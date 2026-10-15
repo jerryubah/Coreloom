@@ -44,6 +44,10 @@
     <Resource Include="..\..\assets\branding\png\coreloom-128.png" Link="Assets\coreloom-128.png" />
     <!-- Startup splash icon (88 DIP, sharp up to ~580 % scaling). -->
     <Resource Include="..\..\assets\branding\png\coreloom-512.png" Link="Assets\coreloom-512.png" />
+    <!-- The dark-mode icon (the mark on a dark glass tile), made from the approved icon by build/dark-icon.py and shown by
+         the app wherever it draws its own icon while the dark theme is on. -->
+    <Resource Include="..\..\assets\branding\dark\coreloom-dark.ico" Link="Assets\coreloom-dark.ico" />
+    <Resource Include="..\..\assets\branding\dark\png\coreloom-dark-*.png" Link="Assets\%(Filename)%(Extension)" />
     <!-- Vendor logos (nvidia/amd/intel[-on-dark|-on-light].png) are optional and supplied by the repository owner from
          the vendors' own brand pages; none are bundled. Anything placed in assets/vendors is embedded at build time. -->
     <Resource Include="..\..\assets\vendors\*.png" Link="Assets\Vendors\%(Filename)%(Extension)" />

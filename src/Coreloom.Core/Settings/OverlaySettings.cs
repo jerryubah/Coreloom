@@ -116,7 +116,7 @@ public sealed class OverlaySettings
     /// <summary>Background opacity in percent (0 = no background).</summary>
     public int BackgroundOpacity { get; set; } = 70;
 
-    public int CornerRadius { get; set; } = 12;
+    public int CornerRadius { get; set; } = 16;
 
     /// <summary>Distance from the edges of the screen, in pixels at 100 % scaling.</summary>
     public int EdgeMargin { get; set; } = 16;
@@ -130,6 +130,11 @@ public sealed class OverlaySettings
     /// <summary>A soft shadow behind the text, so it stays readable without a background.</summary>
     public bool TextShadow { get; set; } = true;
 
+    /// <summary>Which new readings have been offered to existing setups (1: the frame-time graph, 1.4.1).</summary>
+    public int Revision { get; set; }
+
+    public const int CurrentRevision = 1;
+
     /// <summary>Repairs out-of-range or missing values.</summary>
     public OverlaySettings Normalize()
     {
@@ -141,6 +146,17 @@ public sealed class OverlaySettings
 
         Hotkey.Modifiers &= HotkeyModifiers.Alt | HotkeyModifiers.Control | HotkeyModifiers.Shift | HotkeyModifiers.Windows;
         Items = OverlayCatalog.Normalize(Items);
+        if (Revision < 1)
+        {
+            // 1.4.1 added the frame-time graph: show it to everyone who shows the frame rate.
+            if (Items.Contains(OverlayCatalog.Fps) && !Items.Contains(OverlayCatalog.FrameGraph))
+            {
+                Items = OverlayCatalog.Normalize([.. Items, OverlayCatalog.FrameGraph]);
+            }
+
+            Revision = CurrentRevision;
+        }
+
         if (!Enum.IsDefined(Position))
         {
             Position = OverlayPosition.TopLeft;
@@ -189,11 +205,15 @@ public static class OverlayCatalog
     public const string CpuFan = "cpu-fan";
     public const string Ram = "ram";
 
+    /// <summary>A graph of the latest frame times under the FPS line (not a number).</summary>
+    public const string FrameGraph = "frame-graph";
+
     public static IReadOnlyList<(string Id, string Name, OverlayGroup Group)> All { get; } =
     [
         (Fps, "Frames per second (FPS)", OverlayGroup.FrameRate),
         (FrameTime, "Frame time", OverlayGroup.FrameRate),
         (LowFps, "1% low FPS", OverlayGroup.FrameRate),
+        (FrameGraph, "Frame time graph", OverlayGroup.FrameRate),
         (GpuLoad, "Utilization", OverlayGroup.Graphics),
         (GpuTemperature, "Temperature", OverlayGroup.Graphics),
         (GpuHotSpot, "Hot spot", OverlayGroup.Graphics),
@@ -211,11 +231,18 @@ public static class OverlayCatalog
         (Ram, "RAM used", OverlayGroup.Memory),
     ];
 
-    /// <summary>FPS and frame time, the graphics card's load, temperature, power and fan, the processor's load and temperature, and RAM.</summary>
+    /// <summary>
+    /// FPS and frame time with the frame-time graph, the graphics card's load, temperature, power and fan, the processor's
+    /// load and temperature, and RAM.
+    /// </summary>
     public static List<string> Defaults() =>
-        [Fps, FrameTime, GpuLoad, GpuTemperature, GpuPower, GpuFan, CpuLoad, CpuTemperature, Ram];
+        [Fps, FrameTime, FrameGraph, GpuLoad, GpuTemperature, GpuPower, GpuFan, CpuLoad, CpuTemperature, Ram];
 
-    public static bool IsFrameRate(string id) => id is Fps or FrameTime or LowFps;
+    /// <summary>Readings that need frame rates measured (the FPS numbers and the graph).</summary>
+    public static bool IsFrameRate(string id) => id is Fps or FrameTime or LowFps or FrameGraph;
+
+    /// <summary>A reading shown as a number on a line (everything but the graph).</summary>
+    public static bool IsValue(string id) => id != FrameGraph;
 
     public static OverlayGroup GroupOf(string id) => All.FirstOrDefault(i => i.Id == id).Group;
 

@@ -18,8 +18,8 @@ public partial class MainWindow : Window
     public static readonly DependencyProperty IsCompactSidebarProperty = DependencyProperty.Register(
         nameof(IsCompactSidebar), typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
 
-    private const double ExpandedSidebarWidth = 236;
-    private const double CompactSidebarWidth = 68;
+    private const double ExpandedSidebarWidth = 232;
+    private const double CompactSidebarWidth = 62;
     private const double AutoCompactWidth = 980;
 
     private readonly ShellViewModel _shell;
@@ -41,6 +41,12 @@ public partial class MainWindow : Window
         shell.PropertyChanged += OnShellPropertyChanged;
         shell.Timeline.PropertyChanged += OnTimelinePropertyChanged;
         SourceInitialized += (_, _) => ThemeService.Instance?.ApplyToWindow(this);
+        if (ThemeService.Instance is { } theme)
+        {
+            theme.ThemeChanged += (_, _) => UpdateSidebarText();
+        }
+
+        UpdateSidebarText();
         Loaded += (_, _) =>
         {
             SnapLayoutSupport.Attach(this, MaximizeButton);
@@ -227,6 +233,22 @@ public partial class MainWindow : Window
                 Sidebar.BeginAnimation(WidthProperty, null);
                 Sidebar.Width = target;
             }
+        }
+    }
+
+    /// <summary>
+    /// With Mica the glass sidebar is see-through to the desktop, and ClearType can't be blended onto see-through pixels
+    /// (it fringes), so its text is smoothed in grayscale there; everywhere else, and without Mica, text uses ClearType.
+    /// </summary>
+    private void UpdateSidebarText()
+    {
+        if (ThemeService.Instance?.IsMicaActive == true)
+        {
+            TextOptions.SetTextRenderingMode(Sidebar, TextRenderingMode.Grayscale);
+        }
+        else
+        {
+            Sidebar.ClearValue(TextOptions.TextRenderingModeProperty); // the window's (ClearType unless Windows has it off)
         }
     }
 

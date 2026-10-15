@@ -40,14 +40,15 @@ public static class ScrollBarHover
         bar.MouseEnter -= OnMouseEnter;
         bar.MouseMove -= OnMouseMove;
         bar.MouseLeave -= OnMouseLeave;
-        bar.PreviewMouseWheel -= OnWheel;
+        bar.RemoveHandler(UIElement.PreviewMouseWheelEvent, WheelHandler);
         bar.LostMouseCapture -= OnLostCapture;
         if ((bool)e.NewValue)
         {
             bar.MouseEnter += OnMouseEnter;
             bar.MouseMove += OnMouseMove;
             bar.MouseLeave += OnMouseLeave;
-            bar.PreviewMouseWheel += OnWheel;
+            // Also when the page's smooth scrolling has already taken the wheel (SmoothScroll marks it handled).
+            bar.AddHandler(UIElement.PreviewMouseWheelEvent, WheelHandler, handledEventsToo: true);
             bar.LostMouseCapture += OnLostCapture;
         }
     }
@@ -87,6 +88,8 @@ public static class ScrollBarHover
         bar.ClearValue(WheelPointProperty);
         SetIsExpanded(bar, false);
     }
+
+    private static readonly MouseWheelEventHandler WheelHandler = OnWheel;
 
     private static void OnWheel(object sender, MouseWheelEventArgs e)
     {

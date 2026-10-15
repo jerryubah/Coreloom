@@ -18,7 +18,7 @@
       <ContentPresenter Content="{Binding Chart}" ContentTemplate="{StaticResource ChartCard}" Height="300" Margin="0,16,0,0" />
 
       <!-- Internet speed test -->
-      <Border Style="{StaticResource Card}" Margin="0,16,0,0" DataContext="{Binding SpeedTest}" Padding="20,18">
+      <c:SquircleBorder Style="{StaticResource Card.Glow}" GlowKey="NetworkDown" GlowStrength="0.8" Margin="0,16,0,0" DataContext="{Binding SpeedTest}" Padding="20,18">
         <StackPanel>
           <Grid>
             <Grid.ColumnDefinitions>
@@ -26,9 +26,9 @@
               <ColumnDefinition Width="*" />
               <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Border Width="38" Height="38" CornerRadius="11" Background="{DynamicResource Brush.AccentSoft}" VerticalAlignment="Top">
+            <c:SquircleBorder Width="38" Height="38" CornerRadius="11" Background="{DynamicResource Brush.AccentSoft}" VerticalAlignment="Top">
               <Path Style="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Globe}" Stroke="{DynamicResource Brush.Accent}" />
-            </Border>
+            </c:SquircleBorder>
             <StackPanel Grid.Column="1" Margin="12,0,16,0">
               <TextBlock Style="{StaticResource Text.CardTitle}" Text="Internet speed test" />
               <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding Status}" TextWrapping="Wrap" Margin="0,2,0,0" />
@@ -58,14 +58,14 @@
 
           <c:AdaptiveGrid MinColumnWidth="300" MaxColumns="2" Spacing="20" Margin="0,16,0,0">
             <!-- Live gauge -->
-            <Border Style="{StaticResource Card.Inset}" Padding="16,18">
+            <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="16,18">
               <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <ContentPresenter Content="{Binding Live}" ContentTemplate="{StaticResource ToneGauge}" />
                 <Border Style="{StaticResource Badge}" HorizontalAlignment="Center" Margin="0,8,0,0" Padding="10,3">
                   <TextBlock Text="{Binding Phase}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
                 </Border>
               </StackPanel>
-            </Border>
+            </c:SquircleBorder>
             <!-- Results -->
             <StackPanel>
               <ItemsControl ItemsSource="{Binding Results}" ItemTemplate="{StaticResource ToneTile}" Focusable="False">
@@ -84,9 +84,9 @@
             </StackPanel>
           </c:AdaptiveGrid>
         </StackPanel>
-      </Border>
+      </c:SquircleBorder>
 
-      <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+      <c:SquircleBorder Style="{StaticResource Card}" Margin="0,16,0,0">
         <StackPanel>
           <Grid Margin="0,0,0,10">
             <StackPanel>
@@ -100,7 +100,7 @@
           <ItemsControl ItemsSource="{Binding Adapters}" Focusable="False">
             <ItemsControl.ItemTemplate>
               <DataTemplate DataType="{x:Type pages:AdapterViewModel}">
-                <Border Style="{StaticResource Card.Inset}" Margin="0,0,0,8">
+                <c:SquircleBorder Style="{StaticResource Card.Inset}" Margin="0,0,0,8">
                   <Grid>
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="*" />
@@ -136,12 +136,12 @@
                             Command="{Binding DataContext.UseAdapterCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                             CommandParameter="{Binding}" ToolTip="Show this adapter on the dashboard" />
                   </Grid>
-                </Border>
+                </c:SquircleBorder>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </StackPanel>
-      </Border>
+      </c:SquircleBorder>
     </StackPanel>
   </ScrollViewer>
 </UserControl>

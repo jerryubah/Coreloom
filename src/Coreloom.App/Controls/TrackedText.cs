@@ -173,5 +173,6 @@ public sealed class TrackedText : FrameworkElement
     private FormattedText Format(string text, Brush brush, double pixelsPerDip) =>
         new(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
             new Typeface(FontFamily ?? SystemFonts.MessageFontFamily, FontStyles.Normal, FontWeight, FontStretches.Normal),
-            FontSize > 0 ? FontSize : SystemFonts.MessageFontSize, brush, null, TextFormattingMode.Display, pixelsPerDip);
+            FontSize > 0 ? FontSize : SystemFonts.MessageFontSize, brush, null,
+            FontSize >= 20 ? TextFormattingMode.Ideal : TextFormattingMode.Display, pixelsPerDip); // big glyphs keep their true shapes
 }

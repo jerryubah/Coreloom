@@ -116,6 +116,39 @@ internal sealed class FakeGaming : IGamingService
         return Task.FromResult(new TweakResult(true, "Done."));
     }
 
+    /// <summary>Per-program limits set in the "driver".</summary>
+    public Dictionary<string, int> ProgramCaps { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public Task<IReadOnlyList<string>> FindExecutablesAsync(GameEntry game, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<string>>(game.Id switch
+        {
+            "steam:1091500" => ["Cyberpunk2077.exe"],
+            "gog:1207658924" => ["witcher3.exe"],
+            _ => [],
+        });
+
+    public Task<TweakResult> SetGameFrameCapAsync(string gameName, IReadOnlyList<string> executables, int fps, CancellationToken cancellationToken)
+    {
+        if (!HasNvidia || executables.Count == 0)
+        {
+            return Task.FromResult(new TweakResult(false, $"Couldn't find {gameName}'s program to set its limit."));
+        }
+
+        foreach (string exe in executables)
+        {
+            if (fps > 0)
+            {
+                ProgramCaps[exe] = fps;
+            }
+            else
+            {
+                ProgramCaps.Remove(exe);
+            }
+        }
+
+        return Task.FromResult(new TweakResult(true, "Done."));
+    }
+
     public Task<RunningGame?> FindRunningAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken) => Task.FromResult(Running);
 
     public void WatchFrameRates(bool on) => Watching = on;
@@ -175,6 +208,21 @@ public class GamingViewModelTests
         Assert.Equal("W", witcher.Initials);
         Assert.StartsWith("#", witcher.PlaceholderColor);
         Assert.Equal("Not played yet", page.Games[2].LastPlayedText);
+        settings.Dispose();
+    }
+
+    [Fact]
+    public void SearchSuggestions_RankNamesStartingWithTheSearchFirst()
+    {
+        var (page, _, settings) = Create();
+        page.Search = "w";
+        // "The Witcher 3" (a word starting with W) and "Alan Wake 2" (a word too), alphabetical within the same rank
+        Assert.Equal(["Alan Wake 2", "The Witcher 3"], page.SearchSuggestions.Select(s => s.Title));
+        page.Search = "c";
+        Assert.Equal("Cyberpunk 2077", page.SearchSuggestions[0].Title); // starts with it
+        Assert.All(page.SearchSuggestions, s => Assert.Equal("Icon.Controller", s.IconKey));
+        page.Search = string.Empty;
+        Assert.Empty(page.SearchSuggestions);
         settings.Dispose();
     }
 
@@ -313,6 +361,63 @@ public class GamingViewModelTests
         await Task.Yield();
         Assert.Equal(0, fake.FrameCap);
         Assert.Equal("Off", page.FrameLimitText);
+        settings.Dispose();
+    }
+
+    [Fact]
+    public async Task FramePacer_SetsAGamesOwnLimit_ShowsIt_AndRemovesIt()
+    {
+        var (page, fake, settings) = Create();
+        var pacer = page.FramePacer;
+        Assert.Equal("All games", pacer.Scopes[0].Label);
+        Assert.Contains(pacer.Scopes, s => s.Value == "steam:1091500" && s.Label == "Cyberpunk 2077");
+        Assert.StartsWith("Applies to every game.", pacer.ScopeText);
+
+        pacer.SelectedScope = "steam:1091500";
+        Assert.True(pacer.IsGameScope);
+        Assert.False(pacer.IsOn);
+        Assert.Contains("Cyberpunk 2077 only", pacer.ScopeText);
+        pacer.SelectedTarget = 90;
+        Assert.Equal("90", pacer.LimitText);
+
+        pacer.IsOn = true;
+        await Task.Yield();
+        Assert.Equal(90, fake.ProgramCaps["Cyberpunk2077.exe"]);
+        Assert.Equal(0, fake.FrameCap); // every other game is untouched
+        var cap = Assert.Single(settings.Current.Gaming.GameFrameCaps);
+        Assert.Equal(("steam:1091500", 90, 90), (cap.GameId, cap.Choice, cap.Fps));
+        Assert.Equal(["Cyberpunk2077.exe"], cap.Executables);
+        Assert.True(pacer.IsOn);
+        Assert.Equal("Cyberpunk 2077 · 90 FPS", $"{Assert.Single(pacer.GameCaps).Name} · {pacer.GameCaps[0].LimitText}");
+        Assert.Contains(pacer.Scopes, s => s.Label == "Cyberpunk 2077 · own limit");
+
+        // The overlay knows the game is paced, and other programs follow the all-games limit (none here).
+        Assert.Equal(90, settings.Current.Gaming.ActiveFrameCap(@"D:\Steam\steamapps\common\Cyberpunk 2077\bin\x64\Cyberpunk2077.exe"));
+        Assert.Equal(0, settings.Current.Gaming.ActiveFrameCap("witcher3.exe"));
+
+        // Changing the limit while it's on sets it again.
+        pacer.SelectedTarget = 60;
+        await Task.Yield();
+        Assert.Equal(60, fake.ProgramCaps["Cyberpunk2077.exe"]);
+
+        // The all-games scope doesn't show the game's switch state.
+        pacer.SelectedScope = FramePacerViewModel.AllGames;
+        Assert.False(pacer.IsOn);
+        Assert.Contains("except the 1 with a limit of its own", pacer.ScopeText);
+
+        await pacer.GameCaps[0].RemoveCommand.ExecuteAsync(null);
+        Assert.Empty(fake.ProgramCaps);
+        Assert.Empty(settings.Current.Gaming.GameFrameCaps);
+        Assert.False(pacer.HasGameCaps);
+        settings.Dispose();
+    }
+
+    [Fact]
+    public void FramePacer_RemembersTheAllGamesLimitForTheOverlay()
+    {
+        var (_, _, settings) = Create(f => f.FrameCap = 141); // set elsewhere (the NVIDIA Control Panel)
+        Assert.Equal(141, settings.Current.Gaming.GlobalFrameCap);
+        Assert.Equal(141, settings.Current.Gaming.ActiveFrameCap("game.exe"));
         settings.Dispose();
     }
 

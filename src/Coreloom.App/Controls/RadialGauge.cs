@@ -20,8 +20,21 @@ public enum GaugeGradient
     Shade,
 }
 
+/// <summary>How a <see cref="RadialGauge"/> is drawn.</summary>
+public enum GaugeLook
+{
+    /// <summary>Ticks for gauges (40 px and up), a smooth arc for small spinners and comet tails.</summary>
+    Auto,
+
+    /// <summary>A ring of fine radial ticks: the lit ones brighten toward the head, which glows.</summary>
+    Ticks,
+
+    /// <summary>A smooth arc with rounded caps.</summary>
+    Arc,
+}
+
 /// <summary>
-/// 270° ring gauge with rounded caps. <see cref="Value"/> is a 0–1 fraction; changes ease over ~450 ms
+/// 270° ring gauge, drawn as a ring of fine radial ticks (<see cref="GaugeLook"/>) or a smooth arc with rounded caps. <see cref="Value"/> is a 0–1 fraction; changes ease over ~450 ms
 /// at the display refresh rate unless reduced motion is on. With <see cref="ToneScale"/> the arc takes its color from the
 /// shared four-color scale (green idle or cool, blue normal, orange heavy, red at the limit; see <see cref="GaugeTone"/>),
 /// worked out from the animated value so the color glides along with the arc; otherwise it is drawn with <see cref="Fill"/>.
@@ -74,6 +87,12 @@ public sealed class RadialGauge : FrameworkElement
     public static readonly DependencyProperty FadeTailProperty = DependencyProperty.Register(
         nameof(FadeTail), typeof(bool), typeof(RadialGauge), new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    public static readonly DependencyProperty LookProperty = DependencyProperty.Register(
+        nameof(Look), typeof(GaugeLook), typeof(RadialGauge), new FrameworkPropertyMetadata(GaugeLook.Auto, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty OrbProperty = DependencyProperty.Register(
+        nameof(Orb), typeof(bool), typeof(RadialGauge), new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
     private bool _themeHooked;
 
     public RadialGauge()
@@ -91,6 +110,20 @@ public sealed class RadialGauge : FrameworkElement
     {
         get => (GaugeGradient)GetValue(GradientProperty);
         set => SetValue(GradientProperty, value);
+    }
+
+    /// <summary>Ticks or a smooth arc (<see cref="GaugeLook.Auto"/>: ticks unless the gauge is small or a comet).</summary>
+    public GaugeLook Look
+    {
+        get => (GaugeLook)GetValue(LookProperty);
+        set => SetValue(LookProperty, value);
+    }
+
+    /// <summary>A soft glowing sphere inside the ring, in the gauge's color, lit from the top right.</summary>
+    public bool Orb
+    {
+        get => (bool)GetValue(OrbProperty);
+        set => SetValue(OrbProperty, value);
     }
 
     /// <summary>The arc fades out toward its start, like a comet's tail (for a short spinning arc).</summary>
@@ -226,16 +259,23 @@ public sealed class RadialGauge : FrameworkElement
         var center = new Point(ActualWidth / 2, ActualHeight / 2);
         double sweep = Math.Clamp(SweepAngle, 10, 359);
         double start = 90 + ((360 - sweep) / 2); // opening centered at the bottom
+        double value = (double)GetValue(DisplayValueProperty);
+        double tone = (double)GetValue(DisplayToneProperty);
+        bool ticks = Look == GaugeLook.Ticks || (Look == GaugeLook.Auto && size >= 40 && !FadeTail);
+
+        if (ticks)
+        {
+            RenderTicks(dc, center, radius, thickness, start, sweep, IsUnavailable ? 0 : value, tone);
+            return;
+        }
 
         dc.DrawGeometry(null, RoundPen(TrackBrush, thickness), Arc(center, radius, start, sweep));
 
-        double value = (double)GetValue(DisplayValueProperty);
         if (IsUnavailable || value <= 0.002)
         {
             return;
         }
 
-        double tone = (double)GetValue(DisplayToneProperty);
         double arcSweep = sweep * Math.Clamp(value, 0, 1);
         var gradient = Gradient;
         if (gradient == GaugeGradient.None && !FadeTail)
@@ -270,6 +310,167 @@ public sealed class RadialGauge : FrameworkElement
         }
 
         DrawSweep(dc, center, radius, thickness, start, sweep, arcSweep, colorAt);
+    }
+
+    /// <summary>The color of the lit ticks at a place on the ring (0 at the start … 1 at the end of the sweep).</summary>
+    private Func<double, Color> TickColors(double value, double tone)
+    {
+        Color color = ToneScale ? (double.IsFinite(tone) ? ScaleColor(tone) : ToneColor(value))
+            : Fill is SolidColorBrush solid ? solid.Color
+            : Colors.DodgerBlue;
+        if (Gradient == GaugeGradient.Accent)
+        {
+            var accent = ThemeService.Instance?.AccentColor ?? color;
+            var (cool, warm) = ThemeService.AccentNeighbours(accent);
+            return t => t < 0.5 ? Lerp(cool, accent, t * 2) : Lerp(accent, warm, (t - 0.5) * 2);
+        }
+
+        return _ => color;
+    }
+
+    /// <summary>
+    /// The tick ring: fine radial ticks around the sweep. Unlit ticks are the track; lit ones start dim and grow brighter
+    /// toward the head, where the last few reach a little further out and glow. The head tick lights partway as the value
+    /// moves, so the ring glides instead of stepping.
+    /// </summary>
+    private void RenderTicks(DrawingContext dc, Point center, double radius, double thickness, double start, double sweep, double value, double tone)
+    {
+        double size = (2 * radius) + thickness;
+        double pitch = Math.Clamp(size * 0.058, 3.3, 6.4);
+        int count = Math.Max(8, (int)Math.Round(radius * sweep * Math.PI / 180 / pitch)) + (sweep >= 358 ? 0 : 1);
+        double step = sweep / (sweep >= 358 ? count : count - 1);
+        double width = Math.Clamp(pitch * 0.44, 1.2, 2.9);
+        double inner = radius - (thickness / 2) + (width / 2);
+        double outer = radius + (thickness / 2) - (width / 2);
+        double lit = Math.Clamp(value, 0, 1) * (sweep >= 358 ? count : count - 1);   // in ticks
+        int full = value <= 0.002 ? -1 : (int)Math.Floor(lit + 1e-6);               // last fully lit tick
+        double partial = lit - Math.Floor(lit + 1e-6);
+        var colorAt = TickColors(value, tone);
+        Color head = colorAt(Math.Clamp(lit / Math.Max(count - 1, 1), 0, 1));
+
+        if (Orb)
+        {
+            DrawOrb(dc, center, inner - (thickness * 0.55), head);
+        }
+
+        // Unlit ticks (one geometry, one pen).
+        if (TrackBrush is { } track && !(track is SolidColorBrush s && s.Color.A == 0))
+        {
+            var geometry = new StreamGeometry();
+            using (var ctx = geometry.Open())
+            {
+                for (int i = Math.Max(full + 1, 0); i < count; i++)
+                {
+                    AddTick(ctx, center, start + (i * step), inner, outer);
+                }
+            }
+
+            geometry.Freeze();
+            dc.DrawGeometry(null, RoundPen(track, width), geometry);
+        }
+
+        if (full < 0 && partial <= 0.01)
+        {
+            return;
+        }
+
+        int headIndex = partial > 0.01 ? full + 1 : full;
+        double reach = thickness * 0.26;
+        for (int i = 0; i <= headIndex && i < count; i++)
+        {
+            double t = count > 1 ? i / (double)(count - 1) : 1;
+            double along = headIndex > 0 ? i / (double)headIndex : 1;     // 0 at the tail … 1 at the head
+            var color = colorAt(t);
+            int fromHead = headIndex - i;
+            if (fromHead <= 2)
+            {
+                color = Lerp(color, ThemePalette.Shift(color, 0, 0.16), 1 - (fromHead / 3.0));
+            }
+
+            double alpha = 0.5 + (0.5 * Math.Pow(along, 1.5));
+            if (i == headIndex && partial > 0.01)
+            {
+                alpha *= partial;
+            }
+
+            double extend = fromHead <= 1 ? reach : fromHead == 2 ? reach * 0.45 : 0;
+            var pen = ChartColors.Pen(ThemePalette.WithAlpha(color, (byte)Math.Round(color.A * Math.Clamp(alpha, 0, 1))), width);
+            var geometry = new StreamGeometry();
+            using (var ctx = geometry.Open())
+            {
+                AddTick(ctx, center, start + (i * step), inner - (extend * 0.35), outer + extend);
+            }
+
+            geometry.Freeze();
+            dc.DrawGeometry(null, pen, geometry);
+        }
+
+        // The head's glow.
+        double headAngle = (start + (Math.Min(lit, count - 1) * step)) * Math.PI / 180;
+        var at = new Point(center.X + (radius * Math.Cos(headAngle)), center.Y + (radius * Math.Sin(headAngle)));
+        double glow = Math.Max(thickness * 1.5, 7);
+        var halo = new RadialGradientBrush
+        {
+            GradientStops =
+            {
+                new GradientStop(ThemePalette.WithAlpha(ThemePalette.Shift(head, 0, 0.12), 0x70), 0),
+                new GradientStop(ThemePalette.WithAlpha(head, 0x24), 0.5),
+                new GradientStop(ThemePalette.WithAlpha(head, 0), 1),
+            },
+        };
+        halo.Freeze();
+        dc.DrawEllipse(halo, null, at, glow, glow);
+    }
+
+    private static void AddTick(StreamGeometryContext ctx, Point center, double degrees, double inner, double outer)
+    {
+        double a = degrees * Math.PI / 180;
+        double cos = Math.Cos(a), sin = Math.Sin(a);
+        ctx.BeginFigure(new Point(center.X + (inner * cos), center.Y + (inner * sin)), false, false);
+        ctx.LineTo(new Point(center.X + (outer * cos), center.Y + (outer * sin)), true, false);
+    }
+
+    /// <summary>A sphere of soft light inside the ring: brightest toward the top right, its rim catching the light there.</summary>
+    private static void DrawOrb(DrawingContext dc, Point center, double radius, Color color)
+    {
+        if (radius < 6)
+        {
+            return;
+        }
+
+        bool dark = ThemeService.Instance?.IsDark ?? true;
+        var light = ThemePalette.Shift(color, 0, 0.2);
+        var body = new RadialGradientBrush
+        {
+            Center = new Point(0.5, 0.5),
+            GradientOrigin = new Point(0.7, 0.26),
+            RadiusX = 0.62,
+            RadiusY = 0.62,
+            GradientStops =
+            {
+                new GradientStop(ThemePalette.WithAlpha(light, (byte)(dark ? 0x3C : 0x2A)), 0),
+                new GradientStop(ThemePalette.WithAlpha(color, (byte)(dark ? 0x1C : 0x12)), 0.5),
+                new GradientStop(ThemePalette.WithAlpha(color, (byte)(dark ? 0x0A : 0x06)), 0.82),
+                new GradientStop(ThemePalette.WithAlpha(color, 0), 1),
+            },
+        };
+        body.Freeze();
+        dc.DrawEllipse(body, null, center, radius, radius);
+
+        var rim = new LinearGradientBrush
+        {
+            StartPoint = new Point(0.85, 0.1),
+            EndPoint = new Point(0.25, 0.85),
+            GradientStops =
+            {
+                new GradientStop(ThemePalette.WithAlpha(light, (byte)(dark ? 0x70 : 0x50)), 0),
+                new GradientStop(ThemePalette.WithAlpha(light, 0), 0.6),
+            },
+        };
+        rim.Freeze();
+        var pen = new Pen(rim, 1);
+        pen.Freeze();
+        dc.DrawEllipse(null, pen, center, radius - 0.5, radius - 0.5);
     }
 
     private static Color Lighter(Color color) => ThemePalette.Shift(color, 0, 0.14);

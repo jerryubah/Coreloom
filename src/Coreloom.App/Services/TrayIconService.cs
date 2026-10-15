@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
+using Coreloom.App.Themes;
 using Coreloom.Core.Diagnostics;
 
 namespace Coreloom.App.Services;
@@ -22,6 +23,7 @@ public sealed partial class TrayIconService : IDisposable
 
     /// <summary>Sizes of the supplied Coreloom PNGs that suit the notification area (16 px at 100 % scaling).</summary>
     private static readonly int[] TrayIconSizes = [16, 24, 32, 48];
+    private bool _dark;
 
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -35,7 +37,7 @@ public sealed partial class TrayIconService : IDisposable
     {
         _icon = new System.Windows.Forms.NotifyIcon
         {
-            Icon = LoadIcon(),
+            Icon = LoadIcon(dark: false),
             Text = "Coreloom",
             Visible = true,
         };
@@ -130,7 +132,21 @@ public sealed partial class TrayIconService : IDisposable
     /// The Coreloom icon at the size the notification area needs at the current DPI. Uses the supplied PNG that is
     /// the smallest one at least as large as the requested size, so the shell scales down rather than up.
     /// </summary>
-    private static System.Drawing.Icon LoadIcon()
+    /// <summary>Shows the dark-mode icon (dark glass tile) or the light one, following the app's theme.</summary>
+    public void SetDark(bool dark)
+    {
+        if (_dark == dark)
+        {
+            return;
+        }
+
+        _dark = dark;
+        var previous = _icon.Icon;
+        _icon.Icon = LoadIcon(dark);
+        previous?.Dispose();   // NotifyIcon does not own the icon it shows
+    }
+
+    private static System.Drawing.Icon LoadIcon(bool dark)
     {
         try
         {
@@ -141,7 +157,7 @@ public sealed partial class TrayIconService : IDisposable
                 size = TrayIconSizes[^1];
             }
 
-            var resource = Application.GetResourceStream(new Uri($"pack://application:,,,/Assets/coreloom-{size}.png", UriKind.Absolute));
+            var resource = Application.GetResourceStream(new Uri(AppIcons.Png(dark, size), UriKind.Absolute));
             if (resource is not null)
             {
                 using var stream = resource.Stream;

@@ -74,7 +74,21 @@ public class OverlayViewModelTests
 
         public Dictionary<int, FrameRateStats> Rates { get; } = [];
 
+        public Dictionary<int, double[]> FrameTimes { get; } = [];
+
         public FrameRateStats? Get(int processId) => Rates.TryGetValue(processId, out var stats) ? stats : null;
+
+        public int RecentFrameTimes(int processId, Span<double> buffer)
+        {
+            if (!FrameTimes.TryGetValue(processId, out var times))
+            {
+                return 0;
+            }
+
+            int count = Math.Min(times.Length, buffer.Length);
+            times.AsSpan(times.Length - count).CopyTo(buffer);
+            return count;
+        }
     }
 
     private static string Line(OverlayGroupViewModel group) =>
@@ -117,6 +131,42 @@ public class OverlayViewModelTests
         Assert.Equal("FPS: — — ms — 1% low", Line(overlay.Groups[0]));
         overlay.Tick(null);
         Assert.Equal("—", overlay.Groups[0].Values[0].Number);
+        settings.Dispose();
+    }
+
+    [Fact]
+    public void FramePacerMark_AndGraph_FollowTheGameInFront()
+    {
+        var (monitor, settings, _) = Fixture.Create();
+        var overlay = Fixture.Context(monitor, settings).Overlay;
+        var rates = new FakeFrameRates();
+        rates.Rates[1234] = new FrameRateStats(140.2, 7.13, 121.2, 140);
+        rates.FrameTimes[1234] = [7.1, 7.0, 7.2, 16.4, 7.1];
+        overlay.FrameRates = rates;
+        settings.Update("Gaming", s =>
+        {
+            s.Gaming.GlobalFrameCap = 141;
+            s.Gaming.GameFrameCaps.Add(new Core.Gaming.GameFrameCap { GameId = "steam:1", Name = "Paced", Fps = 90, Executables = ["paced.exe"] });
+        });
+
+        Assert.True(overlay.ShowGraph); // on by default, on the FPS line
+        Assert.True(overlay.Groups[0].IsFrameRate);
+        Assert.DoesNotContain(overlay.Groups[0].Values, v => v.Id == OverlayCatalog.FrameGraph);
+
+        overlay.Tick(1234, @"C:\Games\Game\game.exe");
+        Assert.True(overlay.IsPacing);
+        Assert.Equal("141", overlay.PacingText);
+        Assert.Equal(1000.0 / 141, overlay.FrameTimes.TargetFrameTime, 6);
+        var buffer = new double[8];
+        Assert.Equal(5, overlay.FrameTimes.Read(buffer));
+        Assert.Equal(16.4, buffer[3]);
+
+        overlay.Tick(1234, "Paced.exe"); // its own limit wins over the one for all games
+        Assert.Equal("90", overlay.PacingText);
+
+        overlay.Tick(99, "notepad.exe"); // not drawing frames: no mark, nothing to graph
+        Assert.False(overlay.IsPacing);
+        Assert.Equal(0, overlay.FrameTimes.Read(buffer));
         settings.Dispose();
     }
 
@@ -285,5 +335,7 @@ public class OverlaySettingsViewModelTests
         public string? Problem => "No access";
 
         public FrameRateStats? Get(int processId) => null;
+
+        public int RecentFrameTimes(int processId, Span<double> buffer) => 0;
     }
 }

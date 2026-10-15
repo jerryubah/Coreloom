@@ -21,12 +21,6 @@ public static class SplashPolicy
     /// <summary>Splash fade-out (and main window fade-in) during the handoff.</summary>
     public static readonly TimeSpan HandoffDuration = TimeSpan.FromMilliseconds(360);
 
-    /// <summary>One sweep of the indeterminate loading line (travel, then a pause off-track).</summary>
-    public static readonly TimeSpan IndicatorCycle = TimeSpan.FromMilliseconds(1450);
-
-    /// <summary>Fraction of <see cref="IndicatorCycle"/> spent travelling across the track.</summary>
-    public const double IndicatorTravelFraction = 0.6;
-
     /// <summary>
     /// Safety net only: if the main window was shown but never reported its first paint within this time, it is
     /// revealed anyway so a rendering problem can never leave an invisible window behind a splash. This runs
@@ -55,4 +49,36 @@ public static class SplashPolicy
     /// <summary>Motion is reduced when Coreloom's own setting asks for it or Windows animation effects are off.</summary>
     public static bool UseReducedMotion(bool appReducedMotion, bool windowsAnimationsEnabled) =>
         appReducedMotion || !windowsAnimationsEnabled;
+
+    /// <summary>Highest the loading bar goes before the app is ready (it fills the rest during the handoff).</summary>
+    public const double ProgressCeiling = 0.92;
+
+    /// <summary>How long the loading bar takes to fill the rest of the way once the app is ready.</summary>
+    public static readonly TimeSpan ProgressFinish = TimeSpan.FromMilliseconds(260);
+
+    /// <summary>
+    /// Where the loading bar is heading. Startup can't be measured, so the bar moves on with each stage the app reports
+    /// (reading the hardware, opening the dashboard) and creeps on slowly while a stage takes long, but never reaches the
+    /// end until the app is actually ready.
+    /// </summary>
+    /// <param name="stagesDone">Status updates so far (0 at the start).</param>
+    /// <param name="sinceStage">Time spent in the current stage.</param>
+    public static double ProgressTarget(int stagesDone, TimeSpan sinceStage)
+    {
+        double stage = 0.14 + (0.3 * Math.Clamp(stagesDone, 0, 3) * (1 - (0.12 * Math.Clamp(stagesDone - 1, 0, 2))));
+        double creep = 0.16 * (1 - Math.Exp(-Math.Max(0, sinceStage.TotalSeconds) / 2.5));
+        return Math.Min(stage + creep, ProgressCeiling);
+    }
+
+    /// <summary>Moves the shown progress toward its target (eases out; never moves backwards).</summary>
+    public static double ProgressStep(double shown, double target, TimeSpan frame)
+    {
+        if (target <= shown)
+        {
+            return shown;
+        }
+
+        double next = shown + ((target - shown) * (1 - Math.Exp(-5 * Math.Max(0, frame.TotalSeconds))));
+        return target - next < 0.0005 ? target : next;
+    }
 }

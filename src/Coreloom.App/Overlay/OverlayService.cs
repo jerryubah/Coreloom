@@ -19,6 +19,7 @@ namespace Coreloom.App.Overlay;
 internal sealed partial class OverlayService : IDisposable
 {
     private const string LogCategory = "Overlay";
+    private const string FrameRateOwner = "overlay";
     private static readonly IntPtr HwndTopmost = new(-1);
     private const uint SwpNoSize = 0x0001;
     private const uint SwpNoMove = 0x0002;
@@ -30,13 +31,13 @@ internal sealed partial class OverlayService : IDisposable
     private readonly Dispatcher _dispatcher;
     private readonly OverlayViewModel _overlay;
     private readonly OverlaySettingsViewModel _card;
-    private const string FrameRateOwner = "overlay";
-
     private readonly EtwFrameRateSource _frameRates;
     private readonly GlobalHotkey _hotkey;
     private readonly DispatcherTimer _timer;
     private readonly int _ownProcessId = Environment.ProcessId;
     private OverlayWindow? _window;
+    private int _lastProgramId;
+    private string? _lastProgram;
     private int _ticks;
     private bool _disposed;
 
@@ -183,7 +184,7 @@ internal sealed partial class OverlayService : IDisposable
             processId = (int)pid; // Coreloom itself isn't a game: no frame rate while it is in front
         }
 
-        _overlay.Tick(processId);
+        _overlay.Tick(processId, processId is int id ? ProgramName(id) : null);
         Place();
 
         // Other topmost windows (some games, launchers) can end up above it; claim the top again now and then.
@@ -191,6 +192,30 @@ internal sealed partial class OverlayService : IDisposable
         {
             SetWindowPos(_window.Handle, HwndTopmost, 0, 0, 0, 0, SwpNoMove | SwpNoSize | SwpNoActivate);
         }
+    }
+
+    /// <summary>"Cyberpunk2077.exe" for a process (remembered for the last one asked about).</summary>
+    private string? ProgramName(int processId)
+    {
+        if (processId == _lastProgramId)
+        {
+            return _lastProgram;
+        }
+
+        string? name = null;
+        try
+        {
+            using var process = System.Diagnostics.Process.GetProcessById(processId);
+            name = process.ProcessName + ".exe";
+        }
+        catch (Exception e) when (e is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            // gone already, or not ours to look at
+        }
+
+        _lastProgramId = processId;
+        _lastProgram = name;
+        return name;
     }
 
     /// <summary>Puts the overlay in its place on the screen of the window in front.</summary>

@@ -274,7 +274,8 @@ public sealed class DevicesViewModel : PageViewModel
     private bool _isRadioBusy;
     private string? _radioMessage;
     private bool _isLoaded;
-    private string _search = string.Empty;
+    private string _search = string.Empty;      // trimmed: what the list is filtered by
+    private string _searchText = string.Empty;  // as typed (a trailing space stays while typing the next word)
 
     public DevicesViewModel(PageContext context)
         : base("devices", "Devices", "Icon.Devices", context)
@@ -379,13 +380,28 @@ public sealed class DevicesViewModel : PageViewModel
 
     public string WiredEmptyText => _search.Length > 0 && _wired.Count > 0 ? "No wired devices match your search." : "Plug in a USB device or a display to see it here.";
 
+    /// <summary>The best few matches for the search, listed under the search box while typing.</summary>
+    public IReadOnlyList<SearchSuggestion> SearchSuggestions =>
+        Infrastructure.SearchSuggestions.Rank(
+            _bluetooth.Cast<object>().Concat(_wired),
+            _search,
+            item => item is BluetoothDeviceViewModel b ? b.Name : ((WiredDeviceViewModel)item).Name,
+            item => item is BluetoothDeviceViewModel b ? b.Matches(_search) : ((WiredDeviceViewModel)item).Matches(_search),
+            item => item switch
+            {
+                BluetoothDeviceViewModel b => new SearchSuggestion(b.Name, $"Bluetooth · {b.KindText} · {(b.IsConnected ? "Connected" : "Not connected")}", b.IconKey),
+                WiredDeviceViewModel w => new SearchSuggestion(w.Name, w.Detail, w.IconKey),
+                _ => new SearchSuggestion(item.ToString() ?? string.Empty, string.Empty, "Icon.Devices"),
+            });
+
     public string Search
     {
-        get => _search;
+        get => _searchText;
         set
         {
-            if (SetProperty(ref _search, (value ?? string.Empty).Trim()))
+            if (SetProperty(ref _searchText, value ?? string.Empty) && _searchText.Trim() != _search)
             {
+                _search = _searchText.Trim();
                 ApplyBluetooth();
                 ApplyWired();
             }
@@ -583,6 +599,7 @@ public sealed class DevicesViewModel : PageViewModel
         OnPropertyChanged(nameof(LowBatteryText));
         OnPropertyChanged(nameof(HasBluetoothDevices));
         OnPropertyChanged(nameof(BluetoothEmptyText));
+        OnPropertyChanged(nameof(SearchSuggestions));
     }
 
     private void Apply(IReadOnlyList<WiredDevice> devices)
@@ -631,6 +648,7 @@ public sealed class DevicesViewModel : PageViewModel
         OnPropertyChanged(nameof(WiredSummary));
         OnPropertyChanged(nameof(HasWiredDevices));
         OnPropertyChanged(nameof(WiredEmptyText));
+        OnPropertyChanged(nameof(SearchSuggestions));
     }
 
     private async Task ToggleAsync(BluetoothDeviceViewModel device)

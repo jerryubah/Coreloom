@@ -20,6 +20,19 @@ public interface IFrameRateSource
 
     /// <summary>The frame rate of a process, or null when it isn't drawing frames.</summary>
     FrameRateStats? Get(int processId);
+
+    /// <summary>The process's latest frame times in milliseconds, oldest first; returns how many were written.</summary>
+    int RecentFrameTimes(int processId, Span<double> buffer);
+}
+
+/// <summary>Frame times for the overlay's graph (milliseconds, oldest first), read each time the graph draws.</summary>
+public interface IFrameTimeFeed
+{
+    /// <summary>Fills <paramref name="buffer"/> with the latest frame times and returns how many; 0 when no game is drawing.</summary>
+    int Read(Span<double> buffer);
+
+    /// <summary>The frame time the frame pacer aims for (milliseconds), or 0 when the game in front isn't paced.</summary>
+    double TargetFrameTime { get; }
 }
 
 /// <summary>One value on the overlay: "72" + "°C", tinted when it reaches a warning level.</summary>
@@ -84,6 +97,9 @@ public sealed class OverlayGroupViewModel
     /// <summary>The overlay it belongs to (templates read labels on/off and the layout from it).</summary>
     public OverlayViewModel Overlay { get; }
 
+    /// <summary>The FPS line: the frame-time graph and the frame pacer's mark go with it.</summary>
+    public bool IsFrameRate => Id == nameof(OverlayGroup.FrameRate);
+
     public string Label { get; }
 
     public IReadOnlyList<OverlayValueViewModel> Values { get; }
@@ -104,6 +120,8 @@ public sealed class OverlayViewModel : ObservableObject
     private readonly Dictionary<string, OverlayValueViewModel> _values = new(StringComparer.Ordinal);
     private readonly Dictionary<string, MetricViewModel> _metrics = new(StringComparer.Ordinal);
     private FrameRateStats? _frameRate;
+    private int? _processId;
+    private int _pacingCap;
     private string _layoutKey = string.Empty;
     private int _fanCatalogVersion = -1;
     private IReadOnlyList<string> _cpuFanIds = [];
@@ -111,9 +129,31 @@ public sealed class OverlayViewModel : ObservableObject
     public OverlayViewModel(PageContext context)
     {
         _context = context;
+        FrameTimes = new Feed(this);
         context.Settings.Changed += OnSettingsChanged;
         Rebuild(context.Monitor.Engine.LatestFrame);
     }
+
+    /// <summary>The frame times of the program in front, for the graph.</summary>
+    public IFrameTimeFeed FrameTimes { get; }
+
+    /// <summary>The frame-time graph is shown (under the FPS line).</summary>
+    public bool ShowGraph => Options.Items.Contains(OverlayCatalog.FrameGraph);
+
+    /// <summary>The frame pacer limits the game in front (its own limit or the one for all games).</summary>
+    public bool IsPacing => _pacingCap > 0;
+
+    /// <summary>The pacer's mark next to the FPS: the limit ("116").</summary>
+    public string PacingText => _pacingCap > 0 ? _pacingCap.ToString(CultureInfo.CurrentCulture) : string.Empty;
+
+    public string PacingToolTip => _pacingCap > 0 ? $"Frame pacer on: limited to {_pacingCap.ToString(CultureInfo.CurrentCulture)} FPS" : string.Empty;
+
+    /// <summary>The FPS number is a little bigger than the other values.</summary>
+    public double HeadlineFontSize => Math.Round(Options.FontSize * 1.3, 1);
+
+    public double GraphWidth => IsHorizontal ? Math.Round(Options.FontSize * 6.5) : Math.Round(Options.FontSize * 11.5);
+
+    public double GraphHeight => IsHorizontal ? Math.Round(Options.FontSize * 1.3) : Math.Round(Options.FontSize * 2.6);
 
     /// <summary>Set by the app once frame rates can be measured.</summary>
     public IFrameRateSource? FrameRates { get; set; }
@@ -201,11 +241,24 @@ public sealed class OverlayViewModel : ObservableObject
         }
     }
 
-    /// <summary>Refreshes the frame rate of the program in front (about twice a second).</summary>
-    public void Tick(int? foregroundProcessId)
+    /// <summary>
+    /// Refreshes the frame rate of the program in front (about twice a second). <paramref name="executable"/> (its
+    /// file name or path) tells whether the frame pacer limits it.
+    /// </summary>
+    public void Tick(int? foregroundProcessId, string? executable = null)
     {
+        _processId = foregroundProcessId;
         _frameRate = foregroundProcessId is int pid ? FrameRates?.Get(pid) : null;
         ShowFrameRate();
+
+        int cap = _frameRate is not null ? _context.Settings.Current.Gaming.ActiveFrameCap(executable) : 0;
+        if (cap != _pacingCap)
+        {
+            _pacingCap = cap;
+            OnPropertyChanged(nameof(IsPacing));
+            OnPropertyChanged(nameof(PacingText));
+            OnPropertyChanged(nameof(PacingToolTip));
+        }
     }
 
     private void OnSettingsChanged(string section)
@@ -260,7 +313,12 @@ public sealed class OverlayViewModel : ObservableObject
         _metrics.Clear();
         Groups.Clear();
 
-        var shown = Options.Items.Where(id => OverlayCatalog.IsFrameRate(id) || IsAvailable(id, frame, slot)).ToList();
+        var shown = Options.Items.Where(id => OverlayCatalog.IsValue(id) && (OverlayCatalog.IsFrameRate(id) || IsAvailable(id, frame, slot))).ToList();
+        if (ShowGraph && !shown.Any(OverlayCatalog.IsFrameRate))
+        {
+            shown.Insert(0, OverlayCatalog.Fps); // the graph sits on the FPS line
+        }
+
         foreach (var group in Enum.GetValues<OverlayGroup>())
         {
             var values = new List<OverlayValueViewModel>();
@@ -393,5 +451,14 @@ public sealed class OverlayViewModel : ObservableObject
         }
 
         return rpm;
+    }
+
+    /// <summary>The graph's view of the frame-rate source: the program in front, and its pacing target.</summary>
+    private sealed class Feed(OverlayViewModel overlay) : IFrameTimeFeed
+    {
+        public double TargetFrameTime => overlay._pacingCap > 0 ? 1000.0 / overlay._pacingCap : 0;
+
+        public int Read(Span<double> buffer) =>
+            overlay._processId is int pid && overlay.FrameRates is { } source ? source.RecentFrameTimes(pid, buffer) : 0;
     }
 }

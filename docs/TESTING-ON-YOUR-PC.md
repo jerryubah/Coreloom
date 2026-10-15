@@ -260,8 +260,41 @@ Work through each area and tick what works.
 - [ ] Startup apps match Task Manager's *Startup apps*; switching one off here shows *Disabled* there (and back).
 - [ ] *Flush DNS cache* and *Optimize drives* report success.
 
+**Design overhaul (1.4.1)**
+
+- [ ] Every card, button, field, menu, tooltip and the sidebar has smooth squircle corners (no hard tangent where the
+      corner meets the edge), at 100, 125, 150 and 200 % scaling; no jagged or doubled edges, no clipped content.
+- [ ] Dark theme: the background is near-black but not black, cards a step lighter, text easy to read. Light theme
+      still looks right.
+- [ ] The Overview's summary cards, the PC header, Memory/Storage/Health panels, the page gauge cards, the speed test
+      and benchmark cards, the Smart Optimize, Gaming and Devices banners and the frame pacer glow faintly in their
+      color from the bottom. Moving the pointer over them lights the rim near the pointer in two shades, following it
+      smoothly, brighter near the edge, fading out when the pointer leaves; the content never glows, and nothing lags.
+- [ ] The sidebar floats with a gap all round, rounded and glassy with a bright rim; collapsing it (button or a
+      narrow window) still works. With Mica on (Windows 11), the desktop tint shows through the sidebar; text there is
+      smooth (no colored fringes). With Mica off, it shows the two soft lights.
+- [ ] Gauges are tick rings: lit ticks brighten toward a glowing head, colors still green/blue/orange/red, values
+      glide. The page gauge cards and speed gauges have a soft orb inside. Spinners are still smooth arcs.
+- [ ] Every switch: pressing swells the knob into a glass lens; releasing slides it across with a little overshoot.
+      Keyboard (Space) still toggles; disabled switches are dimmed.
+- [ ] Devices and Gaming search: clicking the box drops the panel (*Start typing…*); typing lists *Show all matches*
+      and the best results with icons; Up/Down, Enter and clicking pick one (the box fills with its name and the page
+      shows it); × clears; Esc or clicking elsewhere closes the panel; Ctrl+K and Ctrl+F jump to the box.
+- [ ] Scrolling with the wheel and touchpad glides on every page; a list inside a page (startup apps, specifications)
+      scrolls first, then the page. Dragging the scroll bar or using the keyboard is still immediate.
+- [ ] Text: page titles and big numbers look clean (not blocky); small text stays sharp with ClearType.
+- [ ] Splash: 16:9 with flowing light, the dark-mode icon with the dark theme (the white-tile icon with the light theme),
+      the striped bar moving on through *Reading system information…* and *Opening dashboard…*, then fading into the
+      app. With Reduce motion, no flowing light or stripes.
+- [ ] Dark theme: the window, taskbar and tray icons and the sidebar/About logos are the dark-mode icon; switching to
+      the light theme swaps them back at once.
+
 **Gaming**
 
+- [ ] Frame pacer *Apply to*: pick a game, choose a limit and switch it on: the NVIDIA Control Panel (*Manage 3D
+      settings › Program settings*) shows *Max Frame Rate* for that game's program (in NVIDIA's own profile for it, or a
+      "Coreloom: game" profile), and nothing changes for other games. The game stays at that limit after a restart of
+      it; the chip under the picker shows it, clicking the chip shows it, × removes it (and the Coreloom profile).
 - [ ] *Gaming* sits right above *Graphics* in the sidebar; *Settings › Updates* is now the last item in Settings, below
       *About* (the update dot still shows there, and the sidebar's update badge still opens it).
 - [ ] *Your games* lists the games installed with each launcher you use (Steam, Epic, GOG, Xbox / Game Pass, Ubisoft,
@@ -291,6 +324,11 @@ Work through each area and tick what works.
 
 **In-game overlay**
 
+- [ ] (1.4.1) The overlay is a rounded glass panel with a light rim; FPS is bigger and bold; a frame-time graph sits
+      under the FPS line (after it in the one-line layout) and moves smoothly; stutters show as amber/red spikes. With
+      the frame pacer limiting the game (all games or its own limit), a small green mark with the limit shows next to
+      FPS and a dashed line on the graph. The graph can be turned off in the overlay's settings, where the preview shows
+      a sample trace.
 - [ ] *Graphics*: the *In-game overlay* switch sits on the same line as *Clock limits*; the clock limits text wraps when
       the window is narrow. The switch turns the overlay on and off, and the End badge shows the hotkey.
 - [ ] Turned on, the overlay appears in the top-left corner with FPS, GPU, CPU and RAM lines and a rounded, see-through

@@ -180,7 +180,7 @@ public partial class App : Application
         bool reducedMotion = SplashPolicy.UseReducedMotion(settings.Appearance.ReducedMotion, SystemParameters.ClientAreaAnimation);
         if (!startHidden)
         {
-            _splash = SplashScreenHost.TryStart(reducedMotion);
+            _splash = SplashScreenHost.TryStart(reducedMotion, ThemeService.ResolvesToDark(settings.Appearance.Theme));
         }
 
         // ---- Updates ------------------------------------------------------------------------------
@@ -333,6 +333,24 @@ public partial class App : Application
             },
             exit: ExitApplication);
         _tray = tray;
+
+        // The dark-mode icon (dark glass tile) replaces the light one in the window, taskbar and tray while the dark theme
+        // is on; the sidebar, About page and splash take theirs from the theme's "Image.AppIcon*" resources.
+        void ApplyAppIcon()
+        {
+            tray.SetDark(theme.IsDark);
+            try
+            {
+                window.Icon = System.Windows.Media.Imaging.BitmapFrame.Create(new Uri(AppIcons.Ico(theme.IsDark), UriKind.Absolute));
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("App", "Switching the window icon failed.", ex);
+            }
+        }
+
+        theme.AppIconChanged += (_, _) => ApplyAppIcon();
+        ApplyAppIcon();
 
         shell.PropertyChanged += (_, pe) =>
         {
@@ -640,7 +658,7 @@ public partial class App : Application
         Log.Info("Updates", $"Updating {appDirectory} to Coreloom {app.InformationalVersion} (args: {string.Join(' ', Environment.GetCommandLineArgs().Skip(1))}).");
         if (!args.Quiet)
         {
-            _splash = SplashScreenHost.TryStart(SplashPolicy.UseReducedMotion(false, SystemParameters.ClientAreaAnimation), $"Updating Coreloom to {app.DisplayVersion}");
+            _splash = SplashScreenHost.TryStart(SplashPolicy.UseReducedMotion(false, SystemParameters.ClientAreaAnimation), darkIcon: true, $"Updating Coreloom to {app.DisplayVersion}");
         }
 
         if (args.WaitForProcessId is int pid)

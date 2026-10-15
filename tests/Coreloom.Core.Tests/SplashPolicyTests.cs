@@ -44,4 +44,41 @@ public class SplashPolicyTests
         // The safety net must be far longer than any normal first paint, so it never shortens a slow start.
         Assert.True(SplashPolicy.RevealWatchdog >= TimeSpan.FromSeconds(5));
     }
+
+    [Fact]
+    public void Progress_MovesOnWithEachStage_CreepsWithinOne_AndNeverReachesTheEnd()
+    {
+        double start = SplashPolicy.ProgressTarget(0, TimeSpan.Zero);
+        Assert.InRange(start, 0.1, 0.2);
+
+        // Each reported stage moves the bar on; within a stage it creeps forward but stays below the next stage.
+        for (int stage = 0; stage < 3; stage++)
+        {
+            double now = SplashPolicy.ProgressTarget(stage, TimeSpan.Zero);
+            double later = SplashPolicy.ProgressTarget(stage, TimeSpan.FromSeconds(30));
+            double next = SplashPolicy.ProgressTarget(stage + 1, TimeSpan.Zero);
+            Assert.True(later > now);
+            Assert.True(next > now);
+        }
+
+        // However long startup takes, the bar leaves room for the handoff to fill.
+        Assert.Equal(SplashPolicy.ProgressCeiling, SplashPolicy.ProgressTarget(10, TimeSpan.FromMinutes(5)));
+        Assert.True(SplashPolicy.ProgressCeiling < 1);
+    }
+
+    [Fact]
+    public void ProgressStep_EasesTowardTheTarget_AndNeverGoesBack()
+    {
+        double shown = 0.2;
+        double next = SplashPolicy.ProgressStep(shown, 0.6, TimeSpan.FromMilliseconds(16));
+        Assert.InRange(next, 0.2001, 0.6);
+        Assert.Equal(0.5, SplashPolicy.ProgressStep(0.5, 0.3, TimeSpan.FromMilliseconds(16)));
+
+        for (int i = 0; i < 400; i++)
+        {
+            shown = SplashPolicy.ProgressStep(shown, 0.6, TimeSpan.FromMilliseconds(16));
+        }
+
+        Assert.Equal(0.6, shown);
+    }
 }

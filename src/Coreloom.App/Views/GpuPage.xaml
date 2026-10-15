@@ -97,7 +97,7 @@
           <ColumnDefinition Width="*" />
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
-        <Border Style="{StaticResource Card.Inset}" Margin="0,0,12,0" Visibility="{Binding ClockReasons, Converter={StaticResource HasValueToVisibility}}"
+        <c:SquircleBorder Style="{StaticResource Card.Inset}" Margin="0,0,12,0" Visibility="{Binding ClockReasons, Converter={StaticResource HasValueToVisibility}}"
                 ToolTip="Why the GPU is not running at its maximum clocks right now (reported by the NVIDIA driver).">
           <Grid>
             <Grid.ColumnDefinitions>
@@ -109,9 +109,9 @@
             <TextBlock Grid.Column="1" Text="Clock limits:" Style="{StaticResource Text.Label}" Margin="8,0,6,0" VerticalAlignment="Center" />
             <TextBlock Grid.Column="2" Text="{Binding ClockReasons}" FontSize="12.5" VerticalAlignment="Center" TextWrapping="Wrap" />
           </Grid>
-        </Border>
+        </c:SquircleBorder>
 
-        <Border Grid.Column="1" Style="{StaticResource Card.Inset}" Padding="14,4,6,4" VerticalAlignment="Stretch"
+        <c:SquircleBorder Grid.Column="1" Style="{StaticResource Card.Inset}" Padding="14,4,6,4" VerticalAlignment="Stretch"
                 ToolTip="{Binding OverlaySettings.HotkeyHint}">
           <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
             <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding OverlaySettings.Enabled}" AutomationProperties.Name="In-game overlay">
@@ -129,7 +129,7 @@
               </StackPanel>
             </Button>
           </StackPanel>
-        </Border>
+        </c:SquircleBorder>
       </Grid>
 
       <!-- Secondary metrics -->
@@ -148,7 +148,7 @@
         <ContentPresenter Content="{Binding PowerChart}" ContentTemplate="{StaticResource ChartCard}" Height="280" />
         <ContentPresenter Content="{Binding ClockChart}" ContentTemplate="{StaticResource ChartCard}" Height="280" />
         <ContentPresenter Content="{Binding MemoryChart}" ContentTemplate="{StaticResource ChartCard}" Height="280" />
-        <Border Style="{StaticResource Card}" Height="280" Padding="18,14,8,10">
+        <c:SquircleBorder Style="{StaticResource Card}" Height="280" Padding="18,14,8,10">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
@@ -160,7 +160,7 @@
                             Grid.IsSharedSizeScope="True" Margin="0,0,10,0" />
             </ScrollViewer>
           </Grid>
-        </Border>
+        </c:SquircleBorder>
       </c:AdaptiveGrid>
 
       <!-- All sensors, split into two cards that sit side by side -->
@@ -203,11 +203,11 @@
         </Border.InputBindings>
       </Border>
 
-      <Border Style="{StaticResource Card}" Width="660" Margin="32" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center"
+      <c:SquircleBorder Style="{StaticResource Card}" Width="660" Margin="32" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center"
               AutomationProperties.Name="In-game overlay settings" DataContext="{Binding OverlaySettings}">
-        <Border.Effect>
+        <c:SquircleBorder.Effect>
           <DropShadowEffect BlurRadius="40" ShadowDepth="10" Direction="270" Opacity="0.35" Color="#000000" />
-        </Border.Effect>
+        </c:SquircleBorder.Effect>
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -266,14 +266,14 @@
                          Visibility="{Binding HotkeyIsSingleKey, Converter={StaticResource BoolToVisibility}}" />
 
               <!-- Live preview -->
-              <Border CornerRadius="10" Height="190" Margin="0,16,0,0" ClipToBounds="True">
-                <Border.Background>
+              <c:SquircleBorder CornerRadius="12" Height="190" Margin="0,16,0,0" ClipContent="True">
+                <c:SquircleBorder.Background>
                   <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                     <GradientStop Offset="0" Color="#2B3A52" />
                     <GradientStop Offset="0.55" Color="#16202E" />
                     <GradientStop Offset="1" Color="#0B0E14" />
                   </LinearGradientBrush>
-                </Border.Background>
+                </c:SquircleBorder.Background>
                 <Grid>
                   <TextBlock Text="Preview" FontSize="11" Foreground="#80FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
                   <ContentPresenter Content="{Binding Preview}" ContentTemplate="{StaticResource OverlayContent}" Margin="12">
@@ -311,7 +311,7 @@
                     </ContentPresenter.Style>
                   </ContentPresenter>
                 </Grid>
-              </Border>
+              </c:SquircleBorder>
               <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding FrameRateNote}" TextWrapping="Wrap" Margin="0,6,0,0"
                          Foreground="{DynamicResource Brush.Elevated}" Visibility="{Binding FrameRateNote, Converter={StaticResource HasValueToVisibility}}" />
 
@@ -503,7 +503,7 @@
             </Grid>
           </Border>
         </Grid>
-      </Border>
+      </c:SquircleBorder>
     </Grid>
   </Grid>
 </UserControl>

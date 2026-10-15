@@ -133,6 +133,32 @@ public sealed class FrameRateTracker
         }
     }
 
+    /// <summary>
+    /// The times between the process's latest frames, in milliseconds, oldest first (for the overlay's frame-time graph):
+    /// fills as much of <paramref name="buffer"/> as there are frames and returns how many. None when the process
+    /// hasn't shown a frame for a moment before <paramref name="now"/>.
+    /// </summary>
+    public int RecentFrameTimes(int processId, long now, Span<double> buffer)
+    {
+        lock (_gate)
+        {
+            if (buffer.Length == 0 || !_processes.TryGetValue(processId, out var frames) || frames.Count < 2 || now - frames.Latest > Ticks(StaleAfter))
+            {
+                return 0;
+            }
+
+            int count = Math.Min(buffer.Length, frames.Count - 1);
+            int first = frames.Count - count;
+            double toMilliseconds = 1000.0 / _ticksPerSecond;
+            for (int i = 0; i < count; i++)
+            {
+                buffer[i] = (frames[first + i] - frames[first + i - 1]) * toMilliseconds;
+            }
+
+            return count;
+        }
+    }
+
     public void Clear()
     {
         lock (_gate)

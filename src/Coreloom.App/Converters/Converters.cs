@@ -176,3 +176,18 @@ public sealed class MultiEqualsToVisibilityConverter : IMultiValueConverter
 
     public object[] ConvertBack(object value, Type[] targetTypes, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
+
+/// <summary>A health status ("Excellent", "Good", "Attention") → the glow color key of a card (SquircleBorder.GlowKey).</summary>
+public sealed class StatusToGlowKeyConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) => (value as string) switch
+    {
+        "Excellent" => "Success",
+        "Good" => "Info",
+        "Attention" or "Problem" => "Critical",
+        "Notice" => "Elevated",
+        _ => null,
+    };
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => Binding.DoNothing;
+}

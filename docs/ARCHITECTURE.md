@@ -103,6 +103,42 @@ layer calls Windows sensor APIs, so most of the logic is testable on any OS.
   - Writes are debounced by 600 ms.
   - A corrupt file is kept as `settings.json.bad` and defaults are used.
 
+## Design system (1.4.1)
+
+- **Squircles.** `Squircle.Create` (Controls/SquircleBorder.cs) builds Figma's corner smoothing (figma-squircle,
+  "preserve smoothing"): with smoothing ξ (0.6, Apple's) a corner starts (1 + ξ)·r from the vertex, a circular arc of
+  90°·(1 − ξ) sits in the middle and two cubic Béziers lead into it; when the side is too short the straight lead-in is
+  shortened, never the arc. `SquircleBorder` derives from `Border` (so the `Card`/`Card.Inset` styles and every
+  `Border` template still apply) and replaces `OnRender`: shadow (a few widening translucent outlines, no blur effect),
+  background, the glow, border, lit edge and sheen, all on the squircle; `ClipContent` clips children through
+  `GetLayoutClip`. Every card and rounded container in the XAML, and the button, field, menu, tooltip, segmented and
+  navigation templates, are `c:SquircleBorder`.
+- **Glow cards.** `GlowKey` names a color (a series such as `Gpu`, a status such as `Success`, `Accent`); the card is lit
+  from below by a radial gradient clipped to its shape and its lower rim brightens. `Card.Glow` adds `EdgeGlow`: the
+  pointer's position (eased toward the pointer each frame on `CompositionTarget.Rendering`, only while hovered or fading)
+  centres a radial gradient in the glow color and its warmer neighbour, stroked along the rim in four widths from a
+  14 px halo to a 1.3 px line, clipped inside the card; it brightens as the pointer nears the edge.
+- **Palette and glass.** The dark palette is near-black (`Background` #0A0B0E, cards #15171C). `ThemeService` publishes
+  the sidebar's glass (`Brush.GlassFill`, `Brush.GlassRim`, `Brush.GlassLightA/B`) from the accent; the sidebar column is
+  the backdrop (Mica shows through it when on), the pages sit on an opaque layer, and the sidebar's text switches to
+  grayscale smoothing under Mica (ClearType can't be blended onto see-through pixels).
+- **Gauges.** `RadialGauge.Look` (Auto: ticks from 40 px, an arc for spinners and comets) draws a tick ring: unlit
+  ticks in one geometry, lit ones per tick with alpha rising toward the head, the last ticks longer and lighter, a
+  radial halo at the head, and a partial head tick so values glide. `Orb` adds a sphere of light inside.
+- **Controls.** The liquid toggle (`ToggleSwitch`): track cross-fade, knob slide with `ElasticEase`, and on press a
+  scale-up with the white cover fading to a glass lens. `QuickSearch` (Controls/QuickSearch.cs + implicit style): a
+  borderless `TextBox` in a squircle field and a `Popup` list of `QuickSearchRow`s (hint, *Show all matches*, results
+  from the page's `SearchSuggestions`, ranked by `SearchSuggestions.Rank`), Up/Down/Enter, picks on press, Ctrl+K/F via
+  the window's `PreviewKeyDown`. `SmoothScroll` (attached to the page scroll styles) takes the wheel in
+  `PreviewMouseWheel` at the innermost scroll area that can still move, eases the offset toward a target each frame
+  (exponential, ~165 ms) and stops when something else scrolls.
+- **Text.** Large text uses `TextFormattingMode.Ideal` (Display mode distorts big glyphs); headline numbers are Inter
+  Bold with tabular digits.
+- **Icons.** `build/dark-icon.py` makes the dark-mode icon from the approved one (the mark's shape found by colour with
+  thin highlights closed in, its outline anti-aliased from the original, put on a navy glass tile with a blue rim) into
+  `assets/branding/dark`. `ThemeService` publishes `Image.AppIcon`/`Image.AppIconLarge` and raises `AppIconChanged`, on
+  which the app swaps the window and tray icons (`AppIcons`).
+
 ## Overview header
 
 `SystemSummaryViewModel` (owned by `OverviewViewModel`) holds the board name (title), the graphics card (subtitle), two
@@ -303,6 +339,15 @@ In the app, `OverlayService` owns the pieces:
 
 The foreground process comes from `GetForegroundWindow`; Coreloom itself shows no frame rate.
 
+Since 1.4.1 the overlay is a squircle of smoked glass with a rim, the FPS value is the headline, and the FPS line
+carries the frame-time graph (`OverlayCatalog.FrameGraph`, offered once to existing setups through
+`OverlaySettings.Revision`) and the frame pacer's mark. `FrameGraph` reads `OverlayViewModel.FrameTimes`
+(`IFrameTimeFeed` over `IFrameRateSource.RecentFrameTimes`, i.e. `FrameRateTracker.RecentFrameTimes`) about 30 times a
+second while shown: a line over a soft fill with an eased scale, stutters (over 1.6× the median) tinted amber or red,
+and the pacing target dashed. The mark shows when `GamingSettings.ActiveFrameCap(program)` is above zero for the
+foreground program (`OverlayService` passes its file name). The settings preview draws a sample trace
+(`FrameGraph.IsLive` is set only on the overlay window).
+
 ## Gaming
 
 `GamingViewModel` (the *Gaming* page, above Graphics) has four parts; everything Windows-specific is behind
@@ -339,6 +384,14 @@ be downloaded, the last driver version seen).
   the 12,320-byte `NVDRS_SETTING`). *Automatic* is refresh − refresh² ÷ 3600 (`FrameCap.AutoTarget`, as NVIDIA Reflex
   uses), from the fastest attached display. While a library game runs the page leases the frame-rate source and grades
   pacing from its 1% low against the average (`FramePacing`).
+- **Per-game limits (1.4.1).** The pacer's *Apply to* picker chooses all games or one. A game's limit goes into the
+  driver profile of its programs: `GameExecutables.Pick` (Core, unit-tested) takes the running program in the game's
+  folder, the store's launch program, Unreal's `*-Shipping.exe`, else the largest program that isn't a helper;
+  `NvApi.SetForApplication` uses `NvAPI_DRS_FindApplicationByName` (NVIDIA's own profile when it lists the program;
+  `NVDRS_APPLICATION` V4 down to V1 for older drivers) or creates a "Coreloom: name" profile with the program
+  (`CreateProfile`, `CreateApplication`), sets `FRL_FPS` there and saves; removing deletes the setting and an emptied
+  Coreloom profile. `GamingSettings.GameFrameCaps` remembers each game's limit and programs, and `GlobalFrameCap` the
+  all-games limit last read, for the chips and the overlay.
 - **Shader cache.** NVAPI's `PS_SHADERDISKCACHE_MAX_SIZE` (0xFFFFFFFF = unlimited; off restores the driver default),
   sizes of the DirectX, NVIDIA, AMD, Intel and Steam pre-cache folders (`ShaderCaches.Locations`), and a notice when
   the driver version (NVAPI) differs from the last one seen. Nothing is pre-compiled by running code in games.
@@ -395,10 +448,14 @@ recreated in native XAML; no browser or web view is involved.
   builds the dashboard. The thread can't keep the process alive, and its window is destroyed with it. The window
   sets `InheritanceBehavior = SkipToThemeNext` and defines everything it uses locally, because App.xaml's resources
   belong to the main thread; `check-xaml.py` enforces both.
-- **Window.** 700 × 370, borderless and layered (`AllowsTransparency`, so the whole window can fade), centred on
-  the monitor with the mouse cursor, not topmost, no taskbar button, `WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE` so it
-  never appears in Alt+Tab or takes focus. The wordmark uses the embedded Inter with CSS-style letter spacing
-  (`TrackedText`); the icon is the approved `png/coreloom-512.png`.
+- **Window.** 800 × 450 (16:9) with squircle corners, borderless and layered (`AllowsTransparency`, so the whole
+  window can fade), centred on the monitor with the mouse cursor, not topmost, no taskbar button,
+  `WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE` so it never appears in Alt+Tab or takes focus. `SplashWaves` draws six
+  ribbons of light from sine waves every frame (a lit edge in five widths over a sheet, faded toward the middle). The
+  icon is the dark-mode one with the dark theme, on a breathing halo; the wordmark uses the embedded Inter with
+  CSS-style letter spacing (`TrackedText`). The loading bar moves on with each status the app reports
+  (`SplashPolicy.ProgressTarget`: per-stage steps, a slow creep within a stage, never past 92 % until the handoff,
+  which fills it), with sliding stripes and a blurred glow.
 - **Readiness.** `StartupHandoff` creates the main window's handle, cloaks it (`DWMWA_CLOAK`), and shows it: the
   window lays out and renders but isn't displayed. Its `ContentRendered` event, plus two composition frames, is
   the ready signal. The dashboard does not wait for sensor data or network calls.

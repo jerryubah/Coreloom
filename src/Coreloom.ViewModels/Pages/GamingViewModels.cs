@@ -229,13 +229,19 @@ public sealed class GamingTweakViewModel : ObservableObject
 /// <summary>A shader cache folder and its size.</summary>
 public sealed record ShaderCacheRow(string Name, string Path, string SizeText) : StaticRecord;
 
+/// <summary>A game with a frame limit of its own, shown as a chip under the frame pacer.</summary>
+public sealed record GameCapChip(string GameId, string Name, string LimitText, IRelayCommand SelectCommand, IAsyncRelayCommand RemoveCommand) : StaticRecord;
+
 /// <summary>
-/// The frame pacer: a frame-rate limit for every game, set in the graphics driver (no injection, so it is safe with
-/// anti-cheat), automatically a little under the refresh rate so variable refresh stays engaged; plus how evenly frames
-/// arrive in the game that is running.
+/// The frame pacer: a frame-rate limit set in the graphics driver (no injection, so it is safe with anti-cheat), for
+/// every game or for one game only (the driver's profile for that game's programs), automatically a little under the
+/// refresh rate so variable refresh stays engaged; plus how evenly frames arrive in the game that is running.
 /// </summary>
 public sealed class FramePacerViewModel : ObservableObject
 {
+    /// <summary>The scope that applies to every game.</summary>
+    public const string AllGames = "";
+
     private readonly GamingViewModel _page;
     private bool _isBusy;
     private string? _message;
@@ -246,6 +252,10 @@ public sealed class FramePacerViewModel : ObservableObject
     private string _pacingText = "—";
     private string _pacingColorKey = ColorKeys.Neutral;
     private IReadOnlyList<Option<int>> _options = [];
+    private IReadOnlyList<Option<string>> _scopes = [new(AllGames, "All games")];
+    private IReadOnlyList<GameCapChip> _gameCaps = [];
+    private string _scope = AllGames;
+    private int _gameChoice;
     private bool? _pending;
 
     public FramePacerViewModel(GamingViewModel page)
@@ -255,26 +265,67 @@ public sealed class FramePacerViewModel : ObservableObject
 
     private GamingStatus Status => _page.CurrentStatus;
 
+    private int RefreshHz => Status.RefreshRate > 0 ? Status.RefreshRate : 60;
+
     public bool IsSupported => Status.HasNvidiaDriver;
 
     public string UnsupportedText => "The frame pacer sets the NVIDIA graphics driver's own frame limiter, and no NVIDIA driver was found. On AMD graphics, AMD Software's Radeon Chill or Frame Rate Target Control does the same.";
 
-    /// <summary>The switch: on sets the driver's limit for all games, off removes it.</summary>
+    /// <summary>"All games" and every game in the library.</summary>
+    public IReadOnlyList<Option<string>> Scopes
+    {
+        get => _scopes;
+        private set => SetProperty(ref _scopes, value);
+    }
+
+    /// <summary>What the limit applies to: <see cref="AllGames"/> or a game's library id.</summary>
+    public string SelectedScope
+    {
+        get => _scope;
+        set
+        {
+            value ??= AllGames;
+            if (value != _scope)
+            {
+                _scope = value;
+                _pending = null;
+                _gameChoice = _page.Store.Current.Gaming.FramePacerTarget; // a new game starts from the all-games choice
+                Message = null;
+                OnPropertyChanged(nameof(SelectedScope));
+                Update();
+            }
+        }
+    }
+
+    public bool IsGameScope => _scope.Length > 0;
+
+    private GameFrameCap? ScopeCap => IsGameScope ? _page.Store.Current.Gaming.CapFor(_scope) : null;
+
+    private string ScopeName => IsGameScope ? (_page.FindGame(_scope)?.Name ?? ScopeCap?.Name ?? "this game") : "every game";
+
+    /// <summary>The switch: on sets the limit (for every game, or for the chosen game), off removes it.</summary>
     public bool IsOn
     {
-        get => _pending ?? Status.FrameCap > 0;
+        get => _pending ?? (IsGameScope ? ScopeCap is not null : Status.FrameCap > 0);
         set
         {
             if (value != IsOn && CanToggle)
             {
                 _pending = value;
                 OnPropertyChanged(nameof(IsOn));
-                _ = _page.SetFramePacerAsync(value ? Target : 0);
+                if (IsGameScope)
+                {
+                    _ = _page.SetGameFramePacerAsync(_scope, value ? Target : 0, SelectedTarget);
+                }
+                else
+                {
+                    _ = _page.SetFramePacerAsync(value ? Target : 0);
+                }
             }
         }
     }
 
-    public bool CanToggle => IsSupported && !_isBusy;
+    public bool CanToggle => IsSupported && !_isBusy && (!IsGameScope || _page.FindGame(_scope) is not null || ScopeCap is not null);
 
     public bool IsBusy
     {
@@ -288,19 +339,32 @@ public sealed class FramePacerViewModel : ObservableObject
         }
     }
 
-    /// <summary>The chosen limit (0 = automatic).</summary>
+    /// <summary>The chosen limit (0 = automatic), for the scope shown.</summary>
     public int SelectedTarget
     {
-        get => _page.Store.Current.Gaming.FramePacerTarget;
+        get => IsGameScope ? ScopeCap?.Choice ?? _gameChoice : _page.Store.Current.Gaming.FramePacerTarget;
         set
         {
+            value = value <= 0 ? 0 : FrameCap.Clamp(value);
             if (value == SelectedTarget)
             {
                 return;
             }
 
-            _page.Store.Update("Gaming", s => s.Gaming.FramePacerTarget = value <= 0 ? 0 : FrameCap.Clamp(value));
-            Refresh();
+            if (IsGameScope)
+            {
+                _gameChoice = value;
+                Update();
+                if (ScopeCap is not null && CanToggle)
+                {
+                    _ = _page.SetGameFramePacerAsync(_scope, FrameCap.Resolve(value, RefreshHz), value);
+                }
+
+                return;
+            }
+
+            _page.Store.Update("Gaming", s => s.Gaming.FramePacerTarget = value);
+            Update();
             if (IsOn && CanToggle)
             {
                 _ = _page.SetFramePacerAsync(Target);
@@ -315,29 +379,70 @@ public sealed class FramePacerViewModel : ObservableObject
     }
 
     /// <summary>The limit in frames per second (what "Automatic" works out to on this display).</summary>
-    public int Target => FrameCap.Resolve(SelectedTarget, Status.RefreshRate > 0 ? Status.RefreshRate : 60);
+    public int Target => FrameCap.Resolve(SelectedTarget, RefreshHz);
 
-    /// <summary>The big number: the driver's limit when on, the limit it would use when off.</summary>
-    public string LimitText => (IsOn ? Status.FrameCap : Target).ToString(CultureInfo.CurrentCulture);
+    /// <summary>The limit set now for the scope shown (0 when off).</summary>
+    private int ActiveLimit => IsGameScope ? ScopeCap?.Fps ?? 0 : Status.FrameCap;
 
-    public string FrameTimeText => FrameCap.FrameTimeText(IsOn ? Status.FrameCap : Target) + " per frame";
+    /// <summary>The big number: the limit in the driver when on, the limit it would use when off.</summary>
+    public string LimitText => (IsOn && ActiveLimit > 0 ? ActiveLimit : Target).ToString(CultureInfo.CurrentCulture);
+
+    public string FrameTimeText => FrameCap.FrameTimeText(IsOn && ActiveLimit > 0 ? ActiveLimit : Target) + " per frame";
 
     public string DisplayText => Status.RefreshRate > 0 ? $"{Status.RefreshRate.ToString(CultureInfo.CurrentCulture)} Hz display" : "Display refresh rate unknown";
 
     /// <summary>Why this limit.</summary>
     public string Explanation => SelectedTarget <= 0
-        ? $"Just under your {(Status.RefreshRate > 0 ? Status.RefreshRate : 60).ToString(CultureInfo.CurrentCulture)} Hz refresh rate, so G-SYNC or FreeSync stays engaged and frames never queue up behind V-Sync. Even frame times, lower latency."
+        ? $"Just under your {RefreshHz.ToString(CultureInfo.CurrentCulture)} Hz refresh rate, so G-SYNC or FreeSync stays engaged and frames never queue up behind V-Sync. Even frame times, lower latency."
         : SelectedTarget >= Status.RefreshRate && Status.RefreshRate > 0
             ? "At or above the refresh rate: good for displays without variable refresh, with V-Sync on."
             : "A fixed limit: steadier frame times and less heat and noise when the game would otherwise swing above it.";
 
+    /// <summary>What the switch covers: every game, or one game and what the others do.</summary>
+    public string ScopeText
+    {
+        get
+        {
+            if (!IsGameScope)
+            {
+                int own = _page.Store.Current.Gaming.GameFrameCaps.Count;
+                return own == 0
+                    ? "Applies to every game. Pick a game above to give it a limit of its own."
+                    : $"Applies to every game except the {own.ToString(CultureInfo.CurrentCulture)} with a limit of {(own == 1 ? "its" : "their")} own.";
+            }
+
+            string others = Status.FrameCap > 0 ? $"the all-games limit ({Status.FrameCap.ToString(CultureInfo.CurrentCulture)} FPS)" : "no limit";
+            var cap = ScopeCap;
+            return cap is not null
+                ? $"Only {ScopeName} ({string.Join(", ", cap.Executables)}) is limited this way; other games keep {others}."
+                : $"Sets a limit for {ScopeName} only, in the driver's profile for its program; other games keep {others}.";
+        }
+    }
+
     /// <summary>The setup that paces best with variable refresh (G-SYNC / FreeSync).</summary>
     public string TipText => "For the smoothest result with G-SYNC or FreeSync, turn V-Sync on in the NVIDIA Control Panel and off in games: the limit keeps latency low and V-Sync catches the rare frame that would tear.";
 
-    public string MethodText => "Uses the graphics driver's own frame limiter for every game, so nothing is added to games and it's safe with anti-cheat. It applies to games you start next.";
+    public string MethodText => IsGameScope
+        ? "Uses the graphics driver's own frame limiter in the game's driver profile (NVIDIA's own profile when it has one), so nothing is added to the game and it's safe with anti-cheat. It applies from the game's next start."
+        : "Uses the graphics driver's own frame limiter for every game, so nothing is added to games and it's safe with anti-cheat. It applies to games you start next.";
 
     /// <summary>The driver had a limit Coreloom didn't set (e.g. from the NVIDIA Control Panel).</summary>
-    public string? ForeignLimitText => IsOn && Status.FrameCap != Target ? $"The driver's limit is {Status.FrameCap.ToString(CultureInfo.CurrentCulture)} FPS. Pick a limit to replace it." : null;
+    public string? ForeignLimitText => !IsGameScope && IsOn && Status.FrameCap != Target ? $"The driver's limit is {Status.FrameCap.ToString(CultureInfo.CurrentCulture)} FPS. Pick a limit to replace it." : null;
+
+    /// <summary>Games with a limit of their own.</summary>
+    public IReadOnlyList<GameCapChip> GameCaps
+    {
+        get => _gameCaps;
+        private set
+        {
+            if (SetProperty(ref _gameCaps, value))
+            {
+                OnPropertyChanged(nameof(HasGameCaps));
+            }
+        }
+    }
+
+    public bool HasGameCaps => _gameCaps.Count > 0;
 
     public string? Message
     {
@@ -411,6 +516,7 @@ public sealed class FramePacerViewModel : ObservableObject
         PacingColorKey = grade == PacingGrade.Unknown ? ColorKeys.Neutral : ColorKeys.ForLevel(FramePacing.Level(grade));
     }
 
+    /// <summary>Re-reads everything after a change (status, settings, library); the switch's pending state ends.</summary>
     internal void Refresh()
     {
         if (!_isBusy)
@@ -418,11 +524,15 @@ public sealed class FramePacerViewModel : ObservableObject
             _pending = null;
         }
 
-        int refresh = Status.RefreshRate > 0 ? Status.RefreshRate : 60;
-        var options = new List<Option<int>> { new(0, $"Automatic · {FrameCap.AutoTarget(refresh).ToString(CultureInfo.CurrentCulture)} FPS") };
-        foreach (int fps in FrameCap.Presets(refresh))
+        Update();
+    }
+
+    private void Update()
+    {
+        var options = new List<Option<int>> { new(0, $"Automatic · {FrameCap.AutoTarget(RefreshHz).ToString(CultureInfo.CurrentCulture)} FPS") };
+        foreach (int fps in FrameCap.Presets(RefreshHz))
         {
-            options.Add(new(fps, fps == refresh ? $"{fps.ToString(CultureInfo.CurrentCulture)} FPS · refresh rate" : $"{fps.ToString(CultureInfo.CurrentCulture)} FPS"));
+            options.Add(new(fps, fps == Status.RefreshRate ? $"{fps.ToString(CultureInfo.CurrentCulture)} FPS · refresh rate" : $"{fps.ToString(CultureInfo.CurrentCulture)} FPS"));
         }
 
         if (SelectedTarget > 0 && !options.Any(o => o.Value == SelectedTarget))
@@ -435,6 +545,42 @@ public sealed class FramePacerViewModel : ObservableObject
             Options = options;
         }
 
+        // Every library game (and any game with a limit that has since left the library, so it can still be removed).
+        var caps = _page.Store.Current.Gaming.GameFrameCaps;
+        var games = _page.LibraryGames
+            .Select(g => (g.Id, g.Name))
+            .Concat(caps.Select(c => (Id: c.GameId, c.Name)))
+            .DistinctBy(g => g.Id, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(g => GameLibrary.SortName(g.Name), StringComparer.CurrentCultureIgnoreCase)
+            .Select(g => new Option<string>(g.Id, caps.Any(c => string.Equals(c.GameId, g.Id, StringComparison.OrdinalIgnoreCase)) ? $"{g.Name} · own limit" : g.Name));
+        var scopes = new List<Option<string>> { new(AllGames, "All games") };
+        scopes.AddRange(games);
+        if (Scopes.Count != scopes.Count || !Scopes.Zip(scopes).All(p => p.First == p.Second))
+        {
+            Scopes = scopes;
+        }
+
+        if (IsGameScope && !scopes.Any(s => string.Equals(s.Value, _scope, StringComparison.OrdinalIgnoreCase)))
+        {
+            _scope = AllGames; // the game was uninstalled
+        }
+
+        var chips = caps
+            .OrderBy(c => GameLibrary.SortName(c.Name), StringComparer.CurrentCultureIgnoreCase)
+            .Select(c => new GameCapChip(
+                c.GameId,
+                c.Name,
+                $"{c.Fps.ToString(CultureInfo.CurrentCulture)} FPS",
+                new RelayCommand(() => SelectedScope = c.GameId),
+                new AsyncRelayCommand(() => _page.SetGameFramePacerAsync(c.GameId, 0, c.Choice))))
+            .ToList();
+        if (GameCaps.Count != chips.Count || !GameCaps.Zip(chips).All(p => p.First.GameId == p.Second.GameId && p.First.LimitText == p.Second.LimitText && p.First.Name == p.Second.Name))
+        {
+            GameCaps = chips;
+        }
+
+        OnPropertyChanged(nameof(SelectedScope));
+        OnPropertyChanged(nameof(IsGameScope));
         OnPropertyChanged(nameof(SelectedTarget));
         OnPropertyChanged(nameof(IsSupported));
         OnPropertyChanged(nameof(IsOn));
@@ -444,6 +590,8 @@ public sealed class FramePacerViewModel : ObservableObject
         OnPropertyChanged(nameof(FrameTimeText));
         OnPropertyChanged(nameof(DisplayText));
         OnPropertyChanged(nameof(Explanation));
+        OnPropertyChanged(nameof(ScopeText));
+        OnPropertyChanged(nameof(MethodText));
         OnPropertyChanged(nameof(ForeignLimitText));
     }
 }
@@ -467,7 +615,8 @@ public sealed class GamingViewModel : PageViewModel
     private bool _statusBusy;
     private bool _statusAgain;
     private bool _runningBusy;
-    private string _search = string.Empty;
+    private string _search = string.Empty;      // trimmed: what the list is filtered by
+    private string _searchText = string.Empty;  // as typed (a trailing space stays while typing the next word)
     private DateTime _lastStatus = DateTime.MinValue;
     private DateTime _lastRunning = DateTime.MinValue;
     private RunningGame? _running;
@@ -505,6 +654,11 @@ public sealed class GamingViewModel : PageViewModel
     public Func<DateTimeOffset> Now { get; init; } = () => DateTimeOffset.Now;
 
     internal SettingsService Store => Settings;
+
+    /// <summary>Every game in the library (not just those the search shows).</summary>
+    internal IEnumerable<GameViewModel> LibraryGames => _all;
+
+    internal GameViewModel? FindGame(string id) => _all.FirstOrDefault(g => string.Equals(g.Id, id, StringComparison.OrdinalIgnoreCase));
 
     internal GamingStatus CurrentStatus => _status;
 
@@ -673,15 +827,22 @@ public sealed class GamingViewModel : PageViewModel
 
     public string Search
     {
-        get => _search;
+        get => _searchText;
         set
         {
-            if (SetProperty(ref _search, (value ?? string.Empty).Trim()))
+            if (SetProperty(ref _searchText, value ?? string.Empty) && _searchText.Trim() != _search)
             {
+                _search = _searchText.Trim();
                 ApplyLibrary();
             }
         }
     }
+
+    /// <summary>The best few matching games, listed under the search box while typing.</summary>
+    public IReadOnlyList<SearchSuggestion> SearchSuggestions =>
+        Infrastructure.SearchSuggestions.Rank(
+            _all, _search, g => g.Name, g => g.Matches(_search),
+            g => new SearchSuggestion(g.Name, g.LastPlayedText.Length > 0 ? $"{g.Detail} · {g.LastPlayedText}" : g.Detail, "Icon.Controller"));
 
     public bool IsGridView
     {
@@ -885,6 +1046,7 @@ public sealed class GamingViewModel : PageViewModel
         _all.Clear();
         _all.AddRange(next);
         ApplyLibrary();
+        FramePacer.Refresh(); // the games it can be set for
     }
 
     private void ApplyLibrary()
@@ -903,6 +1065,7 @@ public sealed class GamingViewModel : PageViewModel
         OnPropertyChanged(nameof(GameCountText));
         OnPropertyChanged(nameof(LibrarySummary));
         OnPropertyChanged(nameof(EmptyText));
+        OnPropertyChanged(nameof(SearchSuggestions));
         OnPropertyChanged(nameof(MissingArtworkCount));
         OnPropertyChanged(nameof(ShowArtworkOffer));
         OnPropertyChanged(nameof(ArtworkOfferText));
@@ -1089,6 +1252,11 @@ public sealed class GamingViewModel : PageViewModel
             Settings.Update("Gaming", s => s.Gaming.LastDriverVersion = status.DriverVersion); // first look: nothing to compare with
         }
 
+        if (status.HasNvidiaDriver && Settings.Current.Gaming.GlobalFrameCap != status.FrameCap)
+        {
+            Settings.Update("Gaming", s => s.Gaming.GlobalFrameCap = status.FrameCap); // the overlay shows when games are paced
+        }
+
         FramePacer.Refresh();
         ApplyShaderCaches();
         HeroChanged();
@@ -1200,6 +1368,59 @@ public sealed class GamingViewModel : PageViewModel
         FramePacer.Message = result.Success
             ? fps > 0 ? (_running is not null ? $"Restart {_running.Game.Name} to apply the new limit." : null) : null
             : result.Message;
+    }
+
+    /// <summary>
+    /// Sets (fps &gt; 0) or removes a game's own limit: finds the game's programs, sets the limit in the driver's profile
+    /// for them, and remembers it (so it shows, can be removed, and the overlay knows the game is paced).
+    /// </summary>
+    internal async Task SetGameFramePacerAsync(string gameId, int fps, int choice)
+    {
+        var game = FindGame(gameId);
+        var existing = Settings.Current.Gaming.CapFor(gameId);
+        string name = game?.Name ?? existing?.Name ?? "This game";
+        FramePacer.IsBusy = true;
+        FramePacer.Message = null;
+        TweakResult result;
+        IReadOnlyList<string> programs = existing?.Executables ?? [];
+        try
+        {
+            if (fps > 0 && game is not null)
+            {
+                var found = await _service.FindExecutablesAsync(game.Game, CancellationToken.None);
+                programs = found.Concat(programs).Distinct(StringComparer.OrdinalIgnoreCase).Take(GameExecutables.Max).ToList();
+            }
+
+            result = await _service.SetGameFrameCapAsync(name, programs, fps, CancellationToken.None);
+        }
+        catch (Exception e) when (IsExpected(e))
+        {
+            result = new TweakResult(false, "The graphics driver didn't accept the change.");
+        }
+        finally
+        {
+            FramePacer.IsBusy = false;
+        }
+
+        if (result.Success)
+        {
+            int limit = FrameCap.Clamp(fps);
+            var saved = programs.ToList();
+            Settings.Update("Gaming", s =>
+            {
+                s.Gaming.GameFrameCaps.RemoveAll(c => string.Equals(c.GameId, gameId, StringComparison.OrdinalIgnoreCase));
+                if (limit > 0)
+                {
+                    s.Gaming.GameFrameCaps.Add(new GameFrameCap { GameId = gameId, Name = name, Choice = choice, Fps = limit, Executables = saved });
+                }
+            });
+        }
+
+        FramePacer.Refresh();
+        bool runningNow = _running is not null && string.Equals(_running.Game.Id, gameId, StringComparison.OrdinalIgnoreCase);
+        FramePacer.Message = !result.Success ? result.Message
+            : fps > 0 && runningNow ? $"Restart {name} to apply the new limit."
+            : null;
     }
 
     private async Task ApplyAllAsync()

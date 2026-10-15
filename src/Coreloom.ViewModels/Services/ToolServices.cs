@@ -144,6 +144,12 @@ public interface IGamingService
     /// <summary>Sets the graphics driver's frame-rate limit for all games (0 turns it off).</summary>
     Task<TweakResult> SetFrameCapAsync(int fps, CancellationToken cancellationToken);
 
+    /// <summary>The game's program files the driver should match (see <see cref="GameExecutables.Pick"/>).</summary>
+    Task<IReadOnlyList<string>> FindExecutablesAsync(GameEntry game, CancellationToken cancellationToken);
+
+    /// <summary>Sets the driver's frame-rate limit for these programs only (0 removes it, so the all-games limit applies again).</summary>
+    Task<TweakResult> SetGameFrameCapAsync(string gameName, IReadOnlyList<string> executables, int fps, CancellationToken cancellationToken);
+
     /// <summary>The library game that is running now, if any.</summary>
     Task<RunningGame?> FindRunningAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken);
 
@@ -174,6 +180,10 @@ public sealed class UnsupportedGamingService : IGamingService
     public Task<TweakResult> SetTweakAsync(GamingTweak tweak, bool on, GamingSettings settings, CancellationToken cancellationToken) => Unavailable();
 
     public Task<TweakResult> SetFrameCapAsync(int fps, CancellationToken cancellationToken) => Unavailable();
+
+    public Task<IReadOnlyList<string>> FindExecutablesAsync(GameEntry game, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<string>>([]);
+
+    public Task<TweakResult> SetGameFrameCapAsync(string gameName, IReadOnlyList<string> executables, int fps, CancellationToken cancellationToken) => Unavailable();
 
     public Task<RunningGame?> FindRunningAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken) => Task.FromResult<RunningGame?>(null);
 

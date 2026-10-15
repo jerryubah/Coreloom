@@ -55,6 +55,8 @@ internal sealed unsafe class EtwFrameRateSource : IFrameRateSource, IDisposable
 
     public FrameRateStats? Get(int processId) => _running ? _tracker.Get(processId, Stopwatch.GetTimestamp()) : null;
 
+    public int RecentFrameTimes(int processId, Span<double> buffer) => _running ? _tracker.RecentFrameTimes(processId, Stopwatch.GetTimestamp(), buffer) : 0;
+
     /// <summary>
     /// Starts measuring for <paramref name="owner"/> (the overlay, the Gaming page): the session runs while anyone needs
     /// it. Returns false (see <see cref="Problem"/>) when it can't run.

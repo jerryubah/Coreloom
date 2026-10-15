@@ -439,3 +439,90 @@ public sealed class GamingTweakTests
         Assert.Equal(GameLibraryView.List, settings.Gaming.LibraryView);
     }
 }
+
+public sealed class GameFrameCapTests
+{
+    private static readonly GameEntry Cyberpunk = new("steam:1091500", "Cyberpunk 2077", GameStore.Steam) { InstallPath = @"D:\Games\Cyberpunk 2077" };
+
+    [Fact]
+    public void Pick_PrefersTheRunningProgram_ThenTheStoresOne_ThenUnrealShipping()
+    {
+        var game = new GameEntry("epic:Fortnite", "Fortnite", GameStore.Epic)
+        {
+            InstallPath = @"C:\Games\Fortnite",
+            Executable = @"C:\Games\Fortnite\FortniteGame\Binaries\Win64\FortniteLauncher.exe",
+        };
+        var files = new (string, long)[]
+        {
+            (@"C:\Games\Fortnite\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe", 400_000_000),
+            (@"C:\Games\Fortnite\FortniteGame\Binaries\Win64\FortniteLauncher.exe", 2_000_000),
+            (@"C:\Games\Fortnite\FortniteGame\Binaries\Win64\EasyAntiCheat\EasyAntiCheat_EOS_Setup.exe", 50_000_000),
+            (@"C:\Games\Fortnite\Engine\Binaries\Win64\CrashReportClient.exe", 30_000_000),
+        };
+
+        Assert.Equal(["FortniteLauncher.exe", "FortniteClient-Win64-Shipping.exe"], GameExecutables.Pick(game, files));
+        Assert.Equal("FortniteClient-Win64-Shipping.exe", GameExecutables.Pick(game, files, files[0].Item1)[0]);
+    }
+
+    [Fact]
+    public void Pick_FallsBackToTheLargestProgramThatIsntAHelper()
+    {
+        var files = new (string, long)[]
+        {
+            (@"D:\Games\Cyberpunk 2077\bin\x64\Cyberpunk2077.exe", 90_000_000),
+            (@"D:\Games\Cyberpunk 2077\redprelauncher.exe", 120_000_000),
+            (@"D:\Games\Cyberpunk 2077\unins000.exe", 3_000_000),
+            (@"D:\Games\Cyberpunk 2077\_CommonRedist\vcredist_x64.exe", 140_000_000),
+            (@"D:\Games\Cyberpunk 2077\bin\x64\CrashReporter.exe", 5_000_000),
+        };
+
+        // "redprelauncher.exe" is bigger, but launchers come last
+        Assert.Equal(["Cyberpunk2077.exe"], GameExecutables.Pick(Cyberpunk, files));
+        Assert.Equal(["Launcher.exe"], GameExecutables.Pick(Cyberpunk, [(@"D:\Games\X\Launcher.exe", 5)]));
+        Assert.Empty(GameExecutables.Pick(Cyberpunk, []));
+    }
+
+    [Theory]
+    [InlineData(@"C:\Games\X\game.exe", "game.exe")]
+    [InlineData(@"""C:\Games\X\game.exe"",0", "game.exe")]
+    [InlineData("C:/Games/X/Game.EXE", "Game.EXE")]
+    [InlineData(@"C:\Games\X\readme.txt", null)]
+    [InlineData("", null)]
+    public void FileName_FindsTheProgramsName(string path, string? expected) => Assert.Equal(expected, GameExecutables.FileName(path));
+
+    [Fact]
+    public void ActiveFrameCap_UsesTheGamesOwnLimit_ElseTheLimitForAllGames()
+    {
+        var settings = new GamingSettings
+        {
+            GlobalFrameCap = 141,
+            GameFrameCaps = [new GameFrameCap { GameId = "steam:1091500", Name = "Cyberpunk 2077", Fps = 90, Executables = ["Cyberpunk2077.exe"] }],
+        };
+
+        Assert.Equal(90, settings.ActiveFrameCap(@"D:\Games\Cyberpunk 2077\bin\x64\cyberpunk2077.exe"));
+        Assert.Equal(141, settings.ActiveFrameCap("witcher3.exe"));
+        Assert.Equal(141, settings.ActiveFrameCap(null));
+        Assert.Equal("Cyberpunk 2077", settings.CapFor("STEAM:1091500")!.Name);
+    }
+
+    [Fact]
+    public void Normalize_DropsBrokenGameLimits_AndKeepsOnePerGame()
+    {
+        var settings = new AppSettings();
+        settings.Gaming.GlobalFrameCap = 5000;
+        settings.Gaming.GameFrameCaps =
+        [
+            new GameFrameCap { GameId = "a", Name = "A", Fps = 2000, Choice = -3, Executables = [@"C:\A\a.exe", "a.exe", "notes.txt"] },
+            new GameFrameCap { GameId = "A", Name = "A again", Fps = 60, Executables = ["a.exe"] },
+            new GameFrameCap { GameId = "b", Name = "B", Fps = 60, Executables = [] },
+            new GameFrameCap { GameId = "", Name = "Nameless", Fps = 60, Executables = ["c.exe"] },
+            null!,
+        ];
+        settings.Normalize();
+
+        Assert.Equal(FrameCap.Maximum, settings.Gaming.GlobalFrameCap);
+        var cap = Assert.Single(settings.Gaming.GameFrameCaps);
+        Assert.Equal(("a", FrameCap.Maximum, 0), (cap.GameId, cap.Fps, cap.Choice));
+        Assert.Equal(["a.exe"], cap.Executables);
+    }
+}

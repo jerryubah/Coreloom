@@ -19,16 +19,16 @@
       <ContentPresenter Content="{Binding TotalChart}" ContentTemplate="{StaticResource ChartCard}" Height="260" Margin="0,16,0,0" />
 
       <!-- Drive speed test -->
-      <Border Style="{StaticResource Card}" Margin="0,16,0,0" DataContext="{Binding Benchmark}" Padding="20,18">
+      <c:SquircleBorder Style="{StaticResource Card.Glow}" GlowKey="Storage" GlowStrength="0.8" Margin="0,16,0,0" DataContext="{Binding Benchmark}" Padding="20,18">
         <StackPanel>
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" />
               <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Border Width="38" Height="38" CornerRadius="11" Background="{DynamicResource Brush.AccentSoft}" VerticalAlignment="Top">
+            <c:SquircleBorder Width="38" Height="38" CornerRadius="11" Background="{DynamicResource Brush.AccentSoft}" VerticalAlignment="Top">
               <Path Style="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Gauge}" Stroke="{DynamicResource Brush.Accent}" />
-            </Border>
+            </c:SquircleBorder>
             <StackPanel Grid.Column="1" Margin="12,0,0,0">
               <TextBlock Style="{StaticResource Text.CardTitle}" Text="Drive speed test" />
               <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding Status}" TextWrapping="Wrap" Margin="0,2,0,0" />
@@ -68,12 +68,12 @@
 
           <!-- Gauges and results -->
           <c:AdaptiveGrid MinColumnWidth="400" MaxColumns="2" Spacing="20" Margin="0,16,0,0">
-            <Border Style="{StaticResource Card.Inset}" Padding="16,18">
+            <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="16,18">
               <c:AdaptiveGrid MinColumnWidth="170" MaxColumns="2" Spacing="12" VerticalAlignment="Center">
                 <ContentPresenter Content="{Binding ReadGauge}" ContentTemplate="{StaticResource ToneGauge}" />
                 <ContentPresenter Content="{Binding WriteGauge}" ContentTemplate="{StaticResource ToneGauge}" />
               </c:AdaptiveGrid>
-            </Border>
+            </c:SquircleBorder>
             <StackPanel>
               <Grid Margin="14,0,14,6">
                 <Grid.ColumnDefinitions>
@@ -91,7 +91,7 @@
             </StackPanel>
           </c:AdaptiveGrid>
         </StackPanel>
-      </Border>
+      </c:SquircleBorder>
 
       <ItemsControl ItemsSource="{Binding Disks}" Margin="0,16,0,0" Focusable="False">
         <ItemsControl.ItemsPanel>
@@ -101,7 +101,7 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="{x:Type pages:DiskViewModel}">
-            <Border Style="{StaticResource Card}">
+            <c:SquircleBorder Style="{StaticResource Card}">
               <StackPanel>
                 <!-- Header -->
                 <Grid>
@@ -110,9 +110,9 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                   </Grid.ColumnDefinitions>
-                  <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource Brush.ControlHover}">
+                  <c:SquircleBorder Width="34" Height="34" CornerRadius="10" Background="{DynamicResource Brush.ControlHover}">
                     <Path Style="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Storage}" Stroke="{DynamicResource Series.Storage.Brush}" />
-                  </Border>
+                  </c:SquircleBorder>
                   <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                     <TextBlock Text="{Binding Name}" Style="{StaticResource Text.CardTitle}" />
                     <TextBlock Style="{StaticResource Text.Caption}" Margin="0,2,0,0">
@@ -146,7 +146,7 @@
                 <!-- Volumes -->
                 <ItemsControl ItemsSource="{Binding Volumes}" ItemTemplate="{StaticResource VolumeRow}" Margin="0,10,0,0" Focusable="False" />
               </StackPanel>
-            </Border>
+            </c:SquircleBorder>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>

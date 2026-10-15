@@ -7,6 +7,37 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-10-15
+
+A design overhaul: smooth squircle cards that glow in their own colors, a darker dark mode, a floating glass sidebar, tick-ring gauges, liquid toggles, quick search and eased scrolling, crisper text, an animated splash with a dark-mode icon, and a redesigned in-game overlay with a frame-time graph. The frame pacer can now limit one game on its own.
+
+### Highlights
+
+- **Squircle cards everywhere.** Every card, tile, button, field, menu and pop-up has smooth, continuously curved corners (the same corner Apple uses), drawn the same way everywhere.
+- **Cards that glow.** Cards with data light up in their own color from below, with a lit lower edge and a glassy top rim: the processor card in blue, graphics in green, memory in violet, health in its status color, the page banners in your accent. Move the pointer over one and its edge lights up where the pointer is, in two shades, following it smoothly and growing brighter as you near the edge. Only the edge glows, never the content.
+- **Darker dark mode.** The background is now near-black (not black), with cards, fields and tracks a step deeper, and secondary text a touch brighter so it stays easy to read.
+- **Floating glass sidebar.** The sidebar floats in from the window's edges as a pane of liquid glass: a squircle with a bright rim along its top and bottom corners, over two soft lights in your accent colors (and Windows' Mica, when it's on).
+- **Gauges as glowing tick rings.** Every gauge is a ring of fine ticks: lit ones brighten toward the head, which reaches a little further and glows, and the bigger gauges have a soft orb of light inside. They keep the green, blue, orange and red scale and still glide with the reading.
+- **Liquid toggles.** Press a switch and its knob swells into a clear glass lens over the track; let go and it flows across with a springy overshoot as the track fills with your accent.
+- **Quick search.** The search boxes on the Devices and Gaming pages drop a panel down as you type: *Show all matches* plus the best few results with their icon and details. Use the arrow keys and Enter, or click; Ctrl+K or Ctrl+F jumps to the search box from anywhere on the page.
+- **Smooth scrolling.** Scrolling with the mouse wheel or touchpad glides and eases into place everywhere, and lists inside a page scroll before the page does.
+- **Animated splash and dark-mode icon.** The startup splash is now 16:9, with ribbons of blue light flowing across deep navy, the icon on a breathing halo, the wordmark and a glowing striped loading bar that moves on with each startup step. A new dark-mode icon (the mark on a dark glass tile with a blue rim) replaces the light one in the window, taskbar, tray, sidebar, About page and splash whenever the dark theme is on.
+- **Per-game frame limits.** The frame pacer has an *Apply to* picker: keep one limit for all games, or pick a game to give it a limit of its own, set in the NVIDIA driver's profile for that game's program. Games with their own limit show as chips under the picker, where × removes the limit again.
+- **In-game overlay redesign.** The overlay is a squircle of smoked glass with a light rim, the FPS number is bigger and bold, a new frame-time graph under it shows how evenly frames arrive (stutters show as amber or red spikes), and a small green mark with the limit appears while the frame pacer limits the game in front, with the pacer's target as a dashed line on the graph.
+
+### In detail
+
+- Text is crisper: large text (titles, headline numbers, the splash) is laid out with its true glyph shapes, the pages sit on an opaque layer so text keeps ClearType, and the sidebar's text is smoothed in grayscale where Mica shows through it.
+- Headline numbers on cards use bold Inter with fixed-width digits, so they don't jitter as they count.
+- The frame-time graph is on by default for everyone who shows the frame rate on the overlay; it can be turned off with the other readings in the overlay's settings, where the preview shows a sample trace until a game runs.
+- A game's own limit applies from its next start. When NVIDIA already has a profile for the game (most popular games), the limit is set there; otherwise Coreloom creates a profile named *Coreloom: game name*, and deletes it again when the limit is removed.
+- The overlay knows a game is paced from the limits set in Coreloom (and the all-games limit, also when it was set in the NVIDIA Control Panel and the Gaming page has seen it since).
+- With *Reduce motion* on, scrolling, the splash, the cards' edge light and the gauges move without animation.
+
+### Feedback
+
+Found a bug, or a game whose own limit doesn't take? [Open an issue](https://github.com/jerryubah/Coreloom/issues) and attach a CoreloomDiag report.
+
 ## [1.4.0] - 2026-10-14
 
 A new Gaming tab brings your games and the settings that make them run best into one place: your library as cards or covers, one-click boosts for Windows and the graphics card, a frame pacer for even frame times on high-refresh displays, and shader-cache care for fewer stutters.

@@ -17,6 +17,9 @@ installs drivers or services, and never sends your data anywhere.
 
 ## Features
 
+- **Design.** Smooth squircle corners on every card and control; cards with data glow in their own color, and their
+  edge lights up under the pointer; a near-black dark mode; a floating liquid-glass sidebar; tick-ring gauges;
+  liquid toggles; quick search with live results (Ctrl+K); eased scrolling everywhere; and a dark-mode app icon.
 - **Overview dashboard.** A header for your PC: motherboard, graphics card and key specs next to a rendered PC whose
   lighting color you choose (blue, purple, red, green, rainbow or your accent) and whose fans turn with your real fan
   speeds; or a render of your own build. Six summary cards (GPU utilization, GPU
@@ -30,11 +33,12 @@ installs drivers or services, and never sends your data anywhere.
   Riot) as cards or a grid of covers, with search, sorting and *Play*; switches for hardware-accelerated GPU
   scheduling, the Ultimate Performance power plan, Game Mode, windowed-game optimizations, Game Bar background
   recording and the NVIDIA *Prefer maximum performance* mode (or *Boost now* for all of them); a **frame pacer** that
-  sets the NVIDIA driver's own frame limiter, automatically just under your refresh rate so G-SYNC/FreeSync stays
-  engaged, with live FPS, 1% low and pacing of the game you're playing; and shader-cache care (an unlimited NVIDIA
-  shader cache, cache sizes, a notice when a new driver resets them).
-- **In-game overlay.** FPS, frame time and 1% lows with GPU, CPU and RAM readings on top of your games, measured from
-  Windows' graphics events (nothing is injected into games). Turned on from the Graphics page or with a hotkey (End by
+  sets the NVIDIA driver's own frame limiter for all games or for one game on its own, automatically just under your
+  refresh rate so G-SYNC/FreeSync stays engaged, with live FPS, 1% low and pacing of the game you're playing; and
+  shader-cache care (an unlimited NVIDIA shader cache, cache sizes, a notice when a new driver resets them).
+- **In-game overlay.** FPS, frame time and 1% lows with a frame-time graph and GPU, CPU and RAM readings on top of
+  your games, measured from Windows' graphics events (nothing is injected into games); a small mark shows when the
+  frame pacer limits the game. Turned on from the Graphics page or with a hotkey (End by
   default); choose what it shows, where, and its text, colors, opacity and corners.
 - **Health cards** on the Overview, Graphics, Processor, Memory and Storage pages: Excellent, Good or Needs attention,
   from the last minute of temperatures, clock slowdowns, fans, memory and commit charge, free space and drive wear,
@@ -72,8 +76,9 @@ installs drivers or services, and never sends your data anywhere.
   - Monotone curves that don't overshoot.
   - Pause/freeze and a reduced-motion mode.
 - **Desktop integration.**
-  - A branded startup splash that fades into the dashboard as soon as the window has painted (skipped when
-    Coreloom starts in the tray; follows reduced-motion settings).
+  - An animated 16:9 startup splash (flowing light, a loading bar that moves with each startup step) that fades
+    into the dashboard as soon as the window has painted (skipped when Coreloom starts in the tray; follows
+    reduced-motion settings).
   - Dark and light themes with a custom accent color.
   - Mica, Snap Layouts and a collapsible sidebar.
   - A tray icon with a live tooltip, start with Windows (elevated through Task Scheduler, so no prompt at

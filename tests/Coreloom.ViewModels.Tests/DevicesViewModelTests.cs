@@ -180,6 +180,24 @@ public class DevicesViewModelTests
     }
 
     [Fact]
+    public void SearchSuggestions_ListBestMatchesFromBothLists()
+    {
+        var (page, _, settings) = Create();
+        Assert.Empty(page.SearchSuggestions);
+
+        page.Search = "xbox ";
+        Assert.Equal("xbox ", page.Search); // the trailing space stays while typing the next word
+        var suggestion = Assert.Single(page.SearchSuggestions);
+        Assert.Equal("Xbox Wireless Controller", suggestion.Title);
+        Assert.StartsWith("Bluetooth · ", suggestion.Detail);
+        Assert.Equal("Icon.Controller", suggestion.IconKey);
+
+        page.Search = "dell";
+        Assert.Equal("DELL U2723QE", Assert.Single(page.SearchSuggestions).Title);
+        settings.Dispose();
+    }
+
+    [Fact]
     public async Task Search_FiltersBothLists()
     {
         var (page, _, settings) = Create();

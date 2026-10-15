@@ -19,6 +19,7 @@ internal sealed class SplashScreenHost
 
     private readonly object _gate = new();
     private readonly bool _reducedMotion;
+    private readonly bool _darkIcon;
     private Dispatcher? _dispatcher;
     private SplashWindow? _window;
     private string _status;
@@ -26,10 +27,11 @@ internal sealed class SplashScreenHost
     private bool _closeRequested;
     private bool _ended;
 
-    private SplashScreenHost(bool reducedMotion, string status)
+    private SplashScreenHost(bool reducedMotion, string status, bool darkIcon)
     {
         _reducedMotion = reducedMotion;
         _status = status;
+        _darkIcon = darkIcon;
     }
 
     /// <summary>False once the splash has closed, failed or been asked to close.</summary>
@@ -57,12 +59,15 @@ internal sealed class SplashScreenHost
         }
     }
 
-    /// <summary>Starts the splash thread and returns at once; the window appears as soon as that thread has built it.</summary>
-    public static SplashScreenHost? TryStart(bool reducedMotion, string status = "Starting Coreloom")
+    /// <summary>
+    /// Starts the splash thread and returns at once; the window appears as soon as that thread has built it.
+    /// <paramref name="darkIcon"/> shows the dark-mode icon (the dark theme is on).
+    /// </summary>
+    public static SplashScreenHost? TryStart(bool reducedMotion, bool darkIcon, string status = "Starting Coreloom")
     {
         try
         {
-            var host = new SplashScreenHost(reducedMotion, status);
+            var host = new SplashScreenHost(reducedMotion, status, darkIcon);
             var thread = new Thread(host.Run)
             {
                 IsBackground = true,
@@ -249,7 +254,7 @@ internal sealed class SplashScreenHost
                 status = _status;
             }
 
-            var window = new SplashWindow(_reducedMotion, status);
+            var window = new SplashWindow(_reducedMotion, status, _darkIcon);
             window.ContentRendered += (_, _) =>
             {
                 Interlocked.CompareExchange(ref _shownAt, Stopwatch.GetTimestamp(), 0);

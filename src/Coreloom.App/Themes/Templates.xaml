@@ -28,7 +28,7 @@
   <!-- Metric tile (secondary metrics grid)                                               -->
   <!-- ================================================================================= -->
   <DataTemplate x:Key="MetricTile" DataType="{x:Type inf:MetricViewModel}">
-    <Border Style="{StaticResource Card.Inset}" ToolTip="{Binding ToolTip}" ToolTipService.InitialShowDelay="400" MinHeight="74">
+    <c:SquircleBorder Style="{StaticResource Card.Inset}" ToolTip="{Binding ToolTip}" ToolTipService.InitialShowDelay="400" MinHeight="74">
       <StackPanel>
         <Grid>
           <TextBlock Style="{StaticResource Text.Label}" Text="{Binding Label}" Margin="0,0,24,0" />
@@ -55,14 +55,14 @@
         <TextBlock Style="{StaticResource Text.Caption}" Text="Unavailable" Margin="0,2,0,0"
                    Visibility="{Binding HasValue, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
       </StackPanel>
-    </Border>
+    </c:SquircleBorder>
   </DataTemplate>
 
   <!-- ================================================================================= -->
   <!-- Gauge card (page heroes)                                                           -->
   <!-- ================================================================================= -->
   <DataTemplate x:Key="GaugeCard" DataType="{x:Type inf:MetricViewModel}">
-    <Border Style="{StaticResource Card}" ToolTip="{Binding ToolTip}" ToolTipService.InitialShowDelay="400">
+    <c:SquircleBorder Style="{StaticResource Card.Glow}" GlowKey="{Binding ColorKey}" ToolTip="{Binding ToolTip}" ToolTipService.InitialShowDelay="400">
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
@@ -76,12 +76,12 @@
           <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding StatsText}" Margin="0,2,0,0"
                      Visibility="{Binding StatsText, Converter={StaticResource HasValueToVisibility}}" />
         </StackPanel>
-        <c:RadialGauge Grid.Column="1" Width="78" Height="78" Thickness="8" Margin="12,0,0,0" VerticalAlignment="Center"
+        <c:RadialGauge Grid.Column="1" Width="80" Height="80" Thickness="10" Orb="True" Margin="12,0,0,0" VerticalAlignment="Center"
                        Value="{Binding Fraction}" TrackBrush="{DynamicResource Brush.Track}"
                        ToneScale="True" CoolAt="{Binding GaugeCoolAt}" WarmAt="{Binding GaugeWarmAt}" HotAt="{Binding GaugeHotAt}"
                        IsUnavailable="{Binding HasValue, Converter={StaticResource InverseBool}}" />
       </Grid>
-    </Border>
+    </c:SquircleBorder>
   </DataTemplate>
 
   <!-- ================================================================================= -->
@@ -89,7 +89,7 @@
   <!-- ================================================================================= -->
   <!-- A card made taller on the dashboard gives the extra height to its sparkline. -->
   <DataTemplate x:Key="SummaryCard" DataType="{x:Type pages:SummaryCardViewModel}">
-    <Border Style="{StaticResource Card}" Padding="18,16,18,14" ToolTip="{Binding Metric.ToolTip}" ToolTipService.InitialShowDelay="500">
+    <c:SquircleBorder Style="{StaticResource Card.Glow}" GlowKey="{Binding ColorKey}" Padding="18,16,18,14" ToolTip="{Binding Metric.ToolTip}" ToolTipService.InitialShowDelay="500">
       <Grid>
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
@@ -138,7 +138,7 @@
             <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding Metric.Detail}" Margin="0,4,0,0" TextWrapping="NoWrap"
                        Visibility="{Binding Metric.Detail, Converter={StaticResource HasValueToVisibility}}" />
           </StackPanel>
-          <c:RadialGauge Grid.Column="1" Width="58" Height="58" Thickness="6" Margin="10,0,0,0"
+          <c:RadialGauge Grid.Column="1" Width="60" Height="60" Thickness="8" Margin="10,0,0,0"
                          Value="{Binding Metric.Fraction}" TrackBrush="{DynamicResource Brush.Track}"
                          ToneScale="True" CoolAt="{Binding Metric.GaugeCoolAt}" WarmAt="{Binding Metric.GaugeWarmAt}" HotAt="{Binding Metric.GaugeHotAt}"
                          IsUnavailable="{Binding Metric.HasValue, Converter={StaticResource InverseBool}}" />
@@ -153,7 +153,7 @@
         <TextBlock Grid.Row="3" Style="{StaticResource Text.Caption}" Margin="0,8,0,0" Text="{Binding Metric.StatsText}"
                    Visibility="{Binding DataContext.ShowStatisticsOnCards, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}" />
       </Grid>
-    </Border>
+    </c:SquircleBorder>
   </DataTemplate>
 
   <!-- ================================================================================= -->
@@ -196,7 +196,7 @@
   <!-- Chart card                                                                         -->
   <!-- ================================================================================= -->
   <DataTemplate x:Key="ChartCard" DataType="{x:Type inf:ChartViewModel}">
-    <Border Style="{StaticResource Card}" Padding="18,14,14,10">
+    <c:SquircleBorder Style="{StaticResource Card}" Padding="18,14,14,10">
       <Grid>
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
@@ -219,7 +219,7 @@
         <c:LiveLineChart Grid.Row="1" MinHeight="170" Chart="{Binding}"
                          Timeline="{Binding DataContext.Timeline, RelativeSource={RelativeSource AncestorType=UserControl}}" />
       </Grid>
-    </Border>
+    </c:SquircleBorder>
   </DataTemplate>
 
   <!-- ================================================================================= -->
@@ -289,18 +289,18 @@
        content, and the groups are balanced between the two (see SensorColumns). -->
   <DataTemplate x:Key="SensorColumns" DataType="{x:Type inf:SensorTableViewModel}">
     <Grid>
-      <Border Style="{StaticResource Card}" Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}">
+      <c:SquircleBorder Style="{StaticResource Card}" Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}">
         <TextBlock Style="{StaticResource Text.Secondary}" Text="No sensors reported." />
-      </Border>
+      </c:SquircleBorder>
       <c:AdaptiveGrid MinColumnWidth="460" MaxColumns="2" Spacing="16"
                       Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
-        <Border Style="{StaticResource Card}" VerticalAlignment="Top" Padding="10,8,10,2">
+        <c:SquircleBorder Style="{StaticResource Card}" VerticalAlignment="Top" Padding="10,8,10,2">
           <ItemsControl ItemsSource="{Binding FirstColumn}" ItemTemplate="{StaticResource SensorGroup}" Focusable="False" />
-        </Border>
-        <Border Style="{StaticResource Card}" VerticalAlignment="Top" Padding="10,8,10,2"
+        </c:SquircleBorder>
+        <c:SquircleBorder Style="{StaticResource Card}" VerticalAlignment="Top" Padding="10,8,10,2"
                 Visibility="{Binding HasSecondColumn, Converter={StaticResource BoolToVisibility}}">
           <ItemsControl ItemsSource="{Binding SecondColumn}" ItemTemplate="{StaticResource SensorGroup}" Focusable="False" />
-        </Border>
+        </c:SquircleBorder>
       </c:AdaptiveGrid>
     </Grid>
   </DataTemplate>
@@ -443,7 +443,8 @@
   <!-- A part's health across the page: shield and status on the left, the checks on the right.
        Excellent is green, Good blue, Needs attention red. -->
   <DataTemplate x:Key="HealthCard" DataType="{x:Type pages:HealthReportViewModel}">
-    <Border Style="{StaticResource Card}" Padding="18,14">
+    <c:SquircleBorder Style="{StaticResource Card.Glow}" Padding="18,14" GlowStrength="0.8"
+                      GlowKey="{Binding StatusKey, Converter={StaticResource StatusToGlowKey}}">
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto" />
@@ -471,7 +472,7 @@
           </ItemsControl.ItemsPanel>
         </ItemsControl>
       </Grid>
-    </Border>
+    </c:SquircleBorder>
     <DataTemplate.Triggers>
       <DataTrigger Binding="{Binding StatusKey}" Value="Excellent">
         <Setter TargetName="Halo" Property="Fill" Value="{DynamicResource Brush.Success}" />
@@ -495,40 +496,113 @@
   <!-- In-game overlay (the overlay window and its preview in the settings card)          -->
   <!-- ================================================================================= -->
 
-  <!-- A value: the number, then a smaller unit on the same baseline. -->
+  <!-- A value: the number, then a smaller unit on the same baseline. The FPS number is the headline: bigger and bold. -->
   <DataTemplate x:Key="OverlayValue" DataType="{x:Type overlay:OverlayValueViewModel}">
-    <TextBlock Margin="{Binding Overlay.ValueSpacing}" Foreground="{Binding Color, Converter={StaticResource HexToBrush}}">
-      <Run Text="{Binding Number, Mode=OneWay}" /><Run Text="{Binding Unit, Mode=OneWay, StringFormat={}&#x2009;{0}}" FontSize="{Binding Overlay.SmallFontSize, Mode=OneWay}" />
+    <TextBlock x:Name="Value" Margin="{Binding Overlay.ValueSpacing}" Foreground="{Binding Color, Converter={StaticResource HexToBrush}}" VerticalAlignment="Bottom">
+      <Run Text="{Binding Number, Mode=OneWay}" /><Run Text="{Binding Unit, Mode=OneWay, StringFormat={}&#x2009;{0}}" FontSize="{Binding Overlay.SmallFontSize, Mode=OneWay}" FontWeight="Medium" />
     </TextBlock>
+    <DataTemplate.Triggers>
+      <DataTrigger Binding="{Binding Id}" Value="fps">
+        <Setter TargetName="Value" Property="FontSize" Value="{Binding Overlay.HeadlineFontSize}" />
+        <Setter TargetName="Value" Property="FontWeight" Value="Bold" />
+      </DataTrigger>
+    </DataTemplate.Triggers>
   </DataTemplate>
 
-  <!-- A line: "GPU  97 %  72 °C  350 W". Labels line up in a column when stacked. -->
+  <!-- A line: "GPU  97 %  72 °C  350 W". Labels line up in a column when stacked. The FPS line also carries the frame
+       pacer's mark (a small green pill with the limit, only while the game in front is paced) and the frame-time graph
+       (under the line when stacked, after it on one line). -->
   <DataTemplate x:Key="OverlayGroup" DataType="{x:Type overlay:OverlayGroupViewModel}">
     <Grid Margin="{Binding Overlay.GroupSpacing}">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto" SharedSizeGroup="OverlayLabel" />
         <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
-      <TextBlock Text="{Binding Label}" Opacity="0.6" Margin="{Binding Overlay.LabelSpacing}"
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+      <TextBlock Text="{Binding Label}" Opacity="0.55" Margin="{Binding Overlay.LabelSpacing}" VerticalAlignment="Bottom"
+                 FontSize="{Binding Overlay.SmallFontSize}" FontWeight="SemiBold"
                  Visibility="{Binding Overlay.ShowLabels, Converter={StaticResource BoolToVisibility}}" />
-      <ItemsControl Grid.Column="1" ItemsSource="{Binding Values}" ItemTemplate="{StaticResource OverlayValue}" Focusable="False">
+      <ItemsControl Grid.Column="1" ItemsSource="{Binding Values}" ItemTemplate="{StaticResource OverlayValue}" Focusable="False" VerticalAlignment="Bottom">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
             <StackPanel Orientation="Horizontal" />
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
       </ItemsControl>
+      <!-- the frame pacer's mark -->
+      <Border x:Name="Pacing" Grid.Column="2" CornerRadius="6" Padding="5,0,6,1" Margin="0,0,0,2" VerticalAlignment="Bottom" Background="#2645D6A0"
+              ToolTip="{Binding Overlay.PacingToolTip}" Visibility="Collapsed">
+        <StackPanel Orientation="Horizontal">
+          <Ellipse Width="5" Height="5" Fill="#45D6A0" VerticalAlignment="Center" Margin="0,1,4,0" />
+          <TextBlock Text="{Binding Overlay.PacingText}" FontSize="{Binding Overlay.SmallFontSize}" FontWeight="SemiBold" Foreground="#7DEBC2" />
+        </StackPanel>
+      </Border>
+      <!-- the graph: after the values on one line -->
+      <c:FrameGraph x:Name="InlineGraph" Grid.Column="3" Margin="8,0,0,2" VerticalAlignment="Bottom" Visibility="Collapsed"
+                    Width="{Binding Overlay.GraphWidth}" Height="{Binding Overlay.GraphHeight}"
+                    Feed="{Binding Overlay.FrameTimes}" Stroke="{Binding Overlay.TextColor, Converter={StaticResource HexToBrush}}" />
+      <!-- the graph: under the line when stacked -->
+      <c:FrameGraph x:Name="Graph" Grid.Row="1" Grid.ColumnSpan="4" Margin="0,3,0,2" HorizontalAlignment="Left" Visibility="Collapsed"
+                    Width="{Binding Overlay.GraphWidth}" Height="{Binding Overlay.GraphHeight}"
+                    Feed="{Binding Overlay.FrameTimes}" Stroke="{Binding Overlay.TextColor, Converter={StaticResource HexToBrush}}" />
     </Grid>
+    <DataTemplate.Triggers>
+      <MultiDataTrigger>
+        <MultiDataTrigger.Conditions>
+          <Condition Binding="{Binding IsFrameRate}" Value="True" />
+          <Condition Binding="{Binding Overlay.IsPacing}" Value="True" />
+        </MultiDataTrigger.Conditions>
+        <Setter TargetName="Pacing" Property="Visibility" Value="Visible" />
+      </MultiDataTrigger>
+      <MultiDataTrigger>
+        <MultiDataTrigger.Conditions>
+          <Condition Binding="{Binding IsFrameRate}" Value="True" />
+          <Condition Binding="{Binding Overlay.ShowGraph}" Value="True" />
+          <Condition Binding="{Binding Overlay.IsHorizontal}" Value="False" />
+        </MultiDataTrigger.Conditions>
+        <Setter TargetName="Graph" Property="Visibility" Value="Visible" />
+      </MultiDataTrigger>
+      <MultiDataTrigger>
+        <MultiDataTrigger.Conditions>
+          <Condition Binding="{Binding IsFrameRate}" Value="True" />
+          <Condition Binding="{Binding Overlay.ShowGraph}" Value="True" />
+          <Condition Binding="{Binding Overlay.IsHorizontal}" Value="True" />
+        </MultiDataTrigger.Conditions>
+        <Setter TargetName="InlineGraph" Property="Visibility" Value="Visible" />
+      </MultiDataTrigger>
+    </DataTemplate.Triggers>
   </DataTemplate>
 
-  <!-- The overlay: a rounded box with its own background and text opacity, lines stacked or on one line. -->
+  <!-- The overlay: a squircle of smoked glass (its own background color and opacity) with a light rim, the lines stacked
+       or on one line. -->
   <DataTemplate x:Key="OverlayContent" DataType="{x:Type overlay:OverlayViewModel}">
     <Grid TextElement.FontFamily="{StaticResource UiFont}" TextElement.FontSize="{Binding FontSize}"
           TextElement.FontWeight="{Binding FontWeight}" TextElement.Foreground="{Binding TextColor, Converter={StaticResource HexToBrush}}"
           Typography.NumeralAlignment="Tabular" TextOptions.TextRenderingMode="Grayscale" TextOptions.TextFormattingMode="Ideal"
           Visibility="{Binding HasContent, Converter={StaticResource BoolToVisibility}}">
-      <Border CornerRadius="{Binding CornerRadius}" Background="{Binding BackgroundColor, Converter={StaticResource HexToBrush}}"
-              Opacity="{Binding BackgroundOpacity}" />
+      <Grid Opacity="{Binding BackgroundOpacity}">
+        <c:SquircleBorder CornerRadius="{Binding CornerRadius}" Background="{Binding BackgroundColor, Converter={StaticResource HexToBrush}}" />
+        <c:SquircleBorder CornerRadius="{Binding CornerRadius}" BorderThickness="1">
+          <c:SquircleBorder.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+              <GradientStop Color="#14FFFFFF" Offset="0" />
+              <GradientStop Color="#00FFFFFF" Offset="0.5" />
+            </LinearGradientBrush>
+          </c:SquircleBorder.Background>
+          <c:SquircleBorder.BorderBrush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+              <GradientStop Color="#40FFFFFF" Offset="0" />
+              <GradientStop Color="#0CFFFFFF" Offset="0.5" />
+              <GradientStop Color="#1EFFFFFF" Offset="1" />
+            </LinearGradientBrush>
+          </c:SquircleBorder.BorderBrush>
+        </c:SquircleBorder>
+      </Grid>
       <ItemsControl ItemsSource="{Binding Groups}" ItemTemplate="{StaticResource OverlayGroup}" Margin="{Binding Padding}"
                     Opacity="{Binding TextOpacity}" Grid.IsSharedSizeScope="True" Focusable="False">
         <ItemsControl.Style>
@@ -571,7 +645,7 @@
   <!-- A result tile: icon and label, the number (counting smoothly), a bar in the rating's color and a detail line.
        A dot breathes while the value is being measured. -->
   <DataTemplate x:Key="ToneTile" DataType="{x:Type pages:ToneValueViewModel}">
-    <Border Style="{StaticResource Card.Inset}" Padding="14,12" MinHeight="98">
+    <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,12" MinHeight="98">
       <StackPanel>
         <Grid>
           <StackPanel Orientation="Horizontal">
@@ -595,21 +669,21 @@
         <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding Detail}" Margin="0,6,0,0" TextTrimming="CharacterEllipsis"
                    Visibility="{Binding Detail, Converter={StaticResource HasValueToVisibility}}" />
       </StackPanel>
-    </Border>
+    </c:SquircleBorder>
   </DataTemplate>
 
   <!-- A big ring for a speed: the arc's length and color glide as the reading changes. -->
   <DataTemplate x:Key="ToneGauge" DataType="{x:Type pages:ToneValueViewModel}">
     <StackPanel HorizontalAlignment="Center">
       <Grid Width="164" Height="164">
-        <c:RadialGauge Thickness="12" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True"
+        <c:RadialGauge Thickness="15" Orb="True" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True"
                        Tone="{Binding Tone}" Value="{Binding Fraction}" />
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
           <Path Style="{StaticResource IconPath}" Width="16" Height="16" HorizontalAlignment="Center"
                 Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
                 Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" b:Pulse.IsPulsing="{Binding IsActive}" />
-          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="27" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,4,0,0"
-                     Foreground="{DynamicResource Brush.Text}"
+          <TextBlock FontFamily="{StaticResource UiFont}" FontSize="29" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,4,0,0"
+                     Foreground="{DynamicResource Brush.Text}" Typography.NumeralAlignment="Tabular" TextOptions.TextFormattingMode="Ideal"
                      b:AnimatedText.Formatter="{Binding NumberFormatter}" b:AnimatedText.Value="{Binding Value}" />
           <TextBlock Text="{Binding Unit}" Style="{StaticResource Text.Caption}" HorizontalAlignment="Center" />
         </StackPanel>
@@ -641,7 +715,7 @@
 
   <!-- A benchmark row: the test (name, shorthand, what it means) and its read and write results. -->
   <DataTemplate x:Key="DiskBenchmarkRow" DataType="{x:Type pages:DiskBenchmarkRowViewModel}">
-    <Border Style="{StaticResource Card.Inset}" Padding="14,12" Margin="0,0,0,8">
+    <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,12" Margin="0,0,0,8">
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="1.2*" MinWidth="130" />
@@ -660,6 +734,6 @@
         <ContentPresenter Grid.Column="1" Content="{Binding Read}" ContentTemplate="{StaticResource ToneCell}" Margin="0,0,14,0" VerticalAlignment="Center" />
         <ContentPresenter Grid.Column="2" Content="{Binding Write}" ContentTemplate="{StaticResource ToneCell}" VerticalAlignment="Center" />
       </Grid>
-    </Border>
+    </c:SquircleBorder>
   </DataTemplate>
 </ResourceDictionary>

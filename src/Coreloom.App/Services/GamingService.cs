@@ -766,6 +766,66 @@ internal sealed class WindowsGamingService : IGamingService
             : new TweakResult(false, "The NVIDIA driver didn't accept the frame limit.");
     }, cancellationToken);
 
+    public Task<IReadOnlyList<string>> FindExecutablesAsync(GameEntry game, CancellationToken cancellationToken) => Task.Run<IReadOnlyList<string>>(() =>
+    {
+        string? folder = GameLibrary.NormalizeFolder(game.InstallPath);
+        var files = new List<(string Path, long Size)>();
+        if (folder is not null && folder.Length > 3 && Directory.Exists(folder))
+        {
+            try
+            {
+                var options = new EnumerationOptions { RecurseSubdirectories = true, MaxRecursionDepth = 4, IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint };
+                foreach (var file in new DirectoryInfo(folder).EnumerateFiles("*.exe", options).Take(600))
+                {
+                    files.Add((file.FullName, file.Length));
+                }
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+            {
+                Log.Warn(LogCategory, $"Couldn't look through {folder}: {e.Message}");
+            }
+        }
+
+        // The game's program running now is the surest answer.
+        string? running = folder is null ? null : GamingNative.RunningPrograms()
+            .Where(p => p.Path.StartsWith(folder.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase) && !GameLibrary.IsNotGame(Path.GetFileName(p.Path)))
+            .Select(p => p.Path)
+            .FirstOrDefault();
+        var picked = GameExecutables.Pick(game, files, running);
+        Log.Info(LogCategory, $"Programs of {game.Name}: {(picked.Count == 0 ? "none found" : string.Join(", ", picked))}.");
+        return picked;
+    }, cancellationToken);
+
+    public Task<TweakResult> SetGameFrameCapAsync(string gameName, IReadOnlyList<string> executables, int fps, CancellationToken cancellationToken) => Task.Run(() =>
+    {
+        if (!NvApi.IsAvailable)
+        {
+            return new TweakResult(false, "The frame pacer needs an NVIDIA graphics driver.");
+        }
+
+        if (executables.Count == 0)
+        {
+            return new TweakResult(false, $"Couldn't find {gameName}'s program to set its limit.");
+        }
+
+        int limit = FrameCap.Clamp(fps);
+        int done = 0;
+        foreach (string exe in executables)
+        {
+            bool ok = limit > 0
+                ? NvApi.SetForApplication(exe, gameName, NvApi.FrameRateLimiter, (uint)limit)
+                : NvApi.RemoveForApplication(exe, NvApi.FrameRateLimiter);
+            done += ok ? 1 : 0;
+        }
+
+        Log.Info(LogCategory, limit > 0
+            ? $"Frame limit for {gameName} ({string.Join(", ", executables)}) set to {limit} FPS: {done} of {executables.Count}."
+            : $"Frame limit for {gameName} removed: {done} of {executables.Count}.");
+        return done > 0
+            ? new TweakResult(true, limit > 0 ? $"{gameName} is limited to {limit} FPS from its next start." : $"{gameName} follows the all-games setting again.")
+            : new TweakResult(false, "The NVIDIA driver didn't accept the frame limit.");
+    }, cancellationToken);
+
     // ---- Registry helpers ----------------------------------------------------------------------------------
 
     /// <summary>A DWORD value, or 1 ("on", Windows' default for these switches) when it isn't set.</summary>

@@ -10,6 +10,39 @@ namespace Coreloom.Core.Tests;
 public class OverlaySettingsTests
 {
     [Fact]
+    public void FrameGraph_IsOfferedOnceToSetupsThatShowTheFrameRate()
+    {
+        var old = new OverlaySettings { Items = [OverlayCatalog.Fps, OverlayCatalog.GpuLoad], Revision = 0 }.Normalize();
+        Assert.Equal([OverlayCatalog.Fps, OverlayCatalog.FrameGraph, OverlayCatalog.GpuLoad], old.Items);
+        Assert.Equal(OverlaySettings.CurrentRevision, old.Revision);
+
+        // Turned off afterwards, it stays off; a setup without FPS doesn't get it.
+        old.Items.Remove(OverlayCatalog.FrameGraph);
+        Assert.DoesNotContain(OverlayCatalog.FrameGraph, old.Normalize().Items);
+        Assert.Equal([OverlayCatalog.Ram], new OverlaySettings { Items = [OverlayCatalog.Ram] }.Normalize().Items);
+
+        Assert.Contains(OverlayCatalog.FrameGraph, new AppSettings().Normalize().Overlay.Items);
+        Assert.True(OverlayCatalog.IsFrameRate(OverlayCatalog.FrameGraph));
+        Assert.False(OverlayCatalog.IsValue(OverlayCatalog.FrameGraph));
+    }
+
+    [Fact]
+    public void RecentFrameTimes_AreTheGapsBetweenTheLatestFrames()
+    {
+        var tracker = new FrameRateTracker(1000); // milliseconds
+        foreach (long t in new long[] { 0, 7, 14, 30, 37 })
+        {
+            tracker.OnPresent(42, t);
+        }
+
+        var buffer = new double[3];
+        Assert.Equal(3, tracker.RecentFrameTimes(42, 40, buffer));
+        Assert.Equal([7.0, 16.0, 7.0], buffer);
+        Assert.Equal(0, tracker.RecentFrameTimes(42, 5000, buffer)); // stale
+        Assert.Equal(0, tracker.RecentFrameTimes(7, 40, buffer));
+    }
+
+    [Fact]
     public void Defaults_AreOffWithEndAsHotkey()
     {
         var overlay = new AppSettings().Normalize().Overlay;
@@ -39,6 +72,7 @@ public class OverlaySettingsTests
             CornerRadius = -3,
             EdgeMargin = 999,
             Position = (OverlayPosition)42,
+            Revision = OverlaySettings.CurrentRevision, // (an older revision would also be offered the frame-time graph)
         }.Normalize();
 
         Assert.Equal(OverlayHotkey.DefaultKey, overlay.Hotkey.Key);

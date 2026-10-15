@@ -43,7 +43,7 @@
 
     <!-- Smart Scan's four summary tiles. -->
     <DataTemplate x:Key="ModuleTile" DataType="{x:Type pages:OptimizeModuleViewModel}">
-      <Border x:Name="Tile" Style="{StaticResource Card.Inset}" Padding="14,12" MinHeight="92">
+      <c:SquircleBorder x:Name="Tile" Style="{StaticResource Card.Inset}" Padding="14,12" MinHeight="92">
         <Grid>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
@@ -71,7 +71,7 @@
                       Margin="0,-4,-6,0" ToolTip="Include in the clean-up" AutomationProperties.Name="{Binding Title}" />
           </Grid>
         </Grid>
-      </Border>
+      </c:SquircleBorder>
       <DataTemplate.Triggers>
         <MultiDataTrigger>
           <MultiDataTrigger.Conditions>
@@ -85,7 +85,7 @@
 
     <!-- A junk category: check box, icon, name and description (and why to think twice), size and result. -->
     <DataTemplate x:Key="JunkRow" DataType="{x:Type pages:JunkCategoryViewModel}">
-      <Border Style="{StaticResource Card.Inset}" Padding="8,8,14,8" Margin="0,0,0,6">
+      <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="8,8,14,8" Margin="0,0,0,6">
         <Grid>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
@@ -114,7 +114,7 @@
                            Visibility="{Binding IsWorking, Converter={StaticResource BoolToVisibility}}" />
           </Grid>
         </Grid>
-      </Border>
+      </c:SquircleBorder>
       <DataTemplate.Triggers>
         <DataTrigger Binding="{Binding HasJunk}" Value="False">
           <Setter TargetName="Size" Property="Foreground" Value="{DynamicResource Brush.TextTertiary}" />
@@ -165,7 +165,7 @@
 
     <!-- A maintenance task: what it does, a run button and how it went. -->
     <DataTemplate x:Key="TaskRow" DataType="{x:Type pages:MaintenanceTaskViewModel}">
-      <Border Style="{StaticResource Card.Inset}" Padding="12,10" Margin="0,0,0,6">
+      <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="12,10" Margin="0,0,0,6">
         <Grid>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
@@ -188,7 +188,7 @@
                            Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
           </Grid>
         </Grid>
-      </Border>
+      </c:SquircleBorder>
     </DataTemplate>
   </UserControl.Resources>
 
@@ -196,21 +196,21 @@
     <StackPanel Margin="32,14,28,32" b:Motion.Entrance="True">
 
       <!-- Not available (not Windows, or no access) -->
-      <Border Style="{StaticResource Card}" Margin="0,0,0,16" Background="{DynamicResource Brush.ElevatedSoft}"
+      <c:SquircleBorder Style="{StaticResource Card}" Margin="0,0,0,16" Background="{DynamicResource Brush.ElevatedSoft}"
               Visibility="{Binding IsSupported, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
         <StackPanel Orientation="Horizontal">
           <Path Style="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.Elevated}" />
           <TextBlock Text="{Binding UnsupportedText}" Margin="10,0,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
         </StackPanel>
-      </Border>
+      </c:SquircleBorder>
 
       <!-- ============================================================ -->
       <!-- Smart Scan                                                   -->
       <!-- ============================================================ -->
-      <Border Style="{StaticResource Card}" Padding="0" BorderBrush="{DynamicResource Brush.AccentEdge}">
+      <c:SquircleBorder Style="{StaticResource Card.Glow}" GlowKey="Accent" GlowStrength="0.9" Sheen="0.8" Padding="0" BorderBrush="{DynamicResource Brush.AccentEdge}">
         <Grid ClipToBounds="True">
           <!-- The accent washing in from the top left and turning toward its warmer neighbour as it fades -->
-          <Border CornerRadius="13" Background="{DynamicResource Brush.AccentWash}" IsHitTestVisible="False" />
+          <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.AccentWash}" IsHitTestVisible="False" />
 
           <c:AdaptiveGrid MinColumnWidth="330" MaxColumns="2" Spacing="12" Margin="28,26">
             <!-- The ring -->
@@ -299,7 +299,7 @@
             </StackPanel>
           </c:AdaptiveGrid>
         </Grid>
-      </Border>
+      </c:SquircleBorder>
 
       <!-- Two columns that stack: Cleanup over Free up memory, Protection over Speed up, each card as tall as its content
            (no padding to match a neighbour), with the last card in each column growing so the bottoms line up. One column
@@ -309,16 +309,16 @@
         <!-- ============================================================ -->
         <!-- Cleanup                                                      -->
         <!-- ============================================================ -->
-        <Border Style="{StaticResource Card}" DataContext="{Binding Cleanup}">
+        <c:SquircleBorder Style="{StaticResource Card}" DataContext="{Binding Cleanup}">
           <StackPanel>
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
-              <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
+              <c:SquircleBorder Width="34" Height="34" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
                 <Path Style="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Trash}" Stroke="{DynamicResource Brush.Accent}" />
-              </Border>
+              </c:SquircleBorder>
               <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                 <TextBlock Style="{StaticResource Text.CardTitle}" Text="Cleanup" />
                 <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding SelectedText}" Margin="0,2,0,0" />
@@ -343,12 +343,12 @@
             <TextBlock Style="{StaticResource Text.Caption}" Margin="0,10,0,0" TextWrapping="Wrap"
                        Text="Only temporary files, caches and reports apps and Windows rebuild on their own are touched. Files in use are skipped." />
           </StackPanel>
-        </Border>
+        </c:SquircleBorder>
 
         <!-- ============================================================ -->
         <!-- Protection                                                   -->
         <!-- ============================================================ -->
-        <Border Style="{StaticResource Card}" DataContext="{Binding Protection}">
+        <c:SquircleBorder Style="{StaticResource Card}" DataContext="{Binding Protection}">
           <StackPanel>
             <Grid>
               <Grid.ColumnDefinitions>
@@ -370,12 +370,12 @@
               </Button>
             </Grid>
 
-            <Border CornerRadius="10" Padding="14,12" Margin="0,12,0,0" Background="{DynamicResource Brush.Surface}">
+            <c:SquircleBorder CornerRadius="12" Padding="14,12" Margin="0,12,0,0" Background="{DynamicResource Brush.Surface}">
               <StackPanel>
                 <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="SemiBold" Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
                 <TextBlock Text="{Binding Summary}" Style="{StaticResource Text.Secondary}" TextWrapping="Wrap" Margin="0,2,0,0" />
               </StackPanel>
-            </Border>
+            </c:SquircleBorder>
 
             <Grid Margin="2,12,0,0">
               <Grid.ColumnDefinitions>
@@ -426,12 +426,12 @@
               </Button>
             </WrapPanel>
           </StackPanel>
-        </Border>
+        </c:SquircleBorder>
 
         <!-- ============================================================ -->
         <!-- Memory                                                       -->
         <!-- ============================================================ -->
-        <Border Style="{StaticResource Card}" DataContext="{Binding Memory}">
+        <c:SquircleBorder Style="{StaticResource Card}" DataContext="{Binding Memory}">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
@@ -442,9 +442,9 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
-              <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
+              <c:SquircleBorder Width="34" Height="34" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
                 <Path Style="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Memory}" Stroke="{DynamicResource Brush.Accent}" />
-              </Border>
+              </c:SquircleBorder>
               <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                 <TextBlock Style="{StaticResource Text.CardTitle}" Text="Free up memory" />
                 <TextBlock Style="{StaticResource Text.Caption}" Text="Trims memory background apps aren't using, so the app you're in has more room" TextWrapping="Wrap" Margin="0,2,0,0" />
@@ -458,11 +458,12 @@
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
               <Grid Width="150" Height="150">
-                <c:RadialGauge Thickness="12" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True" CoolAt="0.4" WarmAt="0.8" HotAt="0.92"
+                <c:RadialGauge Thickness="14" Orb="True" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True" CoolAt="0.4" WarmAt="0.8" HotAt="0.92"
                                Value="{Binding Fraction}" />
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                   <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="30" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}"
+                    <TextBlock FontFamily="{StaticResource UiFont}" FontSize="31" FontWeight="Bold" Foreground="{DynamicResource Brush.Text}"
+                               Typography.NumeralAlignment="Tabular" TextOptions.TextFormattingMode="Ideal"
                                b:AnimatedText.Formatter="{Binding PercentFormatter}" b:AnimatedText.Value="{Binding Load}" />
                     <TextBlock Text="%" Style="{StaticResource Text.Unit}" VerticalAlignment="Bottom" Margin="2,0,0,5" />
                   </StackPanel>
@@ -493,12 +494,12 @@
               </StackPanel>
             </Grid>
           </Grid>
-        </Border>
+        </c:SquircleBorder>
 
         <!-- ============================================================ -->
         <!-- Speed                                                        -->
         <!-- ============================================================ -->
-        <Border Style="{StaticResource Card}" DataContext="{Binding Speed}">
+        <c:SquircleBorder Style="{StaticResource Card}" DataContext="{Binding Speed}">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
@@ -515,9 +516,9 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
               </Grid.ColumnDefinitions>
-              <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
+              <c:SquircleBorder Width="34" Height="34" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
                 <Path Style="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Rocket}" Stroke="{DynamicResource Brush.Accent}" />
-              </Border>
+              </c:SquircleBorder>
               <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                 <TextBlock Style="{StaticResource Text.CardTitle}" Text="Speed up" />
                 <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding StartupSummary}" Margin="0,2,0,0" />
@@ -541,7 +542,7 @@
             <TextBlock Grid.Row="5" Text="Maintenance" Style="{StaticResource Text.Label}" Margin="0,16,0,8" />
             <ItemsControl Grid.Row="6" ItemsSource="{Binding Tasks}" ItemTemplate="{StaticResource TaskRow}" Focusable="False" />
           </Grid>
-        </Border>
+        </c:SquircleBorder>
       </c:StackedColumns>
     </StackPanel>
   </ScrollViewer>

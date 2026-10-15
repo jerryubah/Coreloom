@@ -33,6 +33,7 @@ public sealed class ThemeService : IThemeService
     private readonly Dictionary<string, Color> _published = new(StringComparer.Ordinal);
     private AppearanceSettings? _current;
     private bool _isDark = true;
+    private bool? _iconIsDark;
     private bool _initialized;
 
     public ThemeService(ResourceDictionary resources)
@@ -51,6 +52,9 @@ public sealed class ThemeService : IThemeService
     public static ThemeService? Instance { get; private set; }
 
     public event EventHandler? ThemeChanged;
+
+    /// <summary>Raised when the app icon changes between the light and the dark-mode icon.</summary>
+    public event EventHandler? AppIconChanged;
 
     public bool IsDark => _isDark;
 
@@ -74,12 +78,7 @@ public sealed class ThemeService : IThemeService
     private void Apply(AppearanceSettings appearance, bool animate)
     {
         _current = appearance;
-        _isDark = appearance.Theme switch
-        {
-            ThemePreference.Light => false,
-            ThemePreference.System => !SystemUsesLightTheme(),
-            _ => true,
-        };
+        _isDark = ResolvesToDark(appearance.Theme);
 
         var palette = _isDark ? ThemePalette.Dark : ThemePalette.Light;
         var duration = TimeSpan.FromMilliseconds(animate ? 280 : 0);
@@ -105,11 +104,14 @@ public sealed class ThemeService : IThemeService
 
         IsMicaActive = appearance.UseMica && IsMicaSupported;
         var background = palette["Background"];
-        var surface = palette["Surface"];
+        // The pages sit on an opaque layer (crisp ClearType text, and the darkest surface stays dark). The sidebar column is
+        // the backdrop the glass sidebar floats over: with Mica it lets the desktop's tint through, darkened to the theme.
         SetColor("Brush.WindowBackground", IsMicaActive ? Colors.Transparent : background, TimeSpan.Zero);
-        SetColor("Brush.Sidebar", IsMicaActive ? Colors.Transparent : surface, duration);
-        SetColor("Brush.ContentLayer", IsMicaActive ? ThemePalette.WithAlpha(background, 0xE0) : background, duration);
+        SetColor("Brush.Sidebar", IsMicaActive ? ThemePalette.WithAlpha(background, (byte)(_isDark ? 0x8C : 0x66)) : background, duration);
+        SetColor("Brush.ContentLayer", background, duration);
         SetColor("Brush.TitleBar", background, duration);
+        PublishGlass();
+        PublishAppIcon();
 
         AnimatedText.IsGloballyEnabled = appearance.AnimateValues && !appearance.ReducedMotion;
         Motion.ReducedMotion = appearance.ReducedMotion;
@@ -164,6 +166,90 @@ public sealed class ThemeService : IThemeService
 
             return brush;
         }
+    }
+
+    /// <summary>
+    /// The floating sidebar's liquid glass: a faint fill tinted by the accent where light enters (top left), a rim that is
+    /// bright along the top-left and bottom-right edges like the bevel of thick glass, and two soft lights behind it.
+    /// </summary>
+    private void PublishGlass()
+    {
+        var accent = AccentColor;
+        var (_, warm) = AccentNeighbours(accent);
+        Color White(byte alpha) => Color.FromArgb(alpha, 255, 255, 255);
+        Color Black(byte alpha) => Color.FromArgb(alpha, 0, 0, 0);
+
+        if (_isDark)
+        {
+            Publish("Brush.GlassFill", Gradient(new Point(0, 0), new Point(0.7, 1),
+                (ThemePalette.WithAlpha(accent, 0x14), 0), (White(0x0B), 0.35), (White(0x07), 0.75), (White(0x0A), 1)));
+            Publish("Brush.GlassRim", Gradient(new Point(0, 0), new Point(1, 1),
+                (White(0x5C), 0), (White(0x16), 0.28), (White(0x08), 0.62), (White(0x30), 1)));
+        }
+        else
+        {
+            Publish("Brush.GlassFill", Gradient(new Point(0, 0), new Point(0.7, 1),
+                (White(0xD8), 0), (White(0xB4), 0.5), (White(0xA4), 1)));
+            Publish("Brush.GlassRim", Gradient(new Point(0, 0), new Point(1, 1),
+                (White(0xFF), 0), (White(0x80), 0.35), (Black(0x0C), 0.7), (Black(0x16), 1)));
+        }
+
+        Publish("Brush.GlassLightA", Glow(accent, _isDark ? (byte)0x46 : (byte)0x30));
+        Publish("Brush.GlassLightB", Glow(warm, _isDark ? (byte)0x30 : (byte)0x22));
+
+        static RadialGradientBrush Glow(Color color, byte alpha) => new(new GradientStopCollection
+        {
+            new(ThemePalette.WithAlpha(color, alpha), 0),
+            new(ThemePalette.WithAlpha(color, (byte)(alpha * 0.4)), 0.5),
+            new(ThemePalette.WithAlpha(color, 0), 1),
+        });
+    }
+
+    /// <summary>
+    /// The app icon for the theme as "Image.AppIcon": the dark-mode icon (a dark glass tile) in the dark theme, the white tile
+    /// otherwise. The window and tray icons follow through <see cref="AppIconChanged"/>.
+    /// </summary>
+    private void PublishAppIcon()
+    {
+        if (_resources.Contains("Image.AppIcon") && _iconIsDark == _isDark)
+        {
+            return;
+        }
+
+        _iconIsDark = _isDark;
+        try
+        {
+            _resources["Image.AppIcon"] = Picture(AppIcons.Png(_isDark, 64));
+            _resources["Image.AppIconLarge"] = Picture(AppIcons.Png(_isDark, 128));
+        }
+        catch (Exception)
+        {
+            // A missing resource must never break a theme change; the pictures simply stay as they were.
+        }
+
+        AppIconChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private static System.Windows.Media.Imaging.BitmapImage Picture(string uri)
+    {
+        var image = new System.Windows.Media.Imaging.BitmapImage();
+        image.BeginInit();
+        image.UriSource = new Uri(uri, UriKind.Absolute);
+        image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+        image.EndInit();
+        image.Freeze();
+        return image;
+    }
+
+    private static LinearGradientBrush Gradient(Point start, Point end, params (Color Color, double Offset)[] stops)
+    {
+        var brush = new LinearGradientBrush { StartPoint = start, EndPoint = end };
+        foreach (var (color, offset) in stops)
+        {
+            brush.GradientStops.Add(new GradientStop(color, offset));
+        }
+
+        return brush;
     }
 
     private void Publish(string key, Brush brush)
@@ -260,6 +346,14 @@ public sealed class ThemeService : IThemeService
         (byte)(a.R + ((b.R - a.R) * t)),
         (byte)(a.G + ((b.G - a.G) * t)),
         (byte)(a.B + ((b.B - a.B) * t)));
+
+    /// <summary>Whether a theme preference shows the dark theme (System follows Windows' app mode).</summary>
+    public static bool ResolvesToDark(ThemePreference theme) => theme switch
+    {
+        ThemePreference.Light => false,
+        ThemePreference.System => !SystemUsesLightTheme(),
+        _ => true,
+    };
 
     private static bool SystemUsesLightTheme()
     {

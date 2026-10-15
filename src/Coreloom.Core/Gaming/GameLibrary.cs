@@ -91,6 +91,9 @@ public static class GameLibrary
         "EasyAntiCheat_EOS_Setup.exe", "BEService.exe", "BEService_x64.exe", "unins000.exe", "QtWebEngineProcess.exe",
     };
 
+    /// <summary>A launcher, helper or installer that lives in game folders ("unins000.exe", "EasyAntiCheat.exe").</summary>
+    public static bool IsNotGame(string fileName) => NotGames.Contains(fileName);
+
     public static string StoreName(GameStore store) => store switch
     {
         GameStore.Steam => "Steam",

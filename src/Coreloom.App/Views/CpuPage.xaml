@@ -16,12 +16,12 @@
       </StackPanel>
 
       <!-- Why temperature/power may be missing -->
-      <Border Style="{StaticResource Card.Inset}" Margin="0,0,0,16" Visibility="{Binding LowLevelUnavailable, Converter={StaticResource BoolToVisibility}}">
+      <c:SquircleBorder Style="{StaticResource Card.Inset}" Margin="0,0,0,16" Visibility="{Binding LowLevelUnavailable, Converter={StaticResource BoolToVisibility}}">
         <StackPanel Orientation="Horizontal">
           <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Info}" />
           <TextBlock Text="{Binding LowLevelMessage}" Margin="10,0,0,0" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource Brush.TextSecondary}" />
         </StackPanel>
-      </Border>
+      </c:SquircleBorder>
 
       <!-- Gauges -->
       <c:AdaptiveGrid MinColumnWidth="250" MaxColumns="4" Spacing="16">
@@ -51,7 +51,7 @@
       </c:AdaptiveGrid>
 
       <!-- Logical processors -->
-      <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+      <c:SquircleBorder Style="{StaticResource Card}" Margin="0,16,0,0">
         <StackPanel>
           <Grid Margin="0,0,0,12">
             <StackPanel>
@@ -70,7 +70,7 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
               <DataTemplate DataType="{x:Type pages:ThreadTileViewModel}">
-                <Border Style="{StaticResource Card.Inset}" Padding="10,8,10,6">
+                <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="10,8,10,6">
                   <StackPanel>
                     <Grid>
                       <TextBlock Text="{Binding Label}" Style="{StaticResource Text.Caption}" />
@@ -79,15 +79,15 @@
                     <c:Sparkline Height="30" Margin="0,6,0,0" MetricId="{Binding MetricId}" ColorKey="Cpu" Maximum="100" FillOpacity="0.22" StrokeThickness="1.2"
                                  Timeline="{Binding DataContext.Timeline, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                   </StackPanel>
-                </Border>
+                </c:SquircleBorder>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </StackPanel>
-      </Border>
+      </c:SquircleBorder>
 
       <!-- Per-core table -->
-      <Border Style="{StaticResource Card}" Margin="0,16,0,0" Visibility="{Binding HasCoreTable, Converter={StaticResource BoolToVisibility}}">
+      <c:SquircleBorder Style="{StaticResource Card}" Margin="0,16,0,0" Visibility="{Binding HasCoreTable, Converter={StaticResource BoolToVisibility}}">
         <StackPanel>
           <TextBlock Style="{StaticResource Text.CardTitle}" Text="Cores" Margin="0,0,0,10" />
           <Grid Margin="8,0,8,6">
@@ -125,23 +125,23 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </StackPanel>
-      </Border>
+      </c:SquircleBorder>
 
       <!-- Processes + specs (each card as tall as its own content) -->
       <c:AdaptiveGrid MinColumnWidth="460" MaxColumns="2" Spacing="16" Margin="0,16,0,0">
-        <Border Style="{StaticResource Card}" VerticalAlignment="Top">
+        <c:SquircleBorder Style="{StaticResource Card}" VerticalAlignment="Top">
           <StackPanel>
             <TextBlock Style="{StaticResource Text.CardTitle}" Text="Top processes by CPU" />
             <TextBlock Style="{StaticResource Text.Caption}" Text="Grouped by application · refreshed every 2 seconds" Margin="0,2,0,10" />
             <ContentPresenter Content="{Binding Processes}" ContentTemplate="{StaticResource ProcessList}" />
           </StackPanel>
-        </Border>
-        <Border Style="{StaticResource Card}" VerticalAlignment="Top">
+        </c:SquircleBorder>
+        <c:SquircleBorder Style="{StaticResource Card}" VerticalAlignment="Top">
           <StackPanel>
             <TextBlock Style="{StaticResource Text.CardTitle}" Text="Specifications" Margin="0,0,0,10" />
             <ItemsControl ItemsSource="{Binding Specifications}" ItemTemplate="{StaticResource KeyValueRow}" Focusable="False" Grid.IsSharedSizeScope="True" />
           </StackPanel>
-        </Border>
+        </c:SquircleBorder>
       </c:AdaptiveGrid>
 
       <!-- Motherboard sensors, two cards side by side -->

@@ -79,6 +79,7 @@ def runtime_brush_keys() -> set[str]:
     for key in re.findall(r'\["([A-Za-z.]+)"\]\s*=', palette):
         keys.add(key + ".Brush" if key.startswith("Series.") else "Brush." + key)
     keys.update(re.findall(r'"((?:Brush|Series)\.[A-Za-z.]+)"', service))
+    keys.update(re.findall(r'_resources\["([A-Za-z.]+)"\]', service))
     surface = re.search(r"SurfaceKeys\s*=\s*\[([^\]]*)\]", service)
     if surface:
         keys.update("Brush." + k for k in re.findall(r'"(\w+)"', surface.group(1)))
@@ -373,7 +374,9 @@ def main() -> int:
     resources: list[tuple[str, str]] = []
     for m in re.finditer(r'<Resource\s+Include="([^"]+)"(?:\s+Link="([^"]+)")?', csproj):
         # Wildcard includes publish under a Link built from item metadata ("Assets\PC\%(Filename)%(Extension)").
-        link = re.sub(r"%\((RecursiveDir|Filename|Extension)\)", "*", m.group(2) or "") or m.group(1)
+        # A link of "%(Filename)%(Extension)" keeps the source's own file name pattern ("coreloom-dark-*.png").
+        link = (m.group(2) or "").replace("%(Filename)%(Extension)", m.group(1).replace("/", chr(92)).rsplit(chr(92), 1)[-1])
+        link = re.sub(r"%\((RecursiveDir|Filename|Extension)\)", "*", link) or m.group(1)
         resources.append((re.sub(r"\*+", "*", link), m.group(1)))
 
     def published(rel: str):
