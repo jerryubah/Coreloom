@@ -7,6 +7,30 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-14
+
+A new Gaming tab brings your games and the settings that make them run best into one place: your library as cards or covers, one-click boosts for Windows and the graphics card, a frame pacer for even frame times on high-refresh displays, and shader-cache care for fewer stutters.
+
+### Highlights
+
+- **Gaming tab.** A new tab above Graphics. The banner shows how many boosts are on, the game you're playing with its frame rate, your display's refresh rate, the frame limit and the graphics driver, and *Boost now* turns on everything that's off.
+- **Your games, as cards or covers.** Installed games from Steam, Epic Games, GOG, Xbox, Ubisoft Connect, EA app, Battle.net and Riot, as a list of cards or a grid of covers. Search, sort by recently played, name or size, start a game with *Play*, or open its folder. Covers come from your launchers' own picture caches; games without one can download it from their store, only when you ask.
+- **Performance boosts.** Switches for hardware-accelerated GPU scheduling (HAGS), the Ultimate Performance power plan, Game Mode, Windows 11's optimizations for windowed games, turning off Xbox Game Bar's background recording, and the NVIDIA driver's *Prefer maximum performance* mode. Each switch shows whether it's on and can be turned off again; switching Ultimate Performance off goes back to the plan you had.
+- **Frame pacer.** A frame-rate limit for every game, set in the NVIDIA driver's own high-precision limiter, so nothing is added to games and it's safe with anti-cheat. *Automatic* picks a limit just under your refresh rate (138 FPS on 144 Hz, 224 on 240 Hz) so G-SYNC or FreeSync stays engaged and frames never queue up. While you play, the card shows the game's FPS, 1% low and how evenly its frames arrive.
+- **Shader cache.** An *Unlimited shader cache* switch makes the NVIDIA driver keep every pipeline it compiles, so games don't compile the same shaders again mid-play. The card shows how much is cached and tells you when a new driver has reset the caches.
+
+### In detail
+
+- Settings › Updates moved to the bottom of the Settings list, below About.
+- HAGS takes effect after a restart; the switch says *Restart to finish* until then.
+- Games start through their own launcher as you, not as administrator, even though Coreloom runs elevated.
+- The frame pacer and shader-cache switch need an NVIDIA graphics card. On AMD graphics the card explains where AMD Software has the same settings.
+- Coreloom doesn't pre-compile shaders by injecting into games, as some tools do: that is exactly what anti-cheat systems ban for.
+
+### Feedback
+
+Found a bug or a game that's missing from your library? [Open an issue](https://github.com/jerryubah/Coreloom/issues) and attach a CoreloomDiag report.
+
 ## [1.3.5] - 2026-10-14
 
 Smart Optimize's cards now fit their content with no empty space, and the Devices page reads more clearly.

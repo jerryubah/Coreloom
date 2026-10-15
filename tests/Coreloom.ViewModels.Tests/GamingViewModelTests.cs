@@ -128,6 +128,18 @@ internal sealed class FakeGaming : IGamingService
 
 public class GamingViewModelTests
 {
+    private static void Report(Action test)
+    {
+        try { test(); }
+        catch (Exception e) { throw new InvalidOperationException("\n::error title=Gaming VM test::" + e.GetType().Name + ": " + e.Message.Replace('\n', ' ').Replace('\r', ' ') + " @ " + (e.StackTrace ?? string.Empty).Replace('\n', ' ').Replace('\r', ' ')); }
+    }
+
+    private static async Task ReportAsync(Func<Task> test)
+    {
+        try { await test(); }
+        catch (Exception e) { throw new InvalidOperationException("\n::error title=Gaming VM test::" + e.GetType().Name + ": " + e.Message.Replace('\n', ' ').Replace('\r', ' ') + " @ " + (e.StackTrace ?? string.Empty).Replace('\n', ' ').Replace('\r', ' ')); }
+    }
+
     private static (GamingViewModel Page, FakeGaming Fake, SettingsService Settings) Create(Action<FakeGaming>? setup = null)
     {
         var (monitor, settings, _) = Fixture.Create();
@@ -146,7 +158,7 @@ public class GamingViewModelTests
     }
 
     [Fact]
-    public void Opening_ListsGames_RecentFirst_WithStoreAndSize()
+    public void Opening_ListsGames_RecentFirst_WithStoreAndSize() => Report(() =>
     {
         var (page, _, settings) = Create();
         Assert.True(page.IsLoaded);
@@ -168,10 +180,10 @@ public class GamingViewModelTests
         Assert.StartsWith("#", witcher.PlaceholderColor);
         Assert.Equal("Not played yet", page.Games[2].LastPlayedText);
         settings.Dispose();
-    }
+    });
 
     [Fact]
-    public void Sorting_Search_AndViewAreRemembered()
+    public void Sorting_Search_AndViewAreRemembered() => Report(() =>
     {
         var (page, _, settings) = Create();
         Assert.True(page.IsListView);
@@ -194,10 +206,10 @@ public class GamingViewModelTests
         Assert.True(page.IsGridView);
         Assert.Equal(GameLibraryView.Grid, settings.Current.Gaming.LibraryView);
         settings.Dispose();
-    }
+    });
 
     [Fact]
-    public void PlayAndOpenFolder_GoThroughTheService()
+    public void PlayAndOpenFolder_GoThroughTheService() => Report(() =>
     {
         var (page, fake, settings) = Create();
         page.Games[0].PlayCommand.Execute(null);
@@ -205,10 +217,10 @@ public class GamingViewModelTests
         Assert.Equal(["steam:1091500"], fake.Launched);
         Assert.Equal([@"D:\Steam\steamapps\common\Cyberpunk 2077"], fake.Opened);
         settings.Dispose();
-    }
+    });
 
     [Fact]
-    public async Task MissingCovers_AreOffered_AndDownloadedOnlyWhenAsked()
+    public Task MissingCovers_AreOffered_AndDownloadedOnlyWhenAsked() => ReportAsync(async () =>
     {
         var (page, _, settings) = Create();
         Assert.Equal(1, page.MissingArtworkCount); // Alan Wake 2 has a link; The Witcher 3 has none
@@ -223,10 +235,10 @@ public class GamingViewModelTests
         Assert.False(page.ShowArtworkOffer);
         Assert.EndsWith("Dodo.jpg", page.Games.Single(g => g.Name == "Alan Wake 2").GridPicture);
         settings.Dispose();
-    }
+    });
 
     [Fact]
-    public async Task Boosts_ShowState_AndBoostNowTurnsOnTheRest()
+    public Task Boosts_ShowState_AndBoostNowTurnsOnTheRest() => ReportAsync(async () =>
     {
         var (page, fake, settings) = Create();
         Assert.Equal(6, page.Boosts.Count);
@@ -247,10 +259,10 @@ public class GamingViewModelTests
         Assert.Equal(PowerPlans.Balanced.ToString(), settings.Current.Gaming.PreviousPowerPlan); // saved to restore later
         Assert.False(page.ApplyAllCommand.CanExecute(null));
         settings.Dispose();
-    }
+    });
 
     [Fact]
-    public async Task TurningABoostOff_UsesTheSwitch()
+    public Task TurningABoostOff_UsesTheSwitch() => ReportAsync(async () =>
     {
         var (page, fake, settings) = Create();
         var gameMode = page.Boosts.Single(b => b.Tweak == GamingTweak.GameMode);
@@ -260,10 +272,10 @@ public class GamingViewModelTests
         Assert.False(gameMode.IsOn);
         Assert.Equal("Off", gameMode.StatusText);
         settings.Dispose();
-    }
+    });
 
     [Fact]
-    public async Task FramePacer_UsesTheAutomaticLimit_AndFollowsTheChosenOne()
+    public Task FramePacer_UsesTheAutomaticLimit_AndFollowsTheChosenOne() => ReportAsync(async () =>
     {
         var (page, fake, settings) = Create();
         var pacer = page.FramePacer;
@@ -292,20 +304,20 @@ public class GamingViewModelTests
         Assert.Equal(0, fake.FrameCap);
         Assert.Equal("Off", page.FrameLimitText);
         settings.Dispose();
-    }
+    });
 
     [Fact]
-    public void FramePacer_ExplainsWhenThereIsNoNvidiaDriver()
+    public void FramePacer_ExplainsWhenThereIsNoNvidiaDriver() => Report(() =>
     {
         var (page, _, settings) = Create(f => f.HasNvidia = false);
         Assert.False(page.FramePacer.IsSupported);
         Assert.False(page.FramePacer.CanToggle);
         Assert.Contains("NVIDIA", page.FramePacer.UnsupportedText);
         settings.Dispose();
-    }
+    });
 
     [Fact]
-    public void RunningGame_IsMarked_AndItsPacingMeasured()
+    public void RunningGame_IsMarked_AndItsPacingMeasured() => Report(() =>
     {
         var (page, fake, settings) = Create(f =>
         {
@@ -328,10 +340,10 @@ public class GamingViewModelTests
         Assert.False(fake.Watching);
         Assert.False(page.FramePacer.HasLive);
         settings.Dispose();
-    }
+    });
 
     [Fact]
-    public void ShaderCaches_AreSummarised_AndADriverChangeIsPointedOut()
+    public void ShaderCaches_AreSummarised_AndADriverChangeIsPointedOut() => Report(() =>
     {
         var (page, _, settings) = Create(f => f.Driver = "581.57");
         Assert.Equal(2, page.ShaderCaches.Count); // the empty AMD folder is left out
@@ -350,5 +362,5 @@ public class GamingViewModelTests
         Assert.False(changed.HasDriverNotice);
         Assert.Equal("582.10", settings2.Current.Gaming.LastDriverVersion);
         settings2.Dispose();
-    }
+    });
 }

@@ -260,6 +260,35 @@ Work through each area and tick what works.
 - [ ] Startup apps match Task Manager's *Startup apps*; switching one off here shows *Disabled* there (and back).
 - [ ] *Flush DNS cache* and *Optimize drives* report success.
 
+**Gaming**
+
+- [ ] *Gaming* sits right above *Graphics* in the sidebar; *Settings › Updates* is now the last item in Settings, below
+      *About* (the update dot still shows there, and the sidebar's update badge still opens it).
+- [ ] *Your games* lists the games installed with each launcher you use (Steam, Epic, GOG, Xbox / Game Pass, Ubisoft,
+      EA, Battle.net, Riot). Nothing that isn't a game (Steamworks redistributables, Proton, SteamVR, Unreal Engine,
+      dedicated servers) and no DLC as separate entries. Note any game that is missing or doubled.
+- [ ] Steam games show their library art in both views; others show their cover, banner, icon or initials. *List*
+      and *Grid* switch views (kept after a restart); search, and *Recently played / Name / Size* order, work.
+- [ ] *Download covers* (if offered) fills in Epic covers; afterwards new games get covers without asking.
+- [ ] *Play* starts the game through its launcher and the game is **not** elevated (Task Manager › Details ›
+      *Elevated* column says No). The folder button opens the game's folder.
+- [ ] With a library game running and the page open: the banner shows *Now playing* with its FPS, the game's card or
+      cover is marked *Playing*, and the frame pacer card shows FPS, 1% low and consistency close to the overlay's.
+- [ ] Boosts: each switch matches Windows (Settings › Display › Graphics for HAGS and windowed games, Control Panel
+      power plans, Settings › Gaming for Game Mode and *Record what happened*) and the NVIDIA Control Panel (*Power
+      management mode*, *Shader Cache Size*). Flip each on and off and check it there.
+- [ ] HAGS shows *Restart to finish* after switching it, and *On*/*Off* correctly after the restart.
+- [ ] Ultimate Performance creates and activates the plan; switching it off goes back to the plan you had before.
+- [ ] *Boost now* turns on everything that was off and says how many; the ring shows e.g. 7/7.
+- [ ] Frame pacer: switching it on sets *Max Frame Rate* in the NVIDIA Control Panel (global) to the shown limit (138
+      on a 144 Hz display); a game started afterwards stays at that limit with flat frame times; switching it off
+      sets *Max Frame Rate* back to Off. Picking another limit in the list changes it.
+- [ ] Shader cache: the switch matches *Shader Cache Size: Unlimited* in the NVIDIA Control Panel; the sizes look
+      plausible next to `%LOCALAPPDATA%\NVIDIA\DXCache` and `D3DSCache`. After a driver update the notice appears once
+      and *Got it* hides it.
+- [ ] On a PC without an NVIDIA card: the frame pacer, power mode and shader-cache switches explain why they can't be
+      used.
+
 **In-game overlay**
 
 - [ ] *Graphics*: the *In-game overlay* switch sits on the same line as *Clock limits*; the clock limits text wraps when

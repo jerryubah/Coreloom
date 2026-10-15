@@ -26,6 +26,13 @@ installs drivers or services, and never sends your data anywhere.
   Below them are large charts and memory, storage and network panels, all on one grid: drag a card to move it and
   drag its corner to resize it. *Customize* opens a card right on the Overview to show or hide the PC picture, pick
   its lighting, and hide and reorder cards; the layout is saved.
+- **Gaming.** A tab with your installed games (Steam, Epic Games, GOG, Xbox, Ubisoft Connect, EA app, Battle.net,
+  Riot) as cards or a grid of covers, with search, sorting and *Play*; switches for hardware-accelerated GPU
+  scheduling, the Ultimate Performance power plan, Game Mode, windowed-game optimizations, Game Bar background
+  recording and the NVIDIA *Prefer maximum performance* mode (or *Boost now* for all of them); a **frame pacer** that
+  sets the NVIDIA driver's own frame limiter, automatically just under your refresh rate so G-SYNC/FreeSync stays
+  engaged, with live FPS, 1% low and pacing of the game you're playing; and shader-cache care (an unlimited NVIDIA
+  shader cache, cache sizes, a notice when a new driver resets them).
 - **In-game overlay.** FPS, frame time and 1% lows with GPU, CPU and RAM readings on top of your games, measured from
   Windows' graphics events (nothing is injected into games). Turned on from the Graphics page or with a hotkey (End by
   default); choose what it shows, where, and its text, colors, opacity and corners.
@@ -99,6 +106,9 @@ installs drivers or services, and never sends your data anywhere.
 | Network throughput | Windows network statistics | No |
 | Bluetooth devices, adapter state, battery levels | Windows Bluetooth APIs (WinRT) and the device tree | No |
 | Wired devices (USB, displays, Thunderbolt) | Plug and Play device tree (configuration manager) | No |
+| Installed games and their pictures | The launchers' own files (Steam `libraryfolders.vdf`, app manifests and library picture cache; Epic manifests; GOG and Xbox game folders) and Windows' installed-apps list | No |
+| GPU scheduling, power plan, Game Mode, windowed-game and Game Bar settings | Windows: the graphics kernel (D3DKMT), the registry values Windows Settings uses, `powercfg` | Changing GPU scheduling: **yes** |
+| NVIDIA frame limit, shader cache size, power management mode, driver version | **NVAPI** driver settings (the store the NVIDIA Control Panel uses) | Changing them: **yes** |
 
 **About PawnIO.** Reading CPU temperature and motherboard sensors on modern Windows needs a kernel driver.
 LibreHardwareMonitor uses [PawnIO](https://pawnio.eu), a signed, open-source driver. Coreloom **never installs
@@ -194,8 +204,13 @@ LibreHardwareMonitor's own report. See [docs/TESTING-ON-YOUR-PC.md](docs/TESTING
 
 ## Privacy and safety
 
-- **Hands off the hardware.** No writes to hardware, the BIOS or drivers, and no overclocking or fan-control features.
-  Monitoring is read-only.
+- **Hands off the hardware.** No writes to hardware or the BIOS, no driver installs, and no overclocking or
+  fan-control features. Monitoring is read-only.
+- **The Gaming page changes settings only when you flip a switch.** Each switch sets one documented Windows setting
+  (the registry values and `powercfg` commands Windows' own Settings use) or one NVIDIA driver setting (as the NVIDIA
+  Control Panel does), shows its state and can be turned off again. **Nothing is injected into games**: frame rates
+  come from Windows' graphics events, the frame pacer is the driver's own limiter, and games start through their own
+  launchers as you, not as administrator.
 - **The Devices page changes something only when you click.** Connect, Disconnect, the Bluetooth switch and Eject do
   what Windows' own buttons do; nothing is unpaired or reconfigured.
 - **Smart Optimize changes only what you ask it to.** It deletes files only inside known junk folders (never through
@@ -203,8 +218,10 @@ LibreHardwareMonitor's own report. See [docs/TESTING-ON-YOUR-PC.md](docs/TESTING
   switch Task Manager uses (turn them back on any time), and uses Windows' own tools for everything else: Microsoft
   Defender for scans and threats, the shell for the Recycle Bin, defrag.exe for drives.
 - **No telemetry.** Coreloom makes network requests only for the update check to `api.github.com` and the update
-  download from GitHub (both can be turned off in *Settings → Updates*), and to `speed.cloudflare.com` when you start
-  an internet speed test. No hardware data is included.
+  download from GitHub (both can be turned off in *Settings → Updates*), to `speed.cloudflare.com` when you start
+  an internet speed test, and, only after you press *Download covers* on the Gaming page, to Steam's
+  (`cdn.cloudflare.steamstatic.com`) and Epic's (`cdn1.epicgames.com` and the links in the Epic launcher's catalog)
+  picture servers for games that have no cover on your PC. No hardware data is included.
 - **Always elevated.** Coreloom runs as administrator so the sensor driver can be read and Smart Optimize can clean
   system folders, but it never installs drivers or services and has no remote access of any kind.
 - **Alert thresholds are reminders, not safety limits.** Check your hardware vendor's specifications;

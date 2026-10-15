@@ -291,8 +291,10 @@ In the app, `OverlayService` owns the pieces:
   buffers, 100 ms flush) with the Microsoft-Windows-DXGI (Present start, events 42 and 55) and Microsoft-Windows-D3D9
   (event 1) providers. A background thread runs `ProcessTrace`; the callback hands each present's process id and
   timestamp to `FrameRateTracker` (Core, unit-tested), which keeps 4096 frames per process and gives FPS over the
-  second up to the latest frame, the average frame time and the 1% low over ten seconds. It runs only while the
-  overlay is on and shows a frame-rate item; a stale session of the same name is stopped first. Struct layouts are
+  second up to the latest frame, the average frame time and the 1% low over ten seconds. It is shared with the
+  Gaming page and runs only while someone holds a lease (`Acquire`/`Release` by owner: the overlay while it is on and
+  shows a frame-rate item, the Gaming page while it is open and a library game runs); a stale session of the same
+  name is stopped first. Struct layouts are
   checked against the Windows SDK sizes before starting (`EtwNative.LayoutIsValid`).
 - `GlobalHotkey`: a `WH_KEYBOARD_LL` hook on its own thread with a message loop, so a busy UI never delays typing.
   It never swallows keys (unlike `RegisterHotKey`), ignores auto-repeat, matches modifiers exactly, pauses while the
@@ -300,6 +302,46 @@ In the app, `OverlayService` owns the pieces:
   (`OverlaySettings.ActiveHotkey`).
 
 The foreground process comes from `GetForegroundWindow`; Coreloom itself shows no frame rate.
+
+## Gaming
+
+`GamingViewModel` (the *Gaming* page, above Graphics) has four parts; everything Windows-specific is behind
+`IGamingService` (`WindowsGamingService` in the app, `UnsupportedGamingService` elsewhere). Settings live in `Gaming`
+(`GamingSettings`: list or grid, sort order, the frame pacer's target, the power plans to restore, whether covers may
+be downloaded, the last driver version seen).
+
+- **Library.** Core parses each launcher's own files, unit-tested with samples: Valve's text KeyValues
+  (`KeyValues`) for Steam's `libraryfolders.vdf` and `appmanifest_*.acf` (fully installed games only, tools such as
+  redistributables, Proton and dedicated servers left out; `LastPlayed` and `SizeOnDisk` read), Epic's
+  `Manifests\*.item` JSON (DLC, engines and unfinished installs left out) and its base64 `catcache.bin` for cover
+  links, GOG's `goggame-*.info` play tasks, and Xbox's `MicrosoftGame.config`. Ubisoft Connect, EA app, Battle.net and
+  Riot games are recognised from Windows' Uninstall keys (`LauncherGames`). The app adds GOG's registry list and Xbox
+  packages from `PackageManager.FindPackagesForUser` that carry a `MicrosoftGame.config`. Pictures: Steam's library
+  cache (`appcache\librarycache`, both the old `{appid}_library_600x900.jpg` names and the newer per-game folders),
+  Xbox's package logos and splash, covers downloaded earlier, else the program's icon saved as a 256 px PNG
+  (`Icon.ExtractIcon`). Missing covers are downloaded (to `%LOCALAPPDATA%\Coreloom\Artwork`) only after the user
+  presses *Download covers*. `GameLibrary` merges (by id and folder), sorts, searches and finds the running game: a
+  process whose file is inside a game's folder (the most specific folder wins; launchers, crash reporters and
+  anti-cheat services don't count), checked every 3 s while the page is open. *Play* starts the launcher's link, the
+  package's app id or the program through `ShellLaunch`, which asks the desktop's shell (`IShellDispatch2.ShellExecute`
+  on the desktop window) so games run as the user, not elevated; Explorer is the fallback. Covers are decoded off the
+  UI thread at their shown size (`AsyncImage`).
+- **Boosts.** `GamingTweakViewModel` switches, optimistic until the next read confirms them. HAGS: support and current
+  state from the graphics kernel (`D3DKMTQueryAdapterInfo`, `KMTQAITYPE_WDDM_2_7_CAPS`), the choice in
+  `GraphicsDrivers\HwSchMode` (2 on, 1 off; a restart is pending while the two differ). Ultimate Performance:
+  `powercfg /list` parsed by GUID (language-independent), `-duplicatescheme e9a42b02-…` once, `/setactive`; the plan
+  that was active is remembered and restored when it's switched off. Game Mode: `GameBar\AutoGameModeEnabled`.
+  Windowed optimizations: `SwapEffectUpgradeEnable` in `DirectX\UserGpuPreferences\DirectXUserGlobalSettings`, keeping
+  the other entries (Windows 11). Background recording: `GameDVR\HistoricalCaptureEnabled`. NVIDIA power mode:
+  NVAPI.
+- **Frame pacer.** The NVIDIA driver's frame limiter (`FRL_FPS`, 0x10835002) in the global profile through NVAPI's
+  driver settings (`NvApi`: `nvapi_QueryInterface` function pointers, ids from NVIDIA's public `nvapi_interface.h`,
+  the 12,320-byte `NVDRS_SETTING`). *Automatic* is refresh − refresh² ÷ 3600 (`FrameCap.AutoTarget`, as NVIDIA Reflex
+  uses), from the fastest attached display. While a library game runs the page leases the frame-rate source and grades
+  pacing from its 1% low against the average (`FramePacing`).
+- **Shader cache.** NVAPI's `PS_SHADERDISKCACHE_MAX_SIZE` (0xFFFFFFFF = unlimited; off restores the driver default),
+  sizes of the DirectX, NVIDIA, AMD, Intel and Steam pre-cache folders (`ShaderCaches.Locations`), and a notice when
+  the driver version (NVAPI) differs from the last one seen. Nothing is pre-compiled by running code in games.
 
 ## Sensor columns and nested scrolling
 
