@@ -8,10 +8,10 @@ namespace Coreloom.App.Controls;
 /// The overlay's frame-time graph: the time each of the latest frames took, newest at the right, as a line over a soft
 /// fill. Even pacing is a flat line; a stutter is a spike, tinted amber or red by how far it jumps above the typical frame.
 /// When the frame pacer limits the game, a dashed line marks its target. The scale follows the frames smoothly so it
-/// doesn't jump. It redraws about 30 times a second while shown, reading <see cref="Feed"/>.
+/// doesn't jump. It reads <see cref="Feed"/> about 30 times a second while shown and redraws only while frames come in.
 /// <para>
 /// In the live overlay (<see cref="IsLiveProperty"/>, set on its window) it shows only real frames; in the preview in
-/// the settings it shows a sample trace while no game is running, so the look can be judged.
+/// the settings it shows a still sample trace while no game is running, so the look can be judged.
 /// </para>
 /// </summary>
 public sealed class FrameGraph : FrameworkElement
@@ -32,14 +32,17 @@ public sealed class FrameGraph : FrameworkElement
     private static readonly Color Hot = Color.FromRgb(0xFF, 0x5C, 0x5C);
     private static readonly Color Paced = Color.FromRgb(0x45, 0xD6, 0xA0);
 
+    private static readonly TimeSpan SampleInterval = TimeSpan.FromMilliseconds(500);
+
     private readonly double[] _buffer = new double[Frames];
+    private readonly double[] _incoming = new double[Frames];
+    private bool _showingSample;
     private readonly double[] _sorted = new double[Frames];
     private int _count;
     private double _scale = 20;   // milliseconds at the top of the graph (eases toward what the frames need)
     private double _target;
     private bool _hooked;
     private TimeSpan _lastDraw;
-    private double _sampleTime;
 
     public FrameGraph()
     {
@@ -93,7 +96,7 @@ public sealed class FrameGraph : FrameworkElement
     private void OnRendering(object? sender, EventArgs e)
     {
         var now = e is RenderingEventArgs args ? args.RenderingTime : TimeSpan.Zero;
-        if (now - _lastDraw < Interval)
+        if (now - _lastDraw < (_showingSample ? SampleInterval : Interval))
         {
             return;
         }
@@ -101,26 +104,47 @@ public sealed class FrameGraph : FrameworkElement
         double elapsed = _lastDraw == TimeSpan.Zero ? Interval.TotalSeconds : Math.Min((now - _lastDraw).TotalSeconds, 0.25);
         _lastDraw = now;
         var feed = Feed;
-        _count = feed?.Read(_buffer) ?? 0;
+        int read = feed?.Read(_incoming) ?? 0;
         _target = feed?.TargetFrameTime ?? 0;
-        if (_count == 0 && !GetIsLive(this))
+        if (read == 0)
         {
-            _sampleTime += elapsed;
-            _count = Sample(_buffer, _sampleTime);
+            if (!GetIsLive(this))
+            {
+                // The preview: a still sample trace, drawn once; the feed is checked twice a second for real frames.
+                if (!_showingSample)
+                {
+                    _showingSample = true;
+                    _count = Sample(_buffer);
+                    _scale = Wanted();
+                    InvalidateVisual();
+                }
+            }
+            else if (_count > 0)
+            {
+                _count = 0; // the game stopped drawing: back to the empty baseline (drawn once)
+                InvalidateVisual();
+            }
+
+            return;
         }
 
+        _showingSample = false;
+        Array.Copy(_incoming, _buffer, read);
+        _count = read;
+
         // The top of the graph: room above the typical frame and the target, eased so the trace doesn't jump.
-        double wanted = Math.Max(Math.Max(Percentile(0.5) * 2, Percentile(0.95) * 1.25), Math.Max(_target * 1.6, 8));
-        _scale += (wanted - _scale) * Math.Min(1, elapsed * 4);
+        _scale += (Wanted() - _scale) * Math.Min(1, elapsed * 4);
         InvalidateVisual();
     }
 
+    private double Wanted() => Math.Max(Math.Max(Percentile(0.5) * 2, Percentile(0.95) * 1.25), Math.Max(_target * 1.6, 8));
+
     /// <summary>A believable trace for the preview: ~7 ms frames with a little jitter and a stutter now and then.</summary>
-    private static int Sample(double[] buffer, double time)
+    private static int Sample(double[] buffer)
     {
         for (int i = 0; i < buffer.Length; i++)
         {
-            double t = time * 60 + i;
+            double t = i;
             double jitter = (Math.Sin(t * 0.9) * 0.35) + (Math.Sin(t * 2.3 + 1) * 0.2);
             double stutter = ((int)t % 97) == 0 ? 9 : ((int)t % 53) == 0 ? 4 : 0;
             buffer[i] = 6.9 + jitter + stutter;
