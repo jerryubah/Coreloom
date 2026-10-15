@@ -32,6 +32,8 @@ internal sealed class WindowsGamingService : IGamingService
     private readonly string _userAgent;
     private readonly object _gate = new();
     private HttpClient? _http;
+    private List<ShaderCacheInfo> _shaderCaches = [];
+    private DateTime _shaderCachesMeasured = DateTime.MinValue;
 
     public WindowsGamingService(EtwFrameRateSource frameRates, string localDirectory, string userAgent)
     {
@@ -58,7 +60,8 @@ internal sealed class WindowsGamingService : IGamingService
             {
                 games.AddRange(scan());
             }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException or InvalidOperationException or ArgumentException or FormatException)
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException or InvalidOperationException
+                or ArgumentException or FormatException or System.Runtime.InteropServices.COMException or System.Xml.XmlException)
             {
                 Log.Warn(LogCategory, $"Reading the {store} library failed.", e);
             }
@@ -122,7 +125,7 @@ internal sealed class WindowsGamingService : IGamingService
                 {
                     game = SteamLibrary.FromManifest(File.ReadAllText(manifest), library);
                 }
-                catch (IOException)
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException)
                 {
                     continue; // being written by Steam
                 }
@@ -152,14 +155,24 @@ internal sealed class WindowsGamingService : IGamingService
             {
                 covers = EpicLibrary.CatalogCovers(File.ReadAllText(catalog));
             }
-            catch (IOException)
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
             {
             }
         }
 
         foreach (string file in Directory.EnumerateFiles(manifests, "*.item"))
         {
-            var game = EpicLibrary.FromManifest(File.ReadAllText(file));
+            string json;
+            try
+            {
+                json = File.ReadAllText(file);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                continue;
+            }
+
+            var game = EpicLibrary.FromManifest(json);
             if (game is null || !Directory.Exists(game.InstallPath))
             {
                 continue;
@@ -528,7 +541,7 @@ internal sealed class WindowsGamingService : IGamingService
             FrameCap = frameCap > FrameCap.Maximum ? FrameCap.Maximum : frameCap,
             RefreshRate = DisplayInfo.MaxRefreshRate(),
             DriverVersion = driver,
-            ShaderCaches = MeasureShaderCaches(),
+            ShaderCaches = ShaderCacheSizes(),
         };
     }, cancellationToken);
 
@@ -554,6 +567,27 @@ internal sealed class WindowsGamingService : IGamingService
 
         var ultimate = PowerPlans.FindUltimate(plans, Guid.TryParse(settings.UltimatePowerPlan, out var id) ? id : null);
         return new TweakStatus(true, ultimate is { IsActive: true });
+    }
+
+    /// <summary>Shader cache sizes, measured at most every two minutes (Steam's pre-cache can hold many thousands of files).</summary>
+    private List<ShaderCacheInfo> ShaderCacheSizes()
+    {
+        lock (_gate)
+        {
+            if (DateTime.UtcNow - _shaderCachesMeasured < TimeSpan.FromMinutes(2))
+            {
+                return _shaderCaches;
+            }
+        }
+
+        var sizes = MeasureShaderCaches();
+        lock (_gate)
+        {
+            _shaderCaches = sizes;
+            _shaderCachesMeasured = DateTime.UtcNow;
+        }
+
+        return sizes;
     }
 
     private static List<ShaderCacheInfo> MeasureShaderCaches()

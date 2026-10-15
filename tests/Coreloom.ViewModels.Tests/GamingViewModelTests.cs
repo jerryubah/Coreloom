@@ -53,6 +53,9 @@ internal sealed class FakeGaming : IGamingService
 
     public RunningGame? Running { get; set; }
 
+    /// <summary>A tweak Windows refuses to change.</summary>
+    public GamingTweak? Refuse { get; set; }
+
     public FrameRateStats? Stats { get; set; }
 
     public bool Watching { get; private set; }
@@ -82,6 +85,11 @@ internal sealed class FakeGaming : IGamingService
 
     public Task<TweakResult> SetTweakAsync(GamingTweak tweak, bool on, GamingSettings settings, CancellationToken cancellationToken)
     {
+        if (tweak == Refuse)
+        {
+            return Task.FromResult(new TweakResult(false, "Windows didn't allow the change."));
+        }
+
         if (tweak == GamingTweak.GpuScheduling)
         {
             Tweaks[tweak] = new TweakStatus(true, on, NeedsRestart: true);
@@ -128,18 +136,6 @@ internal sealed class FakeGaming : IGamingService
 
 public class GamingViewModelTests
 {
-    private static void Report(Action test)
-    {
-        try { test(); }
-        catch (Exception e) { throw new InvalidOperationException("\n::error title=Gaming VM test::" + e.GetType().Name + ": " + e.Message.Replace('\n', ' ').Replace('\r', ' ') + " @ " + (e.StackTrace ?? string.Empty).Replace('\n', ' ').Replace('\r', ' ')); }
-    }
-
-    private static async Task ReportAsync(Func<Task> test)
-    {
-        try { await test(); }
-        catch (Exception e) { throw new InvalidOperationException("\n::error title=Gaming VM test::" + e.GetType().Name + ": " + e.Message.Replace('\n', ' ').Replace('\r', ' ') + " @ " + (e.StackTrace ?? string.Empty).Replace('\n', ' ').Replace('\r', ' ')); }
-    }
-
     private static (GamingViewModel Page, FakeGaming Fake, SettingsService Settings) Create(Action<FakeGaming>? setup = null)
     {
         var (monitor, settings, _) = Fixture.Create();
@@ -158,7 +154,7 @@ public class GamingViewModelTests
     }
 
     [Fact]
-    public void Opening_ListsGames_RecentFirst_WithStoreAndSize() => Report(() =>
+    public void Opening_ListsGames_RecentFirst_WithStoreAndSize()
     {
         var (page, _, settings) = Create();
         Assert.True(page.IsLoaded);
@@ -180,10 +176,10 @@ public class GamingViewModelTests
         Assert.StartsWith("#", witcher.PlaceholderColor);
         Assert.Equal("Not played yet", page.Games[2].LastPlayedText);
         settings.Dispose();
-    });
+    }
 
     [Fact]
-    public void Sorting_Search_AndViewAreRemembered() => Report(() =>
+    public void Sorting_Search_AndViewAreRemembered()
     {
         var (page, _, settings) = Create();
         Assert.True(page.IsListView);
@@ -206,10 +202,10 @@ public class GamingViewModelTests
         Assert.True(page.IsGridView);
         Assert.Equal(GameLibraryView.Grid, settings.Current.Gaming.LibraryView);
         settings.Dispose();
-    });
+    }
 
     [Fact]
-    public void PlayAndOpenFolder_GoThroughTheService() => Report(() =>
+    public void PlayAndOpenFolder_GoThroughTheService()
     {
         var (page, fake, settings) = Create();
         page.Games[0].PlayCommand.Execute(null);
@@ -217,10 +213,10 @@ public class GamingViewModelTests
         Assert.Equal(["steam:1091500"], fake.Launched);
         Assert.Equal([@"D:\Steam\steamapps\common\Cyberpunk 2077"], fake.Opened);
         settings.Dispose();
-    });
+    }
 
     [Fact]
-    public Task MissingCovers_AreOffered_AndDownloadedOnlyWhenAsked() => ReportAsync(async () =>
+    public async Task MissingCovers_AreOffered_AndDownloadedOnlyWhenAsked()
     {
         var (page, _, settings) = Create();
         Assert.Equal(1, page.MissingArtworkCount); // Alan Wake 2 has a link; The Witcher 3 has none
@@ -235,10 +231,10 @@ public class GamingViewModelTests
         Assert.False(page.ShowArtworkOffer);
         Assert.EndsWith("Dodo.jpg", page.Games.Single(g => g.Name == "Alan Wake 2").GridPicture);
         settings.Dispose();
-    });
+    }
 
     [Fact]
-    public Task Boosts_ShowState_AndBoostNowTurnsOnTheRest() => ReportAsync(async () =>
+    public async Task Boosts_ShowState_AndBoostNowTurnsOnTheRest()
     {
         var (page, fake, settings) = Create();
         Assert.Equal(6, page.Boosts.Count);
@@ -259,10 +255,10 @@ public class GamingViewModelTests
         Assert.Equal(PowerPlans.Balanced.ToString(), settings.Current.Gaming.PreviousPowerPlan); // saved to restore later
         Assert.False(page.ApplyAllCommand.CanExecute(null));
         settings.Dispose();
-    });
+    }
 
     [Fact]
-    public Task TurningABoostOff_UsesTheSwitch() => ReportAsync(async () =>
+    public async Task TurningABoostOff_UsesTheSwitch()
     {
         var (page, fake, settings) = Create();
         var gameMode = page.Boosts.Single(b => b.Tweak == GamingTweak.GameMode);
@@ -272,10 +268,24 @@ public class GamingViewModelTests
         Assert.False(gameMode.IsOn);
         Assert.Equal("Off", gameMode.StatusText);
         settings.Dispose();
-    });
+    }
 
     [Fact]
-    public Task FramePacer_UsesTheAutomaticLimit_AndFollowsTheChosenOne() => ReportAsync(async () =>
+    public async Task ARefusedChange_FlipsTheSwitchBack_AndSaysWhy()
+    {
+        var (page, fake, settings) = Create(f => f.Refuse = GamingTweak.UltimatePower);
+        var power = page.Boosts.Single(b => b.Tweak == GamingTweak.UltimatePower);
+        power.IsOn = true;
+        await Task.Yield();
+        Assert.False(fake.Tweaks[GamingTweak.UltimatePower].IsOn);
+        Assert.False(power.IsOn);
+        Assert.False(power.IsBusy);
+        Assert.Equal("Windows didn't allow the change.", power.Message);
+        settings.Dispose();
+    }
+
+    [Fact]
+    public async Task FramePacer_UsesTheAutomaticLimit_AndFollowsTheChosenOne()
     {
         var (page, fake, settings) = Create();
         var pacer = page.FramePacer;
@@ -304,20 +314,20 @@ public class GamingViewModelTests
         Assert.Equal(0, fake.FrameCap);
         Assert.Equal("Off", page.FrameLimitText);
         settings.Dispose();
-    });
+    }
 
     [Fact]
-    public void FramePacer_ExplainsWhenThereIsNoNvidiaDriver() => Report(() =>
+    public void FramePacer_ExplainsWhenThereIsNoNvidiaDriver()
     {
         var (page, _, settings) = Create(f => f.HasNvidia = false);
         Assert.False(page.FramePacer.IsSupported);
         Assert.False(page.FramePacer.CanToggle);
         Assert.Contains("NVIDIA", page.FramePacer.UnsupportedText);
         settings.Dispose();
-    });
+    }
 
     [Fact]
-    public void RunningGame_IsMarked_AndItsPacingMeasured() => Report(() =>
+    public void RunningGame_IsMarked_AndItsPacingMeasured()
     {
         var (page, fake, settings) = Create(f =>
         {
@@ -340,10 +350,10 @@ public class GamingViewModelTests
         Assert.False(fake.Watching);
         Assert.False(page.FramePacer.HasLive);
         settings.Dispose();
-    });
+    }
 
     [Fact]
-    public void ShaderCaches_AreSummarised_AndADriverChangeIsPointedOut() => Report(() =>
+    public void ShaderCaches_AreSummarised_AndADriverChangeIsPointedOut()
     {
         var (page, _, settings) = Create(f => f.Driver = "581.57");
         Assert.Equal(2, page.ShaderCaches.Count); // the empty AMD folder is left out
@@ -362,5 +372,5 @@ public class GamingViewModelTests
         Assert.False(changed.HasDriverNotice);
         Assert.Equal("582.10", settings2.Current.Gaming.LastDriverVersion);
         settings2.Dispose();
-    });
+    }
 }
