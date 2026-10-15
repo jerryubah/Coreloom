@@ -63,6 +63,7 @@ public sealed class ShellViewModel : ObservableObject
         _context = context;
 
         Overview = new OverviewViewModel(context);
+        Gaming = new GamingViewModel(context);
         Gpu = new GpuViewModel(context);
         Cpu = new CpuViewModel(context);
         Memory = new MemoryViewModel(context);
@@ -83,7 +84,7 @@ public sealed class ShellViewModel : ObservableObject
             App = deps.App,
         });
 
-        Pages = [Overview, Gpu, Cpu, Memory, Storage, Devices, Network, Optimize, History];
+        Pages = [Overview, Gaming, Gpu, Cpu, Memory, Storage, Devices, Network, Optimize, History];
         _currentPage = Overview;
         NavigateCommand = new RelayCommand<PageViewModel>(page =>
         {
@@ -135,6 +136,9 @@ public sealed class ShellViewModel : ObservableObject
     public TimelineViewModel Timeline { get; }
 
     public OverviewViewModel Overview { get; }
+
+    /// <summary>Game library, boosts, frame pacer and shader caches (above Graphics).</summary>
+    public GamingViewModel Gaming { get; }
 
     public GpuViewModel Gpu { get; }
 

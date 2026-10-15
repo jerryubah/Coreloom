@@ -12,6 +12,11 @@ public partial class OverviewPage : UserControl
     public OverviewPage() => InitializeComponent();
 }
 
+public partial class GamingPage : UserControl
+{
+    public GamingPage() => InitializeComponent();
+}
+
 public partial class GpuPage : UserControl
 {
     public GpuPage() => InitializeComponent();

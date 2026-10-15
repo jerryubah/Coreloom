@@ -1,6 +1,9 @@
 using Coreloom.Core.Benchmarks;
 using Coreloom.Core.Devices;
+using Coreloom.Core.Gaming;
 using Coreloom.Core.Optimize;
+using Coreloom.Core.Overlay;
+using Coreloom.Core.Settings;
 
 namespace Coreloom.ViewModels.Services;
 
@@ -120,6 +123,77 @@ public sealed class UnsupportedDeviceService : IDeviceService
     private static Task<DeviceActionResult> Unavailable() => Task.FromResult(new DeviceActionResult(false, "Not available on this system."));
 }
 
+/// <summary>
+/// The Gaming page's view of Windows: installed games from every launcher, the Windows and graphics-driver settings
+/// that help games, the driver's frame limiter, shader caches and the game that is running.
+/// </summary>
+public interface IGamingService
+{
+    /// <summary>False where Windows isn't available (tests, other systems); the page explains instead.</summary>
+    bool IsSupported { get; }
+
+    /// <summary>Installed games from Steam, Epic, GOG, Xbox, Ubisoft, EA, Battle.net and Riot, with the pictures found on this PC.</summary>
+    Task<IReadOnlyList<GameEntry>> ScanLibraryAsync(CancellationToken cancellationToken);
+
+    /// <summary>The state of every tweak, the frame limit, the display and the shader caches.</summary>
+    Task<GamingStatus> StatusAsync(GamingSettings settings, CancellationToken cancellationToken);
+
+    /// <summary>Turns a tweak on or off. May record what to restore later in <paramref name="settings"/> (the power plans).</summary>
+    Task<TweakResult> SetTweakAsync(GamingTweak tweak, bool on, GamingSettings settings, CancellationToken cancellationToken);
+
+    /// <summary>Sets the graphics driver's frame-rate limit for all games (0 turns it off).</summary>
+    Task<TweakResult> SetFrameCapAsync(int fps, CancellationToken cancellationToken);
+
+    /// <summary>The library game that is running now, if any.</summary>
+    Task<RunningGame?> FindRunningAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken);
+
+    /// <summary>Measures frame rates while true (Windows' graphics events, nothing is added to games).</summary>
+    void WatchFrameRates(bool on);
+
+    /// <summary>The frame rate of a process, when measured.</summary>
+    FrameRateStats? FrameRate(int processId);
+
+    /// <summary>Starts a game through its launcher (as the signed-in user, not as administrator).</summary>
+    bool Launch(GameEntry game);
+
+    void OpenFolder(string path);
+
+    /// <summary>Downloads missing cover pictures (only when the user asked); returns the games with the pictures found.</summary>
+    Task<IReadOnlyList<GameEntry>> DownloadArtworkAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken);
+}
+
+/// <summary>Stand-in where Windows isn't available: no games, nothing to switch.</summary>
+public sealed class UnsupportedGamingService : IGamingService
+{
+    public bool IsSupported => false;
+
+    public Task<IReadOnlyList<GameEntry>> ScanLibraryAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<GameEntry>>([]);
+
+    public Task<GamingStatus> StatusAsync(GamingSettings settings, CancellationToken cancellationToken) => Task.FromResult(GamingStatus.Unavailable);
+
+    public Task<TweakResult> SetTweakAsync(GamingTweak tweak, bool on, GamingSettings settings, CancellationToken cancellationToken) => Unavailable();
+
+    public Task<TweakResult> SetFrameCapAsync(int fps, CancellationToken cancellationToken) => Unavailable();
+
+    public Task<RunningGame?> FindRunningAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken) => Task.FromResult<RunningGame?>(null);
+
+    public void WatchFrameRates(bool on)
+    {
+    }
+
+    public FrameRateStats? FrameRate(int processId) => null;
+
+    public bool Launch(GameEntry game) => false;
+
+    public void OpenFolder(string path)
+    {
+    }
+
+    public Task<IReadOnlyList<GameEntry>> DownloadArtworkAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken) => Task.FromResult(games);
+
+    private static Task<TweakResult> Unavailable() => Task.FromResult(new TweakResult(false, "Not available on this system."));
+}
+
 public sealed class DiskBenchmarkService : IDiskBenchmarkService
 {
     public IReadOnlyList<BenchmarkDrive> Drives() => DiskBenchmark.Drives();
@@ -170,7 +244,7 @@ public sealed class UnsupportedOptimizeService : IOptimizeService
     private static Task<MaintenanceResult> Unavailable() => Task.FromResult(new MaintenanceResult(false, "Not available on this system."));
 }
 
-/// <summary>The tools the pages offer (benchmarks, speed test, Smart Optimize, devices). Tests swap in fakes.</summary>
+/// <summary>The tools the pages offer (benchmarks, speed test, Smart Optimize, devices, gaming). Tests swap in fakes.</summary>
 public sealed class ToolServices
 {
     public IDiskBenchmarkService DiskBenchmark { get; init; } = new DiskBenchmarkService();
@@ -180,4 +254,6 @@ public sealed class ToolServices
     public IOptimizeService Optimizer { get; init; } = new UnsupportedOptimizeService();
 
     public IDeviceService Devices { get; init; } = new UnsupportedDeviceService();
+
+    public IGamingService Gaming { get; init; } = new UnsupportedGamingService();
 }

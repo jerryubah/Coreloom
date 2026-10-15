@@ -257,7 +257,7 @@ public sealed class SettingsViewModel : PageViewModel
 
     // ---- Navigation within settings ----------------------------------------------------------
 
-    public IReadOnlyList<string> Sections { get; } = ["Appearance", "Monitoring", "Desktop", "Alerts", "Updates", "Diagnostics", "About"];
+    public IReadOnlyList<string> Sections { get; } = ["Appearance", "Monitoring", "Desktop", "Alerts", "Diagnostics", "About", "Updates"];
 
     public string? SelectedSection
     {

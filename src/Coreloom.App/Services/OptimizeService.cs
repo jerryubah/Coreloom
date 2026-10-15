@@ -451,7 +451,7 @@ internal sealed partial class WindowsOptimizeService : IOptimizeService
         return RunAsync(powershell, $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {encoded}", timeout, cancellationToken);
     }
 
-    private static async Task<(int Exit, string Output, string Error)> RunAsync(string file, string arguments, TimeSpan timeout, CancellationToken cancellationToken)
+    internal static async Task<(int Exit, string Output, string Error)> RunAsync(string file, string arguments, TimeSpan timeout, CancellationToken cancellationToken)
     {
         using var process = new Process
         {

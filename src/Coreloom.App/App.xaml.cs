@@ -52,6 +52,7 @@ public partial class App : Application
     private TrayIconService? _tray;
     private Overlay.OverlayService? _overlay;
     private WindowsDeviceService? _devices;
+    private Overlay.EtwFrameRateSource? _frameRates;
     private HttpClient? _http;
     private UpdatesViewModel? _updates;
     private DispatcherTimer? _updateTimer;
@@ -283,6 +284,7 @@ public partial class App : Application
                 SpeedTest = new SpeedTestService($"Coreloom/{app.DisplayVersion}"),
                 Optimizer = new WindowsOptimizeService(),
                 Devices = _devices = new WindowsDeviceService(),
+                Gaming = new WindowsGamingService(_frameRates = new Overlay.EtwFrameRateSource(), paths.LocalDirectory, $"Coreloom/{app.DisplayVersion}"),
             },
         });
         _shell = shell;
@@ -383,7 +385,7 @@ public partial class App : Application
         // The in-game overlay (off until turned on; its hotkey works from the start).
         try
         {
-            _overlay = new Overlay.OverlayService(shell, settingsService, Dispatcher);
+            _overlay = new Overlay.OverlayService(shell, settingsService, Dispatcher, _frameRates!);
             _overlay.Start();
         }
         catch (Exception ex)
@@ -735,6 +737,8 @@ public partial class App : Application
             _settings?.Flush();
             _overlay?.Dispose();
             _overlay = null;
+            _frameRates?.Dispose();
+            _frameRates = null;
             _devices?.Dispose();
             _devices = null;
             _tray?.Dispose();

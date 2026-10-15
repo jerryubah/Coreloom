@@ -30,7 +30,9 @@ internal sealed partial class OverlayService : IDisposable
     private readonly Dispatcher _dispatcher;
     private readonly OverlayViewModel _overlay;
     private readonly OverlaySettingsViewModel _card;
-    private readonly EtwFrameRateSource _frameRates = new();
+    private const string FrameRateOwner = "overlay";
+
+    private readonly EtwFrameRateSource _frameRates;
     private readonly GlobalHotkey _hotkey;
     private readonly DispatcherTimer _timer;
     private readonly int _ownProcessId = Environment.ProcessId;
@@ -38,8 +40,9 @@ internal sealed partial class OverlayService : IDisposable
     private int _ticks;
     private bool _disposed;
 
-    public OverlayService(ShellViewModel shell, SettingsService settings, Dispatcher dispatcher)
+    public OverlayService(ShellViewModel shell, SettingsService settings, Dispatcher dispatcher, EtwFrameRateSource frameRates)
     {
+        _frameRates = frameRates;
         _shell = shell;
         _settings = settings;
         _dispatcher = dispatcher;
@@ -70,7 +73,7 @@ internal sealed partial class OverlayService : IDisposable
         _card.PropertyChanged -= OnCardChanged;
         _timer.Stop();
         _hotkey.Dispose();
-        _frameRates.Dispose();
+        _frameRates.Release(FrameRateOwner);
         _window?.Close();
         _window = null;
     }
@@ -124,14 +127,14 @@ internal sealed partial class OverlayService : IDisposable
         bool on = options.Enabled;
         if (on && _overlay.NeedsFrameRates)
         {
-            if (!_frameRates.IsRunning && !_frameRates.Start())
+            if (!_frameRates.Acquire(FrameRateOwner))
             {
                 Log.Warn(LogCategory, $"Frame rates unavailable: {_frameRates.Problem}");
             }
         }
-        else if (_frameRates.IsRunning)
+        else
         {
-            _frameRates.Stop();
+            _frameRates.Release(FrameRateOwner);
         }
 
         _card.RefreshFrameRateNote();

@@ -37,6 +37,8 @@ public sealed class AppSettings
 
     public OverlaySettings Overlay { get; set; } = new();
 
+    public GamingSettings Gaming { get; set; } = new();
+
     public DesktopSettings Desktop { get; set; } = new();
 
     public AlertSettings Alerts { get; set; } = new();
@@ -55,6 +57,7 @@ public sealed class AppSettings
         Monitoring ??= new MonitoringSettings();
         Dashboard ??= new DashboardSettings();
         Overlay ??= new OverlaySettings();
+        Gaming ??= new GamingSettings();
         Desktop ??= new DesktopSettings();
         Alerts ??= new AlertSettings();
         Updates ??= new UpdateSettings();
@@ -78,6 +81,7 @@ public sealed class AppSettings
         }
 
         Overlay.Normalize();
+        Gaming.Normalize();
         Alerts.CooldownMinutes = Math.Clamp(Alerts.CooldownMinutes, 1, 24 * 60);
         Alerts.Rules ??= AlertSettings.DefaultRules();
         foreach (var rule in Alerts.Rules)

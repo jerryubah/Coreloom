@@ -37,6 +37,7 @@ internal sealed unsafe class EtwFrameRateSource : IFrameRateSource, IDisposable
     private Thread? _thread;
     private volatile bool _running;
     private long _events;
+    private readonly HashSet<string> _owners = [];
 
     public EtwFrameRateSource()
     {
@@ -53,6 +54,31 @@ internal sealed unsafe class EtwFrameRateSource : IFrameRateSource, IDisposable
     public bool IsRunning => _running;
 
     public FrameRateStats? Get(int processId) => _running ? _tracker.Get(processId, Stopwatch.GetTimestamp()) : null;
+
+    /// <summary>
+    /// Starts measuring for <paramref name="owner"/> (the overlay, the Gaming page): the session runs while anyone needs
+    /// it. Returns false (see <see cref="Problem"/>) when it can't run.
+    /// </summary>
+    public bool Acquire(string owner)
+    {
+        lock (_owners)
+        {
+            _owners.Add(owner);
+            return _running || Start();
+        }
+    }
+
+    /// <summary>Stops measuring for <paramref name="owner"/>; the session stops when nobody needs it any more.</summary>
+    public void Release(string owner)
+    {
+        lock (_owners)
+        {
+            if (_owners.Remove(owner) && _owners.Count == 0)
+            {
+                Stop();
+            }
+        }
+    }
 
     /// <summary>Starts the session (if it isn't running). Returns false and sets <see cref="Problem"/> when it can't.</summary>
     public bool Start()

@@ -332,10 +332,13 @@ public class ShellViewModelTests
         var (shell, _, settings, stubs) = Create();
         Assert.Same(shell.Overview, shell.CurrentPage);
         Assert.NotNull(stubs.Applied);
-        Assert.Equal(9, shell.Pages.Count);
+        Assert.Equal(10, shell.Pages.Count);
+        Assert.Same(shell.Gaming, shell.Pages[shell.Pages.IndexOf(shell.Gpu) - 1]); // Gaming sits above Graphics
         Assert.Same(shell.History, shell.Pages[^1]);
         Assert.Same(shell.Optimize, shell.Pages[^2]); // Smart Optimize sits above Performance History
         Assert.Same(shell.Devices, shell.Pages[shell.Pages.IndexOf(shell.Storage) + 1]); // Devices sits below Storage
+        Assert.Equal("Updates", shell.Settings.Sections[^1]); // Updates sits at the bottom of Settings, below About
+        Assert.Equal("About", shell.Settings.Sections[^2]);
         settings.Dispose();
     }
 
