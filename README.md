@@ -41,8 +41,11 @@ installs drivers or services, and never sends your data anywhere.
   the rest; switches for hardware-accelerated GPU
   scheduling, the Ultimate Performance power plan, Game Mode, windowed-game optimizations, Game Bar background
   recording, the NVIDIA *Prefer maximum performance* mode, G-SYNC for fullscreen and windowed games, a 10 GB / 100 GB /
-  unlimited NVIDIA shader cache and Windows 11's Auto HDR, each saying what it helps with and how to use it (or *Boost
-  now* for the performance ones); a **frame limiter** that sets the NVIDIA driver's own frame limiter for all games or
+  unlimited NVIDIA shader cache and **intelligent CPU core scheduling**, each saying what it helps with and how to use
+  it (or *Boost now* for all of them); core scheduling knows which cores suit games (the 3D V-Cache CCD of a multi-CCD
+  Ryzen X3D such as the 9950X3D, or a hybrid processor's performance cores), shows where the game you're playing runs,
+  checks AMD's chipset driver, Game Mode and the power plan it depends on, and keeps a game on chosen cores only after
+  an A/B test in that game shows a clear gain and you keep it, never against AMD's own scheduling; a **frame limiter** that sets the NVIDIA driver's own frame limiter for all games or
   for one game on its own, automatically just under your refresh rate so G-SYNC/FreeSync stays engaged, with live FPS,
   1% low and pacing of the game you're playing; **adaptive frame pacing** (off until you turn it on), which measures
   each game's real frame times while you play and sets the game's own limit to a frame rate it holds with steady 1%
@@ -51,7 +54,10 @@ installs drivers or services, and never sends your data anywhere.
 - **In-game overlay.** FPS, frame time and 1% lows with a smooth frame-time graph and GPU, CPU and RAM readings on top
   of your games, measured from Windows' graphics events (nothing is injected into games, and Coreloom gives way to the
   game while it runs); while the frame limiter limits the game, its limit is a dashed line on the graph. Turned on
-  from the Graphics page or with a hotkey (End by default); choose what it shows, where, and its text, colors, opacity and corners.
+  from the Graphics page or with a hotkey (End by default); choose what it shows (each line in its own size), where
+  (nine places, fine-tuned X/Y, or a place per game), its size (Compact, Standard, Expanded or your own scale, following
+  your screen's resolution), and its text, colors, opacity and corners. *Move on screen* (or Shift + the hotkey) lets
+  you drag it in the game and resize it by its corner; where you drop it is kept.
 - **Health cards** on the Overview, Graphics, Processor, Memory and Storage pages: Excellent, Good or Needs attention,
   from the last minute of temperatures, clock slowdowns, fans, memory and commit charge, free space and drive wear,
   with the reasons.
@@ -240,7 +246,10 @@ LibreHardwareMonitor's own report. See [docs/TESTING-ON-YOUR-PC.md](docs/TESTING
   (the registry values and `powercfg` commands Windows' own Settings use) or one NVIDIA driver setting (as the NVIDIA
   Control Panel does), shows its state and can be turned off again. Adaptive frame pacing, once you turn it on, sets
   and adjusts each game's own driver limit as you play (never a limit you set yourself), writes every change to the
-  log, and removes its limits when you turn it off. **Nothing is injected into games**: frame rates
+  log, and removes its limits when you turn it off. Intelligent CPU core scheduling, once on, only reads AMD's 3D
+  V-Cache driver and its preferences (it never changes them or restarts its service) and changes a game's cores only
+  for a test you start or a profile you kept, the way Task Manager's *Set affinity* does; turning it off or closing
+  Coreloom gives those games Windows' choice back. **Nothing is injected into games**: frame rates
   come from Windows' graphics events, the frame limiter is the driver's own limiter, and games start through their own
   launchers as you, not as administrator.
 - **The Devices page changes something only when you click.** Connect, Disconnect, the Bluetooth switch and Eject do

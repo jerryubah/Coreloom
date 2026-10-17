@@ -147,6 +147,35 @@ How this change was checked in the Linux container (no Windows, no nuget.org):
 | In-place update of portable copies | File operations unit-tested on Linux (staging, copy, rollback, cleanup) | Windows specifics: the elevated helper starting without a prompt, locked files and antivirus timing, the hidden `.coreloom-update` folder, the splash while copying, `Compress-Archive` zips from the real release |
 | Per-copy trust key `HKLM\SOFTWARE\Coreloom\Updates\Copies\<id>` | Code review | Registry writes and clean-up on Windows |
 
+### 1.4.7: intelligent CPU core scheduling, a movable and sizable overlay, cards that fit their content, a compact AMD card
+
+- **Core tests: 653 passed** (52 new: `OverlayPlacementTests`, `CoreLayoutTests` with Windows topology buffers built
+  for a Ryzen 9 9950X3D, 9950X, 9800X3D, Core i9-14900K and Ryzen AI 9 HX 370, `CorePlacementTests`,
+  `CoreSchedulingChecksTests`, `AffinityTrialTests`, `CoreProfileTests`, `MemoryModuleNamesTests`, and updated AMD
+  tuning tests). **View-model tests: 161 passed** (16 new: overlay placement and sizing, and core scheduling against
+  a simulated 9950X3D, AMD driver and game process: the checks, *Boost now* leaving Ultimate Performance off, load
+  shares, a kept profile applied after AMD's driver had its moment, each case where a profile is left out, the A/B
+  test switching cores and offering a profile only for a clear gain, a refused change, and turning off giving the
+  cores back). `Coreloom.App` compiles and the XAML checks pass (20 files, 242 shared keys, 1,320 bindings).
+- **GitHub Actions.** Branch CI on `release-1.4.7` passed on the first run: 891 tests on Windows (Core 653, view
+  models 161, Hardware 77), none skipped, and the Linux tests.
+- **Not run on the hardware it's for.** There's no Ryzen 9 9950X3D here and no game to play. Not verified: that
+  Windows reports the two CCDs' L3 caches as 96 MB and 32 MB (as `coreinfo` shows on X3D processors), the service
+  manager's view of `amd3dvcache`/`amd3dvcacheSvc` and the registry preferences on a real chipset driver install,
+  `SetProcessAffinityMask` on real games (and anti-cheat refusing it), the load shares against Task Manager, and what
+  the A/B test finds in real games. The registry and service names come from the open-source vcache-tray tool's
+  source, not from AMD documentation.
+- **Overlay dragging and resizing** (the window leaving click-through while moving, `DragMove`, the corner grip in
+  per-monitor DPI, per-game places) haven't been tried on Windows.
+
+| Change | What was done here | Not verified here |
+|---|---|---|
+| Intelligent CPU core scheduling | Unit tests of the topology parser, grouping, load shares, verdicts, checks, A/B rules and profiles; view-model tests with a simulated driver and game | A real 9950X3D and AMD chipset driver; affinity on real games; real gains |
+| Movable, sizable overlay | Unit tests of placing, dropping, per-game places, screen scale and sizes; view-model tests | Dragging, the grip and DPI on Windows; how the sizes look in games |
+| Cards fit their content | XAML reviewed page by page; `StackedColumns.CanFill` | How each page looks at your window sizes |
+| Compact AMD card, leaner frame limiter | View-model tests of the shorter texts; XAML checks | The look on his PC |
+| Memory slot names with the channel | Unit tests | His board's SMBIOS strings |
+
 ### 1.4.6: process-level memory logs, a log viewer, games added by hand, lighter monitoring, AMD details, adaptive frame pacing
 
 - **Core tests: 601 passed** (99 new: `LogAndMemoryTrimTests`, `CustomGameTests`, the lighter-monitoring cases in

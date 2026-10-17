@@ -108,6 +108,11 @@ layer calls Windows sensor APIs, so most of the logic is testable on any OS.
   Usage donuts (memory, volumes) recolor their "in use" segment with `ColorKeys.ForLevel`. Mica uses `DWMWA_SYSTEMBACKDROP_TYPE` on Windows 11
   22H2 and later. The custom caption buttons support Snap Layouts by answering `WM_NCHITTEST` with
   `HTMAXBUTTON`.
+- **Cards fit their content (1.4.7).** A card is as tall as what it holds; nothing is stretched to line up with its
+  neighbour. Side-by-side cards sit in `StackedColumns` (masonry) or in an `AdaptiveGrid` with
+  `VerticalAlignment="Top"`; only a card whose content can use the extra room (Smart Optimize's *Speed up*, whose
+  startup list shows more apps) is marked `StackedColumns.CanFill` and grows to the column bottom with `FillColumns`.
+  Grids of like tiles (gauges, metric tiles, charts) keep a uniform row height.
 - **Settings** are JSON in `%APPDATA%\Coreloom\settings.json`, or `Data\` in portable mode.
   - Writes are atomic: write a temp file, then replace.
   - Writes are debounced by 600 ms.
@@ -324,7 +329,7 @@ use (`DeviceNative.LayoutIsValid`). Events log under "Devices".
 
 `OptimizeViewModel` (the *Smart Optimize* page, above Performance History) runs Smart Scan through four parts, each
 also a card of its own (laid out by `StackedColumns` with `InOrder` and `FillColumns`, so each card is as tall as its
-content and the column bottoms line up): `CleanupViewModel`, `ProtectionViewModel`, `MemoryOptimizeViewModel` and `SpeedUpViewModel`.
+content, and only *Speed up*, marked `CanFill`, grows to line the column bottoms up): `CleanupViewModel`, `ProtectionViewModel`, `MemoryOptimizeViewModel` and `SpeedUpViewModel`.
 Everything Windows-specific is behind `IOptimizeService`; the app's `WindowsOptimizeService` implements it and the
 default `UnsupportedOptimizeService` makes the page explain itself where it can't work.
 
@@ -409,6 +414,20 @@ late on average, as on one CI runner, it holds `timeBeginPeriod(1)` while doing 
 in and 4 times a second otherwise. The settings preview (not `FrameGraph.IsLive`) draws the same pixels into a
 `WriteableBitmap`, with a still sample trace.
 
+**Where it sits and how big it is (1.4.7).** `OverlaySettings` keeps the place as one of nine anchors (`Center` added)
+plus `OffsetX`/`OffsetY` in pixels at 100 % scaling, optionally one `OverlayPlacement` per game program
+(`PerGamePosition`, `GamePlacements`, newest per program, at most 200), and the size as `Size` (Compact 0.85, Standard
+1, Expanded 1.25, or `Custom` with `Scale` 50–250 %) with `AutoScale` following the monitor's height (1080 DIP = 100 %,
+0.85–1.35, `OverlayPlacements.ScreenScale`) and `GroupSizes` for one line at a time (S/M/L). `OverlayPlacements`
+(Core, unit-tested) locates the window from anchor, margin and offset, clamped to the monitor's work area, and turns a
+drop point back into the nearest anchor (by thirds) plus the offset (`FromDrop`). `OverlayViewModel.Factor` is the size
+× the screen scale; every font size, graph size, spacing and the corner radius derive from it, and each line's group
+multiplies its own. *Move on screen* (or Shift + the hotkey, `GlobalHotkey`'s second action) sets `IsMoving`: the
+window drops `WS_EX_TRANSPARENT`, shows a dashed outline, a resize grip (a `Thumb` working from screen deltas over the
+DPI so it doesn't feed back on itself), the S/M/L button per line and *Done*; `DragMove` moves it and `SaveAdjusted`
+stores where it was dropped, for the game last in front when per-game places are on. Leaving move mode stores a resized
+scale as `Custom`.
+
 **Staying out of the game's way (1.4.3).** Besides the software-drawn window and the graph thread: `OverlayService`
 claims the top again only when a visible topmost window of another program overlaps the overlay (`GetWindow`
 `GW_HWNDPREV` walk) rather than every 2 s, and while the overlay is up and another program is in front it sets
@@ -463,10 +482,10 @@ version seen; `DownloadArtwork` is only kept for older settings files).
   `PS_SHADERDISKCACHE_MAX_SIZE` (0x00AC8497, megabytes; the driver's default is 0x4000) set to the chosen 10 GB /
   100 GB / unlimited (`GamingSettings.ShaderCacheSize`, `ShaderCacheSize`), on when a limit of 10 GB or more was set
   (`NvApi.GetGlobalSetting` tells a set value from the driver's own via `isCurrentPredefined`); off restores the
-  default; a new size applies at once while on. **Auto HDR**: `AutoHDREnable` in the same DirectX settings (Windows
-  11); HDR state from `DisplayConfigGetDeviceInfo` (`DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO_2`, type 15, else type 9
-  without wide-color-only): not offered without an HDR display, a hint while HDR is off. Auto HDR isn't counted as a
-  boost and *Boost now* leaves it alone.
+  default; a new size applies at once while on. 1.4.3–1.4.6 also had an **Auto HDR** switch (`AutoHDREnable` in the
+  same DirectX settings); 1.4.7 replaced it with intelligent CPU core scheduling (below), and Auto HDR is left to
+  Windows' Settings. *Boost now* skips Ultimate Performance on a multi-CCD Ryzen X3D with AMD's driver
+  (`GamingTweakViewModel.Advice`), since it stops the core parking that driver relies on.
 - **Frame limiter.** The NVIDIA driver's frame limiter (`FRL_FPS`, 0x10835002) in the global profile through NVAPI's
   driver settings (`NvApi`: `nvapi_QueryInterface` function pointers, ids from NVIDIA's public `nvapi_interface.h`,
   the 12,320-byte `NVDRS_SETTING`). *Automatic* is refresh − refresh² ÷ 3600 (`FrameCap.AutoTarget`, as NVIDIA Reflex
@@ -504,6 +523,33 @@ version seen; `DownloadArtwork` is only kept for older settings files).
   marked `GameFrameCap.Adaptive`; turning the switch off removes those. `GamingSettings.AdaptivePacingGames` keeps
   what was learned (limit, failed limit, sustained rate, frame generation, sessions). Without an NVIDIA driver it
   suggests the limit instead. Each change and session end is logged under *Gaming*.
+- **Intelligent CPU core scheduling (1.4.7).** A boost (`GamingTweak.CoreScheduling`, Coreloom's own switch:
+  `GamingSettings.CoreScheduling`) with a card under the shader cache. `CoreLayout.Parse` (Core, unit-tested with
+  synthetic buffers) reads `GetLogicalProcessorInformationEx(RelationAll)`: cores (efficiency class, group masks) and
+  L3 caches; logical processors are numbered by group and number as Windows' per-processor counters are. Cores are
+  grouped by their L3: two or more L3s with one at least 1.5× the smallest, on cores of the same efficiency class, are
+  a Ryzen X3D's cache and frequency CCDs; differing efficiency classes are performance and efficiency cores (also Zen 5
+  with Zen 5c, where the faster cores have the larger L3); otherwise CCDs alike, or one group. The preferred cores are
+  the cache, else the performance, else the first CCD; affinity masks need everything in processor group 0.
+  `CoreSchedulingTicker` (app) ticks once a second while it's on: the game in front (`GamingModeService`), the
+  per-logical-processor loads from the latest sensor frame (`cpu/thread/N/load`), and frames from the shared ETW
+  source only while a test runs (leased as "core scheduling"). `CorePlacement` keeps each group's share of the load
+  over 20 readings; `CoreScheduling.Judge` calls it good at 70 % on the preferred cores, mostly elsewhere under 45 %.
+  `CoreScheduling.Checks` validates what AMD's scheduling needs on an X3D: the `amd3dvcache` driver and
+  `amd3dvcacheSvc` service (service manager, query only), `HKLM\SYSTEM\CurrentControlSet\Services\amd3dvcache\Preferences`
+  `DefaultType` (0 frequency first, AMD's default; 1 cache first) and per-program keys under `Preferences\App`
+  (`EndsWith`, `Type`), Game Mode (which AMD's driver uses to spot games) and a power plan that lets cores park (not
+  High or Ultimate Performance). All of this is read only. `AffinityTrial` (Core, unit-tested) is the A/B test the
+  user starts: Windows' choice, preferred, Windows' choice, preferred, 30 s of gameplay each (the first 3 s of a round
+  and seconds under 10 FPS or with a frame over 500 ms left out); proven when both preferred rounds beat the Windows
+  rounds before them and FPS gains ≥ 3 % with 1% lows ≥ −1 %, or 1% lows gain ≥ 5 % with FPS ≥ −1 %. A proven
+  result is offered (*Keep* / *Not now*); kept profiles are `GamingSettings.CoreProfiles` (program file name, cores,
+  gains; never frequency or efficiency cores). `CoreSchedulingController` applies a profile when its game comes in
+  front, unless AMD's driver has a per-program preference for it, its affinity was set elsewhere
+  (`ProcessAffinity.IsCustom`), or, with AMD's driver running, 10 readings show ≥ 80 % of the load already on the cache
+  cores. Affinity is `SetProcessAffinityMask` with `PROCESS_SET_INFORMATION` (as Task Manager does; a refusal, e.g. by
+  anti-cheat, is reported). Turning it off, or closing Coreloom, sets every changed game back to the system mask; a
+  test that isn't proven also drops that game's old profile. Everything is logged under *Gaming*.
 - **Shader cache.** NVAPI's `PS_SHADERDISKCACHE_MAX_SIZE` (0xFFFFFFFF = unlimited; off restores the driver default),
   sizes of the DirectX, NVIDIA, AMD, Intel and Steam pre-cache folders (`ShaderCaches.Locations`), and a notice when
   the driver version (NVAPI) differs from the last one seen. Nothing is pre-compiled by running code in games.
@@ -529,7 +575,10 @@ version seen; `DownloadArtwork` is only kept for older settings files).
   compares the last hour of PPT (or package power) with the stock limit to say whether PBO looks on (three readings
   over 108 %), held at stock (five near it) or not known yet, and lists power limits, PBO, Curve Optimizer, Eco mode
   and manual tuning, each read-only or unavailable (`TuningControl.CanChange` is always false) with where to change
-  it. Nothing writes to the SMU.
+  it. Nothing writes to the SMU. Since 1.4.7 the card sits right above the per-core table and is compact: the segment
+  as caption (the CPUID signature on the architecture badge's tooltip), readings as tiles with the ones not reported on
+  one line (`MissingText`, reasons in `MissingToolTip`), and each tuning control as one row with a short `Summary` and a
+  status pill (the full explanation on hover).
 
 ## Sensor columns and nested scrolling
 

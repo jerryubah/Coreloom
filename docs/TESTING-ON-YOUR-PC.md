@@ -336,9 +336,71 @@ Work through each area and tick what works.
 - [ ] *NVIDIA shader cache*: pick 10 GB / 100 GB / Unlimited in *Size*, switch it on: NVIDIA Control Panel ›
       *Shader Cache Size* shows that size; *Limit now* under the picker matches. Changing the size while it's on
       applies at once. Off puts *Shader Cache Size* back to *Driver Default*.
-- [ ] *Auto HDR* (Windows 11): with an HDR display and HDR on, the switch matches *Settings › Display › Graphics ›
-      Auto HDR*. With HDR off it says to turn on HDR; without an HDR display it explains it can't be used. *Boost now*
-      leaves Auto HDR alone and the ring counts the other boosts (e.g. 8/8).
+- [ ] (Auto HDR was a boost from 1.4.3 to 1.4.6; since 1.4.7 it's set in Windows' *Settings › Display › Graphics*.)
+
+**New in 1.4.7**
+
+*Cards that fit their content*
+
+- [ ] Memory: the usage card and the reading tiles, *Top processes* and *Modules* are each as tall as their own
+      content (no empty space at the bottom of the shorter one). Two modules that both say "DIMM 1" now say
+      "DIMM 1 · Channel A" and "DIMM 1 · Channel B".
+- [ ] Gaming: the boost cards stack in columns, each as tall as its text; the frame limiter, shader cache and CPU core
+      scheduling cards fit their content (core scheduling sits under the shader cache in the right column).
+- [ ] Storage, Smart Optimize (only *Speed up* may grow, showing more startup apps), Devices (Bluetooth cards) and the
+      Processor page: no card stretched to its neighbour's height.
+
+*Processor page*
+
+- [ ] On an AMD PC, the *AMD processor* card is right above *Cores*: the architecture badge (hover for the CPUID
+      signature), reading tiles, one "Not reported here: …" line (hover for why), and five one-line tuning rows with a
+      pill each (hover for the details). It reads "Read-only: Coreloom never changes limits, clocks or voltages."
+
+*Frame limiter*
+
+- [ ] The card is shorter: how it works is behind the ⓘ next to the title, the adaptive pacing method behind its ⓘ,
+      why a limit on the limit picker's tooltip and what *Apply to* covers on that picker's tooltip; pacing is one row
+      (FPS, 1% low, "even", grade).
+
+*In-game overlay (please try in a game)*
+
+- [ ] Graphics › overlay settings › *Show*: one row per line (FPS, GPU, CPU, RAM) with its readings as chips and an
+      S / M / L size for the line; little empty space.
+- [ ] *Position*: nine places including the middle; *Fine-tune X/Y* moves it a few pixels at a time; *Reset
+      fine-tuning* puts it back on the place.
+- [ ] *Move on screen* (or Shift + the overlay hotkey, Shift+End by default) in a game: the overlay shows a dashed
+      outline, a corner grip and *Done*. Drag it somewhere; drag the grip to make it bigger or smaller (text, graph and
+      spacing follow); S/M/L next to each line resizes that line. *Done* (or the hotkey again) keeps it there; it's
+      still there after restarting Coreloom.
+- [ ] *A place for each game* on: move the overlay in game A, then start game B (its own place, or the general one)
+      and back to A (A's place). Each game shows as a chip with × to forget it.
+- [ ] *Size*: Compact, Standard, Expanded change the whole overlay; the *Scale* slider sets your own; *Follow the
+      screen* makes it larger on a 1440p or 4K display than on 1080p (and the same physical size across Windows'
+      scaling settings).
+- [ ] The overlay still lets clicks through to the game except while moving it.
+
+*Intelligent CPU core scheduling (please try on the Ryzen 9 9950X3D)*
+
+- [ ] Gaming › *Performance boosts*: *Auto HDR* is gone; *Intelligent CPU core scheduling* (Frame stability, Ryzen
+      X3D) is in its place. On a single-CCD or all-alike processor it says there's nothing to choose between.
+- [ ] Its card (under the shader cache): "2 CCDs · 3D V-Cache on one", *Cache cores 8 cores · 96 MB L3* and
+      *Frequency cores 8 cores · 32 MB L3*, and pills for the AMD 3D V-Cache driver and service, AMD's preference,
+      Game Mode and the power plan (hover each). Compare with AMD's chipset driver being installed and
+      `sc query amd3dvcache` in a terminal.
+- [ ] With *Ultimate Performance* on: its pill is red and the Ultimate Performance boost says it's better off here;
+      *Boost now* leaves it alone.
+- [ ] Turn core scheduling on and play a game: after ~5 s the card shows each CCD's share of the load and says e.g.
+      "Cyberpunk 2077: 85 % of the load on the cache cores" (green). Task Manager › Performance › CPU (logical
+      processors) should agree: the second CCD mostly idle/parked.
+- [ ] *Test a game*, then play the game normally for about 2½ minutes (same area, no menus): the card counts the
+      rounds ("Round 2 of 4 · cache cores · 18 s left"). Task Manager › Details › the game › *Set affinity* shows CPU
+      0–15 ticked during the cache rounds and all CPUs otherwise. At the end it either offers *Keep* with the gain, or
+      says there was no clear gain. Note what it says.
+- [ ] *Keep*: the game shows as a chip; next time it starts, its affinity is CPU 0–15 (unless AMD's driver already
+      keeps it on the cache cores, which the card then says). × removes it.
+- [ ] Turn core scheduling off: the game's affinity goes back to all CPUs.
+- [ ] A game with anti-cheat (e.g. Valorant, Fortnite): a test says Windows refused to change its cores, and nothing
+      else happens.
 
 **New in 1.4.6**
 
@@ -449,7 +511,8 @@ Work through each area and tick what works.
       management mode*, *Shader Cache Size*, *Set up G-SYNC*). Flip each on and off and check it there.
 - [ ] HAGS shows *Restart to finish* after switching it, and *On*/*Off* correctly after the restart.
 - [ ] Ultimate Performance creates and activates the plan; switching it off goes back to the plan you had before.
-- [ ] *Boost now* turns on everything that was off (except Auto HDR) and says how many; the ring shows e.g. 8/8.
+- [ ] *Boost now* turns on everything that was off (except Ultimate Performance on a multi-CCD Ryzen X3D) and says how
+      many; the ring shows e.g. 8/8.
 - [ ] Frame limiter: switching it on sets *Max Frame Rate* in the NVIDIA Control Panel (global) to the shown limit (138
       on a 144 Hz display); a game started afterwards stays at that limit with flat frame times; switching it off
       sets *Max Frame Rate* back to Off. Picking another limit in the list changes it.

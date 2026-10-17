@@ -7,6 +7,38 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.4.7] - 2026-10-17
+
+Intelligent CPU core scheduling for Ryzen X3D in place of Auto HDR, an overlay you can move and resize in the game, cards that fit their content, a compact AMD card and a leaner frame limiter.
+
+### Highlights
+
+- **Intelligent CPU core scheduling.** A new performance boost, in place of Auto HDR. It works out which cores suit games: on a multi-CCD Ryzen X3D such as the 9950X3D, the CCD with the 3D V-Cache ("cache cores") and the one that clocks higher ("frequency cores"); on hybrid processors, the performance and efficiency cores. Its card (under the shader cache) shows the cores, how much of the game's load each group carries while you play ("Cyberpunk 2077: 85 % of the load on the cache cores"), and checks what AMD's own scheduling needs: the 3D V-Cache driver and service from AMD's chipset driver, AMD's preference, Game Mode and a power plan that lets cores park. *Test a game* plays your next game 30 seconds at a time on Windows' choice and on the cache cores, four rounds, and offers a profile for that game only when the cache cores are clearly and consistently better (at least 3 % more FPS, or 5 % better 1% lows); you choose to keep it. Kept profiles apply when the game starts, and never against AMD's driver: not for a game AMD has its own preference for, not when its cores were chosen elsewhere, not when AMD's driver already keeps it on the cache cores, and never on the frequency cores. Turning it off, or closing Coreloom, gives those games Windows' choice back.
+- **Move and resize the overlay in the game.** *Move on screen* in the overlay settings, or Shift + the overlay hotkey (Shift+End by default), shows an outline: drag the overlay anywhere, drag its corner to make it bigger or smaller, and use S / M / L next to each line to size that line on its own. Where you drop it is kept, also after a restart. Nine places (now with the middle), fine-tuning of X and Y, and, if you like, a place for each game.
+- **Overlay sizes.** Compact, Standard, Expanded or your own scale; text, the graph and spacing follow, and *Follow the screen* keeps the overlay the same size relative to your display on 1080p, 1440p and 4K and across Windows' scaling.
+- **A tidier Show section.** The overlay's readings are chips in one row per line, each line with its size, instead of a long list of checkboxes.
+- **Cards fit their content.** On every page, a card is as tall as what it holds instead of being stretched to its neighbour's height: Memory, Gaming, Storage, Smart Optimize, Devices and the Processor page. Only a card whose content can use the room (Smart Optimize's *Speed up*, which then lists more startup apps) grows.
+- **A compact AMD card, above Cores.** The Processor page's AMD card moved right above the per-core table and lost most of its text: the architecture as a badge (CPUID signature on hover), the readings as tiles, the readings your processor doesn't report on one line (why on hover), and the five tuning controls as one-line rows with a status pill (details on hover).
+- **A leaner frame limiter.** How it works, the adaptive pacing method, why a limit and what *Apply to* covers moved to ⓘ tooltips; the pacing of the game you're playing is one row. The card is much shorter, and the core scheduling card fills the column beside it under the shader cache.
+
+### In detail
+
+- Core scheduling only reads AMD's 3D V-Cache driver (the `amd3dvcache` driver and `amd3dvcacheSvc` service, and the preferences under `HKLM\SYSTEM\CurrentControlSet\Services\amd3dvcache\Preferences`); it never changes them or restarts the service. A game's cores are set from outside the game, the way Task Manager's *Set affinity* does; nothing is added to the game. If Windows or the game's anti-cheat refuses, the card says so and nothing else happens. Each step is written to the log (*Gaming*).
+- Where the load sits comes from Windows' per-processor counters (the ones Task Manager uses) while a game is in front, so it's a good guide rather than an exact count of the game's own threads.
+- On a multi-CCD Ryzen X3D with AMD's driver installed, the *Ultimate Performance* boost now says it's better left off (it stops the core parking AMD's driver uses to keep games on the cache cores), and *Boost now* leaves it alone.
+- Auto HDR is no longer a boost; turn it on in Windows' *Settings › Display › Graphics*. Coreloom leaves the setting as it was.
+- Two memory modules that report the same slot (many AMD boards call one slot in each channel "DIMM 1") are now named with their channel, e.g. "DIMM 1 · Channel A".
+- Overlay places are kept per game by program file name; a place saved while moving the overlay from Coreloom's own window goes to the last game that was in front.
+
+### What wasn't measured
+
+- Core scheduling's test and profiles haven't been run on a real Ryzen 9 9950X3D or in real games here; the layout reading, the load shares, AMD's checks, the A/B test's rules and the profile handling are tested against built Windows topology data and a simulated driver. How much a game gains on the cache cores varies by game, which is why profiles are only offered after a test in that game.
+- Dragging and resizing the overlay, and the new sizes on 1440p/4K and at different Windows scaling, haven't been tried on a Windows PC here.
+
+### Feedback
+
+Something not right? [Open an issue](https://github.com/jerryubah/Coreloom/issues) with a screenshot and a CoreloomDiag report, or copy the lines from *Settings › Logs*.
+
 ## [1.4.6] - 2026-10-17
 
 Adaptive frame pacing, games you add yourself, a log viewer with every process the memory clean-up touched, lighter monitoring while you play, and a detailed AMD processor card.
