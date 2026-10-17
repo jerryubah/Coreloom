@@ -494,9 +494,9 @@ version seen; `DownloadArtwork` is only kept for older settings files).
   (`NvApi.GetGlobalSetting` tells a set value from the driver's own via `isCurrentPredefined`); off restores the
   default; a new size applies at once while on. 1.4.3–1.4.6 also had an **Auto HDR** switch (`AutoHDREnable` in the
   same DirectX settings); 1.4.7 replaced it with intelligent CPU core scheduling (below), and Auto HDR is left to
-  Windows' Settings. *Boost now* skips Ultimate Performance on a multi-CCD Ryzen X3D with AMD's driver
-  (`GamingTweakViewModel.Advice`, shown as the card's tooltip since 1.4.8), since it stops the core parking that
-  driver relies on.
+  Windows' Settings. Every supported boost counts in the ring and *Boost now* turns each one on, Ultimate Performance
+  included (1.4.7–1.4.8 left it out on a multi-CCD Ryzen X3D, so the ring read 8/8 with nine switches on); on such a
+  processor `GamingTweakViewModel.Advice` explains on hover that it stops the core parking AMD's driver relies on.
 - **Frame limiter.** The NVIDIA driver's frame limiter (`FRL_FPS`, 0x10835002) in the global profile through NVAPI's
   driver settings (`NvApi`: `nvapi_QueryInterface` function pointers, ids from NVIDIA's public `nvapi_interface.h`,
   the 12,320-byte `NVDRS_SETTING`). *Automatic* is refresh − refresh² ÷ 3600 (`FrameCap.AutoTarget`, as NVIDIA Reflex
@@ -552,7 +552,8 @@ version seen; `DownloadArtwork` is only kept for older settings files).
   `amd3dvcacheSvc` service (service manager, query only), `HKLM\SYSTEM\CurrentControlSet\Services\amd3dvcache\Preferences`
   `DefaultType` (0 frequency first, AMD's default; 1 cache first) and per-program keys under `Preferences\App`
   (`EndsWith`, `Type`), Game Mode (which AMD's driver uses to spot games) and a power plan that lets cores park (not
-  High or Ultimate Performance). All of this is read only. `AffinityTrial` (Core, unit-tested) is the A/B test the
+  High or Ultimate Performance; shown in grey, as a trade-off rather than an error, since 1.4.9). All of this is read
+  only. `AffinityTrial` (Core, unit-tested) is the A/B test the
   user starts: Windows' choice, preferred, Windows' choice, preferred, 30 s of gameplay each (the first 3 s of a round
   and seconds under 10 FPS or with a frame over 500 ms left out); proven when both preferred rounds beat the Windows
   rounds before them and FPS gains ≥ 3 % with 1% lows ≥ −1 %, or 1% lows gain ≥ 5 % with FPS ≥ −1 %. A proven

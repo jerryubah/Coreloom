@@ -280,7 +280,7 @@ public class CoreSchedulingChecksTests
         Assert.DoesNotContain(checks, c => c.Name == "AMD preference");
         Assert.Equal(CheckState.Bad, checks.Single(c => c.Name == "Game Mode").State);
         var plan = checks.Single(c => c.Name == "Power plan");
-        Assert.Equal(CheckState.Bad, plan.State);
+        Assert.Equal(CheckState.Info, plan.State); // shown in grey: a trade-off to know about, not an error
         Assert.Contains("core parking", plan.Detail);
         Assert.True(CoreScheduling.StopsParking(ultimate));
         Assert.True(CoreScheduling.StopsParking(new PowerPlan(PowerPlans.HighPerformance, "High performance", true)));

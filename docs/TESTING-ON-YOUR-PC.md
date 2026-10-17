@@ -338,6 +338,15 @@ Work through each area and tick what works.
       applies at once. Off puts *Shader Cache Size* back to *Driver Default*.
 - [ ] (Auto HDR was a boost from 1.4.3 to 1.4.6; since 1.4.7 it's set in Windows' *Settings › Display › Graphics*.)
 
+**New in 1.4.9**
+
+- [ ] Gaming: the ring counts every boost, 9 on your PC: with all nine switches on it says 9/9. Turn one off (say
+      Ultimate Performance): 8/9 and "1 boost can make your games smoother"; turn it back on: 9/9 again.
+- [ ] *Boost now* turns on every boost that's off, Ultimate Performance included. Hovering Ultimate Performance on the
+      Ryzen X3D still says how it affects core parking.
+- [ ] Core scheduling's *Details*: the *Power plan* pill shows "Ultimate Performance" in grey, not red (hover it for
+      why Balanced suits AMD's driver).
+
 **New in 1.4.8**
 
 - [ ] Gaming › *Performance boosts*: three rows of three cards; the cards in each row start and end on the same line,
@@ -528,7 +537,7 @@ Work through each area and tick what works.
       management mode*, *Shader Cache Size*, *Set up G-SYNC*). Flip each on and off and check it there.
 - [ ] HAGS shows *Restart to finish* after switching it, and *On*/*Off* correctly after the restart.
 - [ ] Ultimate Performance creates and activates the plan; switching it off goes back to the plan you had before.
-- [ ] *Boost now* turns on everything that was off (except Ultimate Performance on a multi-CCD Ryzen X3D) and says how
+- [ ] *Boost now* turns on everything that was off and says how
       many; the ring shows e.g. 8/8.
 - [ ] Frame limiter: switching it on sets *Max Frame Rate* in the NVIDIA Control Panel (global) to the shown limit (138
       on a 144 Hz display); a game started afterwards stays at that limit with flat frame times; switching it off

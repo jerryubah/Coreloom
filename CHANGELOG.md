@@ -7,6 +7,19 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.4.9] - 2026-10-17
+
+The Gaming page's boost count matches its switches, and core scheduling's power plan note is no longer red.
+
+### Highlights
+
+- **The ring counts every boost.** With all nine performance boosts on, the ring now reads 9/9 (it read 8/8 because Ultimate Performance wasn't counted on a Ryzen X3D). The count follows every switch as you turn it on or off, and *Boost now* turns on every boost that's off, Ultimate Performance included.
+- **A grey power plan note.** In core scheduling's *Details*, the *Power plan* pill shows your plan in grey instead of red. Hover it, or the Ultimate Performance card, for how that plan affects AMD's core parking on a Ryzen X3D.
+
+### Feedback
+
+Something not right? [Open an issue](https://github.com/jerryubah/Coreloom/issues) with a screenshot and a CoreloomDiag report.
+
 ## [1.4.8] - 2026-10-17
 
 A tidier Gaming page and pages whose cards line up: rows of cards now start and end on one line, the CPU core scheduling card moved into its boost's Details, and the extra lines under Ultimate Performance and the shader cache are gone.

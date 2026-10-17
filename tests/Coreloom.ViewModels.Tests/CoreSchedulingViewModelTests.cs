@@ -113,13 +113,14 @@ public class CoreSchedulingViewModelTests
         Assert.Equal("Off", scheduling.StatusText);
         Assert.False(scheduling.CanTest);
 
-        // Ultimate Performance stops the core parking AMD's driver needs: advised against on hover (no extra line under
-        // the card), and not counted as a boost.
+        // Ultimate Performance stops the core parking AMD's driver needs: said on hover (no extra line under the card),
+        // and still one of the nine boosts the ring counts.
         var ultimate = page.Boosts.Single(b => b.Tweak == GamingTweak.UltimatePower);
-        Assert.False(ultimate.CountsAsBoost);
+        Assert.True(ultimate.CountsAsBoost);
         Assert.Contains("core parking", ultimate.Advice);
         Assert.Null(ultimate.Message);
-        Assert.Equal(8, page.BoostsAvailable);
+        Assert.Equal(9, page.BoostsAvailable);
+        Assert.Equal(page.Boosts.Count, page.BoostsAvailable);
 
         // The details open from the boost's Details, over the page.
         Assert.True(page.CoreSchedulingBoost.HasDetails);
@@ -132,15 +133,42 @@ public class CoreSchedulingViewModelTests
     }
 
     [Fact]
-    public async Task BoostNow_TurnsItOn_AndLeavesUltimatePerformanceOff()
+    public async Task TheRing_CountsEverySwitch_AsItIsTurnedOnOrOff()
     {
-        var (page, gaming, _, settings) = Create();
+        var (page, gaming, _, settings) = Create(gaming: g => g.Plan = new PowerPlan(Guid.NewGuid(), "Ultimate Performance", true));
+        var ultimate = page.Boosts.Single(b => b.Tweak == GamingTweak.UltimatePower);
+        Assert.Equal("2/9", page.ReadinessText); // Game Mode and no background recording
+        Assert.Equal(ColorKeys.Neutral, page.CoreScheduling.Checks.Single(c => c.Name == "Power plan").ColorKey); // grey, not red
+
+        ultimate.IsOn = true;
+        await Task.Yield();
+        Assert.Equal("3/9", page.ReadinessText);
+
+        page.CoreSchedulingBoost.IsOn = true;
+        await Task.Yield();
+        Assert.Equal("4/9", page.ReadinessText);
+
+        ultimate.IsOn = false;
+        await Task.Yield();
+        Assert.Equal("3/9", page.ReadinessText);
+        Assert.Equal("6 boosts can make your games smoother", page.HeroTitle);
+
+        await page.ApplyAllCommand.ExecuteAsync(null);
+        Assert.Equal("9/9", page.ReadinessText);
+        Assert.True(gaming.Tweaks[GamingTweak.UltimatePower].IsOn); // Boost now turns on every switch
+        Assert.Equal("Your PC is tuned for games", page.HeroTitle);
+        settings.Dispose();
+    }
+
+    [Fact]
+    public async Task BoostNow_TurnsItOn()
+    {
+        var (page, _, _, settings) = Create();
 
         await page.ApplyAllCommand.ExecuteAsync(null);
 
         Assert.True(settings.Current.Gaming.CoreScheduling);
         Assert.True(page.CoreSchedulingBoost.IsOn);
-        Assert.False(gaming.Tweaks[GamingTweak.UltimatePower].IsOn);
         Assert.True(page.AllBoostsOn);
         Assert.Equal("On · waiting for a game", page.CoreScheduling.StatusText);
         Assert.True(page.CoreScheduling.CanTest);
@@ -333,7 +361,7 @@ public class CoreSchedulingViewModelTests
         Assert.False(page.CoreSchedulingBoost.IsSupported);
         Assert.Equal("Every core on this processor has the 3D V-Cache, so there's nothing to choose between.", page.CoreSchedulingBoost.Message);
         Assert.Null(page.Boosts.Single(b => b.Tweak == GamingTweak.UltimatePower).Advice);
-        Assert.Equal(8, page.BoostsAvailable); // Ultimate Performance counts again; core scheduling doesn't
+        Assert.Equal(8, page.BoostsAvailable); // core scheduling can't be used here, so it isn't counted
         settings.Dispose();
     }
 

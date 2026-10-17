@@ -516,7 +516,7 @@ public static class CoreScheduling
             bool parks = plan.Id != PowerPlans.HighPerformance && plan.Id != PowerPlans.UltimateTemplate && !plan.Name.Contains("Ultimate", StringComparison.OrdinalIgnoreCase);
             checks.Add(parks
                 ? new CoreCheck("Power plan", plan.Name, plan.Id == PowerPlans.Balanced ? CheckState.Good : CheckState.Info, plan.Id == PowerPlans.Balanced ? "Balanced lets cores park, which AMD's driver needs." : "AMD recommends Balanced on Ryzen X3D processors.")
-                : new CoreCheck("Power plan", plan.Name, CheckState.Bad, "This plan stops core parking, which AMD's driver uses to keep games on the cache cores. Switch to Balanced."));
+                : new CoreCheck("Power plan", plan.Name, CheckState.Info, "This plan stops core parking, which AMD's driver uses to keep games on the cache cores. Balanced lets it park them."));
         }
 
         return checks;

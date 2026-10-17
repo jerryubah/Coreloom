@@ -147,6 +147,12 @@ How this change was checked in the Linux container (no Windows, no nuget.org):
 | In-place update of portable copies | File operations unit-tested on Linux (staging, copy, rollback, cleanup) | Windows specifics: the elevated helper starting without a prompt, locked files and antivirus timing, the hidden `.coreloom-update` folder, the splash while copying, `Compress-Archive` zips from the real release |
 | Per-copy trust key `HKLM\SOFTWARE\Coreloom\Updates\Copies\<id>` | Code review | Registry writes and clean-up on Windows |
 
+### 1.4.9: the boost count matches the switches, a grey power plan note
+
+- **Tests.** Core tests: 653 passed (the power plan check is now informational). View-model tests: 162 passed, with a
+  new one turning switches on and off and checking the ring (2/9, 3/9, 4/9, 3/9, then 9/9 after *Boost now*, which
+  now turns on Ultimate Performance too) and that the power plan pill is grey.
+
 ### 1.4.8: a Gaming page in clean rows, core scheduling details in its boost, cards in a row ending on one line
 
 - **Seen as rendered on Windows.** A new tool, `tools/Coreloom.PageShots`, builds the Gaming (at 1600 and 1000 DIP),

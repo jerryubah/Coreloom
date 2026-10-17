@@ -199,25 +199,19 @@ public sealed class GamingTweakViewModel : ObservableObject
     public bool HasCaveat => Caveat is not null;
 
     /// <summary>
-    /// Counted in the banner's "boosts on" and turned on by "Boost now" — not while it's advised against on this PC
-    /// (<see cref="Advice"/>).
+    /// Counted in the banner's "boosts on" and turned on by "Boost now". Every boost on the page is (since 1.4.9 also
+    /// Ultimate Performance on a Ryzen X3D), so the ring's count matches the switches: 9 of 9 when all are on.
     /// </summary>
-    public bool CountsAsBoost => _countsAsBoost && _advice is null;
+    public bool CountsAsBoost => _countsAsBoost;
 
     /// <summary>
-    /// Why this boost is better left off on this PC (Ultimate Performance on a multi-CCD Ryzen X3D, which needs core
-    /// parking), or null. Shown when the pointer rests on the card (no extra line); "Boost now" leaves it alone.
+    /// A trade-off of this boost on this PC (Ultimate Performance on a multi-CCD Ryzen X3D stops the core parking AMD's
+    /// driver uses), or null. Shown when the pointer rests on the card; it doesn't change the count or Boost now.
     /// </summary>
     public string? Advice
     {
         get => _advice;
-        internal set
-        {
-            if (SetProperty(ref _advice, value))
-            {
-                OnPropertyChanged(nameof(CountsAsBoost));
-            }
-        }
+        internal set => SetProperty(ref _advice, value);
     }
 
     /// <summary>Opens more about this boost (core scheduling's details), or null when there's nothing more.</summary>
@@ -1576,7 +1570,7 @@ public sealed class GamingViewModel : PageViewModel
 
         CoreScheduling.Refresh();
         Boosts.First(b => b.Tweak == GamingTweak.UltimatePower).Advice = CoreScheduling.ParkingMatters
-            ? "Better off on this Ryzen X3D: it stops the core parking AMD's driver uses to keep games on the cache cores. Balanced works best."
+            ? "On this Ryzen X3D, the Balanced plan lets AMD's driver park the frequency cores so games stay on the cache cores; Ultimate Performance stops core parking."
             : null;
 
         if (Settings.Current.Gaming.LastDriverVersion is null && status.DriverVersion is not null)
