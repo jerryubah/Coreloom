@@ -467,8 +467,9 @@
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
             <!-- rows of cards that start and end on one line: each row is as tall as its longest card (the short boosts
-                 share rows, the ones with a recommendation share the last), so every column ends on the same line -->
-            <c:AdaptiveGrid MinColumnWidth="320" MaxColumns="3" Spacing="12" RowSpacing="12" />
+                 share rows, the ones with a recommendation share the last), so every column ends on the same line; in two
+                 columns the ninth card spans the last row -->
+            <c:AdaptiveGrid MinColumnWidth="320" MaxColumns="3" Spacing="12" RowSpacing="12" FillLastRow="True" />
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
       </ItemsControl>

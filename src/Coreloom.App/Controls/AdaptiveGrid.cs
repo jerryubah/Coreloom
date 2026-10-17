@@ -41,6 +41,10 @@ public sealed class AdaptiveGrid : Panel
         nameof(MaxColumnWidth), typeof(double), typeof(AdaptiveGrid),
         new FrameworkPropertyMetadata(double.PositiveInfinity, FrameworkPropertyMetadataOptions.AffectsMeasure));
 
+    public static readonly DependencyProperty FillLastRowProperty = DependencyProperty.Register(
+        nameof(FillLastRow), typeof(bool), typeof(AdaptiveGrid),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsMeasure));
+
     private double[] _rowHeights = [];
     private int _columns = 1;
     private double _columnWidth;
@@ -97,6 +101,28 @@ public sealed class AdaptiveGrid : Panel
         set => SetValue(StretchRowsProperty, value);
     }
 
+    /// <summary>
+    /// Items in a last row that isn't full share its whole width, so the grid ends on one straight line (nine cards in
+    /// two columns: the ninth spans both).
+    /// </summary>
+    public bool FillLastRow
+    {
+        get => (bool)GetValue(FillLastRowProperty);
+        set => SetValue(FillLastRowProperty, value);
+    }
+
+    /// <summary>The first item of an unfull last row (when it fills its row), else the item count.</summary>
+    private static int LastRowStart(int count, int columns, bool fill) =>
+        fill && columns > 1 && count % columns != 0 ? count - (count % columns) : count;
+
+    /// <summary>Width of each item of an unfull last row that fills the row.</summary>
+    private static double LastRowWidth(int count, int columns, double columnWidth, double spacing)
+    {
+        int items = count % columns;
+        double row = (columns * columnWidth) + ((columns - 1) * spacing);
+        return items == 0 ? columnWidth : (row - ((items - 1) * spacing)) / items;
+    }
+
     protected override Size MeasureOverride(Size availableSize)
     {
         var visible = InternalChildren.Cast<UIElement>().Where(c => c.Visibility != Visibility.Collapsed).ToList();
@@ -107,9 +133,13 @@ public sealed class AdaptiveGrid : Panel
         _columns = columns;
         _columnWidth = columnWidth;
 
+        int lastRow = LastRowStart(visible.Count, columns, FillLastRow);
+        double lastWidth = LastRowWidth(visible.Count, columns, _columnWidth, spacing);
+        int visibleIndex = 0;
         foreach (UIElement child in InternalChildren)
         {
-            child.Measure(new Size(_columnWidth, double.PositiveInfinity));
+            bool wide = child.Visibility != Visibility.Collapsed && visibleIndex++ >= lastRow;
+            child.Measure(new Size(wide ? lastWidth : _columnWidth, double.PositiveInfinity));
         }
 
         int rows = visible.Count == 0 ? 0 : (int)Math.Ceiling(visible.Count / (double)columns);
@@ -144,6 +174,9 @@ public sealed class AdaptiveGrid : Panel
 
         double y = 0;
         int index = 0;
+        int count = InternalChildren.Cast<UIElement>().Count(c => c.Visibility != Visibility.Collapsed);
+        int lastRow = LastRowStart(count, _columns, FillLastRow);
+        double lastWidth = LastRowWidth(count, _columns, columnWidth, spacing);
         foreach (UIElement child in InternalChildren)
         {
             if (child.Visibility == Visibility.Collapsed)
@@ -160,7 +193,15 @@ public sealed class AdaptiveGrid : Panel
             }
 
             double height = row < _rowHeights.Length ? _rowHeights[row] + extra : child.DesiredSize.Height;
-            child.Arrange(new Rect(column * (columnWidth + spacing), y, columnWidth, height));
+            if (index >= lastRow)
+            {
+                child.Arrange(new Rect(column * (lastWidth + spacing), y, lastWidth, height));
+            }
+            else
+            {
+                child.Arrange(new Rect(column * (columnWidth + spacing), y, columnWidth, height));
+            }
+
             index++;
         }
 
