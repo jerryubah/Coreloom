@@ -474,6 +474,53 @@
               </Grid>
             </Grid>
 
+            <!-- Adaptive frame pacing (top pick): learns each game's steady frame rate and sets its limit -->
+            <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,12" Margin="0,16,0,0" BorderBrush="{DynamicResource Brush.AccentEdge}" BorderThickness="1">
+              <StackPanel>
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Margin="0,0,12,0">
+                    <WrapPanel>
+                      <TextBlock Text="Adaptive frame pacing" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                      <Border Style="{StaticResource Badge}" Background="{DynamicResource Brush.AccentSoft}" Padding="7,1">
+                        <TextBlock Text="Top pick" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
+                      </Border>
+                    </WrapPanel>
+                    <TextBlock Text="{Binding AdaptiveTags}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" Margin="0,3,0,0" TextWrapping="Wrap" />
+                  </StackPanel>
+                  <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Top" IsChecked="{Binding AdaptiveOn, Mode=TwoWay}" IsEnabled="{Binding CanToggleAdaptive}"
+                            AutomationProperties.Name="Adaptive frame pacing" />
+                </Grid>
+                <TextBlock Text="{Binding AdaptiveDescription}" Style="{StaticResource Text.Secondary}" TextWrapping="Wrap" TextTrimming="None" Margin="0,8,0,0" />
+                <Grid Margin="0,10,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Pulse}" Stroke="{DynamicResource Brush.Accent}" VerticalAlignment="Top" Margin="0,1,8,0" />
+                  <TextBlock Grid.Column="1" Text="{Binding Adaptive.StatusText}" FontSize="12" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
+                </Grid>
+                <TextBlock Text="{Binding Adaptive.LastChangeText}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="22,4,0,0"
+                           Visibility="{Binding Adaptive.HasLastChange, Converter={StaticResource BoolToVisibility}}" />
+                <Grid Margin="0,12,0,0" Visibility="{Binding ShowFrameGeneration, Converter={StaticResource BoolToVisibility}}">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                    <TextBlock Text="{Binding FrameGenerationLabel}" Style="{StaticResource Text.Label}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="As set in the game's options: limits stay in whole rendered frames, at least 40 a second." Style="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="0,2,0,0" />
+                  </StackPanel>
+                  <ComboBox Grid.Column="1" Style="{StaticResource ComboBox.Default}" MinWidth="200" ItemsSource="{Binding FrameGenerationOptions}" DisplayMemberPath="Label"
+                            SelectedValuePath="Value" SelectedValue="{Binding SelectedFrameGeneration}" AutomationProperties.Name="Frame generation" VerticalAlignment="Center" />
+                </Grid>
+                <TextBlock Text="{Binding AdaptiveMethodText}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="0,10,0,0" />
+              </StackPanel>
+            </c:SquircleBorder>
+
             <!-- What the limit applies to: every game, or one game (its own driver profile) -->
             <StackPanel Margin="0,16,0,0" Visibility="{Binding IsSupported, Converter={StaticResource BoolToVisibility}}">
               <Grid>

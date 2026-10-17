@@ -315,6 +315,96 @@ public sealed class FramePacerViewModel : ObservableObject
     public FramePacerViewModel(GamingViewModel page)
     {
         _page = page;
+        FrameGenerationOptions =
+        [
+            new(1, "Off"),
+            new(2, "2× (DLSS or FSR frame generation)"),
+            new(3, "3× (multi frame generation)"),
+            new(4, "4× (multi frame generation)"),
+        ];
+        page.Adaptive.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(AdaptivePacingController.IsBusy) or nameof(AdaptivePacingController.IsOn))
+            {
+                OnPropertyChanged(nameof(AdaptiveOn));
+                OnPropertyChanged(nameof(CanToggleAdaptive));
+                OnPropertyChanged(nameof(ShowFrameGeneration));
+            }
+            else if (e.PropertyName is nameof(AdaptivePacingController.GameName))
+            {
+                OnPropertyChanged(nameof(ShowFrameGeneration));
+                OnPropertyChanged(nameof(FrameGenerationLabel));
+                OnPropertyChanged(nameof(SelectedFrameGeneration));
+            }
+        };
+    }
+
+    // ---- Adaptive frame pacing ------------------------------------------------------------------------------
+
+    /// <summary>The engine behind the adaptive pacing switch (its status and last change are bound directly).</summary>
+    public AdaptivePacingController Adaptive => _page.Adaptive;
+
+    public string AdaptiveTags => "Frame stability · 1% lows · Smoothness";
+
+    public string AdaptiveDescription => "An intelligent engine that monitors actual frame times and automatically finds a stable FPS target for each game.";
+
+    /// <summary>The switch: on lets adaptive pacing set each game's limit as it plays; off removes the limits it set.</summary>
+    public bool AdaptiveOn
+    {
+        get => Adaptive.IsOn;
+        set
+        {
+            if (value != AdaptiveOn && CanToggleAdaptive)
+            {
+                _ = Adaptive.SetEnabledAsync(value);
+            }
+        }
+    }
+
+    public bool CanToggleAdaptive => _page.IsSupported && !Adaptive.IsBusy;
+
+    /// <summary>How it works, and what it can't do here.</summary>
+    public string AdaptiveMethodText => IsSupported
+        ? "While a library game plays, Coreloom measures each frame (Windows' graphics events, nothing added to the game), finds the frame rate it holds with steady 1% lows over the last two minutes, and sets that game's own limit in the NVIDIA driver: a step at a time, at most 15 % lower or 10 % higher, and never again until the change shows. It stays under your refresh rate with G-SYNC or FreeSync, and works in whole rendered frames with frame generation. A limit you set for a game is left alone; turning this off removes the limits it set."
+        : "While a library game plays, Coreloom measures each frame and works out the frame rate it holds with steady 1% lows. Setting the limit needs an NVIDIA driver, so here it suggests one to set in AMD Software (Frame Rate Target Control) or in the game.";
+
+    /// <summary>The game whose frame generation is shown: the one picked under "Apply to", else the one being paced.</summary>
+    private string? FrameGenerationGameId => IsGameScope ? _scope : Adaptive.GameId;
+
+    public bool ShowFrameGeneration => Adaptive.IsOn && FrameGenerationGameId is not null;
+
+    public string FrameGenerationLabel
+    {
+        get
+        {
+            string? id = FrameGenerationGameId;
+            string name = id is null ? "this game" : _page.FindGame(id)?.Name ?? Adaptive.GameName ?? "this game";
+            return $"Frame generation in {name}";
+        }
+    }
+
+    public IReadOnlyList<Option<int>> FrameGenerationOptions { get; }
+
+    /// <summary>
+    /// Frames shown per frame rendered in the game (set in the game's options; Coreloom can't see it): adaptive pacing
+    /// keeps whole rendered frames and at least 40 of them a second.
+    /// </summary>
+    public int SelectedFrameGeneration
+    {
+        get => FrameGenerationGameId is { } id ? _page.Store.Current.Gaming.PacingFor(id)?.FrameGeneration ?? 1 : 1;
+        set
+        {
+            value = Math.Clamp(value, 1, 4);
+            if (FrameGenerationGameId is not { } id || value == SelectedFrameGeneration)
+            {
+                return;
+            }
+
+            string name = _page.FindGame(id)?.Name ?? Adaptive.GameName ?? id;
+            _page.Store.Update("Gaming", s => AdaptivePacingController.Learned(s.Gaming, id, name).FrameGeneration = value);
+            Adaptive.FrameGenerationChanged(id);
+            OnPropertyChanged();
+        }
     }
 
     private GamingStatus Status => _page.CurrentStatus;
@@ -624,7 +714,7 @@ public sealed class FramePacerViewModel : ObservableObject
             .Select(c => new GameCapChip(
                 c.GameId,
                 c.Name,
-                $"{c.Fps.ToString(CultureInfo.CurrentCulture)} FPS",
+                c.Adaptive ? $"{c.Fps.ToString(CultureInfo.CurrentCulture)} FPS · adaptive" : $"{c.Fps.ToString(CultureInfo.CurrentCulture)} FPS",
                 new RelayCommand(() => SelectedScope = c.GameId),
                 new AsyncRelayCommand(() => _page.SetGameFramePacerAsync(c.GameId, 0, c.Choice))))
             .ToList();
@@ -647,6 +737,12 @@ public sealed class FramePacerViewModel : ObservableObject
         OnPropertyChanged(nameof(ScopeText));
         OnPropertyChanged(nameof(MethodText));
         OnPropertyChanged(nameof(ForeignLimitText));
+        OnPropertyChanged(nameof(AdaptiveOn));
+        OnPropertyChanged(nameof(CanToggleAdaptive));
+        OnPropertyChanged(nameof(AdaptiveMethodText));
+        OnPropertyChanged(nameof(ShowFrameGeneration));
+        OnPropertyChanged(nameof(FrameGenerationLabel));
+        OnPropertyChanged(nameof(SelectedFrameGeneration));
     }
 }
 
@@ -683,6 +779,7 @@ public sealed class GamingViewModel : PageViewModel
         : base("gaming", "Gaming", "Icon.Controller", context)
     {
         _service = context.Tools.Gaming;
+        Adaptive = new AdaptivePacingController(this);
         FramePacer = new FramePacerViewModel(this);
         Boosts =
         [
@@ -779,6 +876,9 @@ public sealed class GamingViewModel : PageViewModel
         : "Limit now: the driver's default";
 
     public FramePacerViewModel FramePacer { get; }
+
+    /// <summary>Adaptive frame pacing: learns each game's steady frame rate while it plays and sets the game's limit.</summary>
+    public AdaptivePacingController Adaptive { get; }
 
     /// <summary>Every switch on the page.</summary>
     private IEnumerable<GamingTweakViewModel> AllTweaks => Boosts;
@@ -1035,6 +1135,9 @@ public sealed class GamingViewModel : PageViewModel
         await Task.WhenAll(ScanAsync(), RefreshStatusAsync(force: true));
         await CheckRunningAsync();
     }
+
+    /// <summary>Loads the library and settings once (adaptive pacing needs them before the page has been opened).</summary>
+    internal Task EnsureLoadedAsync() => IsLoaded || IsScanning ? Task.CompletedTask : LoadAsync();
 
     protected override void OnActivated()
     {
@@ -1540,17 +1643,39 @@ public sealed class GamingViewModel : PageViewModel
             : result.Message;
     }
 
+    /// <summary>Sets (fps &gt; 0) or removes a game's own limit from the frame limiter card, with its busy state and message.</summary>
+    internal async Task SetGameFramePacerAsync(string gameId, int fps, int choice)
+    {
+        string name = FindGame(gameId)?.Name ?? Settings.Current.Gaming.CapFor(gameId)?.Name ?? "This game";
+        FramePacer.IsBusy = true;
+        FramePacer.Message = null;
+        TweakResult result;
+        try
+        {
+            result = await ApplyGameCapAsync(gameId, fps, choice, adaptive: false);
+        }
+        finally
+        {
+            FramePacer.IsBusy = false;
+        }
+
+        FramePacer.Refresh();
+        bool runningNow = _running is not null && string.Equals(_running.Game.Id, gameId, StringComparison.OrdinalIgnoreCase);
+        FramePacer.Message = !result.Success ? result.Message
+            : fps > 0 && runningNow ? $"Restart {name} to apply the new limit."
+            : null;
+    }
+
     /// <summary>
     /// Sets (fps &gt; 0) or removes a game's own limit: finds the game's programs, sets the limit in the driver's profile
     /// for them, and remembers it (so it shows, can be removed, and the overlay knows the game is paced).
+    /// <paramref name="adaptive"/> marks a limit set by adaptive pacing (which changes only its own limits).
     /// </summary>
-    internal async Task SetGameFramePacerAsync(string gameId, int fps, int choice)
+    internal async Task<TweakResult> ApplyGameCapAsync(string gameId, int fps, int choice, bool adaptive)
     {
         var game = FindGame(gameId);
         var existing = Settings.Current.Gaming.CapFor(gameId);
         string name = game?.Name ?? existing?.Name ?? "This game";
-        FramePacer.IsBusy = true;
-        FramePacer.Message = null;
         TweakResult result;
         IReadOnlyList<string> programs = existing?.Executables ?? [];
         try
@@ -1567,10 +1692,6 @@ public sealed class GamingViewModel : PageViewModel
         {
             result = new TweakResult(false, "The graphics driver didn't accept the change.");
         }
-        finally
-        {
-            FramePacer.IsBusy = false;
-        }
 
         if (result.Success)
         {
@@ -1581,16 +1702,13 @@ public sealed class GamingViewModel : PageViewModel
                 s.Gaming.GameFrameCaps.RemoveAll(c => string.Equals(c.GameId, gameId, StringComparison.OrdinalIgnoreCase));
                 if (limit > 0)
                 {
-                    s.Gaming.GameFrameCaps.Add(new GameFrameCap { GameId = gameId, Name = name, Choice = choice, Fps = limit, Executables = saved });
+                    s.Gaming.GameFrameCaps.Add(new GameFrameCap { GameId = gameId, Name = name, Choice = choice, Fps = limit, Executables = saved, Adaptive = adaptive });
                 }
             });
         }
 
         FramePacer.Refresh();
-        bool runningNow = _running is not null && string.Equals(_running.Game.Id, gameId, StringComparison.OrdinalIgnoreCase);
-        FramePacer.Message = !result.Success ? result.Message
-            : fps > 0 && runningNow ? $"Restart {name} to apply the new limit."
-            : null;
+        return result;
     }
 
     private async Task ApplyAllAsync()

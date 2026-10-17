@@ -36,6 +36,19 @@ public sealed class GamingSettings
     /// <summary>Games added by hand (since 1.4.6).</summary>
     public List<CustomGame> CustomGames { get; set; } = [];
 
+    /// <summary>
+    /// Adaptive frame pacing (since 1.4.6): while a library game plays, Coreloom measures its frame times and sets the
+    /// game's own limit to a frame rate it sustains steadily. Off until the user turns it on.
+    /// </summary>
+    public bool AdaptivePacing { get; set; }
+
+    /// <summary>What adaptive pacing learned per game (its limit, frame generation, a limit it couldn't hold).</summary>
+    public List<AdaptivePacingGame> AdaptivePacingGames { get; set; } = [];
+
+    /// <summary>What adaptive pacing knows about a game, or null.</summary>
+    public AdaptivePacingGame? PacingFor(string gameId) =>
+        AdaptivePacingGames.FirstOrDefault(g => string.Equals(g.GameId, gameId, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>The game's own limit, or null.</summary>
     public GameFrameCap? CapFor(string gameId) =>
         GameFrameCaps.FirstOrDefault(c => string.Equals(c.GameId, gameId, StringComparison.OrdinalIgnoreCase));
@@ -66,6 +79,7 @@ public sealed class GamingSettings
     {
         ShaderCacheSize = Gaming.ShaderCacheSize.Normalize(ShaderCacheSize);
         CustomGames = Gaming.CustomGames.Normalize(CustomGames);
+        AdaptivePacingGames = AdaptivePacingGame.Normalize(AdaptivePacingGames);
         if (!Enum.IsDefined(LibraryView))
         {
             LibraryView = GameLibraryView.List;

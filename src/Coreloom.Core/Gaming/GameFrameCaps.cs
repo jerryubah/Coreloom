@@ -16,6 +16,9 @@ public sealed class GameFrameCap
 
     /// <summary>The game's program files the driver matches ("Cyberpunk2077.exe").</summary>
     public List<string> Executables { get; set; } = [];
+
+    /// <summary>Set by adaptive frame pacing (since 1.4.6) rather than by hand; adaptive pacing only changes limits it set.</summary>
+    public bool Adaptive { get; set; }
 }
 
 /// <summary>Which program files are a game, so the driver's per-program limit reaches it.</summary>

@@ -54,6 +54,7 @@ public partial class App : Application
     private WindowsDeviceService? _devices;
     private Overlay.EtwFrameRateSource? _frameRates;
     private Services.GamingModeService? _gamingMode;
+    private Services.AdaptivePacingService? _adaptivePacing;
     private bool _telemetryThreadRegistered;
     private HttpClient? _http;
     private UpdatesViewModel? _updates;
@@ -421,6 +422,15 @@ public partial class App : Application
         _gamingMode = new Services.GamingModeService(shell, () => _window, () => settingsService.Current.Monitoring.LighterWhileGaming, Dispatcher);
         _gamingMode.Start();
 
+        // Adaptive frame pacing (does nothing until turned on in Gaming › Frame limiter).
+        if (_frameRates is not null)
+        {
+            _adaptivePacing = new Services.AdaptivePacingService(shell, _gamingMode, _frameRates, () => settingsService.Current.Gaming.AdaptivePacing,
+                () => host.Engine.LatestFrame.TryGetValue(MetricIds.GpuLoad(settingsService.Current.Monitoring.PreferredGpuSlot ?? host.PrimaryGpuSlot), out double load) ? load : double.NaN,
+                Dispatcher);
+            _adaptivePacing.Start();
+        }
+
         if (startHidden)
         {
             shell.SetWindowVisible(false);
@@ -769,6 +779,8 @@ public partial class App : Application
             }
 
             _settings?.Flush();
+            _adaptivePacing?.Dispose();
+            _adaptivePacing = null;
             _gamingMode?.Dispose();
             _gamingMode = null;
             _overlay?.Dispose();
