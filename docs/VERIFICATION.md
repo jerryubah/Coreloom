@@ -160,6 +160,8 @@ How this change was checked in the Linux container (no Windows, no nuget.org):
 - **Tests.** View-model tests: 161 passed (the core scheduling tests now also check the Details command, the boost's
   test and result note, and the Ultimate Performance advice as a tooltip instead of a line). `Coreloom.App` compiles
   and the XAML checks pass (20 files, 242 shared keys, 1,329 bindings).
+- **GitHub Actions.** Branch CI on `release-1.4.8` and `release-1.4.8-b` passed: 891 tests on Windows each time (Core
+  653, view models 161, Hardware 77), none skipped, and the Linux tests.
 
 ### 1.4.7: intelligent CPU core scheduling, a movable and sizable overlay, cards that fit their content, a compact AMD card
 
