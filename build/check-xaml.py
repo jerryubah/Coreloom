@@ -230,6 +230,17 @@ def main() -> int:
             if key not in all_keys and key not in local_keys:
                 problems.add(path, f"DynamicResource '{key}' is not defined anywhere (and not created by ThemeService)")
 
+    # ---- a property set twice -------------------------------------------------------------------
+    # An attribute and a property element for the same property (Style="…" and <TextBlock.Style>) compiles in the
+    # XAML checker here but fails the real XAML compiler ("property has already been set and can be set only once").
+    for path, tree in trees.items():
+        for element in tree.iter():
+            attributes = {name.split("}")[-1] for name in element.attrib}
+            for child in element:
+                child_tag = child.tag.split("}")[-1]
+                if "." in child_tag and child_tag.split(".", 1)[1] in attributes:
+                    problems.add(path, f"{child_tag} is set both as an attribute and as a property element")
+
     # ---- array-typed dependency properties ------------------------------------------------------
     # The XAML compiler rejects array-typed properties inside DataTemplate/ControlTemplate sections ("Tags of type
     # 'PropertyArrayStart' are not supported in template sections"), even when the value is a {Binding}. Custom
