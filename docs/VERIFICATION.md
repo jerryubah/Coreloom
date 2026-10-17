@@ -147,6 +147,39 @@ How this change was checked in the Linux container (no Windows, no nuget.org):
 | In-place update of portable copies | File operations unit-tested on Linux (staging, copy, rollback, cleanup) | Windows specifics: the elevated helper starting without a prompt, locked files and antivirus timing, the hidden `.coreloom-update` folder, the splash while copying, `Compress-Archive` zips from the real release |
 | Per-copy trust key `HKLM\SOFTWARE\Coreloom\Updates\Copies\<id>` | Code review | Registry writes and clean-up on Windows |
 
+### 1.4.6: process-level memory logs, a log viewer, games added by hand, lighter monitoring, AMD details, adaptive frame pacing
+
+- **Core tests: 601 passed** (99 new: `LogAndMemoryTrimTests`, `CustomGameTests`, the lighter-monitoring cases in
+  `TelemetryEngineTests`, `CpuIdTests`, `AmdProcessorTests`, `AmdTuningTests`, `PacingSecondTests`,
+  `PacingLimitsTests`, `AdaptivePacingSessionTests`). **View-model tests: 145 passed** (19 new: the log viewer, the
+  memory card's process list, adding and editing games, gaming in front making monitoring lighter, the AMD card and
+  adaptive pacing against a fake driver). The sensor-mapping tests (64, including the new AMD SMU and SVI2 names,
+  taken from LibreHardwareMonitor 0.9.6's own source) also pass here, built against the release's
+  LibreHardwareMonitor assembly. `Coreloom.App` and `Coreloom.Hardware` compile (0 errors, 0 warnings) and the XAML
+  checks pass (20 files, 242 shared keys, 1,243 bindings).
+- **Overhead was not measured on a game PC.** There is no Windows PC with a GPU here, let alone a Ryzen 4000 / GTX
+  1650 one, so no "with and without Coreloom" frame rates were taken. What was done: the gaming-in-front path is
+  unit-tested (slower polling without resizing history, below-normal thread priority, no page updates while a game
+  covers the window), and *Settings › Diagnostics* now shows what each part of Coreloom costs (from each thread's
+  processor time), so the comparison in TESTING-ON-YOUR-PC.md can be made on that PC, the overlay on its own included.
+- **AMD readings depend on the processor.** Which SMU readings exist comes from LibreHardwareMonitor 0.9.6's tables
+  (read from its source): one firmware version each of the Ryzen 2000 APU, Ryzen 3000, Ryzen 5000 and Ryzen
+  7000/9000 desktop tables, so TDC/EDC/PPT depend on the processor and its BIOS; none of the SMU table on Ryzen 4000
+  (Renoir) processors, which still get package power, clocks and temperatures. The
+  CPUID decoding is tested with register values, not on AMD hardware.
+- **Adaptive pacing and the driver.** Whether the NVIDIA driver applies a changed per-program limit to a game that is
+  already running isn't known here; the engine checks the frames after each change and, if they don't show it,
+  waits for the game's next start rather than changing again.
+
+| Change | What was done here | Not verified here |
+|---|---|---|
+| Memory clean-up per process | Unit tests (outcomes, reasons, totals, log lines); view-model test of the list and filter | `K32EmptyWorkingSet` and `K32GetProcessMemoryInfo` on his PC; protected processes failing as expected |
+| Log viewer | Parsing and filtering unit-tested; view-model tests | Reading a log that is being written on Windows |
+| Games added by hand | Unit tests (ids, paths, names, broad folders, matching the running program); view-model tests | The open-file dialogs, icons, launching and per-program limits on Windows |
+| Lighter monitoring while gaming | Unit tests; Diagnostics parts compile | Frame rates with and without Coreloom on the Ryzen 4000 / GTX 1650 PC |
+| AMD card | Unit tests (CPUID, models, stock PPT, PBO inference, controls); view-model tests | Readings on real Ryzen processors with PawnIO |
+| Adaptive frame pacing | Unit tests of the engine (learning, set, lower, raise, hysteresis, verify, frame generation); view-model tests with a fake driver | Real games: ETW frame times, the driver taking the limit live or at the next start |
+
 ### 1.4.5: the frame-time graph on screen, no frame limiter mark
 
 - **Why the graph didn't show (1.4.3–1.4.4).** A new Windows test (`OverlayVisibilityTests`) puts a WPF window set up

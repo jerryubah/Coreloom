@@ -7,6 +7,36 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.4.6] - 2026-10-17
+
+Adaptive frame pacing, games you add yourself, a log viewer with every process the memory clean-up touched, lighter monitoring while you play, and a detailed AMD processor card.
+
+### Highlights
+
+- **Adaptive frame pacing (Top pick).** A new switch at the top of Gaming › *Frame limiter*: "an intelligent engine that monitors actual frame times and automatically finds a stable FPS target for each game" (frame stability · 1% lows · smoothness). While a library game plays, Coreloom measures every frame, finds the frame rate the game holds with steady 1% lows over the last two minutes, and sets that game's own limit in the NVIDIA driver. It moves a step at a time (at most 15 % down, 10 % up, and only up when the graphics card has room), never back to a limit the game couldn't hold, and not again until a change shows in the frames. It stays just under your refresh rate with G-SYNC or FreeSync, and with frame generation (set per game: 2×, 3×, 4×) it keeps whole rendered frames and at least 40 of them a second. It's off until you turn it on, leaves alone any game you gave a limit yourself, and turning it off removes the limits it set. Without an NVIDIA driver it suggests a limit instead.
+- **Add games by hand.** *Add game* on the Gaming page: pick the game's .exe, give it a name (one is suggested), a picture or the program's icon, and optional launch options. It shows as "Added by you", is recognised when it runs, gets the overlay's frame counter and its own frame limit like any other game, and can be edited or removed.
+- **See every process the memory clean-up touched.** *Free up RAM* now lists each process with its PID, memory before and after and what was reclaimed, or why it was skipped or failed, with a trimmed / skipped / failed filter. Coreloom only trims; it never ends a process, and the totals say so.
+- **A log viewer.** *Settings › Logs* (or *Open logs* on the memory card, or *View logs* in Diagnostics): every entry with its time, a search box, level and category filters, and copy and open-folder buttons.
+- **Lighter while you play.** With a game in front, Coreloom reads sensors less often (every 2 s by default; 1 s, 2 s or 5 s, and never slower than 1 s while the overlay shows readings), at low priority, gives the game priority and stops redrawing its window behind the game. The sensor refresh interval is now labelled from 0.25 s to 5 s (lightest), and *Settings › Diagnostics* shows what each part of Coreloom costs: sensor reading, the window, the overlay's graph and its frame counter.
+- **AMD processor details.** The Processor page gains an *AMD processor* card: architecture and codename (Zen to Zen 5, e.g. "Zen 2 · Renoir"), laptop or desktop, the CPUID family and model, and instruction sets and features. Where the processor reports them: PPT, TDC, EDC, cores/SoC power, SoC voltage and current, fabric, memory-controller and memory clocks, SoC and I/O-die temperatures; the others are listed with why. *Limits and tuning* shows AMD's stock power limit for desktop models, says whether Precision Boost Overdrive looks on (from package power over the last hour), and shows Curve Optimizer, Eco mode and manual clocks as unavailable with where to change them. It's read-only: Coreloom never changes processor tuning.
+- **Boost and throttling on every processor.** New *Boost* (how far above base the processor runs) and *Performance limit* (under 100 % when power, heat or Windows' power policy holds it back) readings, and the processor's instruction sets and features under Specifications.
+
+### In detail
+
+- Adaptive pacing reads frames the same way as the overlay (Windows' graphics events; nothing is added to games) and only while it's on and a game is in front. Loading screens and pauses are left out. Each limit it sets, each session's result and why are written to the log (*Gaming*), and the limit shows as "· adaptive" under *Apply to*. Whether the driver applies a changed limit to a game that's already running depends on the game; when the frames don't show it, adaptive pacing waits for the game's next start.
+- Memory clean-up skips the app in front, Coreloom and the Windows processes the desktop needs before opening them, and names the reason when Windows refuses (for example a protected process). Every process is also written to the log.
+- AMD readings come from LibreHardwareMonitor (as administrator with PawnIO); which ones exist depends on the processor and its BIOS. Ryzen 4000 processors get package power, clocks and temperatures, but LibreHardwareMonitor has no SMU table for them, so TDC, EDC and PPT show as not reported. The stock limit is AMD's 1.35 × TDP for desktop models; laptop limits are set by the laptop's maker and aren't reported to Windows.
+- Games added by hand are matched by their exact program first, and never by a broad folder such as the Desktop or Downloads.
+
+### What wasn't measured
+
+- The effect on frame rates with and without Coreloom on a lower-end PC (Ryzen 4000, GTX 1650) couldn't be measured here; *Settings › Diagnostics* now shows the numbers, and [TESTING-ON-YOUR-PC.md](docs/TESTING-ON-YOUR-PC.md) has the steps to compare.
+- Adaptive pacing, the AMD card and the new memory list are tested against recorded and simulated data, not yet on real games and Ryzen processors.
+
+### Feedback
+
+Something not right? [Open an issue](https://github.com/jerryubah/Coreloom/issues) with a screenshot and a CoreloomDiag report, or copy the lines from *Settings › Logs*.
+
 ## [1.4.5] - 2026-10-16
 
 The frame-time graph is back in the in-game overlay, and the frame limiter's mark next to FPS is gone.

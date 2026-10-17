@@ -55,6 +55,16 @@ layer calls Windows sensor APIs, so most of the logic is testable on any OS.
      a lost driver is detected within three polls and NVML is re-initialized. Unsupported queries are
      simply dropped. After sleep and resume, the app asks for a full re-initialization.
    - **Disabled sections** (*Settings → Monitoring*) are skipped entirely.
+   - **Lighter while gaming (1.4.6).** `GamingModeService` (app, every 2 s with a few window calls) decides whether a
+     game is in front (`AdaptiveMonitoring.IsGameInFront`, Core: a program other than Coreloom filling its screen, not
+     the desktop or taskbar, or a library game) and calls `ShellViewModel.SetGameInFront`. With *Lighter monitoring
+     while gaming* on (default), `TelemetryEngine.TemporaryInterval` slows polling to the gaming interval (2 s
+     default; 1, 2 or 5 s; at most 1 s while the overlay shows readings) without resizing history, `LowPriority`
+     drops the telemetry thread to below normal, `ProcessPriority.GiveWay` lowers Coreloom's process priority, and the
+     shell stops page updates while the game covers the main window. The telemetry thread runs at normal priority
+     (above normal before 1.4.6). `OverheadMeters` registers Coreloom's own threads (sensor reading, window and
+     overlay text, the overlay's graph and frame counter) and reads their processor time (`GetThreadTimes`) for
+     *Settings › Diagnostics*.
 5. **Frame delivery.** `App` subscribes to `FrameProduced`.
    - Alert rules are evaluated right there, on the telemetry thread, so alerts work while the window is
      hidden.
@@ -330,7 +340,14 @@ default `UnsupportedOptimizeService` makes the page explain itself where it can'
   actions are disabled.
 - **Memory.** `K32EmptyWorkingSet` on every process it may open except the foreground app, Coreloom and Windows' core
   processes; optionally the standby list is purged (`NtSetSystemInformation`, `SeProfileSingleProcessPrivilege`).
-  The result is available memory after a short settle minus before.
+  The result is available memory after a short settle minus before. Since 1.4.6 each process is a `MemoryTrimEntry`
+  (Core, `MemoryTrim`): trimmed (working set before and after from `K32GetProcessMemoryInfo`, and what was
+  reclaimed), skipped (with why, decided before the process is opened) or failed (the Windows error in words); nothing
+  is ever ended, so "ended" is always 0. Every entry is logged as `Memory: …` under *Optimize*, with a summary line;
+  the memory card lists them with a trimmed/skipped/failed filter and *Open logs*.
+- **Logs (1.4.6).** `LogFile` (Core) reads Coreloom's rolling log files (shared read, newest 20,000 lines) back into
+  `LogRecord`s; `LogViewerViewModel` (*Settings › Logs*) filters by text, lowest level and category, shows the newest
+  1,500, and copies or opens the folder. `PageContext.OpenLogs` lets a page open it pre-filtered.
 - **Speed.** Startup apps from the Run keys (user, machine, 32-bit) and both Startup folders, switched off and on with
   the same `StartupApproved` values Task Manager writes (`StartupApproved`, Core). Maintenance runs
   `DnsFlushResolverCache` and `defrag.exe /C /O /H`.
@@ -463,9 +480,56 @@ version seen; `DownloadArtwork` is only kept for older settings files).
   (`CreateProfile`, `CreateApplication`), sets `FRL_FPS` there and saves; removing deletes the setting and an emptied
   Coreloom profile. `GamingSettings.GameFrameCaps` remembers each game's limit and programs, and `GlobalFrameCap` the
   all-games limit last read, for the chips and the overlay.
+- **Games added by hand (1.4.6).** `CustomGame` entries (`GamingSettings.CustomGames`, normalized by `CustomGames`,
+  Core, with Windows paths parsed by hand so the tests run on Linux) become `GameEntry`s of `GameStore.Custom` ("Added
+  by you"), merged ahead of launcher games. `GameEditorViewModel` adds, edits and removes them (program picked with an
+  open-file dialog, name suggested from the program's version info, picture or the program's icon). `FindRunning`
+  matches a custom game by its exact program first, and never by a broad folder (Desktop, Downloads, a drive root);
+  `GameExecutables.Pick` puts the chosen program first for its own limit.
+- **Adaptive frame pacing (1.4.6).** Off until the user turns on its switch (`GamingSettings.AdaptivePacing`).
+  `AdaptivePacingService` (app) ticks once a second: the game in front from `GamingModeService`, its newest second of
+  frames from the shared ETW frame-rate source (leased as "adaptive pacing", released 30 s after the last game), and
+  the graphics card's utilization. `PacingSecond.From` (Core) sums up a second (frame rate, median and 99th
+  percentile frame time, spikes over 1.6× the median, the longest frame). `AdaptivePacingController` (view model)
+  maps the program to a library game, leaves alone a game with a limit the user set, and runs an
+  `AdaptivePacingSession` (Core, unit-tested): two minutes of seconds (under 10 FPS or with a frame over 500 ms left
+  out); after 45 s the sustainable rate is the frame rate reached in 80 % of seconds, but no more than the median 1%
+  low ÷ 0.85; `PacingLimits` snaps it under the refresh rate (G-SYNC/FreeSync: `FrameCap.AutoTarget`, steps of 5) or
+  to a whole fraction of it (fixed refresh), in whole rendered frames and at least 40 rendered frames a second with
+  frame generation (set per game: 2×, 3×, 4×). A game without a limit gets that; one missing its limit (median under
+  97 %, more than 10 % of seconds under 95 %, or 1% lows under 80 %) is lowered by at most 15 %; one holding it with
+  the graphics card under 70 % busy is raised by up to 10 %, never to or above a limit it failed before
+  (`FailedAt`); changes under 5 % are skipped. After a change 12 s of frames show whether the driver took it: if not,
+  nothing more changes until the game's next start. Limits go through `ApplyGameCapAsync` (the per-game path above)
+  marked `GameFrameCap.Adaptive`; turning the switch off removes those. `GamingSettings.AdaptivePacingGames` keeps
+  what was learned (limit, failed limit, sustained rate, frame generation, sessions). Without an NVIDIA driver it
+  suggests the limit instead. Each change and session end is logged under *Gaming*.
 - **Shader cache.** NVAPI's `PS_SHADERDISKCACHE_MAX_SIZE` (0xFFFFFFFF = unlimited; off restores the driver default),
   sizes of the DirectX, NVIDIA, AMD, Intel and Steam pre-cache folders (`ShaderCaches.Locations`), and a notice when
   the driver version (NVAPI) differs from the last one seen. Nothing is pre-compiled by running code in games.
+
+## Processor details (1.4.6)
+
+- **CPUID.** `CpuIdNative` (Hardware) runs CPUID through `X86Base.CpuId` (no driver, no rights); `CpuIdInfo.Read`
+  (Core, unit-tested with register values) decodes vendor, family/model/stepping (extended fields), the brand string,
+  instruction sets (SSE4.2, AVX, AVX2, AVX-512, FMA3, AES, SHA, BMI, VAES) and features (AMD: Core Performance Boost
+  0x80000007 EDX bit 9, hardware P-states bit 7, invariant TSC bit 8, effective-frequency bit 10, RAPL bit 14, CPPC
+  0x80000008 EBX bit 27; Intel: Turbo and HWP from leaf 6). `CpuProvider` adds them to the processor's properties
+  (`CPUID` is "Family 17h · model 60h · stepping 1", read back by `CpuSignature.TryParse`).
+- **Every processor.** PDH's `% Processor Performance` (boost, the clock relative to base) and `% Performance Limit`
+  (under 100 % when power, heat or policy holds the processor back) are published as `cpu/performance` and
+  `cpu/perf-limit`.
+- **AMD.** `AmdProcessors` (Core) maps family 17h/19h/1Ah model ranges to architecture and codename (Zen to Zen 5),
+  the model suffix to desktop, desktop with graphics, laptop or handheld, and desktop models to AMD's rated TDP and
+  stock PPT (1.35 × TDP). `SensorMapping.MapCpu` publishes LibreHardwareMonitor's SMU power-table and SVI2 sensors
+  where the processor has them (LibreHardwareMonitor 0.9.6 has the layout of one firmware version each of the Ryzen
+  2000 APU, Ryzen 3000, Ryzen 5000 and Ryzen 7000/9000 desktop tables): `cpu/power/ppt`, `cpu/current/tdc`, `cpu/current/edc`, cores/SoC/misc power, SoC current
+  and voltage, `cpu/clock/fabric`, `uncore`, `memory`, SoC and I/O-die temperatures; `CpuProvider` gives each a reason
+  when missing. `AmdProcessorViewModel` shows the ones reported and groups the others by reason. `AmdTuning` (Core)
+  compares the last hour of PPT (or package power) with the stock limit to say whether PBO looks on (three readings
+  over 108 %), held at stock (five near it) or not known yet, and lists power limits, PBO, Curve Optimizer, Eco mode
+  and manual tuning, each read-only or unavailable (`TuningControl.CanChange` is always false) with where to change
+  it. Nothing writes to the SMU.
 
 ## Sensor columns and nested scrolling
 

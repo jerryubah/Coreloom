@@ -158,7 +158,7 @@ public sealed class CpuProvider : ITelemetryProvider
         if (cpuid.IsAmd || vendorIsAmd(cpuName))
         {
             string smu = context.Capabilities.LowLevelSensorsAccessible
-                ? "Not in this processor's SMU power table as LibreHardwareMonitor reads it (it knows the tables of some Ryzen 3000 and 5000 desktop models and of Ryzen 7000 and 9000)."
+                ? "Not in this processor's SMU power table as LibreHardwareMonitor reads it: it knows one firmware version each of the Ryzen 2000 APU, Ryzen 3000, Ryzen 5000 and Ryzen 7000/9000 desktop tables, so it depends on the processor and its BIOS."
                 : lowLevelReason;
             foreach (string id in new[] { MetricIds.CpuPpt, MetricIds.CpuTdc, MetricIds.CpuEdc, MetricIds.CpuCoresPower, MetricIds.CpuSocPower, MetricIds.CpuMiscPower,
                 MetricIds.CpuSocCurrent, MetricIds.CpuFabricClock, MetricIds.CpuUncoreClock, MetricIds.CpuMemoryClock, MetricIds.CpuSocTemperature, MetricIds.CpuIodTemperature })

@@ -340,6 +340,74 @@ Work through each area and tick what works.
       Auto HDR*. With HDR off it says to turn on HDR; without an HDR display it explains it can't be used. *Boost now*
       leaves Auto HDR alone and the ring counts the other boosts (e.g. 8/8).
 
+**New in 1.4.6**
+
+*Memory clean-up and logs*
+
+- [ ] Smart Optimize › *Free up RAM*: after it runs, *Process details* lists every process with PID, memory before and
+      after and what was reclaimed (trimmed), or why it was skipped (the app in front, Coreloom, Windows' own) or
+      failed (e.g. access denied for a protected process). The filter switches between all, trimmed, skipped and
+      failed; the totals line says "ended 0" (Coreloom never ends a process).
+- [ ] *Open logs* on that card opens *Settings › Logs* filtered to the memory entries; each line has a timestamp.
+- [ ] *Settings › Logs*: search finds text in messages; the level and category boxes filter; *Clear filters* resets them;
+      *Copy* puts the shown lines on the clipboard; *Open logs* opens the log folder. *Settings › Diagnostics* has
+      *View logs*.
+
+*Games added by hand*
+
+- [ ] Gaming › *Add game*: pick a game's .exe (try one Coreloom didn't find, e.g. an itch.io or emulator game). The
+      card suggests a name; change it, pick a picture or *Use icon* (the program's icon), and save. The game shows with
+      "Added by you", in the list and the grid, and *Play* starts it.
+- [ ] *Edit* on its card changes the name, program or picture; *Remove from my games* takes it out (and its own
+      frame limit).
+- [ ] While it runs, it shows as playing, the overlay counts its frames, and *Apply to* › the game sets a limit for
+      its program (check in the NVIDIA Control Panel › Manage 3D settings › Program settings).
+
+*Lighter while gaming (please measure on the Ryzen 4000 / GTX 1650 PC)*
+
+- [ ] *Settings › Monitoring*: *Sensor refresh interval* offers 0.25 s, 0.5 s, 1 s, 2 s (lighter) and 5 s (lightest);
+      *Lighter monitoring while gaming* is on, with its interval (1 s, 2 s or 5 s).
+- [ ] With a game in front, the status bar shows the slower interval and "lighter while gaming"; the log says "Game
+      in front: … lighter monitoring". Alt-Tab out: the interval comes back.
+- [ ] *Settings › Diagnostics* shows what each part costs (sensor reading, window and overlay text, overlay graph,
+      overlay frame counter) and the interval in effect.
+- [ ] Overhead, in the same in-game benchmark or a fixed spot, three runs each, noting average FPS and 1% low
+      (from the game, CapFrameX or PresentMon, not from Coreloom's own overlay):
+      1. Coreloom closed (also from the tray);
+      2. Coreloom running in the tray, overlay off;
+      3. Coreloom with the overlay on (FPS and graph);
+      4. as 3 with *Lighter monitoring while gaming* off and the refresh interval at 0.5 s (the heaviest setting).
+      Send the numbers with a screenshot of *Diagnostics* taken during run 3.
+
+*AMD processor card*
+
+- [ ] On an AMD PC, Processor shows *AMD processor* with the architecture and codename (e.g. "Zen 2 · Renoir" for a
+      Ryzen 4000), the type (laptop or desktop) and "Family … · model … · stepping …"; instruction sets and features
+      as chips. Specifications list CPUID, instruction sets and features (on Intel too).
+- [ ] The readings it reports show as tiles (as administrator with PawnIO: package power, and PPT, TDC, EDC, SoC,
+      fabric and memory clocks on models whose SMU table LibreHardwareMonitor knows); the others are listed under
+      *Not reported* with why.
+- [ ] *Limits and tuning*: a desktop with a known model shows "Stock PPT … W"; a laptop says the maker sets the
+      limits. After a heavy all-core load for a minute (a render or compile), PBO says "Looks off" or "Likely on".
+      Curve Optimizer, Eco mode and manual clocks are unavailable, with where to change them; nothing can be changed.
+- [ ] Every processor: *Boost* (over 100 % while boosting) and *Performance limit* (100 % "Not held back"; lower on
+      battery or when hot) tiles.
+
+*Adaptive frame pacing (NVIDIA)*
+
+- [ ] Gaming › *Frame limiter*: *Adaptive frame pacing* with "Top pick", "Frame stability · 1% lows · Smoothness" and
+      its description, off.
+- [ ] Turn it on and play a library game for a minute or two: the status counts "Measuring: … of 45 seconds of play",
+      then says it set the game's limit (e.g. "Set Cyberpunk 2077's limit to 90 FPS"), and the chip under *Apply to*
+      shows "90 FPS · adaptive". The log (*Gaming*) has each step.
+- [ ] Either the frame rate settles at the limit within ~15 s, or the status says the limit applies from the game's
+      next start; restart the game and check it is limited.
+- [ ] Under *Apply to* › the game, *Frame generation in …* (2×, 3×, 4×) changes the limits it picks (whole rendered
+      frames; at least 80 FPS with 2×).
+- [ ] A game you gave a limit yourself: the status says adaptive pacing leaves it alone.
+- [ ] Turn it off: its limits are removed (chip gone, NVIDIA Control Panel back to the all-games limit).
+- [ ] Without an NVIDIA driver: it suggests a limit to set in AMD Software instead of setting one.
+
 **Fixes (1.4.5)**
 
 - [ ] On the desktop (no game in front, FPS "—"), the overlay shows the graph's place as a flat line under the FPS line.

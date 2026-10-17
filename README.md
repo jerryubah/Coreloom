@@ -36,14 +36,18 @@ installs drivers or services, and never sends your data anywhere.
   its lighting, and hide and reorder cards; the layout is saved.
 - **Gaming.** A tab with your installed games (Steam, Epic Games, GOG, Xbox, Ubisoft Connect, EA app, Battle.net,
   Riot) as cards or a grid of covers (a game without a picture on your PC gets one from its store or Steam
-  automatically), with search, sorting and *Play*; switches for hardware-accelerated GPU
+  automatically), with search, sorting and *Play*; **games added by hand** (*Add game*: pick the .exe, give it a name,
+  a picture or the program's icon, and change or remove it later), which are recognised, monitored and limited like
+  the rest; switches for hardware-accelerated GPU
   scheduling, the Ultimate Performance power plan, Game Mode, windowed-game optimizations, Game Bar background
   recording, the NVIDIA *Prefer maximum performance* mode, G-SYNC for fullscreen and windowed games, a 10 GB / 100 GB /
   unlimited NVIDIA shader cache and Windows 11's Auto HDR, each saying what it helps with and how to use it (or *Boost
   now* for the performance ones); a **frame limiter** that sets the NVIDIA driver's own frame limiter for all games or
   for one game on its own, automatically just under your refresh rate so G-SYNC/FreeSync stays engaged, with live FPS,
-  1% low and pacing of the game you're playing; and shader-cache care (cache sizes, a notice when a new driver resets
-  them).
+  1% low and pacing of the game you're playing; **adaptive frame pacing** (off until you turn it on), which measures
+  each game's real frame times while you play and sets the game's own limit to a frame rate it holds with steady 1%
+  lows, a step at a time, under your refresh rate and in whole rendered frames with frame generation; and shader-cache
+  care (cache sizes, a notice when a new driver resets them).
 - **In-game overlay.** FPS, frame time and 1% lows with a smooth frame-time graph and GPU, CPU and RAM readings on top
   of your games, measured from Windows' graphics events (nothing is injected into games, and Coreloom gives way to the
   game while it runs); while the frame limiter limits the game, its limit is a dashed line on the graph. Turned on
@@ -54,8 +58,9 @@ installs drivers or services, and never sends your data anywhere.
 - **Smart Optimize.** One Smart Scan finds junk files (temporary files, browser and shader caches, crash reports,
   Windows Update leftovers, the Recycle Bin), checks Microsoft Defender's protection and threats, memory use and
   startup apps; one click then cleans up, removes threats, frees memory and refreshes the network cache. Each part
-  has its own card too: pick what to clean, run a quick scan or update definitions, free up RAM, turn startup apps
-  off and on, flush DNS or optimize drives.
+  has its own card too: pick what to clean, run a quick scan or update definitions, free up RAM (with every process
+  listed: memory before and after and what was reclaimed, or why it was skipped or failed), turn startup apps off and
+  on, flush DNS or optimize drives.
 - **Devices.** A page with your Bluetooth devices as cards (type icon, connected indicator, battery where reported,
   Connect and Disconnect, which also brings back headphones that switched to your phone) and the devices plugged in by
   USB or display cable, grouped by type on the same grid as the Bluetooth cards, with *Eject* for drives and driver problems flagged. Bluetooth can be turned
@@ -65,7 +70,11 @@ installs drivers or services, and never sends your data anywhere.
 - **Internet speed test** on the Network page: download, upload, ping and jitter against Cloudflare's speed test
   servers, with a live gauge.
 - **Detail pages** for the GPU, CPU, memory, storage and network:
-  - per-thread CPU graphs and a per-core table;
+  - per-thread CPU graphs and a per-core table, boost and performance-limit (throttling) readings, and the
+    processor's CPUID details (instruction sets, boost, preferred cores);
+  - on AMD Ryzen: architecture and codename, PPT, TDC, EDC, SoC power and voltage, fabric and memory clocks where the
+    processor reports them (and why not where it doesn't), AMD's stock power limit, whether PBO looks on, and
+    Curve Optimizer, Eco mode and manual tuning shown as unavailable with where to change them (read-only);
   - top processes;
   - SMBIOS memory modules;
   - per-disk activity, temperature and volumes;
@@ -101,8 +110,13 @@ installs drivers or services, and never sends your data anywhere.
   - A badge in the sidebar and a notification say when a new version is available or ready.
   - Downloads can resume and are SHA-256 verified before anything runs. Files are replaced only after Coreloom
     has exited, by the installer or (portable copies) by the new version, and a failed update is rolled back.
-- **Low overhead.** Coreloom polls on a dedicated thread and does no UI work while minimized. It measures its
-  own CPU and memory use and shows them in *Settings › Diagnostics*.
+- **Low overhead.** Coreloom polls on a dedicated thread and does no UI work while minimized or covered by a game.
+  While a game is in front it reads sensors less often (every 2 s by default; 1 s, 2 s or 5 s), at low priority, and
+  gives the game priority; the refresh interval otherwise is yours to choose (0.25 s to 5 s). *Settings › Diagnostics*
+  shows its own CPU and memory use, and what each part costs: sensor reading, the window, the overlay's graph and
+  frame counter.
+- **Logs.** *Settings › Logs* (or *Open logs* on the memory card) shows Coreloom's log with timestamps, search, a
+  level and category filter, and copy and open-folder buttons.
 
 ## What Coreloom reads, and from where
 
@@ -111,8 +125,10 @@ installs drivers or services, and never sends your data anywhere.
 | NVIDIA GPU: utilization, temperature, clocks, VRAM, power and limit, fan %, P-state, clock-limit reasons, encoder/decoder, PCIe | **NVML** (ships with the NVIDIA driver) | No |
 | GPU hot spot, memory junction, fan RPM, voltage (not in NVML) | LibreHardwareMonitor (NvAPI) | No |
 | AMD / Intel GPUs | LibreHardwareMonitor | Usually no |
-| CPU total and per-thread utilization, effective clock | Windows performance counters (PDH) | No |
+| CPU total and per-thread utilization, effective clock, boost, performance limit | Windows performance counters (PDH) | No |
+| CPU family, model, instruction sets, boost and preferred-core support | The CPUID instruction | No |
 | CPU temperatures (Tctl/Tdie, CCDs), package power, per-core clocks | LibreHardwareMonitor via the **PawnIO** driver | **Yes**, plus PawnIO installed |
+| AMD Ryzen PPT, TDC, EDC, SoC power and voltage, fabric/memory clocks, SoC and I/O die temperatures (where LibreHardwareMonitor knows the processor's SMU table: some Ryzen 2000 APU, 3000, 5000 and 7000/9000 desktop firmware) | LibreHardwareMonitor via PawnIO (SMU power table, SVI2 telemetry) | **Yes**, plus PawnIO installed |
 | Motherboard fans, voltages, temperatures (Super I/O) | LibreHardwareMonitor via PawnIO | **Yes**, plus PawnIO installed |
 | Memory usage, commit, modules | Windows APIs + SMBIOS | No |
 | Disk activity, capacity, volumes, NVMe temperature | PDH + storage IOCTLs (query-only handles) | No; some drives report temperature only to administrators |
@@ -218,10 +234,13 @@ LibreHardwareMonitor's own report. See [docs/TESTING-ON-YOUR-PC.md](docs/TESTING
 ## Privacy and safety
 
 - **Hands off the hardware.** No writes to hardware or the BIOS, no driver installs, and no overclocking or
-  fan-control features. Monitoring is read-only.
+  fan-control features. Monitoring is read-only, and so is the AMD processor card: power limits, PBO and Curve
+  Optimizer are shown, never changed.
 - **The Gaming page changes settings only when you flip a switch.** Each switch sets one documented Windows setting
   (the registry values and `powercfg` commands Windows' own Settings use) or one NVIDIA driver setting (as the NVIDIA
-  Control Panel does), shows its state and can be turned off again. **Nothing is injected into games**: frame rates
+  Control Panel does), shows its state and can be turned off again. Adaptive frame pacing, once you turn it on, sets
+  and adjusts each game's own driver limit as you play (never a limit you set yourself), writes every change to the
+  log, and removes its limits when you turn it off. **Nothing is injected into games**: frame rates
   come from Windows' graphics events, the frame limiter is the driver's own limiter, and games start through their own
   launchers as you, not as administrator.
 - **The Devices page changes something only when you click.** Connect, Disconnect, the Bluetooth switch and Eject do
@@ -229,7 +248,9 @@ LibreHardwareMonitor's own report. See [docs/TESTING-ON-YOUR-PC.md](docs/TESTING
 - **Smart Optimize changes only what you ask it to.** It deletes files only inside known junk folders (never through
   links, never files younger than a day in temp folders, never files in use), turns startup apps off with the same
   switch Task Manager uses (turn them back on any time), and uses Windows' own tools for everything else: Microsoft
-  Defender for scans and threats, the shell for the Recycle Bin, defrag.exe for drives.
+  Defender for scans and threats, the shell for the Recycle Bin, defrag.exe for drives. Freeing memory asks Windows
+  to trim other apps' working sets (they page back in as needed); it skips the app in front, Coreloom and the Windows
+  processes the desktop needs, and never ends a process.
 - **No telemetry.** Coreloom makes network requests only for the update check to `api.github.com` and the update
   download from GitHub (both can be turned off in *Settings → Updates*), to `speed.cloudflare.com` when you start
   an internet speed test, and, for games that have no picture on your PC, to fetch one: Epic's picture servers
