@@ -9,8 +9,8 @@
     <StackPanel Margin="32,14,28,32" b:Motion.Entrance="True">
 
       <c:AdaptiveGrid MinColumnWidth="420" MaxColumns="2" Spacing="16">
-        <!-- Donut hero -->
-        <c:SquircleBorder Style="{StaticResource Card}">
+        <!-- Donut hero (cards are as tall as their content) -->
+        <c:SquircleBorder Style="{StaticResource Card}" VerticalAlignment="Top">
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" />
@@ -31,10 +31,10 @@
           </Grid>
         </c:SquircleBorder>
 
-        <ItemsControl ItemsSource="{Binding Details}" ItemTemplate="{StaticResource MetricTile}" Focusable="False">
+        <ItemsControl ItemsSource="{Binding Details}" ItemTemplate="{StaticResource MetricTile}" Focusable="False" VerticalAlignment="Top">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
-              <c:AdaptiveGrid MinColumnWidth="180" MaxColumns="2" Spacing="12" UniformRowHeight="True" StretchRows="True" />
+              <c:AdaptiveGrid MinColumnWidth="180" MaxColumns="2" Spacing="12" UniformRowHeight="True" />
             </ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>
         </ItemsControl>
@@ -49,14 +49,14 @@
       </c:AdaptiveGrid>
 
       <c:AdaptiveGrid MinColumnWidth="460" MaxColumns="2" Spacing="16" Margin="0,16,0,0">
-        <c:SquircleBorder Style="{StaticResource Card}">
+        <c:SquircleBorder Style="{StaticResource Card}" VerticalAlignment="Top">
           <StackPanel>
             <TextBlock Style="{StaticResource Text.CardTitle}" Text="Top processes by memory" />
             <TextBlock Style="{StaticResource Text.Caption}" Text="Working set, grouped by application" Margin="0,2,0,10" />
             <ContentPresenter Content="{Binding Processes}" ContentTemplate="{StaticResource ProcessList}" />
           </StackPanel>
         </c:SquircleBorder>
-        <c:SquircleBorder Style="{StaticResource Card}">
+        <c:SquircleBorder Style="{StaticResource Card}" VerticalAlignment="Top">
           <StackPanel>
             <TextBlock Style="{StaticResource Text.CardTitle}" Text="Modules" Margin="0,0,0,10" />
             <ItemsControl ItemsSource="{Binding Modules}" Focusable="False" Visibility="{Binding HasModules, Converter={StaticResource BoolToVisibility}}">

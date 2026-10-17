@@ -14,6 +14,7 @@ public sealed class TuningControlViewModel : ObservableObject
     private string _status;
     private TuningState _state;
     private string _explanation;
+    private string _summary;
 
     public TuningControlViewModel(TuningControl control)
     {
@@ -21,6 +22,7 @@ public sealed class TuningControlViewModel : ObservableObject
         _status = control.Status;
         _state = control.State;
         _explanation = control.Explanation;
+        _summary = control.Summary;
     }
 
     public string Name { get; }
@@ -53,10 +55,18 @@ public sealed class TuningControlViewModel : ObservableObject
         _ => "unavailable",
     };
 
+    /// <summary>The full explanation (shown on hover).</summary>
     public string Explanation
     {
         get => _explanation;
         private set => SetProperty(ref _explanation, value);
+    }
+
+    /// <summary>One short line under the name.</summary>
+    public string Summary
+    {
+        get => _summary;
+        private set => SetProperty(ref _summary, value);
     }
 
     /// <summary>Always false: nothing here can be changed from Coreloom.</summary>
@@ -67,6 +77,7 @@ public sealed class TuningControlViewModel : ObservableObject
         Status = control.Status;
         State = control.State;
         Explanation = control.Explanation;
+        Summary = control.Summary;
     }
 }
 
@@ -94,19 +105,21 @@ public sealed class AmdProcessorViewModel : ObservableObject
     private string _segment = "Processor";
     private string? _signature;
     private bool _hasMissing;
+    private string? _missingText;
+    private string? _missingToolTip;
 
     public AmdProcessorViewModel()
     {
         Package = new MetricViewModel(MetricIds.CpuPower, "Package power", ValueStyle.Power, ColorKeys.Power);
-        Ppt = new MetricViewModel(MetricIds.CpuPpt, "PPT (socket power)", ValueStyle.Power, ColorKeys.Power) { Detail = "The power the SMU limits" };
+        Ppt = new MetricViewModel(MetricIds.CpuPpt, "PPT", ValueStyle.Power, ColorKeys.Power) { Detail = "Socket power" };
         Tdc = new MetricViewModel(MetricIds.CpuTdc, "TDC", ValueStyle.Auto, ColorKeys.Power) { Detail = "Sustained current" };
-        Edc = new MetricViewModel(MetricIds.CpuEdc, "EDC", ValueStyle.Auto, ColorKeys.Power) { Detail = "Short-burst peak current" };
+        Edc = new MetricViewModel(MetricIds.CpuEdc, "EDC", ValueStyle.Auto, ColorKeys.Power) { Detail = "Peak current" };
         CoresPower = new MetricViewModel(MetricIds.CpuCoresPower, "Cores power", ValueStyle.Power, ColorKeys.Power) { Detail = "All cores together" };
-        SocPower = new MetricViewModel(MetricIds.CpuSocPower, "SoC power", ValueStyle.Power, ColorKeys.Power) { Detail = "Memory controller, I/O and graphics" };
+        SocPower = new MetricViewModel(MetricIds.CpuSocPower, "SoC power", ValueStyle.Power, ColorKeys.Power) { Detail = "I/O, memory, graphics" };
         CoreVoltage = new MetricViewModel(MetricIds.CpuVoltage, "Core voltage", ValueStyle.Volts, ColorKeys.Power) { Detail = "VDDCR" };
         SocVoltage = new MetricViewModel(MetricIds.CpuSocVoltage, "SoC voltage", ValueStyle.Volts, ColorKeys.Power) { Detail = "VDDCR SoC" };
-        EffectiveClock = new MetricViewModel(MetricIds.CpuClockEffectiveAverage, "Effective clock", ValueStyle.ClockGigahertz, ColorKeys.Cpu) { Detail = "What the cores ran at, sleep included" };
-        FabricClock = new MetricViewModel(MetricIds.CpuFabricClock, "Fabric clock", ValueStyle.ClockMegahertz, ColorKeys.Cpu) { Detail = "Infinity Fabric (FCLK)" };
+        EffectiveClock = new MetricViewModel(MetricIds.CpuClockEffectiveAverage, "Effective clock", ValueStyle.ClockGigahertz, ColorKeys.Cpu) { Detail = "Sleep included" };
+        FabricClock = new MetricViewModel(MetricIds.CpuFabricClock, "Fabric clock", ValueStyle.ClockMegahertz, ColorKeys.Cpu) { Detail = "FCLK" };
         UncoreClock = new MetricViewModel(MetricIds.CpuUncoreClock, "Memory controller", ValueStyle.ClockMegahertz, ColorKeys.Cpu) { Detail = "UCLK" };
         MemoryClock = new MetricViewModel(MetricIds.CpuMemoryClock, "Memory clock", ValueStyle.ClockMegahertz, ColorKeys.Memory) { Detail = "MCLK" };
         SocTemperature = new MetricViewModel(MetricIds.CpuSocTemperature, "SoC temperature", ValueStyle.Temperature, ColorKeys.Temperature, Thresholds.CpuTemperature);
@@ -181,8 +194,22 @@ public sealed class AmdProcessorViewModel : ObservableObject
         }
     }
 
-    /// <summary>"Laptop processor · Family 17h · model 60h · stepping 1".</summary>
-    public string Caption => Signature is { Length: > 0 } signature ? $"{Segment} · {signature}" : Segment;
+    /// <summary>"Desktop processor · 3D V-Cache" (CPUID details are under Specifications).</summary>
+    public string Caption => Segment;
+
+    /// <summary>One line naming what isn't reported ("Not reported here: PPT, TDC, EDC and 9 more"); why is in <see cref="MissingToolTip"/>.</summary>
+    public string? MissingText
+    {
+        get => _missingText;
+        private set => SetProperty(ref _missingText, value);
+    }
+
+    /// <summary>Each group of missing readings with why.</summary>
+    public string? MissingToolTip
+    {
+        get => _missingToolTip;
+        private set => SetProperty(ref _missingToolTip, value);
+    }
 
     /// <summary>The readings this processor reports.</summary>
     public ObservableCollection<MetricViewModel> Readings { get; } = [];
@@ -198,9 +225,6 @@ public sealed class AmdProcessorViewModel : ObservableObject
 
     /// <summary>Power limits, PBO, Curve Optimizer, Eco mode, manual tuning: each read-only or unavailable, with why.</summary>
     public ObservableCollection<TuningControlViewModel> Controls { get; } = [];
-
-    /// <summary>Instruction sets and features from CPUID, as chips.</summary>
-    public ObservableCollection<string> Capabilities { get; } = [];
 
     public string ReadOnlyNote => "Read-only: Coreloom shows what the processor reports and never changes its limits, clocks or voltages.";
 
@@ -218,26 +242,8 @@ public sealed class AmdProcessorViewModel : ObservableObject
         Architecture = _profile.ArchitectureText;
         Segment = _profile.HasVCache ? $"{_profile.SegmentText} · 3D V-Cache" : _profile.SegmentText;
         Signature = device?.GetProperty("CPUID");
-        Package.Detail = _profile.StockPptWatts is int stock ? $"Stock limit {stock} W" : "Whole processor (RAPL)";
-        Ppt.Detail = _profile.StockPptWatts is int ppt ? $"Stock limit {ppt} W" : "The power the SMU limits";
-
-        var chips = new List<string>();
-        foreach (string key in new[] { "Instruction sets", "Features" })
-        {
-            if (device?.GetProperty(key) is { Length: > 0 } list)
-            {
-                chips.AddRange(list.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
-            }
-        }
-
-        if (!Capabilities.SequenceEqual(chips))
-        {
-            Capabilities.Clear();
-            foreach (string chip in chips)
-            {
-                Capabilities.Add(chip);
-            }
-        }
+        Package.Detail = _profile.StockPptWatts is int stock ? $"Of {stock} W stock" : "Whole processor";
+        Ppt.Detail = _profile.StockPptWatts is int ppt ? $"Of {ppt} W stock" : "Socket power";
 
         _assessedAt = long.MinValue;
     }
@@ -275,6 +281,11 @@ public sealed class AmdProcessorViewModel : ObservableObject
             }
 
             HasMissing = Missing.Count > 0;
+            var names = missing.SelectMany(g => g.Names.Split(", ")).ToList();
+            MissingText = names.Count == 0 ? null
+                : names.Count <= 4 ? $"Not reported here: {string.Join(", ", names)}"
+                : $"Not reported here: {string.Join(", ", names.Take(3))} and {names.Count - 3} more";
+            MissingToolTip = missing.Count == 0 ? null : string.Join("\n\n", missing.Select(g => $"{g.Names}: {g.Reason}"));
         }
 
         if (frame.Timestamp - _assessedAt >= 10_000 || _assessedAt == long.MinValue)

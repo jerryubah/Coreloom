@@ -25,6 +25,7 @@ internal sealed unsafe partial class GlobalHotkey : IDisposable
     private const int VkRWin = 0x5C;
 
     private readonly Action _pressed;
+    private readonly Action? _pressedWithShift;
     private readonly HookProc _proc;
     private Thread? _thread;
     private uint _threadId;
@@ -34,9 +35,11 @@ internal sealed unsafe partial class GlobalHotkey : IDisposable
     private bool _down;
 
     /// <param name="pressed">Called on the hook thread when the hotkey goes down: keep it short (post to the UI).</param>
-    public GlobalHotkey(Action pressed)
+    /// <param name="pressedWithShift">Called when the hotkey goes down with Shift added (a hotkey that has no Shift of its own).</param>
+    public GlobalHotkey(Action pressed, Action? pressedWithShift = null)
     {
         _pressed = pressed;
+        _pressedWithShift = pressedWithShift;
         _proc = OnKey; // kept in a field: Windows calls it for as long as the hook is installed
     }
 
@@ -138,9 +141,15 @@ internal sealed unsafe partial class GlobalHotkey : IDisposable
                     if (!_down)
                     {
                         _down = true; // auto-repeat while held doesn't count again
-                        if (!_paused && ModifiersMatch((HotkeyModifiers)_modifiers))
+                        var wanted = (HotkeyModifiers)_modifiers;
+                        if (!_paused && ModifiersMatch(wanted))
                         {
                             _pressed();
+                        }
+                        else if (!_paused && _pressedWithShift is not null && !wanted.HasFlag(HotkeyModifiers.Shift)
+                            && ModifiersMatch(wanted | HotkeyModifiers.Shift))
+                        {
+                            _pressedWithShift();
                         }
                     }
                 }

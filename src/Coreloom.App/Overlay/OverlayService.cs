@@ -21,6 +21,11 @@ namespace Coreloom.App.Overlay;
 /// window has actually covered it, and while a program other than Coreloom is in front Coreloom runs at below-normal
 /// priority, so its own work (sensors, the overlay) always gives way to the game's threads.
 /// </para>
+/// <para>
+/// Its place is one of nine on the screen plus a fine-tuning offset, for all games or per game; Shift + the hotkey (or
+/// *Move on screen*) lets it be dragged and resized, and where it is dropped is saved. Its size follows the screen it is
+/// on when auto-scaling is on.
+/// </para>
 /// </summary>
 internal sealed partial class OverlayService : IDisposable
 {
@@ -58,7 +63,7 @@ internal sealed partial class OverlayService : IDisposable
         _overlay = shell.Overlay;
         _card = shell.Gpu.OverlaySettings;
         _overlay.FrameRates = _frameRates;
-        _hotkey = new GlobalHotkey(() => _dispatcher.BeginInvoke(Toggle));
+        _hotkey = new GlobalHotkey(() => _dispatcher.BeginInvoke(Toggle), () => _dispatcher.BeginInvoke(ToggleMoving));
         _timer = new DispatcherTimer(DispatcherPriority.Background, dispatcher) { Interval = TimeSpan.FromMilliseconds(500) };
         _timer.Tick += (_, _) => Tick();
 
@@ -104,6 +109,58 @@ internal sealed partial class OverlayService : IDisposable
         {
             Apply();
         }
+        else if (e.PropertyName is nameof(OverlayViewModel.IsMoving))
+        {
+            _window?.SetMovable(_overlay.IsMoving);
+            Log.Info(LogCategory, _overlay.IsMoving ? "Overlay can be moved and resized." : "Overlay placed.");
+            Place();
+        }
+    }
+
+    /// <summary>Shift + the hotkey: lets the overlay be dragged and resized (turning it on if it's off), or finishes.</summary>
+    private void ToggleMoving()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        if (!Options.Enabled)
+        {
+            _settings.Update("Overlay", s =>
+            {
+                s.Overlay.Enabled = true;
+                s.Overlay.HasBeenEnabled = true;
+            });
+        }
+
+        _overlay.IsMoving = !_overlay.IsMoving;
+    }
+
+    /// <summary>Saves where the overlay was dropped or resized: the nearest of the nine places and the offset from it.</summary>
+    private void SaveAdjusted()
+    {
+        var window = _window;
+        if (window is null || !GetWindowRect(window.Handle, out var rect))
+        {
+            _overlay.CommitScale();
+            return;
+        }
+
+        IntPtr monitor = MonitorFromWindow(window.Handle, MonitorDefaultToPrimary);
+        var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
+        if (monitor == IntPtr.Zero || !GetMonitorInfo(monitor, ref info))
+        {
+            _overlay.CommitScale();
+            return;
+        }
+
+        double scale = GetDpiForMonitor(monitor, 0, out uint dpiX, out _) == 0 && dpiX > 0 ? dpiX / 96.0 : 1;
+        var screen = info.Monitor;
+        int margin = (int)Math.Round(Options.EdgeMargin * scale);
+        var (position, dx, dy) = OverlayPlacements.FromDrop(screen.Left, screen.Top, screen.Right - screen.Left, screen.Bottom - screen.Top,
+            rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top, margin);
+        _overlay.SavePlacement(position, (int)Math.Round(dx / scale), (int)Math.Round(dy / scale));
     }
 
     private void OnCardChanged(object? sender, PropertyChangedEventArgs e)
@@ -155,6 +212,8 @@ internal sealed partial class OverlayService : IDisposable
             {
                 _window = new OverlayWindow(_overlay);
                 _window.SizeChanged += (_, _) => Place();
+                _window.Adjusted += (_, _) => SaveAdjusted();
+                _window.SetMovable(_overlay.IsMoving);
             }
 
             if (!_window.IsVisible)
@@ -176,6 +235,7 @@ internal sealed partial class OverlayService : IDisposable
             }
 
             _overlay.Tick(null);
+            _overlay.IsMoving = false;
             Yield(false);
         }
     }
@@ -194,7 +254,15 @@ internal sealed partial class OverlayService : IDisposable
             processId = (int)pid; // Coreloom itself isn't a game: no frame rate while it is in front
         }
 
-        _overlay.Tick(processId, processId is int id ? ProgramName(id) : null);
+        string? program = processId is int id ? ProgramName(id) : null;
+        _overlay.Tick(processId, program);
+        if (processId is not null)
+        {
+            // The program the overlay is over: its own place is used when places are kept per game. With Coreloom itself in
+            // front the last program stays, so moving the overlay from Coreloom saves it for the game played last.
+            _overlay.CurrentGame = program;
+        }
+
         Place();
         Yield(processId is not null);
 
@@ -268,18 +336,22 @@ internal sealed partial class OverlayService : IDisposable
         return name;
     }
 
-    /// <summary>Puts the overlay in its place on the screen of the window in front.</summary>
+    /// <summary>
+    /// Puts the overlay in its place on the screen of the window in front: one of nine places plus the offset (for the
+    /// game in front when places are kept per game), never off the screen. Also tells the overlay how big that screen
+    /// is, for auto-scaling. Not while it is being dragged or resized.
+    /// </summary>
     private void Place()
     {
         var window = _window;
-        if (window is null || !window.IsVisible)
+        if (window is null || !window.IsVisible || window.IsAdjusting)
         {
             return;
         }
 
         IntPtr hwnd = window.Handle;
         IntPtr foreground = GetForegroundWindow();
-        IntPtr monitor = MonitorFromWindow(foreground != IntPtr.Zero ? foreground : hwnd, MonitorDefaultToPrimary);
+        IntPtr monitor = MonitorFromWindow(foreground != IntPtr.Zero && !_overlay.IsMoving ? foreground : hwnd, MonitorDefaultToPrimary);
         var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
         if (monitor == IntPtr.Zero || !GetMonitorInfo(monitor, ref info) || !GetWindowRect(hwnd, out var rect))
         {
@@ -287,24 +359,13 @@ internal sealed partial class OverlayService : IDisposable
         }
 
         double scale = GetDpiForMonitor(monitor, 0, out uint dpiX, out _) == 0 && dpiX > 0 ? dpiX / 96.0 : 1;
-        int margin = (int)Math.Round(Options.EdgeMargin * scale);
         var screen = info.Monitor;
-        int width = rect.Right - rect.Left;
-        int height = rect.Bottom - rect.Top;
-        var position = Options.Position;
+        _overlay.ScreenScale = OverlayPlacements.ScreenScale((screen.Bottom - screen.Top) / scale);
 
-        int x = position switch
-        {
-            OverlayPosition.TopLeft or OverlayPosition.MiddleLeft or OverlayPosition.BottomLeft => screen.Left + margin,
-            OverlayPosition.TopCenter or OverlayPosition.BottomCenter => screen.Left + ((screen.Right - screen.Left - width) / 2),
-            _ => screen.Right - margin - width,
-        };
-        int y = position switch
-        {
-            OverlayPosition.TopLeft or OverlayPosition.TopCenter or OverlayPosition.TopRight => screen.Top + margin,
-            OverlayPosition.MiddleLeft or OverlayPosition.MiddleRight => screen.Top + ((screen.Bottom - screen.Top - height) / 2),
-            _ => screen.Bottom - margin - height,
-        };
+        var (position, offsetX, offsetY) = _overlay.Placement;
+        var (x, y) = OverlayPlacements.Locate(screen.Left, screen.Top, screen.Right - screen.Left, screen.Bottom - screen.Top,
+            rect.Right - rect.Left, rect.Bottom - rect.Top, position, (int)Math.Round(Options.EdgeMargin * scale),
+            (int)Math.Round(offsetX * scale), (int)Math.Round(offsetY * scale));
 
         if (x != rect.Left || y != rect.Top)
         {

@@ -204,9 +204,10 @@ public class AmdTuningTests
         {
             var controls = AmdTuning.Controls(profile, AmdTuning.Assess([], profile), sensorsAccessible: true);
 
-            Assert.Equal(["Power limits (PPT · TDC · EDC)", "Precision Boost Overdrive", "Curve Optimizer", "Eco mode", "Manual clocks and voltages"], controls.Select(c => c.Name));
+            Assert.Equal(["Power limits", "Precision Boost Overdrive", "Curve Optimizer", "Eco mode", "Manual tuning"], controls.Select(c => c.Name));
             Assert.All(controls, c => Assert.False(c.CanChange));
             Assert.All(controls, c => Assert.False(string.IsNullOrWhiteSpace(c.Explanation)));
+            Assert.All(controls, c => Assert.InRange(c.Summary.Length, 1, 48)); // one short line on the card
         }
     }
 
@@ -221,6 +222,7 @@ public class AmdTuningTests
         Assert.Equal("Likely on", controls[1].Status);
         Assert.Equal(TuningState.Detected, controls[1].State);
         Assert.Contains("121 W", controls[1].Explanation);
+        Assert.Equal("Reached 121 W, over the 88 W stock limit", controls[1].Summary);
         Assert.Equal(TuningState.Unavailable, controls[2].State);
         Assert.Contains("Ryzen Master", controls[2].Explanation);
     }
@@ -244,6 +246,7 @@ public class AmdTuningTests
 
         Assert.Equal("Not on this processor", AmdTuning.Controls(zen2, default, true)[2].Status);
         Assert.Contains("locks the multiplier", AmdTuning.Controls(x3d, default, true)[4].Explanation);
+        Assert.Equal("Multiplier locked on this X3D model", AmdTuning.Controls(x3d, default, true)[4].Summary);
         Assert.DoesNotContain("locks the multiplier", AmdTuning.Controls(zen5x3d, default, true)[4].Explanation);
     }
 

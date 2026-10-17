@@ -7,6 +7,45 @@
         ShowInTaskbar="False" ShowActivated="False" Topmost="True" Focusable="False" IsHitTestVisible="False"
         SizeToContent="WidthAndHeight" UseLayoutRounding="True" Left="-32000" Top="-32000">
   <!-- Click-through, never focused, not in Alt+Tab (see the code-behind). The content is the same template as the
-       preview in the overlay's settings. -->
-  <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource OverlayContent}" />
+       preview in the overlay's settings. While it is being moved (Shift + the hotkey, or Move on screen in its settings)
+       it takes clicks: drag it anywhere, drag the round handle to resize it, S/M/L resize a line, Done finishes. -->
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+    <Grid Margin="6">
+      <!-- the frame (behind the readings, so the S/M/L buttons stay clickable; its near-clear fill takes the drag) -->
+      <Rectangle Margin="-4" RadiusX="12" RadiusY="12" Stroke="#FF5B8CFF" StrokeThickness="1.5" StrokeDashArray="4 3" Fill="#01000000" Cursor="SizeAll"
+                 Visibility="{Binding IsMoving, Converter={StaticResource BoolToVisibility}}" />
+      <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource OverlayContent}" />
+      <Thumb x:Name="ResizeGrip" Width="14" Height="14" Margin="0,0,-9,-9" HorizontalAlignment="Right" VerticalAlignment="Bottom" Cursor="SizeNWSE"
+             ToolTip="Drag to resize" Visibility="{Binding IsMoving, Converter={StaticResource BoolToVisibility}}"
+             DragStarted="OnResizeStarted" DragDelta="OnResizeDelta" DragCompleted="OnResizeCompleted">
+        <Thumb.Template>
+          <ControlTemplate TargetType="Thumb">
+            <Ellipse Fill="#FF5B8CFF" Stroke="#FFFFFFFF" StrokeThickness="2" />
+          </ControlTemplate>
+        </Thumb.Template>
+      </Thumb>
+    </Grid>
+    <Border Grid.Row="1" Margin="2,2,2,0" Padding="10,5,6,5" CornerRadius="9" Background="#F00E1117" HorizontalAlignment="Left"
+            Visibility="{Binding IsMoving, Converter={StaticResource BoolToVisibility}}"
+            TextElement.FontFamily="{StaticResource UiFont}" TextElement.FontSize="11.5" TextElement.Foreground="#FFE6EAF2">
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Text="Drag to move · handle to resize" VerticalAlignment="Center" />
+        <TextBlock Text="{Binding ScaleText}" Margin="10,0,0,0" FontWeight="SemiBold" VerticalAlignment="Center" />
+        <TextBlock Text="{Binding MovingText}" Margin="10,0,0,0" Opacity="0.7" VerticalAlignment="Center" />
+        <Button Content="Done" Margin="10,0,0,0" Padding="10,2" Focusable="False" Cursor="Hand" Command="{Binding FinishMovingCommand}">
+          <Button.Template>
+            <ControlTemplate TargetType="Button">
+              <Border Background="#FF5B8CFF" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                <ContentPresenter TextElement.Foreground="#FFFFFFFF" TextElement.FontWeight="SemiBold" />
+              </Border>
+            </ControlTemplate>
+          </Button.Template>
+        </Button>
+      </StackPanel>
+    </Border>
+  </Grid>
 </Window>

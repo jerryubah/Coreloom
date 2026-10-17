@@ -301,9 +301,9 @@
         </Grid>
       </c:SquircleBorder>
 
-      <!-- Two columns that stack: Cleanup over Free up memory, Protection over Speed up, each card as tall as its content
-           (no padding to match a neighbour), with the last card in each column growing so the bottoms line up. One column
-           when the window is narrow. -->
+      <!-- Two columns that stack: Cleanup over Free up memory, Protection over Speed up, each card as tall as its content.
+           Only Speed up may grow to line up with the other column, because its startup list shows more apps when it's
+           taller. One column when the window is narrow. -->
       <c:StackedColumns MinColumnWidth="460" MaxColumns="2" Spacing="16" RowSpacing="16" InOrder="True" FillColumns="True" Margin="0,16,0,0">
 
         <!-- ============================================================ -->
@@ -452,8 +452,7 @@
               </StackPanel>
             </Grid>
 
-            <!-- centred in whatever height the card is given -->
-            <Grid Grid.Row="1" Margin="0,16,0,0" VerticalAlignment="Center">
+            <Grid Grid.Row="1" Margin="0,16,0,0">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -577,7 +576,7 @@
         <!-- ============================================================ -->
         <!-- Speed                                                        -->
         <!-- ============================================================ -->
-        <c:SquircleBorder Style="{StaticResource Card}" DataContext="{Binding Speed}">
+        <c:SquircleBorder Style="{StaticResource Card}" DataContext="{Binding Speed}" c:StackedColumns.CanFill="True">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />

@@ -39,6 +39,14 @@ public sealed class StackedColumns : Panel
         nameof(FillColumns), typeof(bool), typeof(StackedColumns),
         new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsArrange));
 
+    /// <summary>
+    /// Marks a card whose content can use extra height (such as a list that shows more rows when taller). With
+    /// <see cref="FillColumns"/>, only such cards grow to line up the column bottoms; every other card keeps its own height.
+    /// </summary>
+    public static readonly DependencyProperty CanFillProperty = DependencyProperty.RegisterAttached(
+        "CanFill", typeof(bool), typeof(StackedColumns),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsParentArrange));
+
     private IReadOnlyList<StackPlacement> _placements = [];
     private double[] _heights = [];
     private double _totalHeight;
@@ -87,7 +95,14 @@ public sealed class StackedColumns : Panel
         set => SetValue(InOrderProperty, value);
     }
 
-    /// <summary>The last item in each column grows so all columns end at the same height.</summary>
+    public static bool GetCanFill(DependencyObject element) => (bool)element.GetValue(CanFillProperty);
+
+    public static void SetCanFill(DependencyObject element, bool value) => element.SetValue(CanFillProperty, value);
+
+    /// <summary>
+    /// The last item in each column grows so all columns end at the same height, when it is marked <c>CanFill</c> (its
+    /// content can use the room); cards that can't keep their own height.
+    /// </summary>
     public bool FillColumns
     {
         get => (bool)GetValue(FillColumnsProperty);
@@ -128,7 +143,7 @@ public sealed class StackedColumns : Panel
             }
 
             var place = _placements[index];
-            double height = index < heights.Length ? heights[index] : child.DesiredSize.Height;
+            double height = index < heights.Length && (GetCanFill(child) || !FillColumns) ? heights[index] : child.DesiredSize.Height;
             index++;
             child.Arrange(new Rect(place.Column * (columnWidth + Spacing), place.Top, columnWidth, height));
         }

@@ -77,79 +77,6 @@
         </ItemsControl.ItemsPanel>
       </ItemsControl>
 
-      <!-- AMD processor: what it is, the readings it reports, and its tuning (read-only) -->
-      <c:SquircleBorder Style="{StaticResource Card}" Margin="0,16,0,0" Visibility="{Binding IsAmd, Converter={StaticResource BoolToVisibility}}">
-        <StackPanel DataContext="{Binding Amd}">
-          <Grid Margin="0,0,0,12">
-            <StackPanel Margin="0,0,120,0">
-              <TextBlock Style="{StaticResource Text.CardTitle}" Text="AMD processor" />
-              <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding Caption}" TextWrapping="Wrap" Margin="0,2,0,0" />
-            </StackPanel>
-            <Border Style="{StaticResource Badge}" HorizontalAlignment="Right" VerticalAlignment="Top" Padding="8,2" Background="{DynamicResource Brush.AccentSoft}"
-                    Visibility="{Binding Architecture, Converter={StaticResource HasValueToVisibility}}">
-              <TextBlock Text="{Binding Architecture}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
-            </Border>
-          </Grid>
-
-          <ItemsControl ItemsSource="{Binding Capabilities}" Focusable="False" Margin="0,0,0,10">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate>
-                <WrapPanel />
-              </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <Border Style="{StaticResource Badge}" Margin="0,0,6,6">
-                  <TextBlock Text="{Binding}" FontSize="11" Foreground="{DynamicResource Brush.TextSecondary}" />
-                </Border>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-
-          <ItemsControl ItemsSource="{Binding Readings}" ItemTemplate="{StaticResource MetricTile}" Focusable="False">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate>
-                <c:AdaptiveGrid MinColumnWidth="168" MaxColumns="6" Spacing="12" UniformRowHeight="True" />
-              </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-          </ItemsControl>
-
-          <ItemsControl ItemsSource="{Binding Missing}" Focusable="False" Margin="0,10,0,0" Visibility="{Binding HasMissing, Converter={StaticResource BoolToVisibility}}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate DataType="{x:Type pages:MissingReadings}">
-                <TextBlock Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,2">
-                  <Run Text="Not reported: " /><Run Text="{Binding Names, Mode=OneWay}" FontWeight="SemiBold" /><Run Text=" — " /><Run Text="{Binding Reason, Mode=OneWay}" />
-                </TextBlock>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-
-          <TextBlock Style="{StaticResource Text.Label}" Text="Limits and tuning" Margin="0,18,0,2" />
-          <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding ReadOnlyNote}" TextWrapping="Wrap" Margin="0,0,0,8" />
-          <ItemsControl ItemsSource="{Binding Controls}" Focusable="False">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate DataType="{x:Type pages:TuningControlViewModel}">
-                <c:SquircleBorder Style="{StaticResource Card.Inset}" Margin="0,0,0,8" Padding="12,10">
-                  <Grid>
-                    <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="*" />
-                      <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Margin="0,0,16,0">
-                      <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" />
-                      <TextBlock Text="{Binding Explanation}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,3,0,0" />
-                    </StackPanel>
-                    <Border Grid.Column="1" Style="{StaticResource TuningPill}">
-                      <TextBlock Text="{Binding Status}" Style="{StaticResource TuningPillText}" />
-                    </Border>
-                  </Grid>
-                </c:SquircleBorder>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </StackPanel>
-      </c:SquircleBorder>
-
       <!-- Charts -->
       <c:AdaptiveGrid MinColumnWidth="460" MaxColumns="2" Spacing="16" Margin="0,16,0,0">
         <ContentPresenter Content="{Binding LoadChart}" ContentTemplate="{StaticResource ChartCard}" Height="280" />
@@ -191,6 +118,72 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
+        </StackPanel>
+      </c:SquircleBorder>
+
+      <!-- AMD processor: what it is, the readings it reports, and its limits and tuning (read-only, details on hover) -->
+      <c:SquircleBorder Style="{StaticResource Card}" Margin="0,16,0,0" Visibility="{Binding IsAmd, Converter={StaticResource BoolToVisibility}}">
+        <StackPanel DataContext="{Binding Amd}">
+          <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Style="{StaticResource Text.CardTitle}" Text="AMD processor" VerticalAlignment="Center" />
+              <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding Caption}" Margin="10,1,0,0" VerticalAlignment="Center" />
+            </StackPanel>
+            <Border Grid.Column="1" Style="{StaticResource Badge}" Padding="8,2" Background="{DynamicResource Brush.AccentSoft}"
+                    Visibility="{Binding Architecture, Converter={StaticResource HasValueToVisibility}}" ToolTip="{Binding Signature}">
+              <TextBlock Text="{Binding Architecture}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
+            </Border>
+          </Grid>
+
+          <c:AdaptiveGrid MinColumnWidth="380" MaxColumns="2" Spacing="20">
+            <!-- What it reports -->
+            <StackPanel VerticalAlignment="Top">
+              <ItemsControl ItemsSource="{Binding Readings}" ItemTemplate="{StaticResource MetricTile}" Focusable="False">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <c:AdaptiveGrid MinColumnWidth="150" MaxColumns="3" Spacing="10" UniformRowHeight="True" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+              </ItemsControl>
+              <Grid Margin="2,10,0,0" Visibility="{Binding HasMissing, Converter={StaticResource BoolToVisibility}}" Background="Transparent"
+                    ToolTip="{Binding MissingToolTip}" ToolTipService.InitialShowDelay="200" ToolTipService.ShowDuration="30000">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Path Style="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.TextTertiary}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding MissingText}" Style="{StaticResource Text.Caption}" Margin="6,0,0,0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+              </Grid>
+            </StackPanel>
+
+            <!-- Limits and tuning: one line each, the reason on hover -->
+            <StackPanel VerticalAlignment="Top">
+              <ItemsControl ItemsSource="{Binding Controls}" Focusable="False">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="{x:Type pages:TuningControlViewModel}">
+                    <Grid Margin="0,0,0,2" Background="Transparent" ToolTip="{Binding Explanation}" ToolTipService.InitialShowDelay="300" ToolTipService.ShowDuration="30000">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel Margin="0,5,12,5">
+                        <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Summary}" Style="{StaticResource Text.Caption}" TextTrimming="CharacterEllipsis" Margin="0,1,0,0" />
+                      </StackPanel>
+                      <Border Grid.Column="1" Style="{StaticResource TuningPill}" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Status}" Style="{StaticResource TuningPillText}" />
+                      </Border>
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Style="{StaticResource Text.Caption}" Text="Read-only: Coreloom never changes limits, clocks or voltages." Margin="0,6,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+          </c:AdaptiveGrid>
         </StackPanel>
       </c:SquircleBorder>
 

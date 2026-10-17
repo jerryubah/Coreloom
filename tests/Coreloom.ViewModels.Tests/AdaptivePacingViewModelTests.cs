@@ -46,7 +46,7 @@ public class AdaptivePacingViewModelTests
 
         Assert.False(page.FramePacer.AdaptiveOn);
         Assert.Empty(fake.ProgramCaps);
-        Assert.StartsWith("Off.", page.Adaptive.StatusText);
+        Assert.Equal("Off", page.Adaptive.StatusText);
         Assert.Equal("Frame stability · 1% lows · Smoothness", page.FramePacer.AdaptiveTags);
         Assert.Equal("An intelligent engine that monitors actual frame times and automatically finds a stable FPS target for each game.", page.FramePacer.AdaptiveDescription);
         settings.Dispose();

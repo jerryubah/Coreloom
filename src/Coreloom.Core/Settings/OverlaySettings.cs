@@ -14,6 +14,34 @@ public enum OverlayPosition
     BottomLeft,
     BottomCenter,
     BottomRight,
+
+    /// <summary>The middle of the screen (since 1.4.7).</summary>
+    Center,
+}
+
+/// <summary>How big the overlay (or one of its lines) is drawn, relative to its text size.</summary>
+public enum OverlaySize
+{
+    Compact,
+    Standard,
+    Expanded,
+
+    /// <summary>The overlay's own scale (<see cref="OverlaySettings.Scale"/>), e.g. after resizing it by its corner.</summary>
+    Custom,
+}
+
+/// <summary>Where the overlay sits for one game: a place on the screen and a fine-tuning offset.</summary>
+public sealed class OverlayPlacement
+{
+    /// <summary>The game's program file ("Cyberpunk2077.exe").</summary>
+    public string Program { get; set; } = string.Empty;
+
+    public OverlayPosition Position { get; set; }
+
+    /// <summary>Offset from that place, in pixels at 100 % scaling.</summary>
+    public int OffsetX { get; set; }
+
+    public int OffsetY { get; set; }
 }
 
 /// <summary>One group per line, or everything on one line.</summary>
@@ -130,6 +158,47 @@ public sealed class OverlaySettings
     /// <summary>A soft shadow behind the text, so it stays readable without a background.</summary>
     public bool TextShadow { get; set; } = true;
 
+    /// <summary>Fine-tunes the place: pixels (at 100 % scaling) right of and below it; negative moves left or up.</summary>
+    public int OffsetX { get; set; }
+
+    public int OffsetY { get; set; }
+
+    /// <summary>Remember a place for each game (when one is moved while that game is in front) instead of one for all.</summary>
+    public bool PerGamePosition { get; set; }
+
+    /// <summary>The places remembered per game.</summary>
+    public List<OverlayPlacement> GamePlacements { get; set; } = [];
+
+    /// <summary>The overlay's size: Compact, Standard, Expanded or its own scale.</summary>
+    public OverlaySize Size { get; set; } = OverlaySize.Standard;
+
+    /// <summary>The scale in percent used with <see cref="OverlaySize.Custom"/> (50–250).</summary>
+    public int Scale { get; set; } = 100;
+
+    /// <summary>Grows on big screens and shrinks on small ones (by the screen's height at its scaling).</summary>
+    public bool AutoScale { get; set; } = true;
+
+    /// <summary>The size of each line ("FrameRate", "Graphics", "Processor", "Memory"); missing means Standard.</summary>
+    public Dictionary<string, OverlaySize> GroupSizes { get; set; } = [];
+
+    /// <summary>The place for a program: its own when it has one and places are kept per game, else the one for all.</summary>
+    public (OverlayPosition Position, int OffsetX, int OffsetY) PlacementFor(string? program)
+    {
+        if (PerGamePosition && OverlayPlacements.ForProgram(GamePlacements, program) is { } own)
+        {
+            return (own.Position, own.OffsetX, own.OffsetY);
+        }
+
+        return (Position, OffsetX, OffsetY);
+    }
+
+    /// <summary>The overlay's scale before the screen's: its size preset, or its own scale.</summary>
+    public double SizeFactor => Size == OverlaySize.Custom ? Scale / 100.0 : OverlayPlacements.PresetFactor(Size);
+
+    /// <summary>A line's size relative to the overlay (Compact, Standard or Expanded).</summary>
+    public double GroupFactor(OverlayGroup group) =>
+        GroupSizes.TryGetValue(group.ToString(), out var size) && size != OverlaySize.Custom ? OverlayPlacements.PresetFactor(size) : 1;
+
     /// <summary>Which new readings have been offered to existing setups (1: the frame-time graph, 1.4.1).</summary>
     public int Revision { get; set; }
 
@@ -179,6 +248,18 @@ public sealed class OverlaySettings
         BackgroundOpacity = Math.Clamp(BackgroundOpacity, 0, 100);
         CornerRadius = Math.Clamp(CornerRadius, 0, 24);
         EdgeMargin = Math.Clamp(EdgeMargin, 0, 160);
+        OffsetX = Math.Clamp(OffsetX, -OverlayPlacements.MaxOffset, OverlayPlacements.MaxOffset);
+        OffsetY = Math.Clamp(OffsetY, -OverlayPlacements.MaxOffset, OverlayPlacements.MaxOffset);
+        GamePlacements = OverlayPlacements.Normalize(GamePlacements);
+        if (!Enum.IsDefined(Size))
+        {
+            Size = OverlaySize.Standard;
+        }
+
+        Scale = Math.Clamp(Scale, OverlayPlacements.MinScale, OverlayPlacements.MaxScale);
+        GroupSizes = (GroupSizes ?? [])
+            .Where(p => Enum.TryParse<OverlayGroup>(p.Key, out _) && Enum.IsDefined(p.Value) && p.Value is not (OverlaySize.Standard or OverlaySize.Custom))
+            .ToDictionary(p => p.Key, p => p.Value);
         return this;
     }
 }
@@ -251,6 +332,145 @@ public static class OverlayCatalog
     {
         var shown = (items ?? []).Where(i => i is not null).ToHashSet(StringComparer.Ordinal);
         return All.Where(i => shown.Contains(i.Id)).Select(i => i.Id).ToList();
+    }
+}
+
+/// <summary>
+/// Where the overlay goes on a screen and how big it is drawn: nine places (corners, edges and the middle) plus an
+/// offset, the place it was dragged to, and its scale. Pixels are the screen's; offsets are kept at 100 % scaling.
+/// </summary>
+public static class OverlayPlacements
+{
+    public const int MaxOffset = 4000;
+    public const int MinScale = 50;
+    public const int MaxScale = 250;
+    public const int MaxGames = 200;
+
+    /// <summary>Compact 85 %, Standard 100 %, Expanded 125 %.</summary>
+    public static double PresetFactor(OverlaySize size) => size switch
+    {
+        OverlaySize.Compact => 0.85,
+        OverlaySize.Expanded => 1.25,
+        _ => 1,
+    };
+
+    /// <summary>
+    /// The scale for a screen <paramref name="heightDip"/> tall at its own scaling: 1 on a 1080-line screen, up to 1.35
+    /// on taller ones (1440p at 100 %) and down to 0.85 on short laptop screens, in steps of 5 %.
+    /// </summary>
+    public static double ScreenScale(double heightDip)
+    {
+        if (!double.IsFinite(heightDip) || heightDip <= 0)
+        {
+            return 1;
+        }
+
+        return Math.Round(Math.Clamp(heightDip / 1080.0, 0.85, 1.35) * 20) / 20;
+    }
+
+    /// <summary>
+    /// The overlay's top-left corner on a screen: its place (<paramref name="margin"/> from the edges) moved by the
+    /// offset, kept fully on the screen. All values in the screen's pixels.
+    /// </summary>
+    public static (int X, int Y) Locate(int left, int top, int screenWidth, int screenHeight, int width, int height,
+        OverlayPosition position, int margin, int offsetX, int offsetY)
+    {
+        int x = Column(position) switch
+        {
+            0 => left + margin,
+            1 => left + ((screenWidth - width) / 2),
+            _ => left + screenWidth - margin - width,
+        };
+        int y = Row(position) switch
+        {
+            0 => top + margin,
+            1 => top + ((screenHeight - height) / 2),
+            _ => top + screenHeight - margin - height,
+        };
+        x = Math.Clamp(x + offsetX, left, Math.Max(left, left + screenWidth - width));
+        y = Math.Clamp(y + offsetY, top, Math.Max(top, top + screenHeight - height));
+        return (x, y);
+    }
+
+    /// <summary>
+    /// Where the overlay was dropped (its top-left, in the screen's pixels), as the nearest of the nine places and the
+    /// offset from it, so it stays exactly there and keeps its corner on screens of other sizes.
+    /// </summary>
+    public static (OverlayPosition Position, int OffsetX, int OffsetY) FromDrop(int left, int top, int screenWidth, int screenHeight,
+        int x, int y, int width, int height, int margin)
+    {
+        double centerX = x + (width / 2.0) - left;
+        double centerY = y + (height / 2.0) - top;
+        int column = centerX < screenWidth / 3.0 ? 0 : centerX < screenWidth * 2 / 3.0 ? 1 : 2;
+        int row = centerY < screenHeight / 3.0 ? 0 : centerY < screenHeight * 2 / 3.0 ? 1 : 2;
+        var position = At(row, column);
+        var (baseX, baseY) = Locate(left, top, screenWidth, screenHeight, width, height, position, margin, 0, 0);
+        return (position, x - baseX, y - baseY);
+    }
+
+    /// <summary>The place in a row (0 top, 1 middle, 2 bottom) and column (0 left, 1 center, 2 right).</summary>
+    public static OverlayPosition At(int row, int column) => (row, column) switch
+    {
+        (0, 0) => OverlayPosition.TopLeft,
+        (0, 1) => OverlayPosition.TopCenter,
+        (0, _) => OverlayPosition.TopRight,
+        (1, 0) => OverlayPosition.MiddleLeft,
+        (1, 1) => OverlayPosition.Center,
+        (1, _) => OverlayPosition.MiddleRight,
+        (_, 0) => OverlayPosition.BottomLeft,
+        (_, 1) => OverlayPosition.BottomCenter,
+        _ => OverlayPosition.BottomRight,
+    };
+
+    public static int Row(OverlayPosition position) => position switch
+    {
+        OverlayPosition.TopLeft or OverlayPosition.TopCenter or OverlayPosition.TopRight => 0,
+        OverlayPosition.MiddleLeft or OverlayPosition.Center or OverlayPosition.MiddleRight => 1,
+        _ => 2,
+    };
+
+    public static int Column(OverlayPosition position) => position switch
+    {
+        OverlayPosition.TopLeft or OverlayPosition.MiddleLeft or OverlayPosition.BottomLeft => 0,
+        OverlayPosition.TopCenter or OverlayPosition.Center or OverlayPosition.BottomCenter => 1,
+        _ => 2,
+    };
+
+    /// <summary>The place kept for a program (by file name, either case), or null.</summary>
+    public static OverlayPlacement? ForProgram(IEnumerable<OverlayPlacement> placements, string? program)
+    {
+        string? name = FileName(program);
+        return name is null ? null : placements.FirstOrDefault(p => string.Equals(p.Program, name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>Keeps one place per program (newest wins), known places only, at most <see cref="MaxGames"/>.</summary>
+    public static List<OverlayPlacement> Normalize(List<OverlayPlacement>? placements) =>
+        (placements ?? [])
+            .Where(p => p is not null && FileName(p.Program) is not null && Enum.IsDefined(p.Position))
+            .Select(p => new OverlayPlacement
+            {
+                Program = FileName(p.Program)!,
+                Position = p.Position,
+                OffsetX = Math.Clamp(p.OffsetX, -MaxOffset, MaxOffset),
+                OffsetY = Math.Clamp(p.OffsetY, -MaxOffset, MaxOffset),
+            })
+            .Reverse()
+            .DistinctBy(p => p.Program, StringComparer.OrdinalIgnoreCase)
+            .Reverse()
+            .TakeLast(MaxGames)
+            .ToList();
+
+    /// <summary>"game.exe" from a name or a path (either slash).</summary>
+    public static string? FileName(string? program)
+    {
+        if (string.IsNullOrWhiteSpace(program))
+        {
+            return null;
+        }
+
+        string name = program.Trim().Trim('"');
+        name = name[(name.LastIndexOfAny(['\\', '/']) + 1)..];
+        return name.Length == 0 ? null : name;
     }
 }
 

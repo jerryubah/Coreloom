@@ -502,12 +502,12 @@
 
   <!-- A value: the number, then a smaller unit on the same baseline. The FPS number is the headline: bigger and bold. -->
   <DataTemplate x:Key="OverlayValue" DataType="{x:Type overlay:OverlayValueViewModel}">
-    <TextBlock x:Name="Value" Margin="{Binding Overlay.ValueSpacing}" Foreground="{Binding Color, Converter={StaticResource HexToBrush}}" VerticalAlignment="Bottom">
-      <Run Text="{Binding Number, Mode=OneWay}" /><Run Text="{Binding Unit, Mode=OneWay, StringFormat={}&#x2009;{0}}" FontSize="{Binding Overlay.SmallFontSize, Mode=OneWay}" FontWeight="Medium" />
+    <TextBlock x:Name="Value" Margin="{Binding Group.ValueSpacing}" Foreground="{Binding Color, Converter={StaticResource HexToBrush}}" VerticalAlignment="Bottom">
+      <Run Text="{Binding Number, Mode=OneWay}" /><Run Text="{Binding Unit, Mode=OneWay, StringFormat={}&#x2009;{0}}" FontSize="{Binding Group.SmallFontSize, Mode=OneWay}" FontWeight="Medium" />
     </TextBlock>
     <DataTemplate.Triggers>
       <DataTrigger Binding="{Binding Id}" Value="fps">
-        <Setter TargetName="Value" Property="FontSize" Value="{Binding Overlay.HeadlineFontSize}" />
+        <Setter TargetName="Value" Property="FontSize" Value="{Binding Group.HeadlineFontSize}" />
         <Setter TargetName="Value" Property="FontWeight" Value="Bold" />
       </DataTrigger>
     </DataTemplate.Triggers>
@@ -517,9 +517,10 @@
        frame-time graph (under the line when stacked, after it on one line). The text shadow is set on the text parts,
        never the graph. (1.4.1–1.4.4 also showed a green pill with the frame limit next to FPS.) -->
   <DataTemplate x:Key="OverlayGroup" DataType="{x:Type overlay:OverlayGroupViewModel}">
-    <Grid Margin="{Binding Overlay.GroupSpacing}">
+    <Grid Margin="{Binding Overlay.GroupSpacing}" TextElement.FontSize="{Binding FontSize}">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto" SharedSizeGroup="OverlayLabel" />
+        <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
@@ -528,8 +529,8 @@
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
-      <TextBlock x:Name="Label" Text="{Binding Label}" Opacity="0.55" Margin="{Binding Overlay.LabelSpacing}" VerticalAlignment="Bottom"
-                 FontSize="{Binding Overlay.SmallFontSize}" FontWeight="SemiBold"
+      <TextBlock x:Name="Label" Text="{Binding Label}" Opacity="0.55" Margin="{Binding LabelSpacing}" VerticalAlignment="Bottom"
+                 FontSize="{Binding SmallFontSize}" FontWeight="SemiBold"
                  Visibility="{Binding Overlay.ShowLabels, Converter={StaticResource BoolToVisibility}}" />
       <ItemsControl x:Name="Values" Grid.Column="1" ItemsSource="{Binding Values}" ItemTemplate="{StaticResource OverlayValue}" Focusable="False" VerticalAlignment="Bottom">
         <ItemsControl.ItemsPanel>
@@ -540,14 +541,32 @@
       </ItemsControl>
       <!-- the graph: after the values on one line -->
       <c:FrameGraph x:Name="InlineGraph" Grid.Column="3" Margin="8,0,0,2" VerticalAlignment="Bottom" Visibility="Collapsed"
-                    Width="{Binding Overlay.GraphWidth}" Height="{Binding Overlay.GraphHeight}"
+                    Width="{Binding GraphWidth}" Height="{Binding GraphHeight}"
                     Feed="{Binding Overlay.FrameTimes}" Stroke="{Binding Overlay.TextColor, Converter={StaticResource HexToBrush}}" />
       <!-- the graph: under the line when stacked -->
       <c:FrameGraph x:Name="Graph" Grid.Row="1" Grid.ColumnSpan="4" Margin="0,3,0,2" HorizontalAlignment="Left" Visibility="Collapsed"
-                    Width="{Binding Overlay.GraphWidth}" Height="{Binding Overlay.GraphHeight}"
+                    Width="{Binding GraphWidth}" Height="{Binding GraphHeight}"
                     Feed="{Binding Overlay.FrameTimes}" Stroke="{Binding Overlay.TextColor, Converter={StaticResource HexToBrush}}" />
+      <!-- while the overlay is being moved: this line's size (S, M, L), click to change -->
+      <Button x:Name="SizeButton" Grid.Column="4" Margin="8,0,0,0" Padding="6,0" MinWidth="22" VerticalAlignment="Center" Visibility="Collapsed"
+              Command="{Binding CycleSizeCommand}" ToolTip="{Binding SizeToolTip}" Focusable="False" Cursor="Hand">
+        <Button.Template>
+          <ControlTemplate TargetType="Button">
+            <Border Background="#CC2D6BFF" CornerRadius="5" Padding="{TemplateBinding Padding}">
+              <TextBlock Text="{Binding SizeLabel}" FontSize="11" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center" />
+            </Border>
+          </ControlTemplate>
+        </Button.Template>
+      </Button>
     </Grid>
     <DataTemplate.Triggers>
+      <MultiDataTrigger>
+        <MultiDataTrigger.Conditions>
+          <Condition Binding="{Binding Overlay.IsMoving}" Value="True" />
+          <Condition Binding="{Binding (c:FrameGraph.IsLive), RelativeSource={RelativeSource Self}}" Value="True" />
+        </MultiDataTrigger.Conditions>
+        <Setter TargetName="SizeButton" Property="Visibility" Value="Visible" />
+      </MultiDataTrigger>
       <DataTrigger Binding="{Binding Overlay.TextShadow}" Value="True">
         <Setter TargetName="Label" Property="Effect" Value="{StaticResource OverlayTextShadow}" />
         <Setter TargetName="Values" Property="Effect" Value="{StaticResource OverlayTextShadow}" />

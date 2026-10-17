@@ -566,6 +566,9 @@ public sealed class FramePacerViewModel : ObservableObject
     /// <summary>The setup that paces best with variable refresh (G-SYNC / FreeSync).</summary>
     public string TipText => "For the smoothest result with G-SYNC or FreeSync, turn V-Sync on in the NVIDIA Control Panel and off in games: the limit keeps latency low and V-Sync catches the rare frame that would tear.";
 
+    /// <summary>The G-SYNC setup tip and how the limiter works (shown on hover, not as text on the card).</summary>
+    public string HelpText => $"{TipText}\n\n{MethodText}";
+
     public string MethodText => IsGameScope
         ? "Uses the graphics driver's own frame limiter in the game's driver profile (NVIDIA's own profile when it has one), so nothing is added to the game and it's safe with anti-cheat. It applies from the game's next start."
         : "Uses the graphics driver's own frame limiter for every game, so nothing is added to games and it's safe with anti-cheat. It applies to games you start next.";
@@ -736,6 +739,7 @@ public sealed class FramePacerViewModel : ObservableObject
         OnPropertyChanged(nameof(Explanation));
         OnPropertyChanged(nameof(ScopeText));
         OnPropertyChanged(nameof(MethodText));
+        OnPropertyChanged(nameof(HelpText));
         OnPropertyChanged(nameof(ForeignLimitText));
         OnPropertyChanged(nameof(AdaptiveOn));
         OnPropertyChanged(nameof(CanToggleAdaptive));

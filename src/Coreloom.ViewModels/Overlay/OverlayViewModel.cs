@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Coreloom.Core.Formatting;
 using Coreloom.Core.Overlay;
 using Coreloom.Core.Settings;
@@ -56,8 +57,11 @@ public sealed class OverlayValueViewModel : ObservableObject
 
     public string Id { get; }
 
-    /// <summary>The overlay it belongs to (templates read the text size from it).</summary>
+    /// <summary>The overlay it belongs to.</summary>
     public OverlayViewModel Overlay { get; }
+
+    /// <summary>The line it is on (templates read its text sizes from it).</summary>
+    public OverlayGroupViewModel? Group { get; internal set; }
 
     public string Number
     {
@@ -87,8 +91,11 @@ public sealed class OverlayValueViewModel : ObservableObject
     }
 }
 
-/// <summary>One line of the overlay: "GPU  97 %  72 °C  350 W".</summary>
-public sealed class OverlayGroupViewModel
+/// <summary>
+/// One line of the overlay: "GPU  97 %  72 °C  350 W". Each line has its own size (Compact, Standard or Expanded) on
+/// top of the overlay's, and its text, graph and spacing follow it.
+/// </summary>
+public sealed class OverlayGroupViewModel : ObservableObject
 {
     public OverlayGroupViewModel(string id, string label, IReadOnlyList<OverlayValueViewModel> values, OverlayViewModel overlay)
     {
@@ -96,6 +103,12 @@ public sealed class OverlayGroupViewModel
         Label = label;
         Values = values;
         Overlay = overlay;
+        foreach (var value in values)
+        {
+            value.Group = this;
+        }
+
+        CycleSizeCommand = new RelayCommand(() => overlay.CycleGroupSize(this));
     }
 
     public string Id { get; }
@@ -103,12 +116,40 @@ public sealed class OverlayGroupViewModel
     /// <summary>The overlay it belongs to (templates read labels on/off and the layout from it).</summary>
     public OverlayViewModel Overlay { get; }
 
-    /// <summary>The FPS line: the frame-time graph and the frame limiter's mark go with it.</summary>
+    /// <summary>The FPS line: the frame-time graph goes with it.</summary>
     public bool IsFrameRate => Id == nameof(OverlayGroup.FrameRate);
 
     public string Label { get; }
 
     public IReadOnlyList<OverlayValueViewModel> Values { get; }
+
+    /// <summary>This line's size relative to the rest of the overlay.</summary>
+    public double Factor => Enum.TryParse<OverlayGroup>(Id, out var group) ? Overlay.GroupFactor(group) : 1;
+
+    public double FontSize => Math.Round(Overlay.FontSize * Factor, 1);
+
+    public double SmallFontSize => Math.Round(FontSize * 0.78, 1);
+
+    public double HeadlineFontSize => Math.Round(FontSize * 1.3, 1);
+
+    public double GraphWidth => Overlay.IsHorizontal ? Math.Round(FontSize * 6.5) : Math.Round(FontSize * 11.5);
+
+    public double GraphHeight => Overlay.IsHorizontal ? Math.Round(FontSize * 1.3) : Math.Round(FontSize * 2.6);
+
+    public string ValueSpacing => $"0,0,{Math.Round(FontSize * 0.6)},0";
+
+    public string LabelSpacing => $"0,0,{Math.Round(FontSize * 0.7)},0";
+
+    /// <summary>"S", "M" or "L" on the line's size button while the overlay is being moved.</summary>
+    public string SizeLabel => Factor < 0.95 ? "S" : Factor > 1.05 ? "L" : "M";
+
+    public string SizeToolTip => $"{Label} line: {(Factor < 0.95 ? "compact" : Factor > 1.05 ? "expanded" : "standard")}. Click to change its size.";
+
+    /// <summary>Compact → Standard → Expanded → Compact.</summary>
+    public IRelayCommand CycleSizeCommand { get; }
+
+    /// <summary>The sizes changed (the overlay's scale, the screen or this line's size).</summary>
+    public void Refresh() => OnPropertyChanged(string.Empty);
 }
 
 /// <summary>
@@ -131,13 +172,186 @@ public sealed class OverlayViewModel : ObservableObject
     private string _layoutKey = string.Empty;
     private int _fanCatalogVersion = -1;
     private IReadOnlyList<string> _cpuFanIds = [];
+    private double _screenScale = 1;
+    private double? _liveScale;
+    private bool _isMoving;
+    private string? _currentGame;
 
     public OverlayViewModel(PageContext context)
     {
         _context = context;
         FrameTimes = new Feed(this);
+        FinishMovingCommand = new RelayCommand(() => IsMoving = false);
         context.Settings.Changed += OnSettingsChanged;
         Rebuild(context.Monitor.Engine.LatestFrame);
+    }
+
+    // ---- Size --------------------------------------------------------------------------------------------------
+
+    /// <summary>The screen's own scale for the overlay (1 on a 1080-line screen; see <see cref="OverlayPlacements.ScreenScale"/>), set by the app.</summary>
+    public double ScreenScale
+    {
+        get => _screenScale;
+        set
+        {
+            value = double.IsFinite(value) && value > 0 ? value : 1;
+            if (Math.Abs(value - _screenScale) > 0.001)
+            {
+                _screenScale = value;
+                OnPropertyChanged();
+                SizesChanged();
+            }
+        }
+    }
+
+    /// <summary>The scale while the overlay is being resized by its corner (saved when the drag ends), else null.</summary>
+    public double? LiveScale
+    {
+        get => _liveScale;
+        set
+        {
+            value = value is double v && double.IsFinite(v) ? Math.Clamp(v, OverlayPlacements.MinScale / 100.0, OverlayPlacements.MaxScale / 100.0) : null;
+            if (value != _liveScale)
+            {
+                _liveScale = value;
+                SizesChanged();
+            }
+        }
+    }
+
+    /// <summary>The overlay's scale: its size (or the one being dragged), times the screen's when it follows the screen.</summary>
+    public double Factor => (_liveScale ?? Options.SizeFactor) * (Options.AutoScale ? _screenScale : 1);
+
+    /// <summary>The overlay's own scale (its size preset or custom scale), without the screen's.</summary>
+    public double OwnScale => Options.SizeFactor;
+
+    /// <summary>"100 %": the overlay's own size (without the screen's scale).</summary>
+    public string ScaleText => $"{Math.Round((_liveScale ?? Options.SizeFactor) * 100).ToString(CultureInfo.CurrentCulture)} %";
+
+    public double GroupFactor(OverlayGroup group) => Options.GroupFactor(group);
+
+    /// <summary>Compact → Standard → Expanded → Compact for one line.</summary>
+    internal void CycleGroupSize(OverlayGroupViewModel group)
+    {
+        var next = group.Factor < 0.95 ? OverlaySize.Standard : group.Factor > 1.05 ? OverlaySize.Compact : OverlaySize.Expanded;
+        _context.Settings.Update("Overlay", s =>
+        {
+            s.Overlay.GroupSizes[group.Id] = next;
+            s.Overlay.Normalize();
+        });
+    }
+
+    /// <summary>Saves the scale reached by dragging the corner (as the overlay's own size).</summary>
+    public void CommitScale()
+    {
+        if (_liveScale is not double scale)
+        {
+            return;
+        }
+
+        int percent = (int)Math.Round(scale * 100);
+        _liveScale = null;
+        _context.Settings.Update("Overlay", s =>
+        {
+            s.Overlay.Size = OverlaySize.Custom;
+            s.Overlay.Scale = percent;
+            s.Overlay.Normalize();
+        });
+    }
+
+    private void SizesChanged()
+    {
+        OnPropertyChanged(nameof(Factor));
+        OnPropertyChanged(nameof(ScaleText));
+        OnPropertyChanged(nameof(FontSize));
+        OnPropertyChanged(nameof(SmallFontSize));
+        OnPropertyChanged(nameof(HeadlineFontSize));
+        OnPropertyChanged(nameof(GraphWidth));
+        OnPropertyChanged(nameof(GraphHeight));
+        OnPropertyChanged(nameof(Padding));
+        OnPropertyChanged(nameof(ValueSpacing));
+        OnPropertyChanged(nameof(GroupSpacing));
+        OnPropertyChanged(nameof(LabelSpacing));
+        OnPropertyChanged(nameof(CornerRadius));
+        foreach (var group in Groups)
+        {
+            group.Refresh();
+        }
+    }
+
+    // ---- Moving --------------------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// The overlay can be dragged to a new place and resized by its corner (Shift + the hotkey, or *Move on screen* in its
+    /// settings); clicks reach it instead of passing through to the game.
+    /// </summary>
+    public bool IsMoving
+    {
+        get => _isMoving;
+        set
+        {
+            if (SetProperty(ref _isMoving, value))
+            {
+                if (!value)
+                {
+                    CommitScale();
+                }
+
+                OnPropertyChanged(nameof(MovingText));
+            }
+        }
+    }
+
+    public IRelayCommand FinishMovingCommand { get; }
+
+    /// <summary>The game the overlay was last over ("Cyberpunk2077.exe"), set by the app; places are kept for it when they're kept per game.</summary>
+    public string? CurrentGame
+    {
+        get => _currentGame;
+        set
+        {
+            if (SetProperty(ref _currentGame, OverlayPlacements.FileName(value)))
+            {
+                OnPropertyChanged(nameof(MovingText));
+            }
+        }
+    }
+
+    /// <summary>Where a move is saved: "Saved for Cyberpunk2077.exe" or "Saved for all games".</summary>
+    public string MovingText => Options.PerGamePosition && _currentGame is { } game ? $"Saved for {game}" : "Saved for all games";
+
+    /// <summary>The place to use now: the current game's own place when places are kept per game, else the one for all.</summary>
+    public (OverlayPosition Position, int OffsetX, int OffsetY) Placement => Options.PlacementFor(_currentGame);
+
+    /// <summary>Saves where the overlay was dropped (and any new scale): for the current game when places are kept per game, else for all.</summary>
+    public void SavePlacement(OverlayPosition position, int offsetX, int offsetY)
+    {
+        string? game = Options.PerGamePosition ? _currentGame : null;
+        double? scale = _liveScale;
+        _liveScale = null;
+        _context.Settings.Update("Overlay", s =>
+        {
+            var o = s.Overlay;
+            if (game is not null)
+            {
+                o.GamePlacements.RemoveAll(p => string.Equals(p.Program, game, StringComparison.OrdinalIgnoreCase));
+                o.GamePlacements.Add(new OverlayPlacement { Program = game, Position = position, OffsetX = offsetX, OffsetY = offsetY });
+            }
+            else
+            {
+                o.Position = position;
+                o.OffsetX = offsetX;
+                o.OffsetY = offsetY;
+            }
+
+            if (scale is double value)
+            {
+                o.Size = OverlaySize.Custom;
+                o.Scale = (int)Math.Round(value * 100);
+            }
+
+            o.Normalize();
+        });
     }
 
     /// <summary>The frame times of the program in front, for the graph.</summary>
@@ -155,11 +369,11 @@ public sealed class OverlayViewModel : ObservableObject
     public string PacingToolTip => _pacingCap > 0 ? $"Frame limiter on: limited to {_pacingCap.ToString(CultureInfo.CurrentCulture)} FPS" : string.Empty;
 
     /// <summary>The FPS number is a little bigger than the other values.</summary>
-    public double HeadlineFontSize => Math.Round(Options.FontSize * 1.3, 1);
+    public double HeadlineFontSize => Math.Round(FontSize * 1.3, 1);
 
-    public double GraphWidth => IsHorizontal ? Math.Round(Options.FontSize * 6.5) : Math.Round(Options.FontSize * 11.5);
+    public double GraphWidth => IsHorizontal ? Math.Round(FontSize * 6.5) : Math.Round(FontSize * 11.5);
 
-    public double GraphHeight => IsHorizontal ? Math.Round(Options.FontSize * 1.3) : Math.Round(Options.FontSize * 2.6);
+    public double GraphHeight => IsHorizontal ? Math.Round(FontSize * 1.3) : Math.Round(FontSize * 2.6);
 
     /// <summary>Set by the app once frame rates can be measured.</summary>
     public IFrameRateSource? FrameRates { get; set; }
@@ -175,10 +389,11 @@ public sealed class OverlayViewModel : ObservableObject
     /// <summary>Whether the overlay needs frame rates (an FPS item is shown).</summary>
     public bool NeedsFrameRates => Options.Items.Any(OverlayCatalog.IsFrameRate);
 
-    public double FontSize => Options.FontSize;
+    /// <summary>The text size: the chosen size times the overlay's scale.</summary>
+    public double FontSize => Math.Round(Options.FontSize * Factor, 1);
 
     /// <summary>Units, labels and the 1% low tag are a little smaller.</summary>
-    public double SmallFontSize => Math.Round(Options.FontSize * 0.78, 1);
+    public double SmallFontSize => Math.Round(FontSize * 0.78, 1);
 
     public string FontWeight => Options.FontWeight switch
     {
@@ -196,19 +411,19 @@ public sealed class OverlayViewModel : ObservableObject
 
     public double BackgroundOpacity => Options.BackgroundOpacity / 100.0;
 
-    public double CornerRadius => Options.CornerRadius;
+    public double CornerRadius => Math.Round(Options.CornerRadius * Factor);
 
     /// <summary>Padding inside the background, in proportion to the text.</summary>
-    public string Padding => $"{Math.Round(Options.FontSize * 0.85)},{Math.Round(Options.FontSize * 0.55)}";
+    public string Padding => $"{Math.Round(FontSize * 0.85)},{Math.Round(FontSize * 0.55)}";
 
     /// <summary>Space after each value.</summary>
-    public string ValueSpacing => $"0,0,{Math.Round(Options.FontSize * 0.6)},0";
+    public string ValueSpacing => $"0,0,{Math.Round(FontSize * 0.6)},0";
 
     /// <summary>Space after each line: between lines when stacked, between groups on one line.</summary>
-    public string GroupSpacing => IsHorizontal ? $"0,0,{Math.Round(Options.FontSize * 0.7)},0" : "0,1,0,1";
+    public string GroupSpacing => IsHorizontal ? $"0,0,{Math.Round(FontSize * 0.7)},0" : "0,1,0,1";
 
     /// <summary>Space between a line's label and its values.</summary>
-    public string LabelSpacing => $"0,0,{Math.Round(Options.FontSize * 0.7)},0";
+    public string LabelSpacing => $"0,0,{Math.Round(FontSize * 0.7)},0";
 
     public bool IsHorizontal => Options.Layout == OverlayLayout.Horizontal;
 
@@ -276,6 +491,10 @@ public sealed class OverlayViewModel : ObservableObject
 
         Rebuild(_context.Monitor.Engine.LatestFrame);
         OnPropertyChanged(string.Empty); // every appearance property
+        foreach (var group in Groups)
+        {
+            group.Refresh();
+        }
     }
 
     /// <summary>The items shown and which of them this PC reports: when it changes, the lines are rebuilt.</summary>

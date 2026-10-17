@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Globalization;
 using Coreloom.Core.Settings;
+using Coreloom.ViewModels.Infrastructure;
 using Coreloom.ViewModels.Pages;
 using Coreloom.ViewModels.Services;
 
@@ -31,7 +33,46 @@ public sealed class OverlayItemOptionViewModel : ObservableObject
     internal void Refresh() => OnPropertyChanged(nameof(IsShown));
 }
 
-public sealed record OverlayItemGroupViewModel(string Name, IReadOnlyList<OverlayItemOptionViewModel> Items);
+/// <summary>A line of the overlay in its settings: the readings it can show and its size (S, M or L).</summary>
+public sealed class OverlayItemGroupViewModel : ObservableObject
+{
+    private readonly OverlaySettingsViewModel _owner;
+
+    public OverlayItemGroupViewModel(OverlaySettingsViewModel owner, OverlayGroup group, string name, IReadOnlyList<OverlayItemOptionViewModel> items)
+    {
+        _owner = owner;
+        Group = group;
+        Name = name;
+        Items = items;
+    }
+
+    public OverlayGroup Group { get; }
+
+    public string Name { get; }
+
+    public IReadOnlyList<OverlayItemOptionViewModel> Items { get; }
+
+    public IReadOnlyList<Option<OverlaySize>> SizeOptions { get; } =
+        [new(OverlaySize.Compact, "S"), new(OverlaySize.Standard, "M"), new(OverlaySize.Expanded, "L")];
+
+    /// <summary>The line's size: S (compact), M (standard) or L (expanded).</summary>
+    public Option<OverlaySize> SelectedSize
+    {
+        get => SizeOptions.First(o => o.Value == _owner.GroupSize(Group));
+        set
+        {
+            if (value is not null)
+            {
+                _owner.SetGroupSize(Group, value.Value);
+            }
+        }
+    }
+
+    internal void Refresh() => OnPropertyChanged(nameof(SelectedSize));
+}
+
+/// <summary>A game with a place of its own for the overlay (× forgets it).</summary>
+public sealed record OverlayGamePlacementChip(string Program, string PlaceText, IRelayCommand RemoveCommand) : StaticRecord;
 
 /// <summary>One of the eight places the overlay can sit (a cell in the position picker).</summary>
 public sealed class OverlayPositionOptionViewModel : ObservableObject
@@ -123,9 +164,21 @@ public sealed class OverlaySettingsViewModel : ObservableObject
         SetTextColorCommand = new RelayCommand<string>(hex => TextColor = hex ?? OverlaySettings.DefaultTextColor);
         SetBackgroundColorCommand = new RelayCommand<string>(hex => BackgroundColor = hex ?? OverlaySettings.DefaultBackgroundColor);
         ResetCommand = new RelayCommand(Reset);
+        ResetOffsetCommand = new RelayCommand(() => Save(s =>
+        {
+            s.OffsetX = 0;
+            s.OffsetY = 0;
+        }));
+        MoveOnScreenCommand = new RelayCommand(() =>
+        {
+            Enabled = true;
+            IsCapturingHotkey = false;
+            IsOpen = false; // out of the way, so the overlay can be dragged over the screen
+            Preview.IsMoving = true;
+        });
 
         ItemGroups = Enum.GetValues<OverlayGroup>()
-            .Select(g => new OverlayItemGroupViewModel(GroupName(g), OverlayCatalog.All
+            .Select(g => new OverlayItemGroupViewModel(this, g, GroupName(g), OverlayCatalog.All
                 .Where(i => i.Group == g)
                 .Select(i => new OverlayItemOptionViewModel(this, i.Id, i.Name))
                 .ToArray()))
@@ -156,6 +209,7 @@ public sealed class OverlaySettingsViewModel : ObservableObject
             new(this, OverlayPosition.TopCenter, "Top center", 0, 1),
             new(this, OverlayPosition.TopRight, "Top right", 0, 2),
             new(this, OverlayPosition.MiddleLeft, "Middle left", 1, 0),
+            new(this, OverlayPosition.Center, "Center", 1, 1),
             new(this, OverlayPosition.MiddleRight, "Middle right", 1, 2),
             new(this, OverlayPosition.BottomLeft, "Bottom left", 2, 0),
             new(this, OverlayPosition.BottomCenter, "Bottom center", 2, 1),
@@ -167,6 +221,13 @@ public sealed class OverlaySettingsViewModel : ObservableObject
             if (section is "Overlay" or "All")
             {
                 Reload();
+            }
+        };
+        preview.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(OverlayViewModel.ScreenScale) or nameof(OverlayViewModel.Factor))
+            {
+                OnPropertyChanged(nameof(ScreenScaleText));
             }
         };
     }
@@ -224,11 +285,116 @@ public sealed class OverlaySettingsViewModel : ObservableObject
 
     public IReadOnlyList<OverlayPositionOptionViewModel> Positions { get; }
 
+    /// <summary>One of the nine places; picking one starts it there again (the fine-tuning offset goes back to zero).</summary>
     public OverlayPosition Position
     {
         get => Options.Position;
-        set => Save(s => s.Position = value);
+        set => Save(s =>
+        {
+            s.Position = value;
+            s.OffsetX = 0;
+            s.OffsetY = 0;
+        });
     }
+
+    /// <summary>Fine-tuning: pixels right of the place (negative: left), at 100 % scaling.</summary>
+    public int OffsetX
+    {
+        get => Options.OffsetX;
+        set => Save(s => s.OffsetX = value);
+    }
+
+    /// <summary>Fine-tuning: pixels below the place (negative: above), at 100 % scaling.</summary>
+    public int OffsetY
+    {
+        get => Options.OffsetY;
+        set => Save(s => s.OffsetY = value);
+    }
+
+    public IRelayCommand ResetOffsetCommand { get; }
+
+    /// <summary>Shows the overlay so it can be dragged into place and resized by its corner (also Shift + the hotkey, in games).</summary>
+    public IRelayCommand MoveOnScreenCommand { get; }
+
+    /// <summary>"Shift + End moves it in games."</summary>
+    public string MoveHint => HasHotkey ? $"In a game, Shift + {HotkeyText} does the same." : "Set a hotkey to move it from inside games too.";
+
+    /// <summary>Keep a place for each game: moving the overlay while a game is in front saves it for that game.</summary>
+    public bool PerGamePosition
+    {
+        get => Options.PerGamePosition;
+        set => Save(s => s.PerGamePosition = value);
+    }
+
+    /// <summary>Games with a place of their own.</summary>
+    public IReadOnlyList<OverlayGamePlacementChip> GamePlacements => Options.GamePlacements
+        .Select(p => new OverlayGamePlacementChip(p.Program, $"{p.Program} · {PlaceName(p.Position)}",
+            new RelayCommand(() => Save(s => s.GamePlacements.RemoveAll(g => string.Equals(g.Program, p.Program, StringComparison.OrdinalIgnoreCase))))))
+        .ToArray();
+
+    public bool HasGamePlacements => Options.GamePlacements.Count > 0;
+
+    public IReadOnlyList<Option<OverlaySize>> SizeOptions { get; } =
+        [new(OverlaySize.Compact, "Compact"), new(OverlaySize.Standard, "Standard"), new(OverlaySize.Expanded, "Expanded"), new(OverlaySize.Custom, "Custom")];
+
+    /// <summary>Compact, Standard or Expanded, or Custom (its own scale, e.g. after dragging its corner).</summary>
+    public Option<OverlaySize> SelectedSize
+    {
+        get => SizeOptions.First(o => o.Value == Options.Size);
+        set
+        {
+            if (value is not null)
+            {
+                Save(s =>
+                {
+                    if (value.Value == OverlaySize.Custom && s.Size != OverlaySize.Custom)
+                    {
+                        s.Scale = (int)Math.Round(s.SizeFactor * 100); // starts from the size it had
+                    }
+
+                    s.Size = value.Value;
+                });
+            }
+        }
+    }
+
+    /// <summary>The overlay's own scale in percent (moving it makes the size Custom).</summary>
+    public int Scale
+    {
+        get => (int)Math.Round(Options.SizeFactor * 100);
+        set => Save(s =>
+        {
+            s.Size = OverlaySize.Custom;
+            s.Scale = value;
+        });
+    }
+
+    /// <summary>Grows on big screens and shrinks on small ones.</summary>
+    public bool AutoScale
+    {
+        get => Options.AutoScale;
+        set => Save(s => s.AutoScale = value);
+    }
+
+    /// <summary>"× 1.25 on this screen" when the screen changes the size.</summary>
+    public string ScreenScaleText => Options.AutoScale && Math.Abs(Preview.ScreenScale - 1) > 0.001
+        ? $"× {Preview.ScreenScale.ToString("0.##", CultureInfo.CurrentCulture)} on the screen it's on"
+        : "Same size on every screen";
+
+    internal OverlaySize GroupSize(OverlayGroup group) =>
+        Options.GroupSizes.TryGetValue(group.ToString(), out var size) ? size : OverlaySize.Standard;
+
+    internal void SetGroupSize(OverlayGroup group, OverlaySize size) => Save(s =>
+    {
+        if (size == OverlaySize.Standard)
+        {
+            s.GroupSizes.Remove(group.ToString());
+        }
+        else
+        {
+            s.GroupSizes[group.ToString()] = size;
+        }
+    });
 
     public IReadOnlyList<Option<OverlayLayout>> LayoutOptions { get; } =
         [new(OverlayLayout.Vertical, "Stacked"), new(OverlayLayout.Horizontal, "One line")];
@@ -426,6 +592,12 @@ public sealed class OverlaySettingsViewModel : ObservableObject
             s.ShowLabels = defaults.ShowLabels;
             s.ColorWarnings = defaults.ColorWarnings;
             s.TextShadow = defaults.TextShadow;
+            s.OffsetX = defaults.OffsetX;
+            s.OffsetY = defaults.OffsetY;
+            s.Size = defaults.Size;
+            s.Scale = defaults.Scale;
+            s.AutoScale = defaults.AutoScale;
+            s.GroupSizes = [];
         });
     }
 
@@ -435,6 +607,11 @@ public sealed class OverlaySettingsViewModel : ObservableObject
         foreach (var item in ItemGroups.SelectMany(g => g.Items))
         {
             item.Refresh();
+        }
+
+        foreach (var group in ItemGroups)
+        {
+            group.Refresh();
         }
 
         foreach (var position in Positions)
@@ -453,6 +630,19 @@ public sealed class OverlaySettingsViewModel : ObservableObject
 
     private OverlayColorOption Background(string name, string hex) =>
         new(name, hex, () => Options.BackgroundColor, h => BackgroundColor = h);
+
+    private static string PlaceName(OverlayPosition position) => position switch
+    {
+        OverlayPosition.TopLeft => "top left",
+        OverlayPosition.TopCenter => "top center",
+        OverlayPosition.TopRight => "top right",
+        OverlayPosition.MiddleLeft => "middle left",
+        OverlayPosition.Center => "center",
+        OverlayPosition.MiddleRight => "middle right",
+        OverlayPosition.BottomLeft => "bottom left",
+        OverlayPosition.BottomCenter => "bottom center",
+        _ => "bottom right",
+    };
 
     private static string GroupName(OverlayGroup group) => group switch
     {

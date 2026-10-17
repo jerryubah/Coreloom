@@ -90,10 +90,10 @@ public sealed class AdaptivePacingController : ObservableObject
     internal AdaptivePacingSession? Session => _session;
 
     private string IdleText => !IsOn
-        ? "Off. Turn it on and play: Coreloom learns each game's steady frame rate as you go."
+        ? "Off"
         : CanApply
-            ? "On. Start a game from your library: Coreloom measures its frames and sets its limit."
-            : "On. Start a game from your library: Coreloom measures its frames and suggests a limit (setting it needs an NVIDIA driver).";
+            ? "On · waiting for a game from your library"
+            : "On · waiting for a game (it suggests limits; setting them needs NVIDIA)";
 
     /// <summary>Turns adaptive pacing on, or off (removing the limits it set; what it learned is kept).</summary>
     public async Task SetEnabledAsync(bool on)
