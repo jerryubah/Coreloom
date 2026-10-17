@@ -152,6 +152,8 @@ How this change was checked in the Linux container (no Windows, no nuget.org):
 - **Tests.** Core tests: 653 passed (the power plan check is now informational). View-model tests: 162 passed, with a
   new one turning switches on and off and checking the ring (2/9, 3/9, 4/9, 3/9, then 9/9 after *Boost now*, which
   now turns on Ultimate Performance too) and that the power plan pill is grey.
+- **GitHub Actions.** Branch CI on `release-1.4.9` and `release-1.4.9-b` passed: 892 tests on Windows each time (Core
+  653, view models 162, Hardware 77), none skipped, and the Linux tests.
 
 ### 1.4.8: a Gaming page in clean rows, core scheduling details in its boost, cards in a row ending on one line
 
