@@ -157,8 +157,8 @@ How this change was checked in the Linux container (no Windows, no nuget.org):
   shares, a kept profile applied after AMD's driver had its moment, each case where a profile is left out, the A/B
   test switching cores and offering a profile only for a clear gain, a refused change, and turning off giving the
   cores back). `Coreloom.App` compiles and the XAML checks pass (20 files, 242 shared keys, 1,320 bindings).
-- **GitHub Actions.** Branch CI on `release-1.4.7` passed on the first run: 891 tests on Windows (Core 653, view
-  models 161, Hardware 77), none skipped, and the Linux tests.
+- **GitHub Actions.** Branch CI passed on the first run and again on `release-1.4.7` and `release-1.4.7-b` with the
+  docs: 891 tests on Windows each time (Core 653, view models 161, Hardware 77), none skipped, and the Linux tests.
 - **Not run on the hardware it's for.** There's no Ryzen 9 9950X3D here and no game to play. Not verified: that
   Windows reports the two CCDs' L3 caches as 96 MB and 32 MB (as `coreinfo` shows on X3D processors), the service
   manager's view of `amd3dvcache`/`amd3dvcacheSvc` and the registry preferences on a real chipset driver install,
