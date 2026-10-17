@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # to publish the pictures on the pageshots-output branch
 
 env:
   DOTNET_NOLOGO: true
@@ -38,3 +38,18 @@ jobs:
           path: artifacts/pageshots/
           if-no-files-found: warn
           retention-days: 14
+
+      # Also as a branch of their own (replaced each run), so they can be fetched with git where artifact downloads
+      # aren't reachable.
+      - name: Publish the pictures on the pageshots-output branch
+        shell: pwsh
+        run: |
+          $source = "${{ github.sha }}".Substring(0, 7)
+          Set-Location artifacts/pageshots
+          git init -q -b pageshots-output
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Page shots of $source (${{ github.ref_name }})"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" pageshots-output
+          Get-ChildItem *.png | ForEach-Object { Write-Output "::notice title=Page shot::$($_.Name) $([math]::Round($_.Length / 1KB)) KB" }
