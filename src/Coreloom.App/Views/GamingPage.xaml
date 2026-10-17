@@ -442,9 +442,10 @@
       </ItemsControl>
 
       <!-- ============================================================ -->
-      <!-- Frame limiter and shader cache, side by side (stacked when narrow) -->
+      <!-- Frame limiter, shader cache and CPU core scheduling: two columns, each card as tall as its content and placed  -->
+      <!-- in the shorter column (so core scheduling goes under the shader cache); stacked when narrow                     -->
       <!-- ============================================================ -->
-      <c:StackedColumns MinColumnWidth="440" MaxColumns="2" Spacing="16" RowSpacing="16" InOrder="True" Margin="0,16,0,0">
+      <c:StackedColumns MinColumnWidth="440" MaxColumns="2" Spacing="16" RowSpacing="16" Margin="0,16,0,0">
 
         <!-- Frame limiter -->
         <c:SquircleBorder Style="{StaticResource Card.Glow}" GlowKey="Accent" GlowStrength="0.7" DataContext="{Binding FramePacer}">
@@ -721,6 +722,159 @@
               <ItemsControl ItemsSource="{Binding ShaderCaches}" ItemTemplate="{StaticResource ShaderCacheRow}" Focusable="False" />
             </c:SquircleBorder>
             <TextBlock Style="{StaticResource Text.Caption}" Margin="0,12,0,0" TextWrapping="Wrap" TextTrimming="None" Text="{Binding ShaderCacheNote}" />
+          </StackPanel>
+        </c:SquircleBorder>
+
+        <!-- CPU core scheduling: the cores, where the game runs, what AMD's scheduling needs, a test, and per-game profiles -->
+        <c:SquircleBorder Style="{StaticResource Card}" DataContext="{Binding CoreScheduling}">
+          <StackPanel>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <c:SquircleBorder Width="36" Height="36" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
+                <Path Style="{StaticResource IconPath}" Width="17" Height="17" Data="{StaticResource Icon.Cpu}" Stroke="{DynamicResource Brush.Accent}" />
+              </c:SquircleBorder>
+              <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
+                <WrapPanel>
+                  <TextBlock Style="{StaticResource Text.CardTitle}" FontSize="14" Text="CPU core scheduling" VerticalAlignment="Center" Margin="0,0,8,0" />
+                  <Border Style="{StaticResource Badge}">
+                    <TextBlock Text="{Binding BadgeText}" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
+                  </Border>
+                </WrapPanel>
+                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding LayoutText}" TextWrapping="Wrap" TextTrimming="None" Margin="0,2,0,0" />
+              </StackPanel>
+              <Grid Grid.Column="2" VerticalAlignment="Center" DataContext="{Binding DataContext.CoreSchedulingBoost, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding IsOn, Mode=TwoWay}" IsEnabled="{Binding CanToggle}" AutomationProperties.Name="Intelligent CPU core scheduling"
+                          Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                <c:RadialGauge Style="{StaticResource GameSpinner}" Margin="0,0,10,0" b:Spin.IsSpinning="{Binding IsBusy}"
+                               Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+              </Grid>
+            </Grid>
+
+            <!-- Nothing to choose between on this processor -->
+            <TextBlock Text="{Binding UnsupportedNote}" Style="{StaticResource Text.Secondary}" TextWrapping="Wrap" TextTrimming="None" Margin="0,12,0,0"
+                       Visibility="{Binding IsSupported, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+
+            <StackPanel Visibility="{Binding IsSupported, Converter={StaticResource BoolToVisibility}}">
+              <!-- The core groups, each with its share of the load while a game is in front -->
+              <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,10" Margin="0,14,0,0">
+                <StackPanel>
+                  <ItemsControl ItemsSource="{Binding Groups}" Focusable="False">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate DataType="{x:Type pages:CoreGroupViewModel}">
+                        <Grid Margin="0,3">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="46" />
+                          </Grid.ColumnDefinitions>
+                          <Ellipse Width="8" Height="8" Margin="0,0,10,0" VerticalAlignment="Center" Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+                          <TextBlock Grid.Column="1" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                            <Run Text="{Binding Name, Mode=OneWay}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" /><Run Text="  " /><Run Text="{Binding Description, Mode=OneWay}" FontSize="11.5" Foreground="{DynamicResource Brush.TextTertiary}" />
+                          </TextBlock>
+                          <ProgressBar Grid.Column="2" Style="{StaticResource ProgressBar.Thin}" Maximum="1" Margin="12,0,0,0" VerticalAlignment="Center"
+                                       Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" b:Smooth.Value="{Binding Share}" />
+                          <TextBlock Grid.Column="3" Text="{Binding ShareText}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right"
+                                     VerticalAlignment="Center" Foreground="{DynamicResource Brush.Text}" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Pulse}" VerticalAlignment="Top" Margin="0,1,8,0"
+                          Stroke="{Binding StatusColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+                    <TextBlock Grid.Column="1" Text="{Binding StatusText}" FontSize="12" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
+                  </Grid>
+                  <TextBlock Text="{Binding Hint}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="22,4,0,0"
+                             Visibility="{Binding HasHint, Converter={StaticResource BoolToVisibility}}" />
+                </StackPanel>
+              </c:SquircleBorder>
+
+              <!-- What AMD's scheduling depends on: one pill each (hover for what to do) -->
+              <ItemsControl ItemsSource="{Binding Checks}" Margin="0,12,0,-6" Focusable="False" Visibility="{Binding HasChecks, Converter={StaticResource BoolToVisibility}}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <WrapPanel />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="{x:Type pages:CoreCheckRow}">
+                    <Border CornerRadius="8" Padding="9,3" Margin="0,0,6,6" Background="{DynamicResource Brush.ControlHover}" ToolTip="{Binding Detail}" ToolTipService.ShowDuration="30000">
+                      <TextBlock FontSize="11.5">
+                        <Run Text="{Binding Name, Mode=OneWay}" Foreground="{DynamicResource Brush.TextSecondary}" /><Run Text="  " /><Run Text="{Binding Status, Mode=OneWay}" FontWeight="SemiBold" Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+                      </TextBlock>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <!-- An A/B test in the next game: Windows' choice against the preferred cores -->
+              <Grid Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding TestText}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" VerticalAlignment="Center" Margin="0,0,12,0" />
+                <Grid Grid.Column="1" VerticalAlignment="Top">
+                  <Button Style="{StaticResource Button.Secondary}" Padding="12,5" Content="Test a game" Command="{Binding TestCommand}"
+                          ToolTip="Turn core scheduling on first. The test runs in the next game you play."
+                          Visibility="{Binding IsTesting, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                  <Button Style="{StaticResource Button.Subtle}" Padding="12,5" Content="Stop test" Command="{Binding CancelTestCommand}"
+                          Visibility="{Binding IsTesting, Converter={StaticResource BoolToVisibility}}" />
+                </Grid>
+              </Grid>
+
+              <!-- A clear gain: keep it as the game's profile? -->
+              <c:SquircleBorder CornerRadius="12" Padding="14,10" Margin="0,10,0,0" Background="{DynamicResource Brush.SuccessSoft}"
+                                Visibility="{Binding HasPending, Converter={StaticResource BoolToVisibility}}">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="{Binding PendingText}" FontSize="12" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                  <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
+                    <Button Style="{StaticResource Button.Primary}" Padding="12,4" Content="Keep" Command="{Binding KeepCommand}" />
+                    <Button Style="{StaticResource Button.Subtle}" Padding="10,4" Margin="6,0,0,0" Content="Not now" Command="{Binding DiscardCommand}" />
+                  </StackPanel>
+                </Grid>
+              </c:SquircleBorder>
+
+              <TextBlock Text="{Binding LastActionText}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="0,8,0,0"
+                         Visibility="{Binding HasLastAction, Converter={StaticResource BoolToVisibility}}" />
+
+              <!-- Games kept on chosen cores: × removes one (Windows chooses again) -->
+              <ItemsControl ItemsSource="{Binding Profiles}" Margin="0,10,0,-8" Focusable="False" Visibility="{Binding HasProfiles, Converter={StaticResource BoolToVisibility}}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <WrapPanel />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="{x:Type pages:CoreProfileChip}">
+                    <c:SquircleBorder CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}" Padding="10,2,2,2" Margin="0,0,8,8">
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock FontSize="12" VerticalAlignment="Center">
+                          <Run Text="{Binding Name, Mode=OneWay}" Foreground="{DynamicResource Brush.Text}" /><Run Text="  " /><Run Text="{Binding Text, Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
+                        </TextBlock>
+                        <Button Style="{StaticResource Button.Icon}" Width="24" Height="24" Margin="4,0,0,0" Command="{Binding RemoveCommand}"
+                                ToolTip="Remove this game's profile" AutomationProperties.Name="{Binding Name, StringFormat='Remove the core profile for {0}'}">
+                          <Path Style="{StaticResource IconPath}" Width="9" Height="9" Data="{StaticResource Icon.Close}" />
+                        </Button>
+                      </StackPanel>
+                    </c:SquircleBorder>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
           </StackPanel>
         </c:SquircleBorder>
       </c:StackedColumns>

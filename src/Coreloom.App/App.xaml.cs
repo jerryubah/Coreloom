@@ -55,6 +55,7 @@ public partial class App : Application
     private Overlay.EtwFrameRateSource? _frameRates;
     private Services.GamingModeService? _gamingMode;
     private Services.AdaptivePacingService? _adaptivePacing;
+    private Services.CoreSchedulingTicker? _coreScheduling;
     private bool _telemetryThreadRegistered;
     private HttpClient? _http;
     private UpdatesViewModel? _updates;
@@ -289,6 +290,7 @@ public partial class App : Application
                 Optimizer = new WindowsOptimizeService(),
                 Devices = _devices = new WindowsDeviceService(),
                 Gaming = new WindowsGamingService(_frameRates = new Overlay.EtwFrameRateSource(), paths.LocalDirectory, $"Coreloom/{app.DisplayVersion}"),
+                CoreScheduling = new WindowsCoreSchedulingService(),
             },
         });
         _shell = shell;
@@ -430,6 +432,23 @@ public partial class App : Application
                 Dispatcher);
             _adaptivePacing.Start();
         }
+
+        // Intelligent CPU core scheduling (does nothing until turned on in Gaming › Performance boosts).
+        _coreScheduling = new Services.CoreSchedulingTicker(shell, _gamingMode, _frameRates, () => settingsService.Current.Gaming.CoreScheduling, () =>
+        {
+            var frame = host.Engine.LatestFrame;
+            int count = Math.Min(Environment.ProcessorCount, 256);
+            var loads = new double[count];
+            bool any = false;
+            for (int i = 0; i < count; i++)
+            {
+                loads[i] = frame.TryGetValue(MetricIds.CpuThreadLoad(i), out double load) ? load : double.NaN;
+                any |= !double.IsNaN(loads[i]);
+            }
+
+            return any ? loads : null;
+        }, Dispatcher);
+        _coreScheduling.Start();
 
         if (startHidden)
         {
@@ -781,6 +800,8 @@ public partial class App : Application
             _settings?.Flush();
             _adaptivePacing?.Dispose();
             _adaptivePacing = null;
+            _coreScheduling?.Dispose();
+            _coreScheduling = null;
             _gamingMode?.Dispose();
             _gamingMode = null;
             _overlay?.Dispose();

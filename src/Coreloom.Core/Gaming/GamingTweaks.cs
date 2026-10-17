@@ -31,8 +31,12 @@ public enum GamingTweak
     /// <summary>The NVIDIA shader cache's size limit set to 10 GB or more (<see cref="ShaderCacheSize"/>).</summary>
     ShaderCache,
 
-    /// <summary>Windows 11's Auto HDR for SDR games.</summary>
-    AutoHdr,
+    /// <summary>
+    /// Intelligent CPU core scheduling (since 1.4.7, in place of Auto HDR): games on the cores that suit them — checked,
+    /// and with per-game profiles kept only after a test (see <see cref="CoreScheduling"/>). Switched by Coreloom itself,
+    /// not a Windows setting.
+    /// </summary>
+    CoreScheduling,
 }
 
 /// <summary>Whether a tweak can be used here, whether it is on, and whether a restart is still needed for it.</summary>
@@ -65,6 +69,9 @@ public sealed record GamingStatus
 
     /// <summary>"581.57" (null when unknown).</summary>
     public string? DriverVersion { get; init; }
+
+    /// <summary>The Windows power plan in use (null when unknown).</summary>
+    public PowerPlan? ActivePowerPlan { get; init; }
 
     /// <summary>The shader cache's size limit set in the NVIDIA driver (MB), or null when it is the driver's default.</summary>
     public uint? ShaderCacheLimit { get; init; }

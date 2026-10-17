@@ -19,7 +19,7 @@
 
     <!-- A paired Bluetooth device, kept compact: icon, name and type; a status pill and battery; Connect or Disconnect. -->
     <DataTemplate x:Key="BluetoothCard" DataType="{x:Type pages:BluetoothDeviceViewModel}">
-      <c:SquircleBorder x:Name="Card" Style="{StaticResource Card}" Padding="14,13,14,14" ToolTip="{Binding AddressText}" ToolTipService.InitialShowDelay="900">
+      <c:SquircleBorder x:Name="Card" Style="{StaticResource Card}" Padding="14,13,14,14" VerticalAlignment="Top" ToolTip="{Binding AddressText}" ToolTipService.InitialShowDelay="900">
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

@@ -44,13 +44,15 @@ internal sealed class FakeGaming : IGamingService
         [GamingTweak.MaxGpuPerformance] = new(true, false),
         [GamingTweak.GSync] = new(true, false),
         [GamingTweak.ShaderCache] = new(true, false),
-        [GamingTweak.AutoHdr] = new(true, false),
     };
 
     /// <summary>The shader cache size last set in the "driver" (MB), or null for its default.</summary>
     public uint? ShaderCacheLimit { get; set; }
 
     public int FrameCap { get; set; }
+
+    /// <summary>The power plan in use.</summary>
+    public PowerPlan? Plan { get; set; }
 
     public string Driver { get; set; } = "581.57";
 
@@ -80,6 +82,7 @@ internal sealed class FakeGaming : IGamingService
         FrameCap = FrameCap,
         RefreshRate = 144,
         DriverVersion = Driver,
+        ActivePowerPlan = Plan,
         ShaderCacheLimit = ShaderCacheLimit,
         ShaderCaches =
         [
@@ -355,7 +358,7 @@ public class GamingViewModelTests
     {
         var (page, fake, settings) = Create();
         Assert.Equal(9, page.Boosts.Count);
-        Assert.Equal(8, page.BoostsAvailable); // Auto HDR is a matter of taste, not a boost
+        Assert.Equal(8, page.BoostsAvailable); // core scheduling has no cores to choose between on this test PC
         Assert.Equal(2, page.BoostsOn);
         Assert.Equal("2/8", page.ReadinessText);
         Assert.Contains("6 boosts can make", page.HeroTitle);
@@ -363,8 +366,8 @@ public class GamingViewModelTests
 
         await page.ApplyAllCommand.ExecuteAsync(null);
 
-        Assert.All(fake.Tweaks.Where(t => t.Key != GamingTweak.AutoHdr), t => Assert.True(t.Value.IsOn));
-        Assert.False(fake.Tweaks[GamingTweak.AutoHdr].IsOn); // "Boost now" leaves Auto HDR to you
+        Assert.All(fake.Tweaks, t => Assert.True(t.Value.IsOn));
+        Assert.False(page.CoreSchedulingBoost.IsOn); // not available here
         Assert.Equal(8, page.BoostsOn);
         Assert.True(page.AllBoostsOn);
         Assert.True(page.RestartPending);
@@ -381,7 +384,7 @@ public class GamingViewModelTests
         var (page, _, settings) = Create(f => f.FrameCap = 141);
         var gsync = page.Boosts.Single(b => b.Tweak == GamingTweak.GSync);
         var cache = page.Boosts.Single(b => b.Tweak == GamingTweak.ShaderCache);
-        var hdr = page.Boosts.Single(b => b.Tweak == GamingTweak.AutoHdr);
+        var cores = page.Boosts.Single(b => b.Tweak == GamingTweak.CoreScheduling);
 
         Assert.Equal("Smoothness", gsync.Category);
         Assert.True(gsync.IsSmoothness);
@@ -390,9 +393,13 @@ public class GamingViewModelTests
         Assert.Equal("Frame stability", cache.Category);
         Assert.False(cache.IsSmoothness);
         Assert.Contains("10 GB", cache.Recommendation);
-        Assert.Equal("Visual fidelity", hdr.Category);
-        Assert.False(hdr.CountsAsBoost);
-        Assert.Contains("RTX HDR", hdr.Recommendation);
+        Assert.Equal("Frame stability", cores.Category);
+        Assert.Equal("Intelligent CPU core scheduling", cores.Title);
+        Assert.True(cores.CountsAsBoost);
+        Assert.False(cores.IsSupported);
+        Assert.Equal("The processor's cores couldn't be read here.", cores.Message);
+        Assert.Contains("after a test", cores.Recommendation);
+        Assert.DoesNotContain(page.Boosts, b => b.Title.Contains("HDR", StringComparison.Ordinal));
         Assert.All(page.Boosts, b => Assert.True(b.HasCategory));
         Assert.Same(cache, page.ShaderCache); // the Shader cache card shows the same switch
         settings.Dispose();
@@ -439,10 +446,10 @@ public class GamingViewModelTests
     [Fact]
     public void ABoostsHint_IsShownWhenItCanBeUsed()
     {
-        var (page, _, settings) = Create(f => f.Tweaks[GamingTweak.AutoHdr] = new(true, false, Note: "Turn on Use HDR in Settings › System › Display for Auto HDR to show in games."));
-        var hdr = page.Boosts.Single(b => b.Tweak == GamingTweak.AutoHdr);
-        Assert.True(hdr.CanToggle);
-        Assert.StartsWith("Turn on Use HDR", hdr.Message);
+        var (page, _, settings) = Create(f => f.Tweaks[GamingTweak.GSync] = new(true, false, Note: "Turn on G-SYNC for your display in the NVIDIA Control Panel too."));
+        var gsync = page.Boosts.Single(b => b.Tweak == GamingTweak.GSync);
+        Assert.True(gsync.CanToggle);
+        Assert.StartsWith("Turn on G-SYNC", gsync.Message);
         settings.Dispose();
     }
 

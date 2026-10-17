@@ -45,6 +45,15 @@ public sealed class GamingSettings
     /// <summary>What adaptive pacing learned per game (its limit, frame generation, a limit it couldn't hold).</summary>
     public List<AdaptivePacingGame> AdaptivePacingGames { get; set; } = [];
 
+    /// <summary>
+    /// Intelligent CPU core scheduling (since 1.4.7): watches which cores the game in front runs on, checks AMD's own
+    /// 3D V-Cache scheduling, and applies the per-game core profiles the user kept after a test. Off until turned on.
+    /// </summary>
+    public bool CoreScheduling { get; set; }
+
+    /// <summary>Games kept on chosen cores (each after an A/B test showed a gain and the user kept it).</summary>
+    public List<CoreProfile> CoreProfiles { get; set; } = [];
+
     /// <summary>What adaptive pacing knows about a game, or null.</summary>
     public AdaptivePacingGame? PacingFor(string gameId) =>
         AdaptivePacingGames.FirstOrDefault(g => string.Equals(g.GameId, gameId, StringComparison.OrdinalIgnoreCase));
@@ -80,6 +89,7 @@ public sealed class GamingSettings
         ShaderCacheSize = Gaming.ShaderCacheSize.Normalize(ShaderCacheSize);
         CustomGames = Gaming.CustomGames.Normalize(CustomGames);
         AdaptivePacingGames = AdaptivePacingGame.Normalize(AdaptivePacingGames);
+        CoreProfiles = CoreProfile.Normalize(CoreProfiles);
         if (!Enum.IsDefined(LibraryView))
         {
             LibraryView = GameLibraryView.List;

@@ -39,10 +39,13 @@ public sealed class MemoryViewModel : PageViewModel
         Processes = new ProcessListViewModel(Monitor.Processes, ProcessSort.Memory, 8);
         ModuleSensors = new SensorTableViewModel(d => d.Category == MetricCategory.Memory && d.IsRaw && d.Kind is MetricKind.Temperature or MetricKind.Voltage);
 
-        foreach (var m in Monitor.Summary.MemoryModules)
+        var modules = Monitor.Summary.MemoryModules;
+        var labels = Coreloom.Core.Hardware.MemoryModuleNames.Labels(modules);
+        for (int i = 0; i < modules.Count; i++)
         {
+            var m = modules[i];
             Modules.Add(new MemoryModuleItem(
-                m.Locator,
+                labels[i],
                 Formatter.Bytes(m.SizeBytes, 0).ToString(),
                 m.MemoryType,
                 (m.ConfiguredSpeedMtps > 0 ? m.ConfiguredSpeedMtps : m.SpeedMtps) is int s and > 0 ? $"{s} MT/s" : "—",

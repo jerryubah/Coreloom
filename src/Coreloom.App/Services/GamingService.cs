@@ -704,18 +704,17 @@ internal sealed class WindowsGamingService : IGamingService
 
     public Task<GamingStatus> StatusAsync(GamingSettings settings, CancellationToken cancellationToken) => Task.Run(async () =>
     {
+        var plans = await PowerPlansAsync(cancellationToken);
         var tweaks = new Dictionary<GamingTweak, TweakStatus>
         {
             [GamingTweak.GpuScheduling] = GpuSchedulingStatus(),
-            [GamingTweak.UltimatePower] = await UltimatePowerStatusAsync(settings, cancellationToken),
+            [GamingTweak.UltimatePower] = UltimatePowerStatus(plans, settings),
             [GamingTweak.GameMode] = new(true, ReadDword(Registry.CurrentUser, GameBarKey, "AutoGameModeEnabled") != 0),
             [GamingTweak.WindowedOptimizations] = Environment.OSVersion.Version.Build >= 22000
                 ? new(true, DirectXUserSettings.IsOn(Registry.CurrentUser.OpenSubKey(DirectXUserSettings.Key)?.GetValue(DirectXUserSettings.Value) as string, DirectXUserSettings.SwapEffectUpgrade))
                 : TweakStatus.Unsupported("Needs Windows 11."),
             [GamingTweak.NoBackgroundRecording] = new(true, (ReadDwordOrNull(Registry.CurrentUser, GameDvrKey, "HistoricalCaptureEnabled") ?? 0) != 1), // off unless turned on
         };
-
-        tweaks[GamingTweak.AutoHdr] = AutoHdrStatus();
 
         bool nvidia = NvApi.IsAvailable;
         int frameCap = 0;
@@ -743,6 +742,7 @@ internal sealed class WindowsGamingService : IGamingService
         {
             Tweaks = tweaks,
             HasNvidiaDriver = nvidia,
+            ActivePowerPlan = plans.FirstOrDefault(p => p.IsActive),
             FrameCap = frameCap > FrameCap.Maximum ? FrameCap.Maximum : frameCap,
             RefreshRate = DisplayInfo.MaxRefreshRate(),
             DriverVersion = driver,
@@ -775,25 +775,6 @@ internal sealed class WindowsGamingService : IGamingService
         return new TweakStatus(true, GSyncSetup.IsOn(feature.Value, requested.Value, mode.Value));
     }
 
-    /// <summary>Auto HDR: Windows 11's switch; a note when HDR itself isn't on, and not offered without an HDR display.</summary>
-    private static TweakStatus AutoHdrStatus()
-    {
-        if (Environment.OSVersion.Version.Build < 22000)
-        {
-            return TweakStatus.Unsupported("Needs Windows 11.");
-        }
-
-        var hdr = DisplayInfo.Hdr();
-        if (hdr is { Supported: false })
-        {
-            return TweakStatus.Unsupported("Needs an HDR display.");
-        }
-
-        bool on = DirectXUserSettings.IsOn(Registry.CurrentUser.OpenSubKey(DirectXUserSettings.Key)?.GetValue(DirectXUserSettings.Value) as string, DirectXUserSettings.AutoHdr);
-        string? note = hdr is { Enabled: false } ? "Turn on Use HDR in Settings › System › Display for Auto HDR to show in games." : null;
-        return new TweakStatus(true, on, Note: note);
-    }
-
     private static TweakStatus GpuSchedulingStatus()
     {
         var caps = GamingNative.GpuScheduling();
@@ -806,9 +787,8 @@ internal sealed class WindowsGamingService : IGamingService
         return GpuScheduling.Status(caps.Value.Supported, caps.Value.Enabled, value, caps.Value.EnabledByDefault);
     }
 
-    private static async Task<TweakStatus> UltimatePowerStatusAsync(GamingSettings settings, CancellationToken cancellationToken)
+    private static TweakStatus UltimatePowerStatus(IReadOnlyList<PowerPlan> plans, GamingSettings settings)
     {
-        var plans = await PowerPlansAsync(cancellationToken);
         if (plans.Count == 0)
         {
             return TweakStatus.Unsupported("Windows' power plans couldn't be read.");
@@ -885,7 +865,6 @@ internal sealed class WindowsGamingService : IGamingService
                 GamingTweak.MaxGpuPerformance => SetNvidia(on ? NvApi.PreferMaximumPerformance : null, NvApi.PowerManagementMode, "Power management mode"),
                 GamingTweak.ShaderCache => SetNvidia(on ? ShaderCacheSize.Normalize(settings.ShaderCacheSize) : null, NvApi.ShaderCacheMaxSize, "Shader cache size"),
                 GamingTweak.GSync => SetGSync(on),
-                GamingTweak.AutoHdr => SetDirectX(DirectXUserSettings.AutoHdr, on, on ? "Auto HDR is on for SDR games you start next." : "Auto HDR is off."),
                 _ => new TweakResult(false, "Unknown setting."),
             };
             Log.Info(LogCategory, $"{tweak} {(on ? "on" : "off")}: {(result.Success ? "done" : "failed")} ({result.Message})");

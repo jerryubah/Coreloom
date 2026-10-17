@@ -271,6 +271,41 @@ public sealed class UnsupportedOptimizeService : IOptimizeService
     private static Task<MaintenanceResult> Unavailable() => Task.FromResult(new MaintenanceResult(false, "Not available on this system."));
 }
 
+/// <summary>
+/// What intelligent CPU core scheduling needs from Windows: the processor's core layout, AMD's 3D V-Cache driver
+/// (read only), and a game's cores (its affinity, as Task Manager's "Set affinity" changes it; nothing is added to the game).
+/// </summary>
+public interface ICoreSchedulingService
+{
+    bool IsSupported { get; }
+
+    /// <summary>The cores, grouped by what they're good at (read once; it doesn't change while Windows runs).</summary>
+    CoreLayout ReadLayout();
+
+    /// <summary>AMD's 3D V-Cache driver and service, its default preference and per-program preferences.</summary>
+    AmdVCacheStatus ReadAmdStatus();
+
+    /// <summary>A process's cores, or null when it can't be read (it ended, or its anti-cheat refuses).</summary>
+    ProcessAffinity? GetAffinity(int processId);
+
+    /// <summary>Sets a process's cores; false when Windows (or the game's anti-cheat) refuses.</summary>
+    bool SetAffinity(int processId, ulong mask);
+}
+
+/// <summary>Stand-in where Windows isn't available: no layout, nothing to change.</summary>
+public sealed class UnsupportedCoreSchedulingService : ICoreSchedulingService
+{
+    public bool IsSupported => false;
+
+    public CoreLayout ReadLayout() => CoreLayout.Unknown;
+
+    public AmdVCacheStatus ReadAmdStatus() => AmdVCacheStatus.None;
+
+    public ProcessAffinity? GetAffinity(int processId) => null;
+
+    public bool SetAffinity(int processId, ulong mask) => false;
+}
+
 /// <summary>The tools the pages offer (benchmarks, speed test, Smart Optimize, devices, gaming). Tests swap in fakes.</summary>
 public sealed class ToolServices
 {
@@ -283,4 +318,6 @@ public sealed class ToolServices
     public IDeviceService Devices { get; init; } = new UnsupportedDeviceService();
 
     public IGamingService Gaming { get; init; } = new UnsupportedGamingService();
+
+    public ICoreSchedulingService CoreScheduling { get; init; } = new UnsupportedCoreSchedulingService();
 }

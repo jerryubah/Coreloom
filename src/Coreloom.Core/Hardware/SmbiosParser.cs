@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Coreloom.Core.Hardware;
 
@@ -11,6 +12,60 @@ public sealed record MemoryModuleInfo(
     int ConfiguredSpeedMtps,
     string? Manufacturer,
     string? PartNumber);
+
+/// <summary>
+/// Names for memory modules as shown on the Memory page: the slot the firmware reports, with the channel added when two
+/// modules report the same slot (many AMD boards call a slot in each channel "DIMM 1"), and a number as a last resort.
+/// </summary>
+public static partial class MemoryModuleNames
+{
+    public static IReadOnlyList<string> Labels(IReadOnlyList<MemoryModuleInfo> modules)
+    {
+        var labels = modules.Select(m => string.IsNullOrWhiteSpace(m.Locator) ? "Module" : m.Locator.Trim()).ToList();
+        foreach (var repeated in Repeated(labels))
+        {
+            for (int i = 0; i < labels.Count; i++)
+            {
+                if (string.Equals(labels[i], repeated, StringComparison.OrdinalIgnoreCase) && Bank(modules[i].BankLocator) is { } bank)
+                {
+                    labels[i] = $"{labels[i]} · {bank}";
+                }
+            }
+        }
+
+        foreach (var repeated in Repeated(labels))
+        {
+            int n = 0;
+            for (int i = 0; i < labels.Count; i++)
+            {
+                if (string.Equals(labels[i], repeated, StringComparison.OrdinalIgnoreCase))
+                {
+                    labels[i] = $"{labels[i]} #{++n}";
+                }
+            }
+        }
+
+        return labels;
+    }
+
+    /// <summary>"Channel A" from "P0 CHANNEL A", else the bank as written.</summary>
+    private static string? Bank(string? bankLocator)
+    {
+        if (string.IsNullOrWhiteSpace(bankLocator))
+        {
+            return null;
+        }
+
+        var channel = ChannelPattern().Match(bankLocator);
+        return channel.Success ? $"Channel {channel.Groups[1].Value.ToUpperInvariant()}" : bankLocator.Trim();
+    }
+
+    private static List<string> Repeated(List<string> labels) =>
+        [.. labels.GroupBy(l => l, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key)];
+
+    [GeneratedRegex(@"CHANNEL\s*([A-Z0-9]+)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex ChannelPattern();
+}
 
 public sealed record SmbiosInfo(
     string? BiosVendor,

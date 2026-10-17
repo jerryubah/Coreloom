@@ -137,6 +137,8 @@ public sealed class GamingTweakViewModel : ObservableObject
 {
     private readonly Func<GamingTweakViewModel, bool, Task> _set;
     private TweakStatus _status = TweakStatus.Unsupported("Checking…");
+    private readonly bool _countsAsBoost;
+    private string? _advice;
     private bool _isBusy;
     private string? _message;
     private bool? _pending;
@@ -164,7 +166,7 @@ public sealed class GamingTweakViewModel : ObservableObject
         Category = category;
         _recommendation = recommendation;
         Caveat = caveat;
-        CountsAsBoost = countsAsBoost;
+        _countsAsBoost = countsAsBoost;
     }
 
     /// <summary>What it helps with ("Smoothness", "Frame stability", "Visual fidelity"…), shown as a pill.</summary>
@@ -195,8 +197,28 @@ public sealed class GamingTweakViewModel : ObservableObject
 
     public bool HasCaveat => Caveat is not null;
 
-    /// <summary>Counted in the banner's "boosts on" and turned on by "Boost now" (Auto HDR is a matter of taste: not).</summary>
-    public bool CountsAsBoost { get; }
+    /// <summary>
+    /// Counted in the banner's "boosts on" and turned on by "Boost now" — not while it's advised against on this PC
+    /// (<see cref="Advice"/>).
+    /// </summary>
+    public bool CountsAsBoost => _countsAsBoost && _advice is null;
+
+    /// <summary>
+    /// Why this boost is better left off on this PC (Ultimate Performance on a multi-CCD Ryzen X3D, which needs core
+    /// parking), or null. Shown under it; "Boost now" leaves it alone.
+    /// </summary>
+    public string? Advice
+    {
+        get => _advice;
+        internal set
+        {
+            if (SetProperty(ref _advice, value))
+            {
+                OnPropertyChanged(nameof(CountsAsBoost));
+                Message = _status.NeedsRestart ? "Restart Windows to finish." : _status.Note ?? value;
+            }
+        }
+    }
 
     public GamingTweak Tweak { get; }
 
@@ -270,7 +292,7 @@ public sealed class GamingTweakViewModel : ObservableObject
     {
         _status = status;
         _pending = null;
-        Message = status.NeedsRestart ? "Restart Windows to finish." : status.Note; // why it can't be used, or a hint
+        Message = status.NeedsRestart ? "Restart Windows to finish." : status.Note ?? _advice; // why it can't be used, or a hint
         OnPropertyChanged(nameof(IsSupported));
         OnPropertyChanged(nameof(IsOn));
         OnPropertyChanged(nameof(NeedsRestart));
@@ -784,6 +806,7 @@ public sealed class GamingViewModel : PageViewModel
     {
         _service = context.Tools.Gaming;
         Adaptive = new AdaptivePacingController(this);
+        CoreScheduling = new CoreSchedulingController(this, context.Tools.CoreScheduling);
         FramePacer = new FramePacerViewModel(this);
         Boosts =
         [
@@ -797,9 +820,9 @@ public sealed class GamingViewModel : PageViewModel
                 GSyncSetup.Recommendation(0, 0), "Improves how frames are shown, not the frame rate itself."),
             new(GamingTweak.ShaderCache, "NVIDIA shader cache", "Keeps the shaders games compile, so they aren't compiled again mid-play: fewer repeat stutters and steadier frame times the next times you play.", "Icon.Database", "NVIDIA", SetTweakAsync, "Frame stability",
                 "Recommended: 10 GB when the current limit is smaller, or a larger size for a big game library.", "Doesn't remove every shader stutter or raise the average frame rate."),
-            new(GamingTweak.AutoHdr, "Auto HDR", "Gives SDR games HDR brightness and color on an HDR display: brighter highlights and more depth.", "Icon.Sun", "Windows 11", SetTweakAsync, "Visual fidelity",
-                "Recommended: on for SDR games on an HDR or OLED display. Use a game's own HDR when it has one, and don't stack Auto HDR with RTX HDR.",
-                "Improves how the picture looks, not the detail the game renders.", countsAsBoost: false),
+            new(GamingTweak.CoreScheduling, "Intelligent CPU core scheduling", "Keeps games on the cores that suit them: the 3D V-Cache cores of a multi-CCD Ryzen X3D, or a hybrid processor's performance cores. Checks AMD's own scheduling first.", "Icon.Cpu", "Ryzen X3D", SetTweakAsync, "Frame stability",
+                "Recommended: on. Per-game profiles are only offered after a test in the game shows a clear gain.",
+                "Chooses cores, never clocks or voltages; nothing is added to games."),
         ];
         ShaderCache = Boosts.First(b => b.Tweak == GamingTweak.ShaderCache);
         ShaderCacheSizes = [.. Coreloom.Core.Gaming.ShaderCacheSize.Choices.Select(size => new Option<uint>(size, Coreloom.Core.Gaming.ShaderCacheSize.Describe(size)))];
@@ -843,7 +866,7 @@ public sealed class GamingViewModel : PageViewModel
 
     /// <summary>
     /// Hardware-accelerated GPU scheduling, Ultimate Performance, Game Mode, windowed optimizations, background recording,
-    /// GPU power mode, G-SYNC, the shader cache and Auto HDR.
+    /// GPU power mode, G-SYNC, the shader cache and intelligent CPU core scheduling.
     /// </summary>
     public IReadOnlyList<GamingTweakViewModel> Boosts { get; }
 
@@ -883,6 +906,12 @@ public sealed class GamingViewModel : PageViewModel
 
     /// <summary>Adaptive frame pacing: learns each game's steady frame rate while it plays and sets the game's limit.</summary>
     public AdaptivePacingController Adaptive { get; }
+
+    /// <summary>Intelligent CPU core scheduling: the core map, AMD's checks, where the game runs, tests and per-game profiles.</summary>
+    public CoreSchedulingController CoreScheduling { get; }
+
+    /// <summary>The core scheduling boost (also switched on its card).</summary>
+    public GamingTweakViewModel CoreSchedulingBoost => Boosts.First(b => b.Tweak == GamingTweak.CoreScheduling);
 
     /// <summary>Every switch on the page.</summary>
     private IEnumerable<GamingTweakViewModel> AllTweaks => Boosts;
@@ -1517,9 +1546,14 @@ public sealed class GamingViewModel : PageViewModel
         {
             if (!tweak.IsBusy)
             {
-                tweak.Apply(status.Tweak(tweak.Tweak));
+                tweak.Apply(tweak.Tweak == GamingTweak.CoreScheduling ? CoreScheduling.Status : status.Tweak(tweak.Tweak));
             }
         }
+
+        CoreScheduling.Refresh();
+        Boosts.First(b => b.Tweak == GamingTweak.UltimatePower).Advice = CoreScheduling.ParkingMatters
+            ? "Better off on this Ryzen X3D: it stops the core parking AMD's driver uses to keep games on the cache cores. Balanced works best."
+            : null;
 
         if (Settings.Current.Gaming.LastDriverVersion is null && status.DriverVersion is not null)
         {
@@ -1593,6 +1627,22 @@ public sealed class GamingViewModel : PageViewModel
 
     private async Task SetTweakAsync(GamingTweakViewModel tweak, bool on)
     {
+        if (tweak.Tweak == GamingTweak.CoreScheduling)
+        {
+            // Coreloom's own switch, not a Windows setting.
+            tweak.IsBusy = true;
+            var outcome = await CoreScheduling.SetEnabledAsync(on);
+            tweak.IsBusy = false;
+            tweak.Apply(CoreScheduling.Status);
+            if (!outcome.Success)
+            {
+                tweak.Message = outcome.Message;
+            }
+
+            HeroChanged();
+            return;
+        }
+
         tweak.IsBusy = true;
         tweak.Message = null;
         TweakResult result;
