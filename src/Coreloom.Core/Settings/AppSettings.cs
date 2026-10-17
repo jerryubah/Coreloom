@@ -69,6 +69,7 @@ public sealed class AppSettings
         }
 
         Monitoring.PollingIntervalMs = Math.Clamp(Monitoring.PollingIntervalMs, (int)TelemetryEngine.MinimumInterval.TotalMilliseconds, (int)TelemetryEngine.MaximumInterval.TotalMilliseconds);
+        Monitoring.GamingIntervalMs = AdaptiveMonitoring.NormalizeGamingInterval(Monitoring.GamingIntervalMs);
         if (!Enum.IsDefined(Monitoring.DefaultWindow))
         {
             Monitoring.DefaultWindow = HistoryWindow.Seconds60;
@@ -128,6 +129,12 @@ public sealed class AppearanceSettings
 public sealed class MonitoringSettings
 {
     public int PollingIntervalMs { get; set; } = 1000;
+
+    /// <summary>Read sensors less often (and at lower priority) while a game is in front (since 1.4.6).</summary>
+    public bool LighterWhileGaming { get; set; } = true;
+
+    /// <summary>How often sensors are read while a game is in front (milliseconds).</summary>
+    public int GamingIntervalMs { get; set; } = AdaptiveMonitoring.DefaultGamingIntervalMs;
 
     public HistoryWindow DefaultWindow { get; set; } = HistoryWindow.Seconds60;
 

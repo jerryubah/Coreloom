@@ -53,6 +53,8 @@ public partial class App : Application
     private Overlay.OverlayService? _overlay;
     private WindowsDeviceService? _devices;
     private Overlay.EtwFrameRateSource? _frameRates;
+    private Services.GamingModeService? _gamingMode;
+    private bool _telemetryThreadRegistered;
     private HttpClient? _http;
     private UpdatesViewModel? _updates;
     private DispatcherTimer? _updateTimer;
@@ -279,6 +281,7 @@ public partial class App : Application
             Diagnostics = diagnostics,
             Updates = updates,
             App = app,
+            Overhead = Services.OverheadMeters.Shared,
             Tools = new ToolServices
             {
                 SpeedTest = new SpeedTestService($"Coreloom/{app.DisplayVersion}"),
@@ -413,6 +416,11 @@ public partial class App : Application
             Log.Error("Overlay", "Starting the in-game overlay failed.", ex);
         }
 
+        // Lighter monitoring while a game is in front, and what Coreloom's own parts cost.
+        Services.OverheadMeters.Shared.RegisterCurrentThread("Window and overlay text");
+        _gamingMode = new Services.GamingModeService(shell, () => _window, () => settingsService.Current.Monitoring.LighterWhileGaming, Dispatcher);
+        _gamingMode.Start();
+
         if (startHidden)
         {
             shell.SetWindowVisible(false);
@@ -444,6 +452,12 @@ public partial class App : Application
 
     private void OnFrameProduced(TelemetryFrame frame)
     {
+        if (!_telemetryThreadRegistered)
+        {
+            _telemetryThreadRegistered = true; // this runs on the telemetry thread
+            Services.OverheadMeters.Shared.RegisterCurrentThread("Sensor reading");
+        }
+
         try
         {
             _alerts?.Evaluate(frame);
@@ -755,6 +769,8 @@ public partial class App : Application
             }
 
             _settings?.Flush();
+            _gamingMode?.Dispose();
+            _gamingMode = null;
             _overlay?.Dispose();
             _overlay = null;
             _frameRates?.Dispose();

@@ -94,6 +94,27 @@ internal static unsafe partial class GamingNative
         }
     }
 
+    /// <summary>The program file of a process, or null when Windows won't say.</summary>
+    public static string? ProgramPath(int processId)
+    {
+        IntPtr handle = OpenProcess(ProcessQueryLimitedInformation, 0, (uint)processId);
+        if (handle == IntPtr.Zero)
+        {
+            return null;
+        }
+
+        try
+        {
+            char* buffer = stackalloc char[1024];
+            uint size = 1024;
+            return QueryFullProcessImageName(handle, 0, buffer, &size) != 0 && size > 0 ? new string(buffer, 0, (int)size) : null;
+        }
+        finally
+        {
+            CloseHandle(handle);
+        }
+    }
+
     /// <summary>The programs running now (id and file), without the ones Windows protects.</summary>
     public static List<(int Id, string Path)> RunningPrograms()
     {

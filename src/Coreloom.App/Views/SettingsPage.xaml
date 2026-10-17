@@ -352,10 +352,26 @@
                     <ColumnDefinition Width="Auto" />
                   </Grid.ColumnDefinitions>
                   <StackPanel>
-                    <TextBlock Style="{StaticResource Row.Title}" Text="Polling interval" />
-                    <TextBlock Style="{StaticResource Row.Description}" Text="How often all sensors are sampled. Faster polling costs a little more CPU; slow sensors are always read less often." />
+                    <TextBlock Style="{StaticResource Row.Title}" Text="Sensor refresh interval" />
+                    <TextBlock Style="{StaticResource Row.Description}" Text="How often all sensors are read. Faster costs a little more CPU; on a lower-end PC, 2 s or 5 s keeps Coreloom lightest. Slow sensors are always read less often." />
                   </StackPanel>
                   <ComboBox Style="{StaticResource Combo.Setting}" ItemsSource="{Binding PollingOptions}" SelectedValue="{Binding PollingIntervalMs}" />
+                </Grid>
+              </Border>
+              <Border Style="{StaticResource Row}">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding LighterWhileGaming}">
+                    <StackPanel>
+                      <TextBlock Style="{StaticResource Row.Title}" Text="Lighter monitoring while gaming" />
+                      <TextBlock Style="{StaticResource Row.Description}" Text="While a game is in front (fullscreen, borderless or one of your games), sensors are read less often and at low priority, Coreloom steps down to below-normal priority, and its window stops redrawing while the game covers it. With the in-game overlay showing readings, they still update every second." />
+                    </StackPanel>
+                  </CheckBox>
+                  <ComboBox Grid.Column="1" Style="{StaticResource Combo.Setting}" ItemsSource="{Binding GamingPollingOptions}" SelectedValue="{Binding GamingIntervalMs}"
+                            IsEnabled="{Binding LighterWhileGaming}" VerticalAlignment="Top" ToolTip="How often sensors are read while a game is in front" />
                 </Grid>
               </Border>
               <Border Style="{StaticResource Row}">
@@ -841,6 +857,25 @@
               <TextBlock Text="{Binding OverheadText}" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
               <TextBlock Style="{StaticResource Text.Caption}" Margin="0,4,0,0" TextWrapping="Wrap"
                          Text="Measured live from Coreloom's own process. CPU is a share of the whole machine (all logical processors)." />
+              <StackPanel Margin="0,12,0,0" Visibility="{Binding HasOverheadParts, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="By part, over the last few seconds" Style="{StaticResource Text.Label}" Margin="0,0,0,4" />
+                <ItemsControl ItemsSource="{Binding OverheadParts}" Focusable="False">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="220" />
+                          <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding Key}" FontSize="12.5" Foreground="{DynamicResource Brush.TextSecondary}" />
+                        <TextBlock Grid.Column="1" Text="{Binding Value}" FontFamily="{StaticResource MonoFont}" FontSize="12" Foreground="{DynamicResource Brush.Text}" />
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Style="{StaticResource Text.Caption}" Margin="0,6,0,0" TextWrapping="Wrap"
+                           Text="&quot;Overlay graph&quot; and &quot;Overlay frame counter&quot; are what the in-game overlay adds on its own (they only run while it shows the frame rate). To compare, open this page with the overlay on and off while a game runs." />
+              </StackPanel>
             </StackPanel>
           </c:SquircleBorder>
 

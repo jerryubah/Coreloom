@@ -109,6 +109,16 @@ public interface IAppLifetime
     void Exit();
 }
 
+/// <summary>A part of Coreloom and its share of the whole machine's processor time (percent).</summary>
+public sealed record OverheadPart(string Name, double CpuPercent);
+
+/// <summary>What Coreloom's own parts cost (Settings › Diagnostics), so the overlay's cost can be told apart.</summary>
+public interface IOverheadService
+{
+    /// <summary>Each registered part's processor share since the last call.</summary>
+    IReadOnlyList<OverheadPart> Measure();
+}
+
 /// <summary>Logging level and log locations controlled from Settings.</summary>
 public interface IDiagnosticsService
 {

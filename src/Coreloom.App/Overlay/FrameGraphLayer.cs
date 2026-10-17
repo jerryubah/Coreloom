@@ -137,6 +137,7 @@ internal sealed class FrameGraphLayer : IDisposable
 
     private void Run()
     {
+        Coreloom.App.Services.OverheadMeters.Shared.RegisterCurrentThread("Overlay graph");
         try
         {
             using var timer = new PreciseTimer(_stop, _wake);

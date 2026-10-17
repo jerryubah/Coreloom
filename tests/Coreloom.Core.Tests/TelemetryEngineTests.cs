@@ -13,6 +13,43 @@ public class TelemetryEngineTests
     }
 
     [Fact]
+    public void ATemporaryInterval_SlowsPolling_WithoutResizingHistory()
+    {
+        var (engine, _) = Create();
+        engine.Interval = TimeSpan.FromSeconds(1);
+        int capacity = engine.History.Capacity;
+        engine.TemporaryInterval = TimeSpan.FromSeconds(2);
+        Assert.Equal(TimeSpan.FromSeconds(2), engine.EffectiveInterval);
+        Assert.Equal(capacity, engine.History.Capacity);
+        engine.TemporaryInterval = TimeSpan.FromMilliseconds(500); // never faster than the chosen interval
+        Assert.Equal(TimeSpan.FromSeconds(1), engine.EffectiveInterval);
+        engine.TemporaryInterval = TimeSpan.FromMinutes(5); // clamped
+        Assert.Equal(TelemetryEngine.MaximumInterval, engine.EffectiveInterval);
+        engine.TemporaryInterval = null;
+        Assert.Equal(TimeSpan.FromSeconds(1), engine.EffectiveInterval);
+        Assert.Null(engine.TemporaryInterval);
+    }
+
+    [Theory]
+    [InlineData(1000, true, true, 2000, false, 2000)]
+    [InlineData(1000, true, true, 2000, true, 1000)] // the overlay's readings keep updating every second
+    [InlineData(2000, true, true, 5000, true, 2000)] // never faster than chosen
+    [InlineData(5000, true, true, 2000, false, 5000)]
+    [InlineData(500, true, false, 2000, false, 500)]
+    [InlineData(500, false, true, 2000, false, 500)]
+    public void AdaptiveIntervals(int chosen, bool game, bool lighter, int gaming, bool overlay, int expected) =>
+        Assert.Equal(expected, AdaptiveMonitoring.IntervalMs(chosen, game, lighter, gaming, overlay));
+
+    [Theory]
+    [InlineData(true, true, false, false, true)]
+    [InlineData(true, false, true, false, true)]
+    [InlineData(true, false, false, false, false)] // an ordinary window
+    [InlineData(true, true, false, true, false)] // the desktop fills the screen too
+    [InlineData(false, true, true, false, false)] // Coreloom itself
+    public void GameInFront(bool other, bool fills, bool known, bool desktop, bool expected) =>
+        Assert.Equal(expected, AdaptiveMonitoring.IsGameInFront(other, fills, known, desktop));
+
+    [Fact]
     public void HigherPrioritySourceWins_ForSameCanonicalMetric()
     {
         var low = new FakeProvider("low").Define("gpu/0/temp", MetricCategory.Gpu, MetricKind.Temperature, priority: 10);

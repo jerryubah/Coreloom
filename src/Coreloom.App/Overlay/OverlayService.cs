@@ -47,7 +47,6 @@ internal sealed partial class OverlayService : IDisposable
     private OverlayWindow? _window;
     private int _lastProgramId;
     private string? _lastProgram;
-    private bool _yielding;
     private bool _disposed;
 
     public OverlayService(ShellViewModel shell, SettingsService settings, Dispatcher dispatcher, EtwFrameRateSource frameRates)
@@ -209,26 +208,10 @@ internal sealed partial class OverlayService : IDisposable
 
     /// <summary>
     /// While a program other than Coreloom is in front (and the overlay is up), Coreloom runs below normal priority, so
-    /// the game's threads always come first; back to normal when Coreloom is in front or the overlay is off.
+    /// the game's threads always come first; back to normal when Coreloom is in front or the overlay is off (unless
+    /// lighter monitoring still asks for it).
     /// </summary>
-    private void Yield(bool yield)
-    {
-        if (yield == _yielding)
-        {
-            return;
-        }
-
-        try
-        {
-            using var process = System.Diagnostics.Process.GetCurrentProcess();
-            process.PriorityClass = yield ? System.Diagnostics.ProcessPriorityClass.BelowNormal : System.Diagnostics.ProcessPriorityClass.Normal;
-            _yielding = yield;
-        }
-        catch (Exception e) when (e is Win32Exception or InvalidOperationException or NotSupportedException)
-        {
-            Log.WarnThrottled("overlay-priority", TimeSpan.FromMinutes(10), LogCategory, "Changing Coreloom's priority failed.", e);
-        }
-    }
+    private static void Yield(bool yield) => Coreloom.App.Services.ProcessPriority.GiveWay("overlay", yield);
 
     /// <summary>Whether a visible topmost window of another program is above the overlay and overlaps it.</summary>
     private bool IsCovered(IntPtr hwnd)

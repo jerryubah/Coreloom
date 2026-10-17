@@ -201,6 +201,8 @@ public sealed class SettingsDependencies
     public required UpdatesViewModel Updates { get; init; }
 
     public required AppVersionInfo App { get; init; }
+
+    public IOverheadService? Overhead { get; init; }
 }
 
 /// <summary>All user settings, grouped into sections. Every change is applied immediately and persisted.</summary>
@@ -225,7 +227,7 @@ public sealed class SettingsViewModel : PageViewModel
 
         ThemeOptions = [new(ThemePreference.Dark, "Dark"), new(ThemePreference.Light, "Light"), new(ThemePreference.System, "Use Windows setting")];
         AccentOptions = AccentPalette.Presets.Select(p => new AccentOption(p.Name, p.Hex)).ToArray();
-        PollingOptions = [new(250, "0.25 s"), new(500, "0.5 s"), new(1000, "1 s (recommended)"), new(2000, "2 s"), new(5000, "5 s")];
+        PollingOptions = [new(250, "0.25 s"), new(500, "0.5 s"), new(1000, "1 s (recommended)"), new(2000, "2 s (lighter)"), new(5000, "5 s (lightest)")];
         WindowOptions = Enum.GetValues<HistoryWindow>().Select(w => new Option<HistoryWindow>(w, w.ToLongLabel())).ToArray();
         TemperatureOptions = [new(TemperatureUnit.Celsius, "Celsius (°C)"), new(TemperatureUnit.Fahrenheit, "Fahrenheit (°F)")];
         DataUnitOptions = [new(DataUnitStyle.Binary, "Binary — 1 GB = 1024 MB (Windows)"), new(DataUnitStyle.Decimal, "Decimal — 1 GB = 1000 MB")];
@@ -367,6 +369,21 @@ public sealed class SettingsViewModel : PageViewModel
     {
         get => Settings.Current.Monitoring.PollingIntervalMs;
         set => Change("Monitoring", s => s.Monitoring.PollingIntervalMs = value);
+    }
+
+    /// <summary>Read sensors less often (and at lower priority) while a game is in front.</summary>
+    public bool LighterWhileGaming
+    {
+        get => Settings.Current.Monitoring.LighterWhileGaming;
+        set => Change("Monitoring", s => s.Monitoring.LighterWhileGaming = value);
+    }
+
+    public IReadOnlyList<Option<int>> GamingPollingOptions { get; } = [new(1000, "Every 1 s"), new(2000, "Every 2 s (recommended)"), new(5000, "Every 5 s")];
+
+    public int GamingIntervalMs
+    {
+        get => Settings.Current.Monitoring.GamingIntervalMs;
+        set => Change("Monitoring", s => s.Monitoring.GamingIntervalMs = value);
     }
 
     public IReadOnlyList<Option<HistoryWindow>> WindowOptions { get; }
@@ -669,6 +686,34 @@ public sealed class SettingsViewModel : PageViewModel
         private set => SetProperty(ref _overheadText, value);
     }
 
+    /// <summary>Each part of Coreloom and its processor share (the overlay's own parts shown apart).</summary>
+    public ObservableCollection<KeyValueItem> OverheadParts { get; } = [];
+
+    public bool HasOverheadParts => OverheadParts.Count > 0;
+
+    private void UpdateOverheadParts()
+    {
+        if (_deps.Overhead is not { } overhead || SelectedSection != "Diagnostics")
+        {
+            return;
+        }
+
+        var parts = overhead.Measure()
+            .OrderBy(p => p.Name, StringComparer.CurrentCulture)
+            .Select(p => new KeyValueItem(p.Name, p.CpuPercent < 0.01 ? "under 0.01 % CPU" : $"{p.CpuPercent.ToString("0.00", CultureInfo.CurrentCulture)} % CPU"))
+            .ToList();
+        if (!OverheadParts.SequenceEqual(parts))
+        {
+            OverheadParts.Clear();
+            foreach (var part in parts)
+            {
+                OverheadParts.Add(part);
+            }
+
+            OnPropertyChanged(nameof(HasOverheadParts));
+        }
+    }
+
     public bool VerboseLogging
     {
         get => Settings.Current.Diagnostics.VerboseLogging;
@@ -772,7 +817,12 @@ public sealed class SettingsViewModel : PageViewModel
         string mem = frame.TryGetValue(MetricIds.AppWorkingSet, out double m) ? f.Bytes(m).ToString() : "—";
         string heap = frame.TryGetValue(MetricIds.AppManagedBytes, out double h) ? f.Bytes(h).ToString() : "—";
         string handles = frame.TryGetValue(MetricIds.AppHandles, out double hc) ? hc.ToString("0", CultureInfo.CurrentCulture) : "—";
-        OverheadText = $"CPU {cpu} of total capacity · working set {mem} · managed heap {heap} · {handles} handles · history buffers ≈{f.Bytes(History.EstimatedBytes)} · last poll {frame.PollDuration.TotalMilliseconds:0.0} ms";
+        var interval = Monitor.Engine.EffectiveInterval;
+        string reading = interval > Monitor.Engine.Interval
+            ? $"sensors read every {interval.TotalSeconds.ToString("0.##", CultureInfo.CurrentCulture)} s (lighter while a game is in front)"
+            : $"sensors read every {interval.TotalSeconds.ToString("0.##", CultureInfo.CurrentCulture)} s";
+        OverheadText = $"CPU {cpu} of total capacity · working set {mem} · managed heap {heap} · {handles} handles · history buffers ≈{f.Bytes(History.EstimatedBytes)} · last poll {frame.PollDuration.TotalMilliseconds:0.0} ms · {reading}";
+        UpdateOverheadParts();
         RefreshAlertMetricOptions();
     }
 

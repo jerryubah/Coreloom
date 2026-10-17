@@ -237,6 +237,7 @@ internal sealed unsafe class EtwFrameRateSource : IFrameRateSource, IDisposable
 
     private void Pump()
     {
+        Coreloom.App.Services.OverheadMeters.Shared.RegisterCurrentThread("Overlay frame counter");
         try
         {
             ulong handle = _trace;

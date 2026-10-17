@@ -370,6 +370,40 @@ public class ShellViewModelTests
     }
 
     [Fact]
+    public void AGameInFront_MakesMonitoringLighter_AndStopsACoveredWindowRedrawing()
+    {
+        var (shell, monitor, settings, _) = Create();
+        var engine = monitor.Engine;
+        Assert.Equal(TimeSpan.FromSeconds(1), engine.EffectiveInterval);
+        Assert.True(shell.Overview.IsActive);
+
+        shell.SetGameInFront(gameInFront: true, coversWindow: true);
+        Assert.True(shell.IsLighterMonitoring);
+        Assert.Equal(TimeSpan.FromSeconds(2), engine.EffectiveInterval);
+        Assert.Equal(TimeSpan.FromSeconds(1), engine.Interval); // the chosen interval (and the history) stay as they are
+        Assert.True(engine.LowPriority);
+        Assert.False(shell.Overview.IsActive); // covered by the game: no charts to draw
+
+        // With the overlay showing sensor readings, they still update every second.
+        settings.Update("Overlay", s => s.Overlay.Enabled = true);
+        Assert.Equal(TimeSpan.FromSeconds(1), engine.EffectiveInterval);
+        settings.Update("Overlay", s => s.Overlay.Enabled = false);
+        Assert.Equal(TimeSpan.FromSeconds(2), engine.EffectiveInterval);
+
+        // A slower gaming interval, then lighter monitoring turned off.
+        settings.Update("Monitoring", s => s.Monitoring.GamingIntervalMs = 5000);
+        Assert.Equal(TimeSpan.FromSeconds(5), engine.EffectiveInterval);
+        settings.Update("Monitoring", s => s.Monitoring.LighterWhileGaming = false);
+        Assert.Equal(TimeSpan.FromSeconds(1), engine.EffectiveInterval);
+        Assert.False(engine.LowPriority);
+        Assert.False(shell.IsLighterMonitoring);
+
+        shell.SetGameInFront(gameInFront: false, coversWindow: false);
+        Assert.True(shell.Overview.IsActive);
+        settings.Dispose();
+    }
+
+    [Fact]
     public void Construction_AppliesSettings_AndShowsOverview()
     {
         var (shell, _, settings, stubs) = Create();

@@ -729,6 +729,9 @@ public sealed class GamingViewModel : PageViewModel
     /// <summary>Every game in the library (not just those the search shows).</summary>
     internal IEnumerable<GameViewModel> LibraryGames => _all;
 
+    /// <summary>The library as last scanned (empty until the Gaming page has scanned once); safe to read on the UI thread.</summary>
+    public IReadOnlyList<GameEntry> LibrarySnapshot() => [.. _all.Select(g => g.Game)];
+
     internal GameViewModel? FindGame(string id) => _all.FirstOrDefault(g => string.Equals(g.Id, id, StringComparison.OrdinalIgnoreCase));
 
     internal GamingStatus CurrentStatus => _status;

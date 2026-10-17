@@ -38,6 +38,9 @@ public sealed class ShellDependencies
 
     /// <summary>Benchmarks, speed test and Smart Optimize; defaults work everywhere (Smart Optimize then explains it's unavailable).</summary>
     public ToolServices? Tools { get; init; }
+
+    /// <summary>What Coreloom's own parts cost (Settings › Diagnostics); null where it isn't measured.</summary>
+    public IOverheadService? Overhead { get; init; }
 }
 
 /// <summary>
@@ -51,6 +54,9 @@ public sealed class ShellViewModel : ObservableObject
     private PageViewModel _currentPage;
     private bool _isLive;
     private bool _isWindowVisible = true;
+    private bool _gameInFront;
+    private bool _coveredByGame;
+    private bool _pageActive = true;
     private bool _bannerDismissed;
     private string _trayText = "Coreloom";
     private long _lastFrameSequence;
@@ -82,6 +88,7 @@ public sealed class ShellViewModel : ObservableObject
             Diagnostics = deps.Diagnostics,
             Updates = deps.Updates,
             App = deps.App,
+            Overhead = deps.Overhead,
         });
 
         context.OpenLogs = (category, search) =>
@@ -276,7 +283,48 @@ public sealed class ShellViewModel : ObservableObject
         ? "Monitoring paused"
         : IsChartsFrozen
             ? "Charts paused"
-            : _isLive ? $"Live · {FormatInterval(_deps.Settings.Current.Monitoring.PollingIntervalMs)}" : "Starting…";
+            : _isLive ? $"Live · {FormatInterval((int)_deps.Monitor.Engine.EffectiveInterval.TotalMilliseconds)}{(IsLighterMonitoring ? " · lighter while gaming" : string.Empty)}" : "Starting…";
+
+    /// <summary>How often sensors are read now (slower while gaming with lighter monitoring on).</summary>
+    public TimeSpan SensorInterval => _deps.Monitor.Engine.EffectiveInterval;
+
+    /// <summary>A game is in front (fullscreen or borderless, or a library game).</summary>
+    public bool IsGameInFront => _gameInFront;
+
+    /// <summary>Sensors are read less often because a game is in front.</summary>
+    public bool IsLighterMonitoring => _gameInFront && _deps.Settings.Current.Monitoring.LighterWhileGaming;
+
+    /// <summary>
+    /// Called by the app every couple of seconds: whether a game is in front, and whether it covers Coreloom's window (then
+    /// the window does no UI work until it's uncovered). Applies lighter monitoring while gaming.
+    /// </summary>
+    public void SetGameInFront(bool gameInFront, bool coversWindow)
+    {
+        bool covered = gameInFront && coversWindow;
+        if (gameInFront == _gameInFront && covered == _coveredByGame)
+        {
+            return;
+        }
+
+        _gameInFront = gameInFront;
+        _coveredByGame = covered;
+        ApplyMonitoringMode();
+        UpdatePageActivity();
+        OnPropertyChanged(nameof(IsGameInFront));
+        OnPropertyChanged(nameof(IsLighterMonitoring));
+        OnPropertyChanged(nameof(StatusText));
+    }
+
+    private void ApplyMonitoringMode()
+    {
+        var s = _deps.Settings.Current;
+        var engine = _deps.Monitor.Engine;
+        bool lighter = _gameInFront && s.Monitoring.LighterWhileGaming;
+        bool overlayReadings = s.Overlay.Enabled && s.Overlay.Items.Any(i => !Coreloom.Core.Settings.OverlayCatalog.IsFrameRate(i));
+        int ms = AdaptiveMonitoring.IntervalMs(s.Monitoring.PollingIntervalMs, _gameInFront, s.Monitoring.LighterWhileGaming, s.Monitoring.GamingIntervalMs, overlayReadings);
+        engine.TemporaryInterval = ms > s.Monitoring.PollingIntervalMs ? TimeSpan.FromMilliseconds(ms) : null;
+        engine.LowPriority = lighter;
+    }
 
     public bool ShowLimitedModeBanner => !_bannerDismissed && !_deps.Monitor.Engine.Capabilities.LowLevelSensorsAccessible
         && _deps.Settings.Current.Monitoring.UseLibreHardwareMonitor && _deps.Monitor.LibreHardwareMonitorIncluded;
@@ -307,7 +355,10 @@ public sealed class ShellViewModel : ObservableObject
 
         _currentPage.Deactivate();
         CurrentPage = page;
-        page.Activate(_deps.Monitor.Engine.LatestFrame);
+        if (_pageActive)
+        {
+            page.Activate(_deps.Monitor.Engine.LatestFrame);
+        }
     }
 
     /// <summary>Called by the app when the main window is shown/hidden/minimized. Hidden windows do no UI work.</summary>
@@ -319,7 +370,20 @@ public sealed class ShellViewModel : ObservableObject
         }
 
         _isWindowVisible = visible;
-        if (visible)
+        UpdatePageActivity();
+    }
+
+    /// <summary>The page does UI work only while the window is shown and no game covers it.</summary>
+    private void UpdatePageActivity()
+    {
+        bool active = _isWindowVisible && !_coveredByGame;
+        if (active == _pageActive)
+        {
+            return;
+        }
+
+        _pageActive = active;
+        if (active)
         {
             _currentPage.Activate(_deps.Monitor.Engine.LatestFrame);
         }
@@ -349,9 +413,9 @@ public sealed class ShellViewModel : ObservableObject
         // Health and the overlay are kept current while the window is hidden: you're in a game.
         _context.Health.Update(frame);
         _context.Overlay.OnFrame(frame);
-        if (!_isWindowVisible)
+        if (!_pageActive)
         {
-            return;
+            return; // hidden, minimized or covered by a game: no charts to draw
         }
 
         Timeline.Advance(frame);
@@ -413,6 +477,11 @@ public sealed class ShellViewModel : ObservableObject
         var s = _deps.Settings.Current;
         var engine = _deps.Monitor.Engine;
         bool all = section == "All";
+
+        if (all || section is "Monitoring" or "Overlay")
+        {
+            ApplyMonitoringMode();
+        }
 
         if (all || section == "Monitoring")
         {

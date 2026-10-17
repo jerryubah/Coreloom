@@ -30,6 +30,8 @@ public sealed class TelemetryEngine : IDisposable
     private volatile bool _paused;
     private volatile bool _reinitializeRequested;
     private long _intervalMs = 1000;
+    private long _temporaryIntervalMs;
+    private volatile bool _lowPriority;
     private long _sequence;
     private TelemetryFrame _latest = TelemetryFrame.Empty;
     private IReadOnlyList<ProviderStatus> _statuses = [];
@@ -97,6 +99,40 @@ public sealed class TelemetryEngine : IDisposable
         }
     }
 
+    /// <summary>
+    /// A slower interval for a while (lighter monitoring while a game is in front), without resizing the history: the
+    /// slower of this and <see cref="Interval"/> is used. Null goes back to <see cref="Interval"/>.
+    /// </summary>
+    public TimeSpan? TemporaryInterval
+    {
+        get => Interlocked.Read(ref _temporaryIntervalMs) is > 0 and long ms ? TimeSpan.FromMilliseconds(ms) : null;
+        set
+        {
+            long ms = value is { } v ? (long)Math.Clamp(v.TotalMilliseconds, MinimumInterval.TotalMilliseconds, MaximumInterval.TotalMilliseconds) : 0;
+            if (Interlocked.Exchange(ref _temporaryIntervalMs, ms) != ms)
+            {
+                _wake.Set();
+            }
+        }
+    }
+
+    /// <summary>The interval polling uses now.</summary>
+    public TimeSpan EffectiveInterval => TimeSpan.FromMilliseconds(Math.Max(Interlocked.Read(ref _intervalMs), Interlocked.Read(ref _temporaryIntervalMs)));
+
+    /// <summary>Polls at below-normal thread priority (while a game is in front), else normal.</summary>
+    public bool LowPriority
+    {
+        get => _lowPriority;
+        set
+        {
+            if (_lowPriority != value)
+            {
+                _lowPriority = value;
+                _wake.Set();
+            }
+        }
+    }
+
     public void Start()
     {
         lock (_lifecycleGate)
@@ -112,7 +148,7 @@ public sealed class TelemetryEngine : IDisposable
             {
                 IsBackground = true,
                 Name = "Coreloom telemetry",
-                Priority = ThreadPriority.AboveNormal,
+                Priority = ThreadPriority.Normal, // (above normal up to 1.4.5; normal so it never gets ahead of a game)
             };
             _thread.Start();
             Log.Info(LogCategory, $"Telemetry started ({_slots.Length} providers, interval {Interval.TotalMilliseconds:0} ms).");
@@ -230,8 +266,21 @@ public sealed class TelemetryEngine : IDisposable
     private void Run()
     {
         long next = _clock.NowMilliseconds;
+        bool lowered = false;
         while (!_stopRequested)
         {
+            if (_lowPriority != lowered)
+            {
+                lowered = _lowPriority;
+                try
+                {
+                    Thread.CurrentThread.Priority = lowered ? ThreadPriority.BelowNormal : ThreadPriority.Normal;
+                }
+                catch (ThreadStateException)
+                {
+                }
+            }
+
             try
             {
                 AdvanceInitialization(runAsync: true);
@@ -258,7 +307,7 @@ public sealed class TelemetryEngine : IDisposable
                 Log.Error(LogCategory, "Polling cycle failed.", ex);
             }
 
-            long interval = Interlocked.Read(ref _intervalMs);
+            long interval = Math.Max(Interlocked.Read(ref _intervalMs), Interlocked.Read(ref _temporaryIntervalMs));
             long now = _clock.NowMilliseconds;
             next += interval;
             if (next <= now)
