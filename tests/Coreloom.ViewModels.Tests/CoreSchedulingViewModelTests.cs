@@ -113,11 +113,21 @@ public class CoreSchedulingViewModelTests
         Assert.Equal("Off", scheduling.StatusText);
         Assert.False(scheduling.CanTest);
 
-        // Ultimate Performance stops the core parking AMD's driver needs: advised against, and not counted as a boost.
+        // Ultimate Performance stops the core parking AMD's driver needs: advised against on hover (no extra line under
+        // the card), and not counted as a boost.
         var ultimate = page.Boosts.Single(b => b.Tweak == GamingTweak.UltimatePower);
         Assert.False(ultimate.CountsAsBoost);
-        Assert.Contains("core parking", ultimate.Message);
+        Assert.Contains("core parking", ultimate.Advice);
+        Assert.Null(ultimate.Message);
         Assert.Equal(8, page.BoostsAvailable);
+
+        // The details open from the boost's Details, over the page.
+        Assert.True(page.CoreSchedulingBoost.HasDetails);
+        Assert.False(page.Boosts.Single(b => b.Tweak == GamingTweak.GSync).HasDetails);
+        page.CoreSchedulingBoost.DetailsCommand!.Execute(null);
+        Assert.True(scheduling.IsDetailsOpen);
+        scheduling.CloseDetailsCommand.Execute(null);
+        Assert.False(scheduling.IsDetailsOpen);
         settings.Dispose();
     }
 
@@ -235,8 +245,11 @@ public class CoreSchedulingViewModelTests
         Assert.True(scheduling.WantsFrames);
         Assert.StartsWith("Ready: switch to your game", scheduling.TestText);
 
+        Assert.Equal("Test ready: play your game normally for about 2 minutes.", page.CoreSchedulingBoost.Message);
+
         Play(scheduling, 1, Loads(30, 30), onCache => onCache ? Second(108, 11.8) : Second(100, 12.5));
         Assert.Equal("Testing Cyberpunk 2077 · Round 1 of 4 · Windows' choice · 29 s left", scheduling.TestText);
+        Assert.Equal("Testing Cyberpunk 2077: round 1 of 4.", page.CoreSchedulingBoost.Message); // under the boost too
 
         Play(scheduling, AffinityTrial.TotalSeconds - 1, Loads(30, 30), onCache => onCache ? Second(108, 11.8) : Second(100, 12.5));
 
@@ -245,8 +258,10 @@ public class CoreSchedulingViewModelTests
         Assert.True(scheduling.HasPending);
         Assert.Equal("Cyberpunk 2077 on the cache cores: +8 % FPS, +6 % 1% lows. Keep this as its profile?", scheduling.PendingText);
         Assert.Empty(settings.Current.Gaming.CoreProfiles); // only kept when the user says so
+        Assert.Equal("Cyberpunk 2077: +8 % FPS on the cache cores. Open Details to keep it.", page.CoreSchedulingBoost.Message);
 
         scheduling.KeepCommand.Execute(null);
+        Assert.Null(page.CoreSchedulingBoost.Message);
         var profile = Assert.Single(settings.Current.Gaming.CoreProfiles);
         Assert.Equal("Cyberpunk2077.exe", profile.Program);
         Assert.Equal(CoreKind.Cache, profile.Cores);

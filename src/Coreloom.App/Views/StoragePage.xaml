@@ -93,6 +93,7 @@
         </StackPanel>
       </c:SquircleBorder>
 
+      <!-- Drives side by side end on one line: the shorter card's chart grows, so its volumes line up at the bottom -->
       <ItemsControl ItemsSource="{Binding Disks}" Margin="0,16,0,0" Focusable="False">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
@@ -101,8 +102,15 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="{x:Type pages:DiskViewModel}">
-            <c:SquircleBorder Style="{StaticResource Card}" VerticalAlignment="Top">
-              <StackPanel>
+            <c:SquircleBorder Style="{StaticResource Card}">
+              <Grid>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="*" />
+                  <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
                 <!-- Header -->
                 <Grid>
                   <Grid.ColumnDefinitions>
@@ -131,21 +139,21 @@
                 </Grid>
 
                 <!-- Live metrics -->
-                <c:AdaptiveGrid MinColumnWidth="120" MaxColumns="3" Spacing="10" Margin="0,14,0,0">
+                <c:AdaptiveGrid Grid.Row="1" MinColumnWidth="120" MaxColumns="3" Spacing="10" Margin="0,14,0,0">
                   <ContentPresenter Content="{Binding Read}" ContentTemplate="{StaticResource MetricTile}" />
                   <ContentPresenter Content="{Binding Write}" ContentTemplate="{StaticResource MetricTile}" />
                   <ContentPresenter Content="{Binding Activity}" ContentTemplate="{StaticResource MetricTile}" />
                 </c:AdaptiveGrid>
 
-                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding Health}" Margin="0,10,0,0"
+                <TextBlock Grid.Row="2" Style="{StaticResource Text.Caption}" Text="{Binding Health}" Margin="0,10,0,0"
                            Visibility="{Binding Health, Converter={StaticResource HasValueToVisibility}}" />
 
-                <c:LiveLineChart Height="170" Margin="0,12,0,0" Chart="{Binding Chart}"
+                <c:LiveLineChart Grid.Row="3" MinHeight="170" Margin="0,12,0,0" Chart="{Binding Chart}"
                                  Timeline="{Binding DataContext.Timeline, RelativeSource={RelativeSource AncestorType=UserControl}}" />
 
                 <!-- Volumes -->
-                <ItemsControl ItemsSource="{Binding Volumes}" ItemTemplate="{StaticResource VolumeRow}" Margin="0,10,0,0" Focusable="False" />
-              </StackPanel>
+                <ItemsControl Grid.Row="4" ItemsSource="{Binding Volumes}" ItemTemplate="{StaticResource VolumeRow}" Margin="0,10,0,0" Focusable="False" />
+              </Grid>
             </c:SquircleBorder>
           </DataTemplate>
         </ItemsControl.ItemTemplate>

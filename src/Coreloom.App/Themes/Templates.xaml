@@ -294,10 +294,11 @@
       </c:SquircleBorder>
       <c:AdaptiveGrid MinColumnWidth="460" MaxColumns="2" Spacing="16"
                       Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
-        <c:SquircleBorder Style="{StaticResource Card}" VerticalAlignment="Top" Padding="10,8,10,2">
+        <!-- the two halves end on one line (they're split to be about the same height) -->
+        <c:SquircleBorder Style="{StaticResource Card}" Padding="10,8,10,2">
           <ItemsControl ItemsSource="{Binding FirstColumn}" ItemTemplate="{StaticResource SensorGroup}" Focusable="False" />
         </c:SquircleBorder>
-        <c:SquircleBorder Style="{StaticResource Card}" VerticalAlignment="Top" Padding="10,8,10,2"
+        <c:SquircleBorder Style="{StaticResource Card}" Padding="10,8,10,2"
                 Visibility="{Binding HasSecondColumn, Converter={StaticResource BoolToVisibility}}">
           <ItemsControl ItemsSource="{Binding SecondColumn}" ItemTemplate="{StaticResource SensorGroup}" Focusable="False" />
         </c:SquircleBorder>
@@ -310,6 +311,12 @@
   <!-- ================================================================================= -->
   <DataTemplate x:Key="ProcessList" DataType="{x:Type inf:ProcessListViewModel}">
     <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <!-- its usual rows, and more when the card is taller to line up with the card beside it -->
+          <c:FitRows MinRows="{Binding MinRows}" />
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
       <ItemsControl.ItemTemplate>
         <DataTemplate DataType="{x:Type inf:ProcessRowViewModel}">
           <Grid Margin="0,5" Visibility="{Binding Name, Converter={StaticResource HasValueToVisibility}}">

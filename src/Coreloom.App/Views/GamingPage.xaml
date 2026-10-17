@@ -36,9 +36,36 @@
       <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
 
+    <!-- A small button the size of the pills next to it ("Details"). -->
+    <Style x:Key="PillButton" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Focusable" Value="True" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Pill" CornerRadius="6" Padding="7,1" Background="{DynamicResource Brush.AccentSoft}">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{TemplateBinding Content}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
+                <Path Data="M0,0 L3,3 0,6" Stroke="{DynamicResource Brush.Accent}" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                      Margin="5,1,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Pill" Property="Background" Value="{DynamicResource Brush.ControlHover}" />
+              </Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter TargetName="Pill" Property="Background" Value="{DynamicResource Brush.ControlHover}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
     <!-- A boost: icon (green when on), name and tag, what it does, its switch, and what happened. -->
     <DataTemplate x:Key="BoostCard" DataType="{x:Type pages:GamingTweakViewModel}">
-      <c:SquircleBorder x:Name="Card" Style="{StaticResource Card}" Padding="16,14,16,14">
+      <c:SquircleBorder x:Name="Card" Style="{StaticResource Card}" Padding="16,14,16,14" ToolTip="{Binding Advice}" ToolTipService.ShowDuration="30000">
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -67,9 +94,13 @@
                         Visibility="{Binding HasCategory, Converter={StaticResource BoolToVisibility}}">
                   <TextBlock x:Name="CategoryText" Text="{Binding Category}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
                 </Border>
-                <Border Style="{StaticResource Badge}" Margin="0,0,0,2" Visibility="{Binding HasTag, Converter={StaticResource BoolToVisibility}}">
+                <Border Style="{StaticResource Badge}" Margin="0,0,6,2" Visibility="{Binding HasTag, Converter={StaticResource BoolToVisibility}}">
                   <TextBlock Text="{Binding Tag}" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
                 </Border>
+                <!-- more about this boost (core scheduling: the cores, AMD's checks, the test and the games' profiles) -->
+                <Button Style="{StaticResource PillButton}" Margin="0,0,0,2" Command="{Binding DetailsCommand}" Content="Details"
+                        Visibility="{Binding HasDetails, Converter={StaticResource BoolToVisibility}}"
+                        AutomationProperties.Name="{Binding Title, StringFormat='Details for {0}'}" />
               </WrapPanel>
             </StackPanel>
             <Grid Grid.Column="2" VerticalAlignment="Top">
@@ -435,20 +466,31 @@
       <ItemsControl ItemsSource="{Binding Boosts}" ItemTemplate="{StaticResource BoostCard}" Focusable="False">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
-            <!-- each card as tall as its own content, stacked in columns (in reading order) -->
-            <c:StackedColumns MinColumnWidth="320" MaxColumns="3" Spacing="12" RowSpacing="12" InOrder="True" />
+            <!-- stacked in columns in reading order, each card as tall as its text; the last card of each column takes up
+                 the difference so every column ends on the same line -->
+            <c:StackedColumns MinColumnWidth="320" MaxColumns="3" Spacing="12" RowSpacing="12" InOrder="True" FillColumns="True" />
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemContainerStyle>
+          <Style TargetType="ContentPresenter">
+            <Setter Property="c:StackedColumns.CanFill" Value="True" />
+          </Style>
+        </ItemsControl.ItemContainerStyle>
       </ItemsControl>
 
       <!-- ============================================================ -->
-      <!-- Frame limiter, shader cache and CPU core scheduling: two columns, each card as tall as its content and placed  -->
-      <!-- in the shorter column (so core scheduling goes under the shader cache); stacked when narrow                     -->
+      <!-- Frame limiter and shader cache side by side, ending on one line: the frame limiter's pacing row and the cache  -->
+      <!-- list both reach the bottom of their cards. Stacked when narrow.                                                -->
       <!-- ============================================================ -->
-      <c:StackedColumns MinColumnWidth="440" MaxColumns="2" Spacing="16" RowSpacing="16" Margin="0,16,0,0">
+      <c:AdaptiveGrid MinColumnWidth="440" MaxColumns="2" Spacing="16" Margin="0,16,0,0">
 
         <!-- Frame limiter -->
         <c:SquircleBorder Style="{StaticResource Card.Glow}" GlowKey="Accent" GlowStrength="0.7" DataContext="{Binding FramePacer}">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="*" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
           <StackPanel>
             <Grid>
               <Grid.ColumnDefinitions>
@@ -616,8 +658,10 @@
                          Visibility="{Binding HasMessage, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
 
-            <!-- Pacing of the game running now, in one row (dashes until a game runs) -->
-            <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,10" Margin="0,14,0,0"
+          </StackPanel>
+
+            <!-- Pacing of the game running now, in one row (dashes until a game runs), at the bottom of the card -->
+            <c:SquircleBorder Grid.Row="1" Style="{StaticResource Card.Inset}" Padding="14,10" Margin="0,14,0,0"
                               ToolTip="Start a game from your library to see how evenly its frames arrive.">
               <Grid>
                 <Grid.ColumnDefinitions>
@@ -644,11 +688,16 @@
                 </Border>
               </Grid>
             </c:SquircleBorder>
-          </StackPanel>
+          </Grid>
         </c:SquircleBorder>
 
         <!-- Shader cache -->
         <c:SquircleBorder Style="{StaticResource Card}">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
           <StackPanel>
             <Grid>
               <Grid.ColumnDefinitions>
@@ -716,22 +765,149 @@
               </Grid>
             </c:SquircleBorder>
 
-            <!-- The caches on this PC -->
-            <TextBlock Text="On this PC" Style="{StaticResource Text.Label}" Margin="2,16,0,6" Visibility="{Binding HasShaderCaches, Converter={StaticResource BoolToVisibility}}" />
-            <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,8" Visibility="{Binding HasShaderCaches, Converter={StaticResource BoolToVisibility}}">
+            <!-- The caches on this PC (what Smart Optimize does with them is on the label's tooltip) -->
+            <StackPanel Orientation="Horizontal" Margin="2,16,0,6" Background="Transparent" ToolTip="{Binding ShaderCacheNote}" ToolTipService.ShowDuration="30000"
+                        Visibility="{Binding HasShaderCaches, Converter={StaticResource BoolToVisibility}}">
+              <TextBlock Text="On this PC" Style="{StaticResource Text.Label}" VerticalAlignment="Center" />
+              <Path Style="{StaticResource IconPath}" Width="12" Height="12" Margin="6,0,0,0" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.TextTertiary}" VerticalAlignment="Center" />
+            </StackPanel>
+          </StackPanel>
+            <!-- the list reaches the bottom of the card, level with the frame limiter's pacing row -->
+            <c:SquircleBorder Grid.Row="1" Style="{StaticResource Card.Inset}" Padding="14,8" Visibility="{Binding HasShaderCaches, Converter={StaticResource BoolToVisibility}}">
               <ItemsControl ItemsSource="{Binding ShaderCaches}" ItemTemplate="{StaticResource ShaderCacheRow}" Focusable="False" />
             </c:SquircleBorder>
-            <TextBlock Style="{StaticResource Text.Caption}" Margin="0,12,0,0" TextWrapping="Wrap" TextTrimming="None" Text="{Binding ShaderCacheNote}" />
-          </StackPanel>
+          </Grid>
         </c:SquircleBorder>
+      </c:AdaptiveGrid>
 
-        <!-- CPU core scheduling: the cores, where the game runs, what AMD's scheduling needs, a test, and per-game profiles -->
-        <c:SquircleBorder Style="{StaticResource Card}" DataContext="{Binding CoreScheduling}">
+      <!-- ============================================================ -->
+      <!-- Your games                                                   -->
+      <!-- ============================================================ -->
+      <StackPanel Margin="2,30,0,12">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="Your games" Style="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
+          <Border Style="{StaticResource Badge}" Margin="10,1,0,0">
+            <TextBlock Text="{Binding GameCount}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+          </Border>
+        </StackPanel>
+        <TextBlock Text="{Binding LibrarySummary}" Style="{StaticResource Text.Secondary}" Margin="0,3,0,0" />
+      </StackPanel>
+
+      <!-- Search, order, list or grid, look again -->
+      <WrapPanel>
+        <!-- Answers as you type (the best matches drop down under it) and filters the library; Ctrl+K or Ctrl+F jumps here. -->
+        <c:QuickSearch Width="380" Margin="0,0,12,10" HorizontalAlignment="Left" VerticalAlignment="Center" Placeholder="Search games"
+                       Hint="Start typing a game's name or store" Text="{Binding Search}" Suggestions="{Binding SearchSuggestions}" />
+        <ComboBox Style="{StaticResource ComboBox.Default}" MinWidth="170" Margin="0,0,10,10" VerticalAlignment="Center" ItemsSource="{Binding SortOptions}"
+                  DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding SelectedSort}" AutomationProperties.Name="Sort games" ToolTip="Order" />
+        <ListBox Style="{StaticResource Segmented}" Margin="0,0,10,10" VerticalAlignment="Center" ItemsSource="{Binding ViewOptions}"
+                 SelectedItem="{Binding SelectedViewOption}" ItemTemplate="{StaticResource ViewOption}" AutomationProperties.Name="List or grid" />
+        <Button Style="{StaticResource Button.Secondary}" Padding="14,8" Margin="0,0,10,10" VerticalAlignment="Center" Command="{Binding AddGameCommand}"
+                ToolTip="Add a game Coreloom didn't find: pick its program (.exe), then name it">
+          <StackPanel Orientation="Horizontal">
+            <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Plus}" />
+            <TextBlock Text="Add game" Margin="7,0,0,0" />
+          </StackPanel>
+        </Button>
+        <Button Style="{StaticResource Button.Secondary}" Padding="14,8" Margin="0,0,0,10" VerticalAlignment="Center" Command="{Binding RescanCommand}" ToolTip="Look for games again">
+          <StackPanel Orientation="Horizontal">
+            <Grid Width="13" Height="13">
+              <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Refresh}"
+                    Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+              <c:RadialGauge Style="{StaticResource GameSpinner}" Width="13" Height="13" b:Spin.IsSpinning="{Binding IsScanning}"
+                             Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}" />
+            </Grid>
+            <TextBlock Text="Rescan" Margin="7,0,0,0" />
+          </StackPanel>
+        </Button>
+      </WrapPanel>
+
+      <!-- Pictures for games without one are downloaded automatically after each scan -->
+      <StackPanel Orientation="Horizontal" Margin="2,0,0,12" Visibility="{Binding IsDownloadingArtwork, Converter={StaticResource BoolToVisibility}}">
+        <c:RadialGauge Style="{StaticResource GameSpinner}" b:Spin.IsSpinning="{Binding IsDownloadingArtwork}" />
+        <TextBlock Text="Finding pictures for your games…" Style="{StaticResource Text.Secondary}" Margin="8,0,0,0" VerticalAlignment="Center" />
+      </StackPanel>
+
+      <TextBlock Text="Looking for games…" Style="{StaticResource Text.Secondary}" Margin="2,0,0,8"
+                 Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+
+      <!-- The games: cards in a list, or covers in a grid -->
+      <ItemsControl ItemsSource="{Binding Games}" Focusable="False">
+        <ItemsControl.Style>
+          <Style TargetType="ItemsControl">
+            <Setter Property="ItemTemplate" Value="{StaticResource GameCard}" />
+            <Setter Property="ItemsPanel">
+              <Setter.Value>
+                <ItemsPanelTemplate>
+                  <c:AdaptiveGrid MinColumnWidth="440" MaxColumns="3" Spacing="12" UniformRowHeight="True" />
+                </ItemsPanelTemplate>
+              </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsGridView}" Value="True">
+                <Setter Property="ItemTemplate" Value="{StaticResource GameTile}" />
+                <Setter Property="ItemsPanel">
+                  <Setter.Value>
+                    <ItemsPanelTemplate>
+                      <c:AdaptiveGrid MinColumnWidth="150" MaxColumnWidth="196" MaxColumns="12" Spacing="16" RowSpacing="20" />
+                    </ItemsPanelTemplate>
+                  </Setter.Value>
+                </Setter>
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </ItemsControl.Style>
+      </ItemsControl>
+
+      <c:SquircleBorder Padding="16,14">
+        <c:SquircleBorder.Style>
+          <Style TargetType="Border" BasedOn="{StaticResource Card.Inset}">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Style.Triggers>
+              <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                  <Condition Binding="{Binding HasGames}" Value="False" />
+                  <Condition Binding="{Binding IsLoaded}" Value="True" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="Visibility" Value="Visible" />
+              </MultiDataTrigger>
+            </Style.Triggers>
+          </Style>
+        </c:SquircleBorder.Style>
+        <StackPanel Orientation="Horizontal">
+          <Path Style="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Controller}" Stroke="{DynamicResource Brush.TextTertiary}" />
+          <TextBlock Text="{Binding EmptyText}" Style="{StaticResource Text.Secondary}" Margin="10,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" />
+        </StackPanel>
+      </c:SquircleBorder>
+
+      <TextBlock Style="{StaticResource Text.Caption}" Margin="2,14,0,0" TextWrapping="Wrap" TextTrimming="None"
+                 Text="Play starts each game through its own launcher, as you rather than as administrator. Coreloom reads the launchers' library files and never adds anything to games." />
+    </StackPanel>
+  </ScrollViewer>
+
+  <!-- Intelligent CPU core scheduling's details, opened from its boost: the cores and where the game runs, what AMD's
+       scheduling needs, the A/B test and the games kept on chosen cores -->
+  <Grid DataContext="{Binding CoreScheduling}" Visibility="{Binding IsDetailsOpen, Converter={StaticResource BoolToVisibility}}">
+    <Border Background="{DynamicResource Brush.Scrim}">
+      <Border.InputBindings>
+        <MouseBinding MouseAction="LeftClick" Command="{Binding CloseDetailsCommand}" />
+      </Border.InputBindings>
+    </Border>
+    <c:SquircleBorder Style="{StaticResource Card}" Width="600" Margin="32" Padding="22,18,22,18" HorizontalAlignment="Center" VerticalAlignment="Center"
+                      AutomationProperties.Name="Intelligent CPU core scheduling">
+      <c:SquircleBorder.Effect>
+        <DropShadowEffect BlurRadius="40" ShadowDepth="10" Direction="270" Opacity="0.35" Color="#000000" />
+      </c:SquircleBorder.Effect>
+      <c:SquircleBorder.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CloseDetailsCommand}" />
+      </c:SquircleBorder.InputBindings>
+      <ScrollViewer Style="{StaticResource ScrollViewer.Page}" VerticalScrollBarVisibility="Auto" MaxHeight="720">
           <StackPanel>
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
               </Grid.ColumnDefinitions>
               <c:SquircleBorder Width="36" Height="36" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
@@ -739,7 +915,7 @@
               </c:SquircleBorder>
               <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
                 <WrapPanel>
-                  <TextBlock Style="{StaticResource Text.CardTitle}" FontSize="14" Text="CPU core scheduling" VerticalAlignment="Center" Margin="0,0,8,0" />
+                  <TextBlock Style="{StaticResource Text.CardTitle}" FontSize="16" Text="Intelligent CPU core scheduling" VerticalAlignment="Center" Margin="0,0,8,0" />
                   <Border Style="{StaticResource Badge}">
                     <TextBlock Text="{Binding BadgeText}" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
                   </Border>
@@ -752,6 +928,10 @@
                 <c:RadialGauge Style="{StaticResource GameSpinner}" Margin="0,0,10,0" b:Spin.IsSpinning="{Binding IsBusy}"
                                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
               </Grid>
+              <Button Grid.Column="3" Style="{StaticResource Button.Icon}" Width="32" Height="32" Margin="8,0,-6,0" VerticalAlignment="Center"
+                      Command="{Binding CloseDetailsCommand}" ToolTip="Close" AutomationProperties.Name="Close">
+                <Path Style="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Close}" />
+              </Button>
             </Grid>
 
             <!-- Nothing to choose between on this processor -->
@@ -876,113 +1056,9 @@
               </ItemsControl>
             </StackPanel>
           </StackPanel>
-        </c:SquircleBorder>
-      </c:StackedColumns>
-
-      <!-- ============================================================ -->
-      <!-- Your games                                                   -->
-      <!-- ============================================================ -->
-      <StackPanel Margin="2,30,0,12">
-        <StackPanel Orientation="Horizontal">
-          <TextBlock Text="Your games" Style="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
-          <Border Style="{StaticResource Badge}" Margin="10,1,0,0">
-            <TextBlock Text="{Binding GameCount}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
-          </Border>
-        </StackPanel>
-        <TextBlock Text="{Binding LibrarySummary}" Style="{StaticResource Text.Secondary}" Margin="0,3,0,0" />
-      </StackPanel>
-
-      <!-- Search, order, list or grid, look again -->
-      <WrapPanel>
-        <!-- Answers as you type (the best matches drop down under it) and filters the library; Ctrl+K or Ctrl+F jumps here. -->
-        <c:QuickSearch Width="380" Margin="0,0,12,10" HorizontalAlignment="Left" VerticalAlignment="Center" Placeholder="Search games"
-                       Hint="Start typing a game's name or store" Text="{Binding Search}" Suggestions="{Binding SearchSuggestions}" />
-        <ComboBox Style="{StaticResource ComboBox.Default}" MinWidth="170" Margin="0,0,10,10" VerticalAlignment="Center" ItemsSource="{Binding SortOptions}"
-                  DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding SelectedSort}" AutomationProperties.Name="Sort games" ToolTip="Order" />
-        <ListBox Style="{StaticResource Segmented}" Margin="0,0,10,10" VerticalAlignment="Center" ItemsSource="{Binding ViewOptions}"
-                 SelectedItem="{Binding SelectedViewOption}" ItemTemplate="{StaticResource ViewOption}" AutomationProperties.Name="List or grid" />
-        <Button Style="{StaticResource Button.Secondary}" Padding="14,8" Margin="0,0,10,10" VerticalAlignment="Center" Command="{Binding AddGameCommand}"
-                ToolTip="Add a game Coreloom didn't find: pick its program (.exe), then name it">
-          <StackPanel Orientation="Horizontal">
-            <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Plus}" />
-            <TextBlock Text="Add game" Margin="7,0,0,0" />
-          </StackPanel>
-        </Button>
-        <Button Style="{StaticResource Button.Secondary}" Padding="14,8" Margin="0,0,0,10" VerticalAlignment="Center" Command="{Binding RescanCommand}" ToolTip="Look for games again">
-          <StackPanel Orientation="Horizontal">
-            <Grid Width="13" Height="13">
-              <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Refresh}"
-                    Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
-              <c:RadialGauge Style="{StaticResource GameSpinner}" Width="13" Height="13" b:Spin.IsSpinning="{Binding IsScanning}"
-                             Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}" />
-            </Grid>
-            <TextBlock Text="Rescan" Margin="7,0,0,0" />
-          </StackPanel>
-        </Button>
-      </WrapPanel>
-
-      <!-- Pictures for games without one are downloaded automatically after each scan -->
-      <StackPanel Orientation="Horizontal" Margin="2,0,0,12" Visibility="{Binding IsDownloadingArtwork, Converter={StaticResource BoolToVisibility}}">
-        <c:RadialGauge Style="{StaticResource GameSpinner}" b:Spin.IsSpinning="{Binding IsDownloadingArtwork}" />
-        <TextBlock Text="Finding pictures for your games…" Style="{StaticResource Text.Secondary}" Margin="8,0,0,0" VerticalAlignment="Center" />
-      </StackPanel>
-
-      <TextBlock Text="Looking for games…" Style="{StaticResource Text.Secondary}" Margin="2,0,0,8"
-                 Visibility="{Binding IsLoaded, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
-
-      <!-- The games: cards in a list, or covers in a grid -->
-      <ItemsControl ItemsSource="{Binding Games}" Focusable="False">
-        <ItemsControl.Style>
-          <Style TargetType="ItemsControl">
-            <Setter Property="ItemTemplate" Value="{StaticResource GameCard}" />
-            <Setter Property="ItemsPanel">
-              <Setter.Value>
-                <ItemsPanelTemplate>
-                  <c:AdaptiveGrid MinColumnWidth="440" MaxColumns="3" Spacing="12" UniformRowHeight="True" />
-                </ItemsPanelTemplate>
-              </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-              <DataTrigger Binding="{Binding IsGridView}" Value="True">
-                <Setter Property="ItemTemplate" Value="{StaticResource GameTile}" />
-                <Setter Property="ItemsPanel">
-                  <Setter.Value>
-                    <ItemsPanelTemplate>
-                      <c:AdaptiveGrid MinColumnWidth="150" MaxColumnWidth="196" MaxColumns="12" Spacing="16" RowSpacing="20" />
-                    </ItemsPanelTemplate>
-                  </Setter.Value>
-                </Setter>
-              </DataTrigger>
-            </Style.Triggers>
-          </Style>
-        </ItemsControl.Style>
-      </ItemsControl>
-
-      <c:SquircleBorder Padding="16,14">
-        <c:SquircleBorder.Style>
-          <Style TargetType="Border" BasedOn="{StaticResource Card.Inset}">
-            <Setter Property="Visibility" Value="Collapsed" />
-            <Style.Triggers>
-              <MultiDataTrigger>
-                <MultiDataTrigger.Conditions>
-                  <Condition Binding="{Binding HasGames}" Value="False" />
-                  <Condition Binding="{Binding IsLoaded}" Value="True" />
-                </MultiDataTrigger.Conditions>
-                <Setter Property="Visibility" Value="Visible" />
-              </MultiDataTrigger>
-            </Style.Triggers>
-          </Style>
-        </c:SquircleBorder.Style>
-        <StackPanel Orientation="Horizontal">
-          <Path Style="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Controller}" Stroke="{DynamicResource Brush.TextTertiary}" />
-          <TextBlock Text="{Binding EmptyText}" Style="{StaticResource Text.Secondary}" Margin="10,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" />
-        </StackPanel>
-      </c:SquircleBorder>
-
-      <TextBlock Style="{StaticResource Text.Caption}" Margin="2,14,0,0" TextWrapping="Wrap" TextTrimming="None"
-                 Text="Play starts each game through its own launcher, as you rather than as administrator. Coreloom reads the launchers' library files and never adds anything to games." />
-    </StackPanel>
-  </ScrollViewer>
+      </ScrollViewer>
+    </c:SquircleBorder>
+  </Grid>
 
   <!-- Adding a game by hand, or changing or removing one -->
   <Grid DataContext="{Binding Editor}" Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}}">

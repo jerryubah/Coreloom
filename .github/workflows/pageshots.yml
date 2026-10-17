@@ -1,0 +1,40 @@
+name: Page shots
+
+# Draws Coreloom's pages with sample data into PNGs (tools/Coreloom.PageShots), to check their layout on Windows:
+# alignment, wrapping and spacing. A developer check only; nothing here is part of a release.
+on:
+  push:
+    branches: ['shots-*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  shots:
+    name: Draw the pages (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Draw the pages
+        shell: pwsh
+        run: dotnet run --project tools/Coreloom.PageShots/Coreloom.PageShots.csproj -c Release -- artifacts/pageshots
+
+      - name: Upload the pictures
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: pageshots
+          path: artifacts/pageshots/
+          if-no-files-found: warn
+          retention-days: 14

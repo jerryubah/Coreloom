@@ -106,6 +106,8 @@ public sealed class CoreSchedulingController : ObservableObject
     private string? _lastActionText;
     private string _testText = string.Empty;
     private bool _isBusy;
+    private bool _isDetailsOpen;
+    private string? _boostNote;
 
     public CoreSchedulingController(GamingViewModel page, ICoreSchedulingService service)
     {
@@ -115,6 +117,12 @@ public sealed class CoreSchedulingController : ObservableObject
         CancelTestCommand = new RelayCommand(CancelTest, () => IsTesting);
         KeepCommand = new RelayCommand(Keep, () => _pending is not null);
         DiscardCommand = new RelayCommand(Discard, () => _pending is not null);
+        OpenDetailsCommand = new RelayCommand(() =>
+        {
+            Refresh();
+            IsDetailsOpen = true;
+        });
+        CloseDetailsCommand = new RelayCommand(() => IsDetailsOpen = false);
         _testText = IdleTestText;
     }
 
@@ -155,8 +163,30 @@ public sealed class CoreSchedulingController : ObservableObject
 
     public bool IsOn => _page.Store.Current.Gaming.CoreScheduling;
 
-    /// <summary>The boost's state for the Performance boosts list.</summary>
-    public TweakStatus Status => IsSupported ? new TweakStatus(true, IsOn) : TweakStatus.Unsupported(UnsupportedNote);
+    /// <summary>The boost's state for the Performance boosts list, with a test's progress or a result to keep as its note.</summary>
+    public TweakStatus Status => IsSupported ? new TweakStatus(true, IsOn, Note: BoostNote) : TweakStatus.Unsupported(UnsupportedNote);
+
+    /// <summary>
+    /// One line under the boost while a test waits or runs, or a result waits to be kept ("Cyberpunk 2077: +8 % FPS on
+    /// the cache cores. Open Details to keep it."); null otherwise.
+    /// </summary>
+    public string? BoostNote
+    {
+        get => _boostNote;
+        private set => SetProperty(ref _boostNote, value);
+    }
+
+    /// <summary>The details card (the cores, AMD's checks, the test and the profiles) is open over the page.</summary>
+    public bool IsDetailsOpen
+    {
+        get => _isDetailsOpen;
+        private set => SetProperty(ref _isDetailsOpen, value);
+    }
+
+    /// <summary>Opens the details card (from the boost's Details).</summary>
+    public IRelayCommand OpenDetailsCommand { get; }
+
+    public IRelayCommand CloseDetailsCommand { get; }
 
     /// <summary>Why there's nothing to schedule here.</summary>
     public string UnsupportedNote => !_service.IsSupported || !Layout.IsKnown
@@ -852,6 +882,13 @@ public sealed class CoreSchedulingController : ObservableObject
             StatusText = "On · waiting for a game";
         }
 
+        BoostNote = !IsOn
+            ? null
+            : _pending is { } p
+                ? $"{p.Name}: {(p.Result.FpsGain >= AffinityTrial.FpsGainNeeded ? $"{CoreScheduling.Gain(p.Result.FpsGain)} FPS" : $"{CoreScheduling.Gain(p.Result.LowGain)} 1% lows")} on the {CoresName(p.Cores)}. Open Details to keep it."
+                : _trial is { } trial
+                    ? $"Testing {_trialName}: round {Math.Min(trial.Round + 1, AffinityTrial.Rounds).ToString(CultureInfo.CurrentCulture)} of {AffinityTrial.Rounds.ToString(CultureInfo.CurrentCulture)}."
+                    : _armed ? "Test ready: play your game normally for about 2 minutes." : null;
         OnPropertyChanged(nameof(IsOn));
         OnPropertyChanged(nameof(IsTesting));
         OnPropertyChanged(nameof(CanTest));

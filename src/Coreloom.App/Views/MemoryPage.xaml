@@ -9,8 +9,8 @@
     <StackPanel Margin="32,14,28,32" b:Motion.Entrance="True">
 
       <c:AdaptiveGrid MinColumnWidth="420" MaxColumns="2" Spacing="16">
-        <!-- Donut hero (cards are as tall as their content) -->
-        <c:SquircleBorder Style="{StaticResource Card}" VerticalAlignment="Top">
+        <!-- Donut hero and the readings beside it, ending on one line (the donut stays centred, the tiles share the height) -->
+        <c:SquircleBorder Style="{StaticResource Card}">
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" />
@@ -31,10 +31,10 @@
           </Grid>
         </c:SquircleBorder>
 
-        <ItemsControl ItemsSource="{Binding Details}" ItemTemplate="{StaticResource MetricTile}" Focusable="False" VerticalAlignment="Top">
+        <ItemsControl ItemsSource="{Binding Details}" ItemTemplate="{StaticResource MetricTile}" Focusable="False">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
-              <c:AdaptiveGrid MinColumnWidth="180" MaxColumns="2" Spacing="12" UniformRowHeight="True" />
+              <c:AdaptiveGrid MinColumnWidth="180" MaxColumns="2" Spacing="12" UniformRowHeight="True" StretchRows="True" />
             </ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>
         </ItemsControl>
@@ -48,15 +48,21 @@
         <ContentPresenter Content="{Binding CommitChart}" ContentTemplate="{StaticResource ChartCard}" Height="280" />
       </c:AdaptiveGrid>
 
+      <!-- Processes and modules end on one line: when the modules card is taller, the process list shows more apps -->
       <c:AdaptiveGrid MinColumnWidth="460" MaxColumns="2" Spacing="16" Margin="0,16,0,0">
-        <c:SquircleBorder Style="{StaticResource Card}" VerticalAlignment="Top">
-          <StackPanel>
+        <c:SquircleBorder Style="{StaticResource Card}">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
             <TextBlock Style="{StaticResource Text.CardTitle}" Text="Top processes by memory" />
-            <TextBlock Style="{StaticResource Text.Caption}" Text="Working set, grouped by application" Margin="0,2,0,10" />
-            <ContentPresenter Content="{Binding Processes}" ContentTemplate="{StaticResource ProcessList}" />
-          </StackPanel>
+            <TextBlock Grid.Row="1" Style="{StaticResource Text.Caption}" Text="Working set, grouped by application" Margin="0,2,0,10" />
+            <ContentPresenter Grid.Row="2" Content="{Binding Processes}" ContentTemplate="{StaticResource ProcessList}" />
+          </Grid>
         </c:SquircleBorder>
-        <c:SquircleBorder Style="{StaticResource Card}" VerticalAlignment="Top">
+        <c:SquircleBorder Style="{StaticResource Card}">
           <StackPanel>
             <TextBlock Style="{StaticResource Text.CardTitle}" Text="Modules" Margin="0,0,0,10" />
             <ItemsControl ItemsSource="{Binding Modules}" Focusable="False" Visibility="{Binding HasModules, Converter={StaticResource BoolToVisibility}}">

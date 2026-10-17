@@ -139,6 +139,7 @@ public sealed class GamingTweakViewModel : ObservableObject
     private TweakStatus _status = TweakStatus.Unsupported("Checking…");
     private readonly bool _countsAsBoost;
     private string? _advice;
+    private IRelayCommand? _detailsCommand;
     private bool _isBusy;
     private string? _message;
     private bool? _pending;
@@ -205,7 +206,7 @@ public sealed class GamingTweakViewModel : ObservableObject
 
     /// <summary>
     /// Why this boost is better left off on this PC (Ultimate Performance on a multi-CCD Ryzen X3D, which needs core
-    /// parking), or null. Shown under it; "Boost now" leaves it alone.
+    /// parking), or null. Shown when the pointer rests on the card (no extra line); "Boost now" leaves it alone.
     /// </summary>
     public string? Advice
     {
@@ -215,10 +216,24 @@ public sealed class GamingTweakViewModel : ObservableObject
             if (SetProperty(ref _advice, value))
             {
                 OnPropertyChanged(nameof(CountsAsBoost));
-                Message = _status.NeedsRestart ? "Restart Windows to finish." : _status.Note ?? value;
             }
         }
     }
+
+    /// <summary>Opens more about this boost (core scheduling's details), or null when there's nothing more.</summary>
+    public IRelayCommand? DetailsCommand
+    {
+        get => _detailsCommand;
+        internal set
+        {
+            if (SetProperty(ref _detailsCommand, value))
+            {
+                OnPropertyChanged(nameof(HasDetails));
+            }
+        }
+    }
+
+    public bool HasDetails => _detailsCommand is not null;
 
     public GamingTweak Tweak { get; }
 
@@ -292,7 +307,7 @@ public sealed class GamingTweakViewModel : ObservableObject
     {
         _status = status;
         _pending = null;
-        Message = status.NeedsRestart ? "Restart Windows to finish." : status.Note ?? _advice; // why it can't be used, or a hint
+        Message = status.NeedsRestart ? "Restart Windows to finish." : status.Note; // why it can't be used, or a hint
         OnPropertyChanged(nameof(IsSupported));
         OnPropertyChanged(nameof(IsOn));
         OnPropertyChanged(nameof(NeedsRestart));
@@ -820,11 +835,20 @@ public sealed class GamingViewModel : PageViewModel
                 GSyncSetup.Recommendation(0, 0), "Improves how frames are shown, not the frame rate itself."),
             new(GamingTweak.ShaderCache, "NVIDIA shader cache", "Keeps the shaders games compile, so they aren't compiled again mid-play: fewer repeat stutters and steadier frame times the next times you play.", "Icon.Database", "NVIDIA", SetTweakAsync, "Frame stability",
                 "Recommended: 10 GB when the current limit is smaller, or a larger size for a big game library.", "Doesn't remove every shader stutter or raise the average frame rate."),
-            new(GamingTweak.CoreScheduling, "Intelligent CPU core scheduling", "Keeps games on the cores that suit them: the 3D V-Cache cores of a multi-CCD Ryzen X3D, or a hybrid processor's performance cores. Checks AMD's own scheduling first.", "Icon.Cpu", "Ryzen X3D", SetTweakAsync, "Frame stability",
-                "Recommended: on. Per-game profiles are only offered after a test in the game shows a clear gain.",
+            new(GamingTweak.CoreScheduling, "Intelligent CPU core scheduling", "Keeps games on the cores that suit them, such as a Ryzen X3D's 3D V-Cache cores, after checking AMD's own scheduling.", "Icon.Cpu", "Ryzen X3D", SetTweakAsync, "Frame stability",
+                "Recommended: on. A per-game profile is only offered after a test in that game shows a clear gain.",
                 "Chooses cores, never clocks or voltages; nothing is added to games."),
         ];
         ShaderCache = Boosts.First(b => b.Tweak == GamingTweak.ShaderCache);
+        CoreSchedulingBoost = Boosts.First(b => b.Tweak == GamingTweak.CoreScheduling);
+        CoreSchedulingBoost.DetailsCommand = CoreScheduling.OpenDetailsCommand;
+        CoreScheduling.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(CoreSchedulingController.BoostNote) && !CoreSchedulingBoost.IsBusy && _status != GamingStatus.Unavailable)
+            {
+                CoreSchedulingBoost.Apply(CoreScheduling.Status); // a test's progress, or a result to keep, under the boost
+            }
+        };
         ShaderCacheSizes = [.. Coreloom.Core.Gaming.ShaderCacheSize.Choices.Select(size => new Option<uint>(size, Coreloom.Core.Gaming.ShaderCacheSize.Describe(size)))];
 
         RescanCommand = new AsyncRelayCommand(ScanAsync, () => !IsScanning && IsSupported);
@@ -910,8 +934,8 @@ public sealed class GamingViewModel : PageViewModel
     /// <summary>Intelligent CPU core scheduling: the core map, AMD's checks, where the game runs, tests and per-game profiles.</summary>
     public CoreSchedulingController CoreScheduling { get; }
 
-    /// <summary>The core scheduling boost (also switched on its card).</summary>
-    public GamingTweakViewModel CoreSchedulingBoost => Boosts.First(b => b.Tweak == GamingTweak.CoreScheduling);
+    /// <summary>The core scheduling boost (its Details open <see cref="CoreScheduling"/>'s card).</summary>
+    public GamingTweakViewModel CoreSchedulingBoost { get; }
 
     /// <summary>Every switch on the page.</summary>
     private IEnumerable<GamingTweakViewModel> AllTweaks => Boosts;

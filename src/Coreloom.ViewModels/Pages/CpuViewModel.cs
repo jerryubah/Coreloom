@@ -159,7 +159,7 @@ public sealed class CpuViewModel : PageViewModel
             Threads.Add(new ThreadTileViewModel(i));
         }
 
-        Processes = new ProcessListViewModel(Monitor.Processes, ProcessSort.Cpu);
+        Processes = new ProcessListViewModel(Monitor.Processes, ProcessSort.Cpu, 6, 16);
         BoardSensors = new SensorTableViewModel(d => d.Category == MetricCategory.Motherboard && d.Kind is MetricKind.Fan or MetricKind.Temperature or MetricKind.Control, showRaw: false);
         Sensors = new SensorTableViewModel(d => d.Category is MetricCategory.Cpu or MetricCategory.Motherboard && !d.Id.StartsWith("cpu/thread/", StringComparison.Ordinal));
         _showThreads = Settings.Current.Monitoring.ShowPerThreadGraphs;

@@ -295,18 +295,24 @@ public sealed class ProcessListViewModel : ObservableObject
     private readonly int _count;
     private DateTime _lastSample = DateTime.MinValue;
 
-    public ProcessListViewModel(IProcessSampler sampler, ProcessSort sort, int count = 6)
+    /// <param name="count">Rows always shown.</param>
+    /// <param name="capacity">Rows kept up to date, shown when the card is taller (at least <paramref name="count"/>).</param>
+    public ProcessListViewModel(IProcessSampler sampler, ProcessSort sort, int count = 6, int capacity = 0)
     {
         _sampler = sampler;
         _sort = sort;
-        _count = count;
-        for (int i = 0; i < count; i++)
+        MinRows = count;
+        _count = Math.Max(count, capacity);
+        for (int i = 0; i < _count; i++)
         {
             Rows.Add(new ProcessRowViewModel());
         }
     }
 
     public ObservableCollection<ProcessRowViewModel> Rows { get; }  = [];
+
+    /// <summary>Rows always shown; a card made taller to line up with its neighbour shows more of <see cref="Rows"/>.</summary>
+    public int MinRows { get; }
 
     public TimeSpan Interval { get; set; } = TimeSpan.FromSeconds(2);
 

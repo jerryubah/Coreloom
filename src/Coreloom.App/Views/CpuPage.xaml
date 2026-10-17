@@ -228,16 +228,21 @@
         </StackPanel>
       </c:SquircleBorder>
 
-      <!-- Processes + specs (each card as tall as its own content) -->
+      <!-- Processes + specs, ending on one line: when the specifications are longer, the process list shows more apps -->
       <c:AdaptiveGrid MinColumnWidth="460" MaxColumns="2" Spacing="16" Margin="0,16,0,0">
-        <c:SquircleBorder Style="{StaticResource Card}" VerticalAlignment="Top">
-          <StackPanel>
+        <c:SquircleBorder Style="{StaticResource Card}">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
             <TextBlock Style="{StaticResource Text.CardTitle}" Text="Top processes by CPU" />
-            <TextBlock Style="{StaticResource Text.Caption}" Text="Grouped by application · refreshed every 2 seconds" Margin="0,2,0,10" />
-            <ContentPresenter Content="{Binding Processes}" ContentTemplate="{StaticResource ProcessList}" />
-          </StackPanel>
+            <TextBlock Grid.Row="1" Style="{StaticResource Text.Caption}" Text="Grouped by application · refreshed every 2 seconds" Margin="0,2,0,10" />
+            <ContentPresenter Grid.Row="2" Content="{Binding Processes}" ContentTemplate="{StaticResource ProcessList}" />
+          </Grid>
         </c:SquircleBorder>
-        <c:SquircleBorder Style="{StaticResource Card}" VerticalAlignment="Top">
+        <c:SquircleBorder Style="{StaticResource Card}">
           <StackPanel>
             <TextBlock Style="{StaticResource Text.CardTitle}" Text="Specifications" Margin="0,0,0,10" />
             <ItemsControl ItemsSource="{Binding Specifications}" ItemTemplate="{StaticResource KeyValueRow}" Focusable="False" Grid.IsSharedSizeScope="True" />

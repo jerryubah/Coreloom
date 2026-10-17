@@ -301,9 +301,9 @@
         </Grid>
       </c:SquircleBorder>
 
-      <!-- Two columns that stack: Cleanup over Free up memory, Protection over Speed up, each card as tall as its content.
-           Only Speed up may grow to line up with the other column, because its startup list shows more apps when it's
-           taller. One column when the window is narrow. -->
+      <!-- Two columns that stack: Cleanup over Free up memory, Protection over Speed up, both columns ending on one line.
+           The lower card of the shorter column takes up the difference: Speed up's startup list shows more apps, or Free
+           up memory's gauge and button stay centred in the taller card. One column when the window is narrow. -->
       <c:StackedColumns MinColumnWidth="460" MaxColumns="2" Spacing="16" RowSpacing="16" InOrder="True" FillColumns="True" Margin="0,16,0,0">
 
         <!-- ============================================================ -->
@@ -431,7 +431,7 @@
         <!-- ============================================================ -->
         <!-- Memory                                                       -->
         <!-- ============================================================ -->
-        <c:SquircleBorder Style="{StaticResource Card}" DataContext="{Binding Memory}">
+        <c:SquircleBorder Style="{StaticResource Card}" DataContext="{Binding Memory}" c:StackedColumns.CanFill="True">
           <Grid>
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />

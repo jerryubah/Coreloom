@@ -399,6 +399,7 @@ public class GamingViewModelTests
         Assert.False(cores.IsSupported);
         Assert.Equal("The processor's cores couldn't be read here.", cores.Message);
         Assert.Contains("after a test", cores.Recommendation);
+        Assert.True(cores.HasDetails);
         Assert.DoesNotContain(page.Boosts, b => b.Title.Contains("HDR", StringComparison.Ordinal));
         Assert.All(page.Boosts, b => Assert.True(b.HasCategory));
         Assert.Same(cache, page.ShaderCache); // the Shader cache card shows the same switch
