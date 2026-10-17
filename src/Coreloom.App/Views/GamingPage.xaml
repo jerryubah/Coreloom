@@ -145,6 +145,11 @@
           </StackPanel>
 
           <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+            <Button Style="{StaticResource Button.Icon}" Width="32" Height="32" Margin="0,0,2,0" Command="{Binding EditCommand}"
+                    ToolTip="Change or remove this game" AutomationProperties.Name="Edit game"
+                    Visibility="{Binding IsCustom, Converter={StaticResource BoolToVisibility}}">
+              <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Edit}" />
+            </Button>
             <Button Style="{StaticResource Button.Icon}" Width="32" Height="32" Margin="0,0,6,0" Command="{Binding OpenFolderCommand}"
                     ToolTip="Open the game's folder" AutomationProperties.Name="Open folder"
                     Visibility="{Binding CanOpenFolder, Converter={StaticResource BoolToVisibility}}">
@@ -220,6 +225,12 @@
             <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Folder}" Stroke="White" />
           </Button>
 
+          <Button x:Name="Edit" Style="{StaticResource Button.Icon}" Width="30" Height="30" Margin="0,8,42,0" HorizontalAlignment="Right" VerticalAlignment="Top"
+                  Background="#99000000" Foreground="White" Opacity="0" Command="{Binding EditCommand}" ToolTip="Change or remove this game"
+                  AutomationProperties.Name="Edit game" Visibility="{Binding IsCustom, Converter={StaticResource BoolToVisibility}}">
+            <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Edit}" Stroke="White" />
+          </Button>
+
           <Border x:Name="Playing" CornerRadius="7" Padding="8,3" Margin="8" HorizontalAlignment="Left" VerticalAlignment="Top" Background="#CC0B1A10" Visibility="Collapsed">
             <StackPanel Orientation="Horizontal">
               <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" b:Pulse.IsPulsing="{Binding IsRunning}" />
@@ -237,12 +248,14 @@
           <Setter TargetName="Hover" Property="Opacity" Value="1" />
           <Setter TargetName="Play" Property="Opacity" Value="1" />
           <Setter TargetName="Folder" Property="Opacity" Value="1" />
+          <Setter TargetName="Edit" Property="Opacity" Value="1" />
           <Setter TargetName="Outline" Property="BorderBrush" Value="{DynamicResource Brush.AccentEdge}" />
         </Trigger>
         <Trigger SourceName="Tile" Property="IsKeyboardFocusWithin" Value="True">
           <Setter TargetName="Hover" Property="Opacity" Value="1" />
           <Setter TargetName="Play" Property="Opacity" Value="1" />
           <Setter TargetName="Folder" Property="Opacity" Value="1" />
+          <Setter TargetName="Edit" Property="Opacity" Value="1" />
         </Trigger>
         <DataTrigger Binding="{Binding IsRunning}" Value="True">
           <Setter TargetName="Playing" Property="Visibility" Value="Visible" />
@@ -279,6 +292,7 @@
     </DataTemplate>
   </UserControl.Resources>
 
+  <Grid>
   <ScrollViewer Style="{StaticResource ScrollViewer.Window}">
     <StackPanel Margin="32,14,28,32" b:Motion.Entrance="True">
 
@@ -701,6 +715,13 @@
                   DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding SelectedSort}" AutomationProperties.Name="Sort games" ToolTip="Order" />
         <ListBox Style="{StaticResource Segmented}" Margin="0,0,10,10" VerticalAlignment="Center" ItemsSource="{Binding ViewOptions}"
                  SelectedItem="{Binding SelectedViewOption}" ItemTemplate="{StaticResource ViewOption}" AutomationProperties.Name="List or grid" />
+        <Button Style="{StaticResource Button.Secondary}" Padding="14,8" Margin="0,0,10,10" VerticalAlignment="Center" Command="{Binding AddGameCommand}"
+                ToolTip="Add a game Coreloom didn't find: pick its program (.exe), then name it">
+          <StackPanel Orientation="Horizontal">
+            <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Plus}" />
+            <TextBlock Text="Add game" Margin="7,0,0,0" />
+          </StackPanel>
+        </Button>
         <Button Style="{StaticResource Button.Secondary}" Padding="14,8" Margin="0,0,0,10" VerticalAlignment="Center" Command="{Binding RescanCommand}" ToolTip="Look for games again">
           <StackPanel Orientation="Horizontal">
             <Grid Width="13" Height="13">
@@ -776,4 +797,105 @@
                  Text="Play starts each game through its own launcher, as you rather than as administrator. Coreloom reads the launchers' library files and never adds anything to games." />
     </StackPanel>
   </ScrollViewer>
+
+  <!-- Adding a game by hand, or changing or removing one -->
+  <Grid DataContext="{Binding Editor}" Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}}">
+    <Border Background="{DynamicResource Brush.Scrim}">
+      <Border.InputBindings>
+        <MouseBinding MouseAction="LeftClick" Command="{Binding CancelCommand}" />
+      </Border.InputBindings>
+    </Border>
+    <c:SquircleBorder Style="{StaticResource Card}" Width="520" Margin="32" Padding="22,18,22,18" HorizontalAlignment="Center" VerticalAlignment="Center"
+                      AutomationProperties.Name="{Binding Title}">
+      <c:SquircleBorder.Effect>
+        <DropShadowEffect BlurRadius="40" ShadowDepth="10" Direction="270" Opacity="0.35" Color="#000000" />
+      </c:SquircleBorder.Effect>
+      <c:SquircleBorder.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CancelCommand}" />
+      </c:SquircleBorder.InputBindings>
+      <StackPanel>
+        <Grid>
+          <StackPanel Margin="0,0,40,0">
+            <TextBlock Style="{StaticResource Text.CardTitle}" Text="{Binding Title}" FontSize="16" />
+            <TextBlock Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,3,0,0"
+                       Text="It joins your games: Play, the in-game overlay, the frame limiter's own limit and adaptive pacing work with it." />
+          </StackPanel>
+          <Button Style="{StaticResource Button.Icon}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="32" Height="32"
+                  Command="{Binding CancelCommand}" ToolTip="Close" AutomationProperties.Name="Close">
+            <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Close}" />
+          </Button>
+        </Grid>
+
+        <Grid Margin="0,18,0,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="96" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <!-- The picture: a chosen one, else the program's icon -->
+          <StackPanel>
+            <Grid Width="96" Height="128">
+              <c:SquircleBorder CornerRadius="12" Background="{DynamicResource Brush.AccentSoft}" />
+              <TextBlock Text="{Binding Initials}" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                         Visibility="{Binding HasPreview, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+              <c:SquircleBorder x:Name="EditorPicture" CornerRadius="12" b:AsyncImage.DecodeWidth="200" b:AsyncImage.Path="{Binding Preview}">
+                <c:SquircleBorder.Style>
+                  <Style TargetType="Border">
+                    <Setter Property="Margin" Value="22,38" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding HasChosenPicture}" Value="True">
+                        <Setter Property="Margin" Value="0" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </c:SquircleBorder.Style>
+              </c:SquircleBorder>
+            </Grid>
+            <Button Style="{StaticResource Button.Subtle}" Margin="0,8,0,0" HorizontalAlignment="Center" Command="{Binding ChoosePictureCommand}" Content="Picture…" />
+            <Button Style="{StaticResource Button.Subtle}" HorizontalAlignment="Center" Command="{Binding UseProgramIconCommand}" Content="Use icon"
+                    Visibility="{Binding HasChosenPicture, Converter={StaticResource BoolToVisibility}}" />
+          </StackPanel>
+
+          <StackPanel Grid.Column="1" Margin="18,0,0,0">
+            <TextBlock Text="Name" Style="{StaticResource Text.Label}" />
+            <TextBox Style="{StaticResource TextBox.Default}" Margin="0,6,0,0" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Game name" />
+
+            <TextBlock Text="Program" Style="{StaticResource Text.Label}" Margin="0,14,0,0" />
+            <Grid Margin="0,6,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Text="{Binding Executable}" Style="{StaticResource Text.Secondary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTip="{Binding Executable}" />
+              <Button Grid.Column="1" Style="{StaticResource Button.Secondary}" Margin="8,0,0,0" Command="{Binding ChangeProgramCommand}" Content="Change…" />
+            </Grid>
+
+            <TextBlock Text="Launch options (optional)" Style="{StaticResource Text.Label}" Margin="0,14,0,0" />
+            <TextBox Style="{StaticResource TextBox.Default}" Margin="0,6,0,0" Text="{Binding Arguments, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Launch options"
+                     ToolTip="Passed to the program when you press Play, e.g. -windowed" />
+          </StackPanel>
+        </Grid>
+
+        <Border Margin="0,14,0,0" Padding="12,8" CornerRadius="8" Background="{DynamicResource Brush.ElevatedSoft}"
+                Visibility="{Binding Error, Converter={StaticResource HasValueToVisibility}}">
+          <TextBlock Text="{Binding Error}" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
+        </Border>
+
+        <Grid Margin="0,18,0,0">
+          <Button Style="{StaticResource Button.Subtle}" HorizontalAlignment="Left" Command="{Binding RemoveCommand}"
+                  Visibility="{Binding IsNew, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}"
+                  ToolTip="Takes it out of Coreloom's list; the game's files aren't touched">
+            <StackPanel Orientation="Horizontal">
+              <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Trash}" />
+              <TextBlock Text="Remove from my games" Margin="7,0,0,0" />
+            </StackPanel>
+          </Button>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Style="{StaticResource Button.Secondary}" Margin="0,0,8,0" Command="{Binding CancelCommand}" Content="Cancel" />
+            <Button Style="{StaticResource Button.Primary}" Padding="18,7" Command="{Binding SaveCommand}" Content="Save" IsDefault="True" />
+          </StackPanel>
+        </Grid>
+      </StackPanel>
+    </c:SquircleBorder>
+  </Grid>
+</Grid>
 </UserControl>

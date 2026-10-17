@@ -28,6 +28,7 @@ public sealed class GameViewModel : ObservableObject
         _page = page;
         PlayCommand = new RelayCommand(() => _page.Play(this));
         OpenFolderCommand = new RelayCommand(() => _page.OpenFolder(this), () => CanOpenFolder);
+        EditCommand = new RelayCommand(() => _page.EditGame(this), () => IsCustom);
         int hash = 0;
         foreach (char c in game.Name)
         {
@@ -92,6 +93,12 @@ public sealed class GameViewModel : ObservableObject
     public IRelayCommand PlayCommand { get; }
 
     public IRelayCommand OpenFolderCommand { get; }
+
+    /// <summary>Changes or removes a game added by hand.</summary>
+    public IRelayCommand EditCommand { get; }
+
+    /// <summary>Added by hand (can be edited and removed).</summary>
+    public bool IsCustom => _game.Store == GameStore.Custom;
 
     public bool Matches(string search) => GameLibrary.Matches(_game, search);
 
@@ -659,6 +666,7 @@ public sealed class GamingViewModel : PageViewModel
     private bool _isScanning;
     private bool _isDownloadingArtwork;
     private bool _lookingUpArtwork;
+    private bool _scanAgain;
     private bool _isApplyingAll;
     private bool _statusBusy;
     private bool _statusAgain;
@@ -696,6 +704,8 @@ public sealed class GamingViewModel : PageViewModel
         ShaderCacheSizes = [.. Coreloom.Core.Gaming.ShaderCacheSize.Choices.Select(size => new Option<uint>(size, Coreloom.Core.Gaming.ShaderCacheSize.Describe(size)))];
 
         RescanCommand = new AsyncRelayCommand(ScanAsync, () => !IsScanning && IsSupported);
+        Editor = new GameEditorViewModel(this, _service);
+        AddGameCommand = new RelayCommand(() => Editor.Add(), () => IsSupported);
         RefreshCommand = new AsyncRelayCommand(() => RefreshStatusAsync(force: true));
         ApplyAllCommand = new AsyncRelayCommand(ApplyAllAsync, () => IsSupported && !_isApplyingAll && CountedBoosts.Any(t => t.IsSupported && !t.IsOn && !t.IsBusy));
         ClearSearchCommand = new RelayCommand(() => Search = string.Empty);
@@ -707,6 +717,12 @@ public sealed class GamingViewModel : PageViewModel
 
     /// <summary>For tests: the clock "played … ago" texts use.</summary>
     public Func<DateTimeOffset> Now { get; init; } = () => DateTimeOffset.Now;
+
+    /// <summary>The card for adding, changing and removing games added by hand.</summary>
+    public GameEditorViewModel Editor { get; }
+
+    /// <summary>Picks a game's program and opens the card to name it.</summary>
+    public IRelayCommand AddGameCommand { get; }
 
     internal SettingsService Store => Settings;
 
@@ -1075,6 +1091,7 @@ public sealed class GamingViewModel : PageViewModel
     {
         if (IsScanning)
         {
+            _scanAgain = true; // e.g. a game was added during a scan: look again when it ends
             return;
         }
 
@@ -1082,7 +1099,7 @@ public sealed class GamingViewModel : PageViewModel
         try
         {
             var games = await _service.ScanLibraryAsync(CancellationToken.None);
-            ApplyGames(games);
+            ApplyGames(GameLibrary.Merge(CustomEntries().Concat(games))); // a game added by hand wins over the same game found in a launcher
             if (MissingArtworkCount > 0)
             {
                 _ = DownloadArtworkAsync(); // automatic since 1.4.4: games without a picture get one from their store or Steam
@@ -1098,6 +1115,12 @@ public sealed class GamingViewModel : PageViewModel
             IsLoaded = true;
             OnPropertyChanged(nameof(LibrarySummary));
             OnPropertyChanged(nameof(EmptyText));
+        }
+
+        if (_scanAgain)
+        {
+            _scanAgain = false;
+            await ScanAsync();
         }
     }
 
@@ -1153,6 +1176,53 @@ public sealed class GamingViewModel : PageViewModel
         {
             HeroMessage = $"Couldn't start {game.Name}. Try starting it from {game.StoreName}.";
         }
+    }
+
+    /// <summary>The games added by hand, as library entries with their pictures.</summary>
+    private IReadOnlyList<GameEntry> CustomEntries()
+    {
+        var entries = Settings.Current.Gaming.CustomGames.Select(CustomGames.ToEntry).ToList();
+        return entries.Count == 0 ? entries : _service.AddLocalPictures(entries);
+    }
+
+    internal void EditGame(GameViewModel game)
+    {
+        if (Settings.Current.Gaming.CustomGames.FirstOrDefault(g => string.Equals(g.Id, game.Id, StringComparison.OrdinalIgnoreCase)) is { } custom)
+        {
+            Editor.Edit(custom);
+        }
+    }
+
+    /// <summary>Saves a game added by hand (new or changed) and shows it in the library.</summary>
+    internal async Task SaveCustomGameAsync(CustomGame game)
+    {
+        Settings.Update("Gaming", s =>
+        {
+            int index = s.Gaming.CustomGames.FindIndex(g => string.Equals(g.Id, game.Id, StringComparison.OrdinalIgnoreCase));
+            if (index >= 0)
+            {
+                s.Gaming.CustomGames[index] = game;
+            }
+            else
+            {
+                s.Gaming.CustomGames.Add(game);
+            }
+        });
+        HeroMessage = $"{game.Name} is in your games.";
+        await ScanAsync();
+    }
+
+    /// <summary>Removes a game added by hand, and its own frame limit if it had one.</summary>
+    internal async Task RemoveCustomGameAsync(CustomGame game)
+    {
+        if (Settings.Current.Gaming.CapFor(game.Id) is { } cap)
+        {
+            await SetGameFramePacerAsync(game.Id, 0, cap.Choice);
+        }
+
+        Settings.Update("Gaming", s => s.Gaming.CustomGames.RemoveAll(g => string.Equals(g.Id, game.Id, StringComparison.OrdinalIgnoreCase)));
+        HeroMessage = $"Removed {game.Name} from your games. Its files weren't touched.";
+        await ScanAsync();
     }
 
     internal void OpenFolder(GameViewModel game)
@@ -1217,6 +1287,11 @@ public sealed class GamingViewModel : PageViewModel
         try
         {
             var running = await _service.FindRunningAsync(_all.Select(g => g.Game).ToList(), CancellationToken.None);
+            if (running is { Game.Store: GameStore.Custom } && running.Game.Id != _running?.Game.Id)
+            {
+                RememberPlayed(running.Game.Id); // launchers keep this for their games; Coreloom keeps it for games added by hand
+            }
+
             if (running?.Game.Id != _running?.Game.Id || (running is null) != (_running is null))
             {
                 _running = running;
@@ -1239,6 +1314,18 @@ public sealed class GamingViewModel : PageViewModel
         {
             _runningBusy = false;
         }
+    }
+
+    private void RememberPlayed(string gameId)
+    {
+        var now = Now();
+        Settings.Update("Gaming", s =>
+        {
+            if (s.Gaming.CustomGames.FirstOrDefault(g => string.Equals(g.Id, gameId, StringComparison.OrdinalIgnoreCase)) is { } game)
+            {
+                game.LastPlayed = now;
+            }
+        });
     }
 
     private void Watch(bool on)

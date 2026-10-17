@@ -49,6 +49,11 @@ public static class GameExecutables
             }
         }
 
+        if (game.Store == GameStore.Custom)
+        {
+            Add(game.Executable); // the program the user picked comes first, whatever it is called
+        }
+
         Add(runningPath);
         if (!IsHelper(FileName(game.Executable)))
         {
@@ -64,8 +69,9 @@ public static class GameExecutables
             Add(shipping.Path);
         }
 
-        if (names.Count == 0)
+        if (names.Count == 0 || game.Store == GameStore.Custom)
         {
+            // (For a game added by hand, also the folder's main program: the picked one may only start it.)
             // Prefer a program that isn't a launcher; a game whose only program is "Launcher.exe" still gets that.
             Add(programs.FirstOrDefault(f => !FileName(f.Path)!.Contains("launcher", StringComparison.OrdinalIgnoreCase)).Path
                 ?? programs.FirstOrDefault().Path);

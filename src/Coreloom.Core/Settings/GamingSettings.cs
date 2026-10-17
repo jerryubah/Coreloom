@@ -33,6 +33,9 @@ public sealed class GamingSettings
     /// <summary>Games with a limit of their own (set in the driver for their programs only).</summary>
     public List<GameFrameCap> GameFrameCaps { get; set; } = [];
 
+    /// <summary>Games added by hand (since 1.4.6).</summary>
+    public List<CustomGame> CustomGames { get; set; } = [];
+
     /// <summary>The game's own limit, or null.</summary>
     public GameFrameCap? CapFor(string gameId) =>
         GameFrameCaps.FirstOrDefault(c => string.Equals(c.GameId, gameId, StringComparison.OrdinalIgnoreCase));
@@ -62,6 +65,7 @@ public sealed class GamingSettings
     public void Normalize()
     {
         ShaderCacheSize = Gaming.ShaderCacheSize.Normalize(ShaderCacheSize);
+        CustomGames = Gaming.CustomGames.Normalize(CustomGames);
         if (!Enum.IsDefined(LibraryView))
         {
             LibraryView = GameLibraryView.List;

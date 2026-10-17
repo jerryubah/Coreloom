@@ -169,6 +169,20 @@ public interface IGamingService
     /// was found for.
     /// </summary>
     Task<IReadOnlyList<GameEntry>> DownloadArtworkAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken);
+
+    /// <summary>Adds pictures kept on this PC (downloaded earlier, or the program's icon) to games added by hand.</summary>
+    IReadOnlyList<GameEntry> AddLocalPictures(IReadOnlyList<GameEntry> games) => games;
+
+    /// <summary>The program's version info, or null when it doesn't exist.</summary>
+    ProgramInfo? DescribeProgram(string path) => File.Exists(path) ? new ProgramInfo(path) : null;
+
+    /// <summary>Asks for a game's program (.exe); null when cancelled.</summary>
+    string? PickProgram(string? startIn = null) => null;
+
+    /// <summary>Asks for a picture (.png, .jpg, .ico); null when cancelled.</summary>
+    string? PickPicture() => null;
+
+    bool FileExists(string path) => File.Exists(path);
 }
 
 /// <summary>Stand-in where Windows isn't available: no games, nothing to switch.</summary>

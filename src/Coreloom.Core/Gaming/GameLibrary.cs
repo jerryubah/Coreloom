@@ -13,6 +13,9 @@ public enum GameStore
     EA,
     BattleNet,
     Riot,
+
+    /// <summary>Added by hand (since 1.4.6).</summary>
+    Custom,
     Other,
 }
 
@@ -104,6 +107,7 @@ public static class GameLibrary
         GameStore.EA => "EA app",
         GameStore.BattleNet => "Battle.net",
         GameStore.Riot => "Riot Games",
+        GameStore.Custom => "Added by you",
         _ => "Other",
     };
 
@@ -184,7 +188,11 @@ public static class GameLibrary
     /// </summary>
     public static RunningGame? FindRunning(IReadOnlyList<GameEntry> games, IEnumerable<RunningProcess> processes)
     {
+        var programs = games
+            .Where(g => g.Store == GameStore.Custom && !string.IsNullOrEmpty(g.Executable))
+            .ToList();
         var folders = games
+            .Where(g => g.Store != GameStore.Custom || !CustomGames.IsBroadFolder(g.InstallPath)) // a game added from Desktop isn't every program there
             .Select(g => (Game: g, Folder: NormalizeFolder(g.InstallPath)))
             .Where(x => x.Folder is not null && x.Folder.Length > 3) // never a whole drive
             .OrderByDescending(x => x.Folder!.Length) // the most specific folder wins (a game inside another's folder)
@@ -196,6 +204,18 @@ public static class GameLibrary
             string path = process.Path;
             if (string.IsNullOrEmpty(path) || NotGames.Contains(path[(path.LastIndexOfAny(['\\', '/']) + 1)..]))
             {
+                continue;
+            }
+
+            var exact = programs.FirstOrDefault(g => string.Equals(g.Executable, path, StringComparison.OrdinalIgnoreCase));
+            if (exact is not null)
+            {
+                if (found is null || ReferenceEquals(found, exact))
+                {
+                    found = exact;
+                    ids.Add(process.Id);
+                }
+
                 continue;
             }
 

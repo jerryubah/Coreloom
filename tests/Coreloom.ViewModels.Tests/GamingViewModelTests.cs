@@ -135,8 +135,30 @@ internal sealed class FakeGaming : IGamingService
         {
             "steam:1091500" => ["Cyberpunk2077.exe"],
             "gog:1207658924" => ["witcher3.exe"],
+            _ when game.Store == GameStore.Custom => GameExecutables.Pick(game, []),
             _ => [],
         });
+
+    /// <summary>What the next "pick a program" dialog returns (null: cancelled).</summary>
+    public string? NextProgram { get; set; }
+
+    public string? NextPicture { get; set; }
+
+    /// <summary>Programs that "exist", with their product names.</summary>
+    public Dictionary<string, string?> Programs { get; } = new(StringComparer.OrdinalIgnoreCase)
+    {
+        [@"D:\Games\Celeste\Celeste.exe"] = "Celeste",
+        [@"C:\Users\jerry\Desktop\tiny_game.exe"] = null,
+    };
+
+    public string? PickProgram(string? startIn = null) => NextProgram;
+
+    public string? PickPicture() => NextPicture;
+
+    public ProgramInfo? DescribeProgram(string path) => Programs.TryGetValue(path, out var product) ? new ProgramInfo(path, product) : null;
+
+    public IReadOnlyList<GameEntry> AddLocalPictures(IReadOnlyList<GameEntry> games) =>
+        [.. games.Select(g => g.Artwork.Cover is null ? g with { Artwork = g.Artwork with { Icon = g.Executable + ".png" } } : g)];
 
     public Task<TweakResult> SetGameFrameCapAsync(string gameName, IReadOnlyList<string> executables, int fps, CancellationToken cancellationToken)
     {
@@ -528,6 +550,95 @@ public class GamingViewModelTests
         Assert.Empty(fake.ProgramCaps);
         Assert.Empty(settings.Current.Gaming.GameFrameCaps);
         Assert.False(pacer.HasGameCaps);
+        settings.Dispose();
+    }
+
+    [Fact]
+    public async Task AGameAddedByHand_JoinsTheLibrary_AndCanBeChangedAndRemoved()
+    {
+        var (page, fake, settings) = Create();
+        fake.NextProgram = null;
+        page.AddGameCommand.Execute(null);
+        Assert.False(page.Editor.IsOpen); // the pick was cancelled
+
+        fake.NextProgram = @"D:\Games\Celeste\Celeste.exe";
+        page.AddGameCommand.Execute(null);
+        var editor = page.Editor;
+        Assert.True(editor.IsOpen);
+        Assert.True(editor.IsNew);
+        Assert.Equal("Add a game", editor.Title);
+        Assert.Equal("Celeste", editor.Name); // from the program's product name
+        Assert.Equal(@"D:\Games\Celeste\Celeste.exe.png", editor.Preview); // the program's icon
+        Assert.Null(editor.Error);
+
+        editor.Arguments = " -windowed ";
+        await editor.SaveCommand.ExecuteAsync(null);
+        Assert.False(editor.IsOpen);
+        var saved = Assert.Single(settings.Current.Gaming.CustomGames);
+        Assert.StartsWith("custom:", saved.Id);
+        Assert.Equal("-windowed", saved.Arguments);
+        var game = page.Games.Single(g => g.Name == "Celeste");
+        Assert.True(game.IsCustom);
+        Assert.Equal("Added by you", game.StoreName);
+        Assert.True(game.HasIconOnly);
+        Assert.Equal("Celeste is in your games.", page.HeroMessage);
+
+        // Play starts its program; the frame limiter can give it a limit of its own.
+        game.PlayCommand.Execute(null);
+        Assert.Equal([saved.Id], fake.Launched);
+        Assert.Contains(page.FramePacer.Scopes, s => s.Value == saved.Id);
+        page.FramePacer.SelectedScope = saved.Id;
+        page.FramePacer.SelectedTarget = 120;
+        page.FramePacer.IsOn = true;
+        await Task.Yield();
+        Assert.Equal(120, fake.ProgramCaps["Celeste.exe"]);
+
+        // Change it.
+        game.EditCommand.Execute(null);
+        Assert.True(editor.IsOpen);
+        Assert.False(editor.IsNew);
+        editor.Name = "Celeste (speedrun)";
+        fake.NextPicture = @"C:\Pictures\celeste.png";
+        editor.ChoosePictureCommand.Execute(null);
+        Assert.True(editor.HasChosenPicture);
+        await editor.SaveCommand.ExecuteAsync(null);
+        Assert.Equal(saved.Id, Assert.Single(settings.Current.Gaming.CustomGames).Id); // same game, same id
+        var renamed = page.Games.Single(g => g.IsCustom);
+        Assert.Equal("Celeste (speedrun)", renamed.Name);
+        Assert.Equal(@"C:\Pictures\celeste.png", renamed.GridPicture);
+
+        // Remove it: its own limit goes too.
+        renamed.EditCommand.Execute(null);
+        await editor.RemoveCommand.ExecuteAsync(null);
+        Assert.Empty(settings.Current.Gaming.CustomGames);
+        Assert.Empty(settings.Current.Gaming.GameFrameCaps);
+        Assert.Empty(fake.ProgramCaps);
+        Assert.DoesNotContain(page.Games, g => g.IsCustom);
+        settings.Dispose();
+    }
+
+    [Fact]
+    public async Task AddingAGame_ChecksTheNameAndTheProgram()
+    {
+        var (page, fake, settings) = Create();
+        fake.NextProgram = @"C:\Users\jerry\Desktop\tiny_game.exe";
+        page.AddGameCommand.Execute(null);
+        var editor = page.Editor;
+        Assert.Equal("Tiny Game", editor.Name); // from the file name, when the program has no product name
+        editor.Name = "  ";
+        await editor.SaveCommand.ExecuteAsync(null);
+        Assert.Equal("Give the game a name.", editor.Error);
+        Assert.True(editor.IsOpen);
+
+        fake.NextProgram = @"C:\Gone\missing.exe";
+        editor.ChangeProgramCommand.Execute(null);
+        Assert.Equal("That program can't be found. Pick it again.", editor.Error);
+        Assert.Equal("Missing", editor.Name); // the name followed the program, since it was empty
+        await editor.SaveCommand.ExecuteAsync(null);
+        Assert.Empty(settings.Current.Gaming.CustomGames);
+
+        editor.CancelCommand.Execute(null);
+        Assert.False(editor.IsOpen);
         settings.Dispose();
     }
 

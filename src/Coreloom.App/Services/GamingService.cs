@@ -328,6 +328,55 @@ internal sealed class WindowsGamingService : IGamingService
         }
     }
 
+    public IReadOnlyList<GameEntry> AddLocalPictures(IReadOnlyList<GameEntry> games) => [.. games.Select(WithLocalArtwork)];
+
+    public ProgramInfo? DescribeProgram(string path)
+    {
+        try
+        {
+            if (!File.Exists(path))
+            {
+                return null;
+            }
+
+            var info = FileVersionInfo.GetVersionInfo(path);
+            return new ProgramInfo(path, info.ProductName, info.FileDescription);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return File.Exists(path) ? new ProgramInfo(path) : null;
+        }
+    }
+
+    public string? PickProgram(string? startIn = null)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Pick the game's program",
+            Filter = "Programs (*.exe)|*.exe",
+            CheckFileExists = true,
+            InitialDirectory = startIn is { Length: > 0 } && Directory.Exists(startIn) ? startIn : string.Empty,
+        };
+        string? picked = dialog.ShowDialog(System.Windows.Application.Current?.MainWindow) == true ? dialog.FileName : null;
+        if (picked is not null)
+        {
+            Log.Info(LogCategory, $"Program picked for a game added by hand: {picked}");
+        }
+
+        return picked;
+    }
+
+    public string? PickPicture()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Pick a picture for the game",
+            Filter = "Pictures (*.png;*.jpg;*.jpeg;*.bmp;*.ico)|*.png;*.jpg;*.jpeg;*.bmp;*.ico",
+            CheckFileExists = true,
+        };
+        return dialog.ShowDialog(System.Windows.Application.Current?.MainWindow) == true ? dialog.FileName : null;
+    }
+
     /// <summary>Adds pictures downloaded earlier and an icon (as a picture file) for games that have nothing better.</summary>
     private GameEntry WithLocalArtwork(GameEntry game)
     {
@@ -1007,6 +1056,11 @@ internal sealed class WindowsGamingService : IGamingService
     public Task<IReadOnlyList<string>> FindExecutablesAsync(GameEntry game, CancellationToken cancellationToken) => Task.Run<IReadOnlyList<string>>(() =>
     {
         string? folder = GameLibrary.NormalizeFolder(game.InstallPath);
+        if (game.Store == GameStore.Custom && CustomGames.IsBroadFolder(folder))
+        {
+            folder = null; // a game added from Desktop or Downloads: only its own program, not everything beside it
+        }
+
         var files = new List<(string Path, long Size)>();
         if (folder is not null && folder.Length > 3 && Directory.Exists(folder))
         {
