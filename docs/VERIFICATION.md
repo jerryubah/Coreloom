@@ -147,6 +147,20 @@ How this change was checked in the Linux container (no Windows, no nuget.org):
 | In-place update of portable copies | File operations unit-tested on Linux (staging, copy, rollback, cleanup) | Windows specifics: the elevated helper starting without a prompt, locked files and antivirus timing, the hidden `.coreloom-update` folder, the splash while copying, `Compress-Archive` zips from the real release |
 | Per-copy trust key `HKLM\SOFTWARE\Coreloom\Updates\Copies\<id>` | Code review | Registry writes and clean-up on Windows |
 
+### 1.4.8: a Gaming page in clean rows, core scheduling details in its boost, cards in a row ending on one line
+
+- **Seen as rendered on Windows.** A new tool, `tools/Coreloom.PageShots`, builds the Gaming (at 1600 and 1000 DIP),
+  Memory, Processor, Graphics, Smart Optimize and Storage pages over sample data with the app's own resources, theme and
+  window text settings, and renders them to PNG on GitHub's Windows runner (*Page shots* workflow). The pictures were
+  looked at before release: the boosts in three rows ending on one line (and the ninth spanning the row in two
+  columns); the frame limiter and shader cache cards ending together with the pacing row and the cache list at the
+  bottom; the core scheduling details card over the page; Memory, Processor, Storage, Smart Optimize and sensor cards
+  ending on one line. The sample data isn't his PC: real text lengths, his window size and scaling, and his startup
+  apps and modules will differ, so the rows can stretch by a different amount there.
+- **Tests.** View-model tests: 161 passed (the core scheduling tests now also check the Details command, the boost's
+  test and result note, and the Ultimate Performance advice as a tooltip instead of a line). `Coreloom.App` compiles
+  and the XAML checks pass (20 files, 242 shared keys, 1,329 bindings).
+
 ### 1.4.7: intelligent CPU core scheduling, a movable and sizable overlay, cards that fit their content, a compact AMD card
 
 - **Core tests: 653 passed** (52 new: `OverlayPlacementTests`, `CoreLayoutTests` with Windows topology buffers built
@@ -613,6 +627,9 @@ dotnet test tests/Coreloom.Core.Tests            # needs nuget.org access for th
 dotnet test tests/Coreloom.ViewModels.Tests
 python3 build/check-xaml.py
 ```
+
+To see the pages' layout on Windows without a Windows PC, push to a branch named `shots-…`: the *Page shots*
+workflow draws them with sample data and publishes the PNGs on the `pageshots-output` branch.
 
 On Windows, `./build/build.ps1` builds everything and runs every test, including the Windows integration
 tests against the real machine.

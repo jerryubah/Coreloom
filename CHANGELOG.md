@@ -7,6 +7,27 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.4.8] - 2026-10-17
+
+A tidier Gaming page and pages whose cards line up: rows of cards now start and end on one line, the CPU core scheduling card moved into its boost's Details, and the extra lines under Ultimate Performance and the shader cache are gone.
+
+### Highlights
+
+- **Performance boosts in clean rows.** The nine boosts sit in three rows of three; the cards in each row start and end on the same line, and the section ends on one straight line. In a narrower window (two columns) the last card spans the row so the bottom stays straight.
+- **No yellow line under Ultimate Performance.** On a multi-CCD Ryzen X3D its advice (Balanced keeps AMD's core parking working) now shows when you hover the card, and *Boost now* still leaves it alone.
+- **Frame limiter and shader cache end together.** The two cards are the same height: the frame limiter's pacing row and the shader cache list both reach the bottom. The note under the cache list moved to the ⓘ next to *On this PC*.
+- **CPU core scheduling lives in its boost.** The separate card under the frame limiter is gone. *Details* on the *Intelligent CPU core scheduling* boost opens everything it had (the cores and where the game runs, AMD's checks, *Test a game*, and the games kept on chosen cores) as a card over the page. While a test runs, the boost says which round it's on, and when a result is ready it says so.
+- **Cards that line up on every page.** Cards side by side now end on one line, and the extra room goes to content that can use it instead of empty space: the process lists on the Processor and Memory pages show more apps, a drive's chart grows so its volumes line up, the Memory tiles share the donut card's height, and both columns of Smart Optimize, the two halves of *All sensors* and the Bluetooth cards in a row end together.
+
+### In detail
+
+- The boost descriptions were trimmed so the rows are about the same height before anything is stretched.
+- A new developer tool draws Coreloom's pages with sample data on GitHub's Windows machines, so their layout can be checked as rendered by WPF before a release; it isn't part of the app.
+
+### Feedback
+
+Something not lined up on your screen? [Open an issue](https://github.com/jerryubah/Coreloom/issues) with a screenshot and your window size and scaling.
+
 ## [1.4.7] - 2026-10-17
 
 Intelligent CPU core scheduling for Ryzen X3D in place of Auto HDR, an overlay you can move and resize in the game, cards that fit their content, a compact AMD card and a leaner frame limiter.

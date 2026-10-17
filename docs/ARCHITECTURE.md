@@ -108,11 +108,21 @@ layer calls Windows sensor APIs, so most of the logic is testable on any OS.
   Usage donuts (memory, volumes) recolor their "in use" segment with `ColorKeys.ForLevel`. Mica uses `DWMWA_SYSTEMBACKDROP_TYPE` on Windows 11
   22H2 and later. The custom caption buttons support Snap Layouts by answering `WM_NCHITTEST` with
   `HTMAXBUTTON`.
-- **Cards fit their content (1.4.7).** A card is as tall as what it holds; nothing is stretched to line up with its
-  neighbour. Side-by-side cards sit in `StackedColumns` (masonry) or in an `AdaptiveGrid` with
-  `VerticalAlignment="Top"`; only a card whose content can use the extra room (Smart Optimize's *Speed up*, whose
-  startup list shows more apps) is marked `StackedColumns.CanFill` and grows to the column bottom with `FillColumns`.
-  Grids of like tiles (gauges, metric tiles, charts) keep a uniform row height.
+- **Cards in a row end on one line (1.4.7, 1.4.8).** Cards side by side share one bottom line, and the difference is
+  taken by content that can use it rather than by empty space: `FitRows` (the process lists on the Processor and
+  Memory pages) asks for its usual rows and shows more when its card is taller; a disk card's chart sits in a star row
+  and grows; the Frame limiter's pacing row and the shader cache list sit at the bottom of their cards; the Memory
+  tiles share the donut card's height (`StretchRows`); in Smart Optimize's masonry (`StackedColumns` with
+  `FillColumns`) the lower card of the shorter column (*Speed up*, whose startup list grows, or *Free up memory*, whose
+  gauge stays centred) is marked `CanFill`. The Performance boosts are an `AdaptiveGrid` whose rows are each as tall
+  as their longest card, with `FillLastRow` so an unfull last row spans the grid. Copy is kept short so the stretch is
+  small. Grids of like tiles (gauges, metric tiles, charts) keep a uniform row height.
+- **Page shots.** `tools/Coreloom.PageShots` (not part of the app) loads the app's resource dictionaries and theme
+  into a plain WPF application, builds the Gaming, Memory, Processor, Graphics, Smart Optimize and Storage pages over
+  sample data (a 9950X3D/RTX 5090 PC, two DIMMs, two NVMe drives), lays each out at 1600 DIP (and the Gaming page at
+  1000) with the main window's text settings, and renders it at 125 % to PNG. `.github/workflows/pageshots.yml` runs
+  it on Windows for pushes to `shots-*` branches and publishes the pictures as an artifact and on the
+  `pageshots-output` branch, so layout can be checked without a Windows PC.
 - **Settings** are JSON in `%APPDATA%\Coreloom\settings.json`, or `Data\` in portable mode.
   - Writes are atomic: write a temp file, then replace.
   - Writes are debounced by 600 ms.
@@ -485,7 +495,8 @@ version seen; `DownloadArtwork` is only kept for older settings files).
   default; a new size applies at once while on. 1.4.3–1.4.6 also had an **Auto HDR** switch (`AutoHDREnable` in the
   same DirectX settings); 1.4.7 replaced it with intelligent CPU core scheduling (below), and Auto HDR is left to
   Windows' Settings. *Boost now* skips Ultimate Performance on a multi-CCD Ryzen X3D with AMD's driver
-  (`GamingTweakViewModel.Advice`), since it stops the core parking that driver relies on.
+  (`GamingTweakViewModel.Advice`, shown as the card's tooltip since 1.4.8), since it stops the core parking that
+  driver relies on.
 - **Frame limiter.** The NVIDIA driver's frame limiter (`FRL_FPS`, 0x10835002) in the global profile through NVAPI's
   driver settings (`NvApi`: `nvapi_QueryInterface` function pointers, ids from NVIDIA's public `nvapi_interface.h`,
   the 12,320-byte `NVDRS_SETTING`). *Automatic* is refresh − refresh² ÷ 3600 (`FrameCap.AutoTarget`, as NVIDIA Reflex
@@ -524,7 +535,9 @@ version seen; `DownloadArtwork` is only kept for older settings files).
   what was learned (limit, failed limit, sustained rate, frame generation, sessions). Without an NVIDIA driver it
   suggests the limit instead. Each change and session end is logged under *Gaming*.
 - **Intelligent CPU core scheduling (1.4.7).** A boost (`GamingTweak.CoreScheduling`, Coreloom's own switch:
-  `GamingSettings.CoreScheduling`) with a card under the shader cache. `CoreLayout.Parse` (Core, unit-tested with
+  `GamingSettings.CoreScheduling`); its *Details* (`GamingTweakViewModel.DetailsCommand`) open a card over the page
+  (1.4.7 had it under the shader cache), and a test's progress or a result to keep shows under the boost
+  (`CoreSchedulingController.BoostNote`, as the boost's status note). `CoreLayout.Parse` (Core, unit-tested with
   synthetic buffers) reads `GetLogicalProcessorInformationEx(RelationAll)`: cores (efficiency class, group masks) and
   L3 caches; logical processors are numbered by group and number as Windows' per-processor counters are. Cores are
   grouped by their L3: two or more L3s with one at least 1.5× the smallest, on cores of the same efficiency class, are

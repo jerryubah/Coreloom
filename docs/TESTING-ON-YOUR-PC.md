@@ -338,6 +338,23 @@ Work through each area and tick what works.
       applies at once. Off puts *Shader Cache Size* back to *Driver Default*.
 - [ ] (Auto HDR was a boost from 1.4.3 to 1.4.6; since 1.4.7 it's set in Windows' *Settings › Display › Graphics*.)
 
+**New in 1.4.8**
+
+- [ ] Gaming › *Performance boosts*: three rows of three cards; the cards in each row start and end on the same line,
+      and the section ends on one straight line. Ultimate Performance has no yellow line (hover it on a Ryzen X3D for
+      why Balanced works better). In a narrower window (two columns) the last card spans both.
+- [ ] *Frame limiter* and *Shader cache* end on the same line: the pacing row and the cache list reach the bottom. No
+      note under the cache list (it's on the ⓘ next to *On this PC*).
+- [ ] No *CPU core scheduling* card on the page. *Details* on the *Intelligent CPU core scheduling* boost opens it over
+      the page (Esc, × or clicking outside closes it). *Test a game* there, then play: the boost card says the round
+      ("Testing Cyberpunk 2077: round 2 of 4.") and, after a clear gain, "Open Details to keep it."
+- [ ] Memory: the donut card and the tiles end on one line; *Top processes* and *Modules* end on one line, with the
+      process list showing more apps when the modules card is taller.
+- [ ] Processor: *Top processes by CPU* and *Specifications* end on one line (more processes when the specifications
+      are longer). Storage: two drives side by side end on one line (the shorter one's chart is taller). Smart
+      Optimize: both columns end on one line. Graphics and Processor: the two *All sensors* cards end on one line.
+      Devices: Bluetooth cards in a row are the same height.
+
 **New in 1.4.7**
 
 *Cards that fit their content*
