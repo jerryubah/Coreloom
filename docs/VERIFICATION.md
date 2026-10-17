@@ -170,6 +170,10 @@ How this change was checked in the Linux container (no Windows, no nuget.org):
 - **Adaptive pacing and the driver.** Whether the NVIDIA driver applies a changed per-program limit to a game that is
   already running isn't known here; the engine checks the frames after each change and, if they don't show it,
   waits for the game's next start rather than changing again.
+- **GitHub Actions.** The first branch runs failed on Windows only: the WPF markup compiler rejected a TextBlock in
+  *Settings › Logs* whose Style was set twice (as an attribute and as a property element), which the XAML checks here
+  didn't look for; `check-xaml.py` now does. After the fix, branch CI on `release-1.4.6` and `release-1.4.6-b` passed:
+  823 tests on Windows (Core 601, view models 145, Hardware 77), none skipped, and the Linux tests.
 
 | Change | What was done here | Not verified here |
 |---|---|---|
