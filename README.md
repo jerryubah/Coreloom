@@ -1,5 +1,9 @@
 # Coreloom
 
+<p align="center">
+  <img src="assets/readme/coreloom-film.avif" width="100%" alt="Coreloom 1.4.5 product film: the PC lighting up, the Overview dashboard, live gauges, Make it yours, Game Boost, the frame limiter, the game library, the in-game overlay, honest numbers, Smart Optimize, devices and speed tests, and what Coreloom never does">
+</p>
+
 A native Windows 11 hardware monitor with a calm, modern dashboard: live GPU, CPU, memory, storage and
 network telemetry, animated charts with up to an hour of history, threshold alerts, a tray icon and
 verified in-app updates.
