@@ -130,6 +130,8 @@ public static partial class SensorMapping
                     "CPU Package" => new(MetricIds.CpuTemperature, "CPU temperature", MetricKind.Temperature, LhmCpuPriority, "Temperatures", cat),
                     "CCDs Max (Tdie)" => new(MetricIds.CpuTemperature, "CPU temperature", MetricKind.Temperature, LhmCpuPriority - 10, "Temperatures", cat),
                     "Core Max" => new(MetricIds.CpuTemperature, "CPU temperature", MetricKind.Temperature, LhmCpuPriority - 15, "Temperatures", cat),
+                    "SoC" => new(MetricIds.CpuSocTemperature, "SoC temperature", MetricKind.Temperature, LhmCpuPriority, "Temperatures", cat),
+                    "IOD Hotspot" => new(MetricIds.CpuIodTemperature, "I/O die hot spot", MetricKind.Temperature, LhmCpuPriority, "Temperatures", cat),
                     _ when CcdPattern().Match(name) is { Success: true } m =>
                         new(MetricIds.CpuCcdTemperature(int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture)), $"CCD{m.Groups[1].Value} temperature", MetricKind.Temperature, LhmCpuPriority, "Temperatures", cat),
                     _ when IntelCorePattern().Match(name) is { Success: true } m =>
@@ -141,6 +143,18 @@ public static partial class SensorMapping
                 if (name is "Package" or "CPU Package")
                 {
                     return new(MetricIds.CpuPower, "CPU package power", MetricKind.Power, LhmCpuPriority, "Power", cat);
+                }
+
+                switch (name)
+                {
+                    case "CPU PPT":
+                        return new(MetricIds.CpuPpt, "PPT (socket power)", MetricKind.Power, LhmCpuPriority, "Power", cat);
+                    case "Core Power":
+                        return new(MetricIds.CpuCoresPower, "Cores power", MetricKind.Power, LhmCpuPriority, "Power", cat, Track: false);
+                    case "SOC Power" or "SoC":
+                        return new(MetricIds.CpuSocPower, "SoC power", MetricKind.Power, LhmCpuPriority, "Power", cat, Track: false);
+                    case "Misc Power":
+                        return new(MetricIds.CpuMiscPower, "Misc power", MetricKind.Power, LhmCpuPriority, "Power", cat, Track: false);
                 }
 
                 if (CoreSmuPowerPattern().Match(name) is { Success: true } power)
@@ -161,6 +175,16 @@ public static partial class SensorMapping
                     return new(MetricIds.CpuClockEffectiveAverage, "Average effective clock", MetricKind.Clock, LhmCpuPriority, "Clocks", cat);
                 }
 
+                switch (name)
+                {
+                    case "Fabric":
+                        return new(MetricIds.CpuFabricClock, "Fabric clock (FCLK)", MetricKind.Clock, LhmCpuPriority, "Clocks", cat, Track: false);
+                    case "Uncore":
+                        return new(MetricIds.CpuUncoreClock, "Memory controller clock (UCLK)", MetricKind.Clock, LhmCpuPriority, "Clocks", cat, Track: false);
+                    case "Memory":
+                        return new(MetricIds.CpuMemoryClock, "Memory clock (MCLK)", MetricKind.Clock, LhmCpuPriority, "Clocks", cat, Track: false);
+                }
+
                 if (CoreClockPattern().Match(name) is { Success: true } clock)
                 {
                     int core = int.Parse(clock.Groups[1].Value, CultureInfo.InvariantCulture);
@@ -173,9 +197,28 @@ public static partial class SensorMapping
                 return null;
 
             case SensorValueKind.Voltage:
-                return name.StartsWith("Core (SVI", StringComparison.Ordinal) || name is "CPU Core" or "Core"
-                    ? new(MetricIds.CpuVoltage, "Core voltage", MetricKind.Voltage, LhmCpuPriority, "Voltages", cat)
+                if (name.StartsWith("Core (SVI", StringComparison.Ordinal) || name is "CPU Core" or "Core")
+                {
+                    return new(MetricIds.CpuVoltage, "Core voltage", MetricKind.Voltage, LhmCpuPriority, "Voltages", cat);
+                }
+
+                if (name == "VDDCR")
+                {
+                    return new(MetricIds.CpuVoltage, "Core voltage", MetricKind.Voltage, LhmCpuPriority - 1, "Voltages", cat);
+                }
+
+                return name.StartsWith("SoC (SVI", StringComparison.Ordinal) || name == "VDDCR SoC"
+                    ? new(MetricIds.CpuSocVoltage, "SoC voltage", MetricKind.Voltage, LhmCpuPriority, "Voltages", cat, Track: false)
                     : null;
+
+            case SensorValueKind.Current:
+                return name switch
+                {
+                    "TDC" => new(MetricIds.CpuTdc, "TDC (sustained current)", MetricKind.Current, LhmCpuPriority, "Currents", cat),
+                    "EDC" => new(MetricIds.CpuEdc, "EDC (peak current)", MetricKind.Current, LhmCpuPriority, "Currents", cat),
+                    "SoC" => new(MetricIds.CpuSocCurrent, "SoC current", MetricKind.Current, LhmCpuPriority, "Currents", cat, Track: false),
+                    _ => null,
+                };
 
             case SensorValueKind.Load:
                 return name switch

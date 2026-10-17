@@ -1,6 +1,7 @@
 using System.Globalization;
 using Coreloom.Core.Diagnostics;
 using Coreloom.Core.Formatting;
+using Coreloom.Core.Hardware;
 using Coreloom.Core.Telemetry;
 using Coreloom.Hardware.Native;
 using Coreloom.Hardware.SystemInfo;
@@ -26,11 +27,14 @@ public sealed class CpuProvider : ITelemetryProvider
     private PdhCounter? _perThread;
     private PdhCounter? _performance;
     private PdhCounter? _frequency;
+    private PdhCounter? _limit;
     private bool _usingUtility;
     private Dictionary<string, int>? _instanceToIndex;
     private MetricHandle? _total;
     private MetricHandle? _maxThread;
     private MetricHandle? _derivedClock;
+    private MetricHandle? _performanceMetric;
+    private MetricHandle? _limitMetric;
     private MetricHandle[] _threads = [];
     private CpuTimesSampler? _fallback;
     private int _baseMhz;
@@ -51,8 +55,9 @@ public sealed class CpuProvider : ITelemetryProvider
         _baseMhz = SystemInfoReader.ReadCpuBaseMhz();
         var (cores, l3, pCores, eCores) = SystemInfoReader.SafeTopology();
         int threads = Environment.ProcessorCount;
+        var cpuid = CpuIdNative.Read();
 
-        RegisterDevice(context, cpuName, cores, threads, l3, pCores, eCores);
+        RegisterDevice(context, cpuName, cores, threads, l3, pCores, eCores, cpuid);
 
         _total = context.Register(new MetricDescriptor(MetricIds.CpuLoad, "CPU utilization", MetricCategory.Cpu, MetricKind.Load)
         {
@@ -89,6 +94,7 @@ public sealed class CpuProvider : ITelemetryProvider
                 ?? _query.TryAddCounter(@"\Processor(*)\% Processor Time", out _);
             _performance = _query.TryAddCounter(@"\Processor Information(_Total)\% Processor Performance", out _);
             _frequency = _query.TryAddCounter(@"\Processor Information(_Total)\Processor Frequency", out _);
+            _limit = _query.TryAddCounter(@"\Processor Information(_Total)\% Performance Limit", out _);
             if (_perThread is null)
             {
                 throw new PdhException("No CPU utilization counter could be added", 0);
@@ -105,6 +111,7 @@ public sealed class CpuProvider : ITelemetryProvider
             _perThread = null;
             _performance = null;
             _frequency = null;
+            _limit = null;
             _fallback = new CpuTimesSampler(threads);
             _fallback.Sample(out _, out _);
             _mode = "kernel CPU times";
@@ -120,6 +127,26 @@ public sealed class CpuProvider : ITelemetryProvider
             }, Provenance.Derived, Priority, "% Processor Performance × nominal frequency — the same estimate Task Manager shows as \"Speed\". Not a sensor reading.");
         }
 
+        if (_performance is not null)
+        {
+            _performanceMetric = context.Register(new MetricDescriptor(MetricIds.CpuPerformance, "Boost (of base clock)", MetricCategory.Cpu, MetricKind.Level)
+            {
+                DeviceId = MetricIds.CpuDeviceId,
+                DeviceName = cpuName,
+                Group = "Clocks",
+            }, Provenance.Measured, Priority, "Windows performance counter \\Processor Information(_Total)\\% Processor Performance: the clock relative to base, over 100 % while boosting.");
+        }
+
+        if (_limit is not null)
+        {
+            _limitMetric = context.Register(new MetricDescriptor(MetricIds.CpuPerformanceLimit, "Performance limit", MetricCategory.Cpu, MetricKind.Level)
+            {
+                DeviceId = MetricIds.CpuDeviceId,
+                DeviceName = cpuName,
+                Group = "Throttling",
+            }, Provenance.Measured, Priority, "Windows performance counter \\Processor Information(_Total)\\% Performance Limit: the performance the platform allows, relative to base. Under 100 % means power, heat or policy is holding the processor back.");
+        }
+
         string lowLevelReason = context.Capabilities.LowLevelSensorsAccessible
             ? "Not reported by LibreHardwareMonitor for this processor."
             : "Requires running Coreloom as administrator with the PawnIO driver installed (read via LibreHardwareMonitor).";
@@ -128,11 +155,28 @@ public sealed class CpuProvider : ITelemetryProvider
         context.SetUnavailableReason(MetricIds.CpuClockEffectiveAverage, lowLevelReason);
         context.SetUnavailableReason(MetricIds.CpuClockAverage, lowLevelReason);
         context.SetUnavailableReason(MetricIds.CpuVoltage, lowLevelReason);
+        if (cpuid.IsAmd || vendorIsAmd(cpuName))
+        {
+            string smu = context.Capabilities.LowLevelSensorsAccessible
+                ? "Not in this processor's SMU power table as LibreHardwareMonitor reads it (it knows the tables of some Ryzen 3000 and 5000 desktop models and of Ryzen 7000 and 9000)."
+                : lowLevelReason;
+            foreach (string id in new[] { MetricIds.CpuPpt, MetricIds.CpuTdc, MetricIds.CpuEdc, MetricIds.CpuCoresPower, MetricIds.CpuSocPower, MetricIds.CpuMiscPower,
+                MetricIds.CpuSocCurrent, MetricIds.CpuFabricClock, MetricIds.CpuUncoreClock, MetricIds.CpuMemoryClock, MetricIds.CpuSocTemperature, MetricIds.CpuIodTemperature })
+            {
+                context.SetUnavailableReason(id, smu);
+            }
+
+            context.SetUnavailableReason(MetricIds.CpuSocVoltage, context.Capabilities.LowLevelSensorsAccessible
+                ? "LibreHardwareMonitor reads SoC voltage from SVI2 telemetry (Ryzen 1000 to 5000) or the SMU table (Ryzen 7000 and 9000); this processor reports neither."
+                : lowLevelReason);
+        }
+
+        static bool vendorIsAmd(string name) => name.Contains("AMD", StringComparison.OrdinalIgnoreCase);
 
         return ProviderInitResult.Running($"{cpuName}: {threads} threads via {_mode}");
     }
 
-    private void RegisterDevice(IProviderContext context, string cpuName, int cores, int threads, long l3, int pCores, int eCores)
+    private void RegisterDevice(IProviderContext context, string cpuName, int cores, int threads, long l3, int pCores, int eCores, CpuIdInfo cpuid)
     {
         var f = new UnitFormatter(culture: CultureInfo.InvariantCulture);
         var props = new List<KeyValuePair<string, string>>();
@@ -150,6 +194,42 @@ public sealed class CpuProvider : ITelemetryProvider
         if (l3 > 0)
         {
             props.Add(new("L3 cache", f.Bytes(l3, 0).ToString()));
+        }
+
+        bool amd = cpuid.IsAmd || SystemInfoReader.ReadCpuVendor() == "AuthenticAMD";
+        if (amd)
+        {
+            var profile = AmdProcessors.Create(cpuName, cpuid.IsKnown ? cpuid.Family : null, cpuid.IsKnown ? cpuid.Model : null);
+            if (profile.ArchitectureText is { } architecture)
+            {
+                props.Add(new("Architecture", architecture));
+            }
+
+            props.Add(new("Type", profile.SegmentText));
+            if (profile.TdpWatts is int tdp)
+            {
+                props.Add(new("TDP", $"{tdp} W (stock PPT {profile.StockPptWatts} W)"));
+            }
+
+            if (profile.HasVCache)
+            {
+                props.Add(new("3D V-Cache", "Yes"));
+            }
+        }
+
+        if (cpuid.IsKnown)
+        {
+            props.Add(new("CPUID", cpuid.Signature));
+            if (cpuid.InstructionSets.Count > 0)
+            {
+                props.Add(new("Instruction sets", string.Join(", ", cpuid.InstructionSets.Where(i => i is not ("SSE2" or "SSE3" or "SSSE3" or "SSE4.1")))));
+            }
+
+            var features = CpuIdInfo.Describe(cpuid.Features, amd);
+            if (features.Count > 0)
+            {
+                props.Add(new("Features", string.Join(", ", features)));
+            }
         }
 
         string? vendor = SystemInfoReader.ReadCpuVendor() switch
@@ -217,6 +297,16 @@ public sealed class CpuProvider : ITelemetryProvider
             }
 
             WriteThreads(writer, values);
+        }
+
+        if (_limitMetric is not null && _limit!.TryGetValue(out double limit, noCap100: true) && limit > 0)
+        {
+            writer.Write(_limitMetric, limit);
+        }
+
+        if (_performanceMetric is not null && _performance!.TryGetValue(out double boost, noCap100: true) && boost > 0)
+        {
+            writer.Write(_performanceMetric, boost);
         }
 
         if (_derivedClock is not null && _performance!.TryGetValue(out double performance, noCap100: true))
@@ -288,9 +378,12 @@ public sealed class CpuProvider : ITelemetryProvider
         _perThread = null;
         _performance = null;
         _frequency = null;
+        _limit = null;
         _instanceToIndex = null;
         _fallback = null;
         _derivedClock = null;
+        _performanceMetric = null;
+        _limitMetric = null;
     }
 
     public void Dispose() => Shutdown();

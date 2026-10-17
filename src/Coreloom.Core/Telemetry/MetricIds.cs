@@ -19,6 +19,27 @@ public static class MetricIds
     public const string CpuClockDerived = "cpu/clock/derived";
     public const string CpuLoadMaxThread = "cpu/load/max-thread";
 
+    /// <summary>% Processor Performance: how fast the processor runs relative to its base clock (over 100 % while boosting).</summary>
+    public const string CpuPerformance = "cpu/performance";
+
+    /// <summary>% Performance Limit: the performance the platform currently allows, relative to base; under 100 % means held back.</summary>
+    public const string CpuPerformanceLimit = "cpu/perf-limit";
+
+    // AMD Ryzen readings from the SMU and SVI telemetry (LibreHardwareMonitor; model dependent).
+    public const string CpuPpt = "cpu/power/ppt";
+    public const string CpuCoresPower = "cpu/power/cores";
+    public const string CpuSocPower = "cpu/power/soc";
+    public const string CpuMiscPower = "cpu/power/misc";
+    public const string CpuTdc = "cpu/current/tdc";
+    public const string CpuEdc = "cpu/current/edc";
+    public const string CpuSocCurrent = "cpu/current/soc";
+    public const string CpuSocVoltage = "cpu/voltage/soc";
+    public const string CpuFabricClock = "cpu/clock/fabric";
+    public const string CpuUncoreClock = "cpu/clock/uncore";
+    public const string CpuMemoryClock = "cpu/clock/memory";
+    public const string CpuSocTemperature = "cpu/temp/soc";
+    public const string CpuIodTemperature = "cpu/temp/iod";
+
     public static string CpuThreadLoad(int logicalIndex) => $"cpu/thread/{Inv(logicalIndex)}/load";
 
     public static string CpuCoreClock(int coreNumber) => $"cpu/core/{Inv(coreNumber)}/clock";

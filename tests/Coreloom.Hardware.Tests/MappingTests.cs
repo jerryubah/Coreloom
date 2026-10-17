@@ -35,6 +35,38 @@ public class SensorMappingTests
         Assert.Null(SensorMapping.MapCpu("Bus Speed", SensorValueKind.Clock));
     }
 
+    [Theory]
+    [InlineData("CPU PPT", SensorValueKind.Power, "cpu/power/ppt")]
+    [InlineData("SOC Power", SensorValueKind.Power, "cpu/power/soc")]
+    [InlineData("SoC", SensorValueKind.Power, "cpu/power/soc")]
+    [InlineData("Core Power", SensorValueKind.Power, "cpu/power/cores")]
+    [InlineData("Misc Power", SensorValueKind.Power, "cpu/power/misc")]
+    [InlineData("TDC", SensorValueKind.Current, "cpu/current/tdc")]
+    [InlineData("EDC", SensorValueKind.Current, "cpu/current/edc")]
+    [InlineData("SoC", SensorValueKind.Current, "cpu/current/soc")]
+    [InlineData("SoC (SVI2 TFN)", SensorValueKind.Voltage, "cpu/voltage/soc")]
+    [InlineData("VDDCR SoC", SensorValueKind.Voltage, "cpu/voltage/soc")]
+    [InlineData("VDDCR", SensorValueKind.Voltage, "cpu/voltage")]
+    [InlineData("Fabric", SensorValueKind.Clock, "cpu/clock/fabric")]
+    [InlineData("Uncore", SensorValueKind.Clock, "cpu/clock/uncore")]
+    [InlineData("Memory", SensorValueKind.Clock, "cpu/clock/memory")]
+    [InlineData("SoC", SensorValueKind.Temperature, "cpu/temp/soc")]
+    [InlineData("IOD Hotspot", SensorValueKind.Temperature, "cpu/temp/iod")]
+    public void AmdSmuAndSviSensors_MapToCanonicalIds(string name, SensorValueKind kind, string expected)
+    {
+        var mapping = SensorMapping.MapCpu(name, kind)!;
+        Assert.Equal(expected, mapping.Id);
+        Assert.Equal(MetricCategory.Cpu, mapping.Category);
+    }
+
+    [Fact]
+    public void SviCoreVoltage_WinsOverTheSmuTablesVddcr()
+    {
+        Assert.True(SensorMapping.MapCpu("Core (SVI2 TFN)", SensorValueKind.Voltage)!.Priority > SensorMapping.MapCpu("VDDCR", SensorValueKind.Voltage)!.Priority);
+        Assert.Null(SensorMapping.MapCpu("GFX", SensorValueKind.Voltage));
+        Assert.Null(SensorMapping.MapCpu("Core #1", SensorValueKind.Factor));
+    }
+
     [Fact]
     public void CpuLoadFromLhm_HasLowerPriorityThanPdh()
     {

@@ -135,8 +135,10 @@ public sealed class CpuViewModel : PageViewModel
         Voltage = new MetricViewModel(MetricIds.CpuVoltage, "Core voltage", ValueStyle.Volts, ColorKeys.Power);
         Ccd1 = new MetricViewModel(MetricIds.CpuCcdTemperature(1), "CCD1 temperature", ValueStyle.Temperature, ColorKeys.Temperature, Thresholds.CpuTemperature);
         Ccd2 = new MetricViewModel(MetricIds.CpuCcdTemperature(2), "CCD2 temperature", ValueStyle.Temperature, ColorKeys.Temperature, Thresholds.CpuTemperature);
+        Boost = new MetricViewModel(MetricIds.CpuPerformance, "Boost", ValueStyle.Percent, ColorKeys.Cpu);
+        PerformanceLimit = new MetricViewModel(MetricIds.CpuPerformanceLimit, "Performance limit", ValueStyle.Percent, ColorKeys.Cpu);
 
-        Details = [DerivedClock, AverageClock, MaxThread, Voltage, Ccd1, Ccd2];
+        Details = [DerivedClock, AverageClock, MaxThread, Boost, PerformanceLimit, Voltage, Ccd1, Ccd2];
 
         LoadChart = new ChartViewModel("Utilization", ChartScale.Percent,
             new ChartSeriesViewModel(MetricIds.CpuLoad, "Total", ColorKeys.Cpu, ValueStyle.Percent),
@@ -146,7 +148,8 @@ public sealed class CpuViewModel : PageViewModel
             new ChartSeriesViewModel(MetricIds.CpuCcdTemperature(1), "CCD1", ColorKeys.Cpu, ValueStyle.Temperature, fill: false),
             new ChartSeriesViewModel(MetricIds.CpuCcdTemperature(2), "CCD2", ColorKeys.Memory, ValueStyle.Temperature, fill: false));
         PowerChart = new ChartViewModel("Package power", ChartScale.Auto,
-            new ChartSeriesViewModel(MetricIds.CpuPower, "Package", ColorKeys.Power, ValueStyle.Power));
+            new ChartSeriesViewModel(MetricIds.CpuPower, "Package", ColorKeys.Power, ValueStyle.Power),
+            new ChartSeriesViewModel(MetricIds.CpuPpt, "PPT", ColorKeys.Temperature, ValueStyle.Power, fill: false));
         ClockChart = new ChartViewModel("Clocks", ChartScale.Auto,
             new ChartSeriesViewModel(MetricIds.CpuClockEffectiveAverage, "Effective (avg)", ColorKeys.Cpu, ValueStyle.ClockMegahertz, fill: false),
             new ChartSeriesViewModel(MetricIds.CpuClockDerived, "Speed (estimated)", ColorKeys.Neutral, ValueStyle.ClockMegahertz, fill: false));
@@ -161,7 +164,13 @@ public sealed class CpuViewModel : PageViewModel
         Sensors = new SensorTableViewModel(d => d.Category is MetricCategory.Cpu or MetricCategory.Motherboard && !d.Id.StartsWith("cpu/thread/", StringComparison.Ordinal));
         _showThreads = Settings.Current.Monitoring.ShowPerThreadGraphs;
         _vendor = HardwareVendors.Detect(null, Monitor.Summary.CpuName);
+        Amd.SetDevice(null, Monitor.Summary.CpuName);
     }
+
+    /// <summary>The AMD card (architecture, SMU readings, read-only tuning); shown for AMD processors.</summary>
+    public AmdProcessorViewModel Amd { get; } = new();
+
+    public bool IsAmd => _vendor == HardwareVendor.Amd;
 
     /// <summary>"amd", "intel" or "nvidia"-style key for the brand mark next to the CPU name; empty when unknown.</summary>
     public string VendorKey => HardwareVendors.Key(_vendor);
@@ -197,6 +206,12 @@ public sealed class CpuViewModel : PageViewModel
     public MetricViewModel Ccd1 { get; }
 
     public MetricViewModel Ccd2 { get; }
+
+    /// <summary>% Processor Performance: the clock relative to base (over 100 % while boosting).</summary>
+    public MetricViewModel Boost { get; }
+
+    /// <summary>% Performance Limit: under 100 % means power, heat or policy is holding the processor back.</summary>
+    public MetricViewModel PerformanceLimit { get; }
 
     public IReadOnlyList<MetricViewModel> Details { get; }
 
@@ -267,7 +282,10 @@ public sealed class CpuViewModel : PageViewModel
             {
                 _vendor = vendor;
                 OnPropertyChanged(nameof(VendorKey));
+                OnPropertyChanged(nameof(IsAmd));
             }
+
+            Amd.SetDevice(device, Monitor.Summary.CpuName);
 
             Subtitle = string.Join(" · ", new[] { device?.GetProperty("Cores") is { } c ? $"{c} cores" : null, device?.GetProperty("Threads") is { } t ? $"{t} threads" : null, device?.GetProperty("L3 cache") is { } l3 ? $"{l3} L3" : null }.Where(s => s is not null));
             var items = ToItems(device);
@@ -288,7 +306,11 @@ public sealed class CpuViewModel : PageViewModel
         }
 
         UpdateMetrics(frame, true, Load, Temperature, Power, Clock);
-        UpdateMetrics(frame, false, DerivedClock, AverageClock, MaxThread, Voltage, Ccd1, Ccd2);
+        UpdateMetrics(frame, false, DerivedClock, AverageClock, MaxThread, Boost, PerformanceLimit, Voltage, Ccd1, Ccd2);
+        Boost.Detail = Boost.HasValue ? Boost.Value > 101 ? "Above base clock" : "Of base clock" : null;
+        PerformanceLimit.Detail = PerformanceLimit.HasValue
+            ? PerformanceLimit.Value >= 99.5 ? "Not held back" : "Held back by power, heat or policy"
+            : null;
         Load.Detail = MaxThread.HasValue ? $"Busiest thread {MaxThread.Number}%" : null;
         Clock.Detail = Clock.HasValue ? null : DerivedClock.HasValue ? $"Estimated {DerivedClock.Number} {DerivedClock.Unit}" : null;
         Temperature.Detail = Ccd1.HasValue ? $"CCD1 {Ccd1.Number}° · CCD2 {(Ccd2.HasValue ? Ccd2.Number + "°" : "—")}" : null;
@@ -299,6 +321,10 @@ public sealed class CpuViewModel : PageViewModel
             : null;
 
         UpdateCharts(frame, LoadChart, TemperatureChart, PowerChart, ClockChart);
+        if (IsAmd)
+        {
+            Amd.Update(frame, Formatter, Catalog, History, Monitor.Engine.Capabilities.LowLevelSensorsAccessible);
+        }
 
         if (ShowThreads)
         {
