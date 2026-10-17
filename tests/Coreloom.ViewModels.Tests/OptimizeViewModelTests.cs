@@ -51,7 +51,16 @@ internal sealed class FakeOptimizer : IOptimizeService, IDisposable
     }
 
     public Task<MemoryCleanResult> FreeMemoryAsync(bool clearStandby, CancellationToken cancellationToken) =>
-        Task.FromResult(new MemoryCleanResult(8L << 30, 9L << 30, 32L << 30, 41));
+        Task.FromResult(new MemoryCleanResult(8L << 30, 9L << 30, 32L << 30, 2)
+        {
+            Processes = MemoryTrim.Ordered(
+            [
+                new(4, "System", TrimOutcome.Skipped, Reason: "part of Windows itself"),
+                new(1234, "chrome", TrimOutcome.Trimmed, 512L << 20, 120L << 20),
+                new(1220, "svchost", TrimOutcome.Failed, Reason: "access denied (a protected process)"),
+                new(77, "discord", TrimOutcome.Trimmed, 300L << 20, 100L << 20),
+            ]),
+        });
 
     public Task<ProtectionStatus> ProtectionAsync(CancellationToken cancellationToken) => Task.FromResult(new ProtectionStatus
     {
@@ -121,6 +130,49 @@ public class OptimizeViewModelTests
         var page = new OptimizeViewModel(context);
         page.Activate(monitor.Engine.LatestFrame);
         return (page, fake, settings);
+    }
+
+    [Fact]
+    public async Task FreeingMemory_ShowsEveryProcess_AndOpensTheLogs()
+    {
+        var (monitor, settings, _) = Fixture.Create();
+        (string? Category, string? Search)? opened = null;
+        var context = new PageContext
+        {
+            Monitor = monitor,
+            Settings = settings,
+            Timeline = new TimelineViewModel(monitor.Engine.History),
+            Tools = new ToolServices { Optimizer = new FakeOptimizer() },
+            OpenLogs = (category, search) => opened = (category, search),
+        };
+        var page = new OptimizeViewModel(context);
+        page.Activate(monitor.Engine.LatestFrame);
+        Assert.False(page.Memory.HasResults);
+        Assert.False(page.Memory.ToggleDetailsCommand.CanExecute(null));
+
+        await page.Memory.FreeUpCommand.ExecuteAsync(null);
+
+        var memory = page.Memory;
+        Assert.True(memory.HasResults);
+        Assert.StartsWith("Trimmed 2 · skipped 1 · failed 1 · ended 0 (Coreloom never ends processes)", memory.TotalsText);
+        Assert.Equal(["All 4", "Trimmed 2", "Skipped 1", "Failed 1"], memory.ResultFilters.Select(f => f.Label));
+        Assert.Equal(["chrome.exe", "discord.exe", "svchost.exe", "System"], memory.Results.Select(r => r.Name));
+        var chrome = memory.Results[0];
+        Assert.Equal("PID 1234", chrome.PidText);
+        Assert.Equal("Trimmed", chrome.OutcomeText);
+        Assert.Equal("—", memory.Results[2].ReclaimedText);
+        Assert.Equal("access denied (a protected process)", memory.Results[2].Reason);
+
+        memory.ResultFilter = "Failed";
+        Assert.Equal(["svchost.exe"], memory.Results.Select(r => r.Name));
+        memory.ResultFilter = "Skipped";
+        Assert.Equal(["System"], memory.Results.Select(r => r.Name));
+
+        memory.ToggleDetailsCommand.Execute(null);
+        Assert.True(memory.ShowDetails);
+        memory.OpenLogsCommand.Execute(null);
+        Assert.Equal(("Optimize", "Memory:"), opened);
+        settings.Dispose();
     }
 
     [Fact]

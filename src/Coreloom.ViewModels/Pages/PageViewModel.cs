@@ -193,4 +193,7 @@ public sealed class PageContext
 
     /// <summary>The in-game overlay's content and look (shared by the overlay window and its settings).</summary>
     public Overlay.OverlayViewModel Overlay => _overlay ??= new Overlay.OverlayViewModel(this);
+
+    /// <summary>Opens Settings › Logs filtered to a category and search (set by the shell; null in tests).</summary>
+    public Action<string?, string?>? OpenLogs { get; set; }
 }

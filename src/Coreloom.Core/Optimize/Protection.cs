@@ -203,6 +203,9 @@ public sealed record ScanOutcome(bool Completed, int ThreatsFound, string? Probl
 public sealed record MemoryCleanResult(long AvailableBefore, long AvailableAfter, long Total, int ProcessesTrimmed)
 {
     public long Freed => Math.Max(0, AvailableAfter - AvailableBefore);
+
+    /// <summary>Every process looked at: trimmed, skipped or failed, with its memory before and after (since 1.4.6).</summary>
+    public IReadOnlyList<MemoryTrimEntry> Processes { get; init; } = [];
 }
 
 /// <summary>Result of a maintenance task (flush DNS, optimize drives…).</summary>

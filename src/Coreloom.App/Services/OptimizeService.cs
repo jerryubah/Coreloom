@@ -25,12 +25,6 @@ internal sealed partial class WindowsOptimizeService : IOptimizeService
     private const int MemoryPurgeStandbyList = 4;
 
     /// <summary>Never trimmed: Windows' own core processes and audio (trimming them can cause glitches).</summary>
-    private static readonly HashSet<string> KeepProcesses = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "Idle", "System", "Registry", "Memory Compression", "smss", "csrss", "wininit", "winlogon", "services", "lsass",
-        "dwm", "audiodg", "fontdrvhost", "MsMpEng", "NisSrv",
-    };
-
     private static readonly string[] StartupFileTypes = [".lnk", ".exe", ".bat", ".cmd", ".url", ".vbs"];
 
     public bool IsSupported => OperatingSystem.IsWindows();
@@ -61,12 +55,18 @@ internal sealed partial class WindowsOptimizeService : IOptimizeService
 
     // ---- Memory -----------------------------------------------------------------------------------
 
+    /// <summary>
+    /// Trims the working set of every background process Windows lets Coreloom open (EmptyWorkingSet: Windows writes out
+    /// pages the process hasn't touched lately; nothing is closed or ended). Each process is logged with its PID, its
+    /// working set before and after and what happened: trimmed, skipped (Windows itself, the app in front, Coreloom) or
+    /// failed (with Windows' reason).
+    /// </summary>
     public Task<MemoryCleanResult> FreeMemoryAsync(bool clearStandby, CancellationToken cancellationToken) => Task.Run(async () =>
     {
         var before = MemoryStatus();
         int foreground = ForegroundProcessId();
         int own = Environment.ProcessId;
-        int trimmed = 0;
+        var entries = new List<MemoryTrimEntry>();
         foreach (var process in Process.GetProcesses())
         {
             using (process)
@@ -76,35 +76,19 @@ internal sealed partial class WindowsOptimizeService : IOptimizeService
                     continue;
                 }
 
+                int pid;
+                string name;
                 try
                 {
-                    if (process.Id is 0 or 4 || process.Id == foreground || process.Id == own || KeepProcesses.Contains(process.ProcessName))
-                    {
-                        continue; // the app you're using keeps its memory
-                    }
-
-                    IntPtr handle = OpenProcess(ProcessQueryLimitedInformation | ProcessSetQuota, false, (uint)process.Id);
-                    if (handle == IntPtr.Zero)
-                    {
-                        continue; // protected process
-                    }
-
-                    try
-                    {
-                        if (EmptyWorkingSet(handle))
-                        {
-                            trimmed++;
-                        }
-                    }
-                    finally
-                    {
-                        CloseHandle(handle);
-                    }
+                    pid = process.Id;
+                    name = process.ProcessName;
                 }
                 catch (Exception e) when (e is InvalidOperationException or Win32Exception)
                 {
-                    // exited meanwhile
+                    continue; // exited meanwhile
                 }
+
+                entries.Add(Trim(pid, name, foreground, own));
             }
         }
 
@@ -115,9 +99,61 @@ internal sealed partial class WindowsOptimizeService : IOptimizeService
 
         await Task.Delay(1200, CancellationToken.None); // let Windows settle the lists before measuring
         var after = MemoryStatus();
-        Log.Info(LogCategory, $"Trimmed {trimmed} processes; available memory {before.Available / (1 << 20)} → {after.Available / (1 << 20)} MB.");
-        return new MemoryCleanResult((long)before.Available, (long)after.Available, (long)after.Total, trimmed);
+        var ordered = MemoryTrim.Ordered(entries);
+        var totals = MemoryTrim.Totals(ordered);
+        foreach (var entry in ordered)
+        {
+            Log.Info(LogCategory, "Memory: " + entry.LogLine());
+        }
+
+        Log.Info(LogCategory, $"Memory: {totals.Summary}; {MemoryTrim.Megabytes(totals.Reclaimed)} taken out of working sets; available memory {before.Available / (1 << 20)} → {after.Available / (1 << 20)} MB.");
+        return new MemoryCleanResult((long)before.Available, (long)after.Available, (long)after.Total, totals.Trimmed) { Processes = ordered };
     }, cancellationToken);
+
+    private static MemoryTrimEntry Trim(int pid, string name, int foreground, int own)
+    {
+        if (MemoryTrim.SkipReason(pid, name, foreground, own) is { } skip)
+        {
+            long? size = null;
+            IntPtr query = pid is 0 or 4 ? IntPtr.Zero : OpenProcess(ProcessQueryLimitedInformation, false, (uint)pid);
+            if (query != IntPtr.Zero)
+            {
+                size = WorkingSet(query);
+                CloseHandle(query);
+            }
+
+            return new MemoryTrimEntry(pid, name, TrimOutcome.Skipped, size, Reason: skip);
+        }
+
+        IntPtr handle = OpenProcess(ProcessQueryLimitedInformation | ProcessSetQuota, false, (uint)pid);
+        if (handle == IntPtr.Zero)
+        {
+            return new MemoryTrimEntry(pid, name, TrimOutcome.Failed, Reason: MemoryTrim.Describe(Marshal.GetLastPInvokeError()));
+        }
+
+        try
+        {
+            long? before = WorkingSet(handle);
+            if (!EmptyWorkingSet(handle))
+            {
+                return new MemoryTrimEntry(pid, name, TrimOutcome.Failed, before, Reason: MemoryTrim.Describe(Marshal.GetLastPInvokeError()));
+            }
+
+            return new MemoryTrimEntry(pid, name, TrimOutcome.Trimmed, before, WorkingSet(handle));
+        }
+        finally
+        {
+            CloseHandle(handle);
+        }
+    }
+
+    /// <summary>The process's working set (bytes), or null when Windows won't say.</summary>
+    private static unsafe long? WorkingSet(IntPtr handle)
+    {
+        var counters = default(ProcessMemoryCounters);
+        counters.Size = (uint)sizeof(ProcessMemoryCounters);
+        return GetProcessMemoryInfo(handle, &counters, counters.Size) ? (long)counters.WorkingSetSize : null;
+    }
 
     private static void ClearStandbyList()
     {
@@ -567,7 +603,26 @@ internal sealed partial class WindowsOptimizeService : IOptimizeService
     [LibraryImport("kernel32.dll", SetLastError = true)]
     private static partial IntPtr OpenProcess(uint access, [MarshalAs(UnmanagedType.Bool)] bool inherit, uint processId);
 
-    [LibraryImport("kernel32.dll", EntryPoint = "K32EmptyWorkingSet")]
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ProcessMemoryCounters
+    {
+        public uint Size;
+        public uint PageFaultCount;
+        public nuint PeakWorkingSetSize;
+        public nuint WorkingSetSize;
+        public nuint QuotaPeakPagedPoolUsage;
+        public nuint QuotaPagedPoolUsage;
+        public nuint QuotaPeakNonPagedPoolUsage;
+        public nuint QuotaNonPagedPoolUsage;
+        public nuint PagefileUsage;
+        public nuint PeakPagefileUsage;
+    }
+
+    [LibraryImport("kernel32.dll", EntryPoint = "K32GetProcessMemoryInfo")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static unsafe partial bool GetProcessMemoryInfo(IntPtr process, ProcessMemoryCounters* counters, uint size);
+
+    [LibraryImport("kernel32.dll", EntryPoint = "K32EmptyWorkingSet", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool EmptyWorkingSet(IntPtr process);
 

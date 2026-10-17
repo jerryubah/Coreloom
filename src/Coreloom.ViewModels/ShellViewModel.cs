@@ -84,6 +84,12 @@ public sealed class ShellViewModel : ObservableObject
             App = deps.App,
         });
 
+        context.OpenLogs = (category, search) =>
+        {
+            Settings.ShowLogs(category, search);
+            Navigate(Settings);
+        };
+
         Pages = [Overview, Gaming, Gpu, Cpu, Memory, Storage, Devices, Network, Optimize, History];
         _currentPage = Overview;
         NavigateCommand = new RelayCommand<PageViewModel>(page =>

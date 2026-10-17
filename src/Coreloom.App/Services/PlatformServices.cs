@@ -66,6 +66,19 @@ public sealed class ShellService : IShellService
         return dialog.ShowDialog(Application.Current?.MainWindow) == true ? dialog.FileName : null;
     }
 
+    public string? PickOpenFile(string title, string filter, string? initialDirectory = null)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = title,
+            Filter = filter,
+            CheckFileExists = true,
+            Multiselect = false,
+            InitialDirectory = initialDirectory is { Length: > 0 } dir && System.IO.Directory.Exists(dir) ? dir : string.Empty,
+        };
+        return dialog.ShowDialog(Application.Current?.MainWindow) == true ? dialog.FileName : null;
+    }
+
     public void ShowMessage(string title, string message)
     {
         var owner = Application.Current?.MainWindow;
@@ -296,4 +309,11 @@ public sealed class DiagnosticsService : IDiagnosticsService
     public void SetVerboseLogging(bool enabled) => Log.MinimumLevel = enabled ? LogLevel.Debug : LogLevel.Info;
 
     public IReadOnlyList<LogEntry> RecentLog() => _memory.Snapshot();
+
+    /// <summary>Writes out what is still queued, then reads the files back.</summary>
+    public IReadOnlyList<LogRecord> ReadLog()
+    {
+        Log.Flush();
+        return LogFile.Read(LogFile.Files(LogDirectory));
+    }
 }

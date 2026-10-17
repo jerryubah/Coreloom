@@ -66,6 +66,9 @@ public interface IShellService
     /// <summary>Shows a save dialog. Returns the chosen path or null if cancelled.</summary>
     string? PickSaveFile(string suggestedName, string filter);
 
+    /// <summary>Shows an open dialog (filter like "Programs (*.exe)|*.exe"). Returns the chosen path or null if cancelled.</summary>
+    string? PickOpenFile(string title, string filter, string? initialDirectory = null) => null;
+
     void ShowMessage(string title, string message);
 
     bool Confirm(string title, string message);
@@ -114,4 +117,8 @@ public interface IDiagnosticsService
     void SetVerboseLogging(bool enabled);
 
     IReadOnlyList<Coreloom.Core.Diagnostics.LogEntry> RecentLog();
+
+    /// <summary>Every entry in the log files (oldest first; at most the newest 20,000), for the log viewer.</summary>
+    IReadOnlyList<Coreloom.Core.Diagnostics.LogRecord> ReadLog() =>
+        Coreloom.Core.Diagnostics.LogFile.Read(Coreloom.Core.Diagnostics.LogFile.Files(LogDirectory));
 }

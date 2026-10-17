@@ -436,6 +436,7 @@
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
               <RowDefinition Height="*" />
+              <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid>
               <Grid.ColumnDefinitions>
@@ -491,8 +492,85 @@
                 </StackPanel>
                 <TextBlock Text="{Binding LastResult}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,8,0,0"
                            Visibility="{Binding LastResult, Converter={StaticResource HasValueToVisibility}}" />
+                <TextBlock Text="{Binding TotalsText}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,3,0,0"
+                           Visibility="{Binding TotalsText, Converter={StaticResource HasValueToVisibility}}" />
+                <WrapPanel Margin="0,8,0,0" Visibility="{Binding HasResults, Converter={StaticResource BoolToVisibility}}">
+                  <Button Style="{StaticResource Button.Subtle}" Command="{Binding ToggleDetailsCommand}" Margin="0,0,6,0" ToolTip="Every process: its memory before and after, and what happened">
+                    <StackPanel Orientation="Horizontal">
+                      <Path Style="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.List}" />
+                      <TextBlock Text="Process details" Margin="6,0,0,0" />
+                    </StackPanel>
+                  </Button>
+                  <Button Style="{StaticResource Button.Subtle}" Command="{Binding OpenLogsCommand}" ToolTip="Opens the log viewer at this clean-up's lines">
+                    <StackPanel Orientation="Horizontal">
+                      <Path Style="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Folder}" />
+                      <TextBlock Text="Open logs" Margin="6,0,0,0" />
+                    </StackPanel>
+                  </Button>
+                </WrapPanel>
               </StackPanel>
             </Grid>
+
+            <!-- Every process of the last clean-up -->
+            <StackPanel Grid.Row="2" Margin="0,14,0,0" Visibility="{Binding ShowDetails, Converter={StaticResource BoolToVisibility}}">
+              <ListBox Style="{StaticResource Segmented}" HorizontalAlignment="Left" ItemsSource="{Binding ResultFilters}" DisplayMemberPath="Label"
+                       SelectedValuePath="Value" SelectedValue="{Binding ResultFilter}" AutomationProperties.Name="Show processes" />
+              <Grid Margin="4,10,14,4">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="78" />
+                  <ColumnDefinition Width="78" />
+                  <ColumnDefinition Width="84" />
+                  <ColumnDefinition Width="74" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Process" Style="{StaticResource Text.Caption}" />
+                <TextBlock Grid.Column="1" Text="Before" Style="{StaticResource Text.Caption}" TextAlignment="Right" />
+                <TextBlock Grid.Column="2" Text="After" Style="{StaticResource Text.Caption}" TextAlignment="Right" />
+                <TextBlock Grid.Column="3" Text="Reclaimed" Style="{StaticResource Text.Caption}" TextAlignment="Right" />
+                <TextBlock Grid.Column="4" Text="Result" Style="{StaticResource Text.Caption}" Margin="12,0,0,0" />
+              </Grid>
+              <c:HeightCap Cap="300">
+                <ScrollViewer Style="{StaticResource ScrollViewer.Page}" b:ScrollChain.Enabled="True">
+                  <ItemsControl ItemsSource="{Binding Results}" Focusable="False" Margin="0,0,10,0" VirtualizingPanel.IsVirtualizing="True">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate DataType="{x:Type pages:MemoryTrimRowViewModel}">
+                        <Grid Margin="4,4" ToolTip="{Binding Reason}">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="78" />
+                            <ColumnDefinition Width="78" />
+                            <ColumnDefinition Width="84" />
+                            <ColumnDefinition Width="74" />
+                          </Grid.ColumnDefinitions>
+                          <StackPanel>
+                            <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Style="{StaticResource Text.Caption}" TextTrimming="CharacterEllipsis">
+                              <Run Text="{Binding PidText, Mode=OneWay}" /><Run Text="{Binding Reason, Mode=OneWay, StringFormat={} · {0}}" />
+                            </TextBlock>
+                          </StackPanel>
+                          <TextBlock Grid.Column="1" Text="{Binding BeforeText}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Foreground="{DynamicResource Brush.TextSecondary}" TextAlignment="Right" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="2" Text="{Binding AfterText}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Foreground="{DynamicResource Brush.TextSecondary}" TextAlignment="Right" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="3" Text="{Binding ReclaimedText}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextAlignment="Right" VerticalAlignment="Center" />
+                          <Border x:Name="Pill" Grid.Column="4" Style="{StaticResource Badge}" HorizontalAlignment="Left" Margin="12,0,0,0">
+                            <TextBlock x:Name="PillText" Text="{Binding OutcomeText}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+                          </Border>
+                        </Grid>
+                        <DataTemplate.Triggers>
+                          <DataTrigger Binding="{Binding OutcomeText}" Value="Trimmed">
+                            <Setter TargetName="PillText" Property="Foreground" Value="{DynamicResource Brush.Success}" />
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding OutcomeText}" Value="Failed">
+                            <Setter TargetName="PillText" Property="Foreground" Value="{DynamicResource Brush.Elevated}" />
+                          </DataTrigger>
+                        </DataTemplate.Triggers>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+              </c:HeightCap>
+              <TextBlock Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="4,8,0,0"
+                         Text="Trimming asks Windows to write out memory a process hasn't used lately; the process keeps running and gets it back if it needs it. Coreloom never ends a process. Failed ones are usually protected parts of Windows or security software." />
+            </StackPanel>
           </Grid>
         </c:SquircleBorder>
 

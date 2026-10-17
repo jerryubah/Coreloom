@@ -747,10 +747,36 @@ public sealed class ProtectionViewModel : ObservableObject
 }
 
 /// <summary>The Memory card: RAM use on the four-color ring and "Free up RAM".</summary>
+/// <summary>A process in the memory results: its PID, memory before and after, what was reclaimed and what happened.</summary>
+public sealed class MemoryTrimRowViewModel(MemoryTrimEntry entry, Func<long, string> formatBytes)
+{
+    public MemoryTrimEntry Entry { get; } = entry;
+
+    public string Name => Entry.FileName;
+
+    public string PidText { get; } = "PID " + entry.ProcessId.ToString(CultureInfo.CurrentCulture);
+
+    public string BeforeText { get; } = entry.Before is { } b ? formatBytes(b) : "—";
+
+    public string AfterText { get; } = entry.After is { } a ? formatBytes(a) : "—";
+
+    public string ReclaimedText { get; } = entry.Outcome == TrimOutcome.Trimmed ? formatBytes(entry.Reclaimed) : "—";
+
+    /// <summary>"Trimmed", "Skipped" or "Failed" (also the key for its color).</summary>
+    public string OutcomeText { get; } = entry.Outcome.ToString();
+
+    public string? Reason => Entry.Reason;
+}
+
 public sealed class MemoryOptimizeViewModel : ObservableObject
 {
     private readonly IOptimizeService _service;
     private readonly Func<long, string> _formatBytes;
+    private readonly Action? _openLogs;
+    private IReadOnlyList<MemoryTrimEntry> _entries = [];
+    private string _resultFilter = "All";
+    private bool _showDetails;
+    private string? _totalsText;
     private double _fraction;
     private double _load = double.NaN;
     private string _usedText = "—";
@@ -760,14 +786,88 @@ public sealed class MemoryOptimizeViewModel : ObservableObject
     private bool _isBusy;
     private string? _lastResult;
 
-    public MemoryOptimizeViewModel(IOptimizeService service, Func<long, string> formatBytes)
+    public MemoryOptimizeViewModel(IOptimizeService service, Func<long, string> formatBytes, Action? openLogs = null)
     {
         _service = service;
         _formatBytes = formatBytes;
+        _openLogs = openLogs;
         FreeUpCommand = new AsyncRelayCommand(async () => await FreeUpAsync(CancellationToken.None), () => !IsBusy && _service.IsSupported);
+        OpenLogsCommand = new RelayCommand(() => _openLogs?.Invoke());
+        ToggleDetailsCommand = new RelayCommand(() => ShowDetails = !ShowDetails, () => HasResults);
     }
 
     public IAsyncRelayCommand FreeUpCommand { get; }
+
+    /// <summary>Opens Settings › Logs at this clean-up's lines.</summary>
+    public IRelayCommand OpenLogsCommand { get; }
+
+    public IRelayCommand ToggleDetailsCommand { get; }
+
+    /// <summary>Every process of the last clean-up, filtered by <see cref="ResultFilter"/>.</summary>
+    public ObservableCollection<MemoryTrimRowViewModel> Results { get; } = [];
+
+    public bool HasResults => _entries.Count > 0;
+
+    /// <summary>"All", "Trimmed", "Skipped" or "Failed".</summary>
+    public IReadOnlyList<Option<string>> ResultFilters { get; private set; } = [new("All", "All")];
+
+    public string ResultFilter
+    {
+        get => _resultFilter;
+        set
+        {
+            if (SetProperty(ref _resultFilter, value ?? "All"))
+            {
+                FillResults();
+            }
+        }
+    }
+
+    public bool ShowDetails
+    {
+        get => _showDetails;
+        set => SetProperty(ref _showDetails, value);
+    }
+
+    /// <summary>"Trimmed 142 · skipped 9 · failed 37 · ended 0 (Coreloom never ends processes) · 3.1 GB taken out of working sets".</summary>
+    public string? TotalsText
+    {
+        get => _totalsText;
+        private set => SetProperty(ref _totalsText, value);
+    }
+
+    /// <summary>Shows a clean-up's per-process results (also used by the Smart Optimize run).</summary>
+    public void ShowResults(MemoryCleanResult result)
+    {
+        _entries = result.Processes;
+        var totals = MemoryTrim.Totals(_entries);
+        TotalsText = _entries.Count == 0 ? null : $"{totals.Summary} · {_formatBytes(totals.Reclaimed)} taken out of working sets";
+        ResultFilters =
+        [
+            new("All", $"All {_entries.Count.ToString(CultureInfo.CurrentCulture)}"),
+            new("Trimmed", $"Trimmed {totals.Trimmed.ToString(CultureInfo.CurrentCulture)}"),
+            new("Skipped", $"Skipped {totals.Skipped.ToString(CultureInfo.CurrentCulture)}"),
+            new("Failed", $"Failed {totals.Failed.ToString(CultureInfo.CurrentCulture)}"),
+        ];
+        OnPropertyChanged(nameof(ResultFilters));
+        _resultFilter = "All";
+        OnPropertyChanged(nameof(ResultFilter));
+        FillResults();
+        OnPropertyChanged(nameof(HasResults));
+        ToggleDetailsCommand.NotifyCanExecuteChanged();
+    }
+
+    private void FillResults()
+    {
+        Results.Clear();
+        foreach (var entry in _entries)
+        {
+            if (_resultFilter == "All" || entry.Outcome.ToString() == _resultFilter)
+            {
+                Results.Add(new MemoryTrimRowViewModel(entry, _formatBytes));
+            }
+        }
+    }
 
     /// <summary>Share of RAM in use (0–1), for the ring.</summary>
     public double Fraction
@@ -849,6 +949,7 @@ public sealed class MemoryOptimizeViewModel : ObservableObject
         try
         {
             var result = await _service.FreeMemoryAsync(ClearStandby, cancellationToken);
+            ShowResults(result);
             LastResult = result.Freed > 0
                 ? $"Freed {_formatBytes(result.Freed)} from {OptimizeText.Count(result.ProcessesTrimmed, "app", "apps")}."
                 : result.ProcessesTrimmed > 0 ? "Memory was already in good shape." : "Nothing could be freed.";
@@ -1105,7 +1206,7 @@ public sealed class OptimizeViewModel : PageViewModel
         Func<long, string> bytes = b => Formatter.Bytes(b).ToString();
         Cleanup = new CleanupViewModel(_service, bytes);
         Protection = new ProtectionViewModel(_service, () => Now());
-        Memory = new MemoryOptimizeViewModel(_service, bytes);
+        Memory = new MemoryOptimizeViewModel(_service, bytes, () => Context.OpenLogs?.Invoke("Optimize", "Memory:"));
         Speed = new SpeedUpViewModel(_service);
         CleanupModule = new("cleanup", "Cleanup", "Icon.Trash");
         ProtectionModule = new("protection", "Protection", "Icon.Shield");

@@ -221,6 +221,7 @@ public sealed class SettingsViewModel : PageViewModel
     {
         _deps = deps;
         Subtitle = "Appearance, monitoring, dashboard, alerts and updates";
+        Logs = new LogViewerViewModel(deps.Diagnostics, deps.Shell);
 
         ThemeOptions = [new(ThemePreference.Dark, "Dark"), new(ThemePreference.Light, "Light"), new(ThemePreference.System, "Use Windows setting")];
         AccentOptions = AccentPalette.Presets.Select(p => new AccentOption(p.Name, p.Hex)).ToArray();
@@ -245,6 +246,7 @@ public sealed class SettingsViewModel : PageViewModel
         AddRuleCommand = new RelayCommand<AlertMetricOption>(AddRule);
         ExportReportCommand = new RelayCommand(ExportReport);
         OpenLogsCommand = new RelayCommand(() => _deps.Shell.OpenFolder(_deps.Diagnostics.LogDirectory));
+        ViewLogsCommand = new RelayCommand(() => ShowLogs());
         RescanCommand = new RelayCommand(() => Monitor.Engine.RequestReinitialize());
         OpenPawnIoCommand = new RelayCommand(() => _deps.Shell.OpenUrl(PawnIoUrl));
         RestartCommand = new RelayCommand(() => _deps.Lifetime.Restart());
@@ -257,12 +259,35 @@ public sealed class SettingsViewModel : PageViewModel
 
     // ---- Navigation within settings ----------------------------------------------------------
 
-    public IReadOnlyList<string> Sections { get; } = ["Appearance", "Monitoring", "Desktop", "Alerts", "Diagnostics", "About", "Updates"];
+    public IReadOnlyList<string> Sections { get; } = ["Appearance", "Monitoring", "Desktop", "Alerts", "Diagnostics", "Logs", "About", "Updates"];
 
     public string? SelectedSection
     {
         get => _selectedSection;
-        set => SetProperty(ref _selectedSection, value);
+        set
+        {
+            if (SetProperty(ref _selectedSection, value) && value == "Logs")
+            {
+                _ = Logs.LoadAsync(); // read fresh every time the viewer is opened
+            }
+        }
+    }
+
+    /// <summary>The log viewer (Settings › Logs).</summary>
+    public LogViewerViewModel Logs { get; }
+
+    /// <summary>Opens the log viewer, optionally filtered (from another page).</summary>
+    public void ShowLogs(string? category = null, string? search = null)
+    {
+        Logs.Apply(category, search);
+        if (SelectedSection == "Logs")
+        {
+            _ = Logs.LoadAsync();
+        }
+        else
+        {
+            SelectedSection = "Logs";
+        }
     }
 
     public IRelayCommand<string> SelectSectionCommand { get; }
@@ -657,6 +682,9 @@ public sealed class SettingsViewModel : PageViewModel
     public IRelayCommand ExportReportCommand { get; }
 
     public IRelayCommand OpenLogsCommand { get; }
+
+    /// <summary>Opens the log viewer.</summary>
+    public IRelayCommand ViewLogsCommand { get; }
 
 
     public IRelayCommand RescanCommand { get; }

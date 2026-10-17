@@ -35,6 +35,70 @@
     <Style x:Key="Group.Label" TargetType="TextBlock" BasedOn="{StaticResource Text.Label}">
       <Setter Property="Margin" Value="0,20,0,6" />
     </Style>
+    <Style x:Key="Spinner" TargetType="c:RadialGauge">
+      <Setter Property="Width" Value="16" />
+      <Setter Property="Height" Value="16" />
+      <Setter Property="Thickness" Value="2.4" />
+      <Setter Property="SweepAngle" Value="359" />
+      <Setter Property="Value" Value="0.28" />
+      <Setter Property="TrackBrush" Value="Transparent" />
+      <Setter Property="Fill" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+    <!-- An entry in the log viewer: time, level, category and message (and any lines under it). -->
+    <Style x:Key="LogItem" TargetType="ListBoxItem">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ListBoxItem">
+            <Border x:Name="Root" Background="Transparent" CornerRadius="8" Padding="10,7" Margin="0,0,10,1">
+              <ContentPresenter />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Root" Property="Background" Value="{DynamicResource Brush.CardHover}" />
+              </Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="Root" Property="Background" Value="{DynamicResource Brush.ControlHover}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <DataTemplate x:Key="LogLine" DataType="{x:Type pages:LogLineViewModel}">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="150" />
+          <ColumnDefinition Width="72" />
+          <ColumnDefinition Width="110" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Text="{Binding TimeText}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Top" Margin="0,1,0,0" />
+        <Border x:Name="LevelPill" Grid.Column="1" Style="{StaticResource Badge}" HorizontalAlignment="Left" VerticalAlignment="Top" Background="{DynamicResource Brush.ControlHover}">
+          <TextBlock x:Name="LevelText" Text="{Binding LevelText}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+        </Border>
+        <TextBlock Grid.Column="2" Text="{Binding Category}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis"
+                   VerticalAlignment="Top" Margin="0,1,8,0" ToolTip="{Binding Category}" />
+        <StackPanel Grid.Column="3">
+          <TextBlock Text="{Binding Message}" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding Details}" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Brush.TextTertiary}" TextWrapping="Wrap"
+                     Margin="0,3,0,0" MaxHeight="120" TextTrimming="CharacterEllipsis"
+                     Visibility="{Binding HasDetails, Converter={StaticResource BoolToVisibility}}" />
+        </StackPanel>
+      </Grid>
+      <DataTemplate.Triggers>
+        <DataTrigger Binding="{Binding LevelKey}" Value="Info">
+          <Setter TargetName="LevelText" Property="Foreground" Value="{DynamicResource Brush.Info}" />
+        </DataTrigger>
+        <DataTrigger Binding="{Binding LevelKey}" Value="Warning">
+          <Setter TargetName="LevelText" Property="Foreground" Value="{DynamicResource Brush.Elevated}" />
+        </DataTrigger>
+        <DataTrigger Binding="{Binding LevelKey}" Value="Error">
+          <Setter TargetName="LevelText" Property="Foreground" Value="{DynamicResource Brush.Critical}" />
+        </DataTrigger>
+      </DataTemplate.Triggers>
+    </DataTemplate>
     <!-- Update status icon: tinted by UpdatesViewModel.StatusTone. -->
     <Style x:Key="UpdateStatus.Circle" TargetType="Border">
       <Setter Property="Width" Value="40" />
@@ -798,6 +862,13 @@
                     <TextBlock Text="Export diagnostic report" Margin="6,0,0,0" />
                   </StackPanel>
                 </Button>
+                <Button Style="{StaticResource Button.Secondary}" Command="{Binding ViewLogsCommand}" Margin="0,0,8,8"
+                        ToolTip="Opens the log viewer: every entry with its time, searchable and filtered by level and category.">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Style="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.List}" />
+                    <TextBlock Text="View logs" Margin="6,0,0,0" />
+                  </StackPanel>
+                </Button>
                 <Button Style="{StaticResource Button.Secondary}" Command="{Binding OpenLogsCommand}" Margin="0,0,8,8">
                   <StackPanel Orientation="Horizontal">
                     <Path Style="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Folder}" />
@@ -812,6 +883,96 @@
                   </StackPanel>
                 </Button>
               </WrapPanel>
+            </StackPanel>
+          </c:SquircleBorder>
+        </StackPanel>
+
+        <!-- ======================================================================= -->
+        <!-- Logs                                                                    -->
+        <!-- ======================================================================= -->
+        <StackPanel b:Motion.Entrance="True" DataContext="{Binding Logs}"
+                    Visibility="{Binding DataContext.SelectedSection, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource EqualsToVisibility}, ConverterParameter=Logs}">
+          <TextBlock Style="{StaticResource Panel.Header}" Text="Logs" />
+          <TextBlock Style="{StaticResource Panel.Intro}" Text="Everything Coreloom has written to its log on this PC, newest first: what it found, what it changed and anything that went wrong. Logs never leave this PC." />
+
+          <c:SquircleBorder Style="{StaticResource Card}" Padding="16,14,6,10">
+            <StackPanel>
+              <WrapPanel Margin="0,0,10,4">
+                <Grid Width="300" Margin="0,0,10,8" VerticalAlignment="Center">
+                  <TextBox x:Name="LogSearch" Style="{StaticResource TextBox.Default}" Padding="32,7,10,7" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                           AutomationProperties.Name="Search the log" />
+                  <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Search}" HorizontalAlignment="Left" Margin="12,0,0,0" IsHitTestVisible="False" />
+                  <TextBlock Text="Search (process name, PID, words…)" Style="{StaticResource Text.Secondary}" Margin="33,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Secondary}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                          <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                              <Condition Binding="{Binding Text, ElementName=LogSearch}" Value="" />
+                              <Condition Binding="{Binding IsKeyboardFocused, ElementName=LogSearch}" Value="False" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Visible" />
+                          </MultiDataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                </Grid>
+                <ComboBox Style="{StaticResource ComboBox.Default}" MinWidth="170" Margin="0,0,10,8" VerticalAlignment="Center" ItemsSource="{Binding LevelOptions}"
+                          DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding MinimumLevel}" AutomationProperties.Name="Level" ToolTip="Level" />
+                <ComboBox Style="{StaticResource ComboBox.Default}" MinWidth="170" Margin="0,0,10,8" VerticalAlignment="Center" ItemsSource="{Binding Categories}"
+                          SelectedItem="{Binding Category}" AutomationProperties.Name="Category" ToolTip="Category" />
+                <Button Style="{StaticResource Button.Subtle}" Margin="0,0,6,8" Command="{Binding ClearFiltersCommand}" Content="Clear filters" VerticalAlignment="Center" />
+              </WrapPanel>
+              <Grid Margin="0,0,10,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding Summary}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                  <Button Style="{StaticResource Button.Subtle}" Command="{Binding CopyCommand}" ToolTip="Copies the selected entry, or every entry shown when none is selected" Margin="0,0,6,0">
+                    <TextBlock Text="Copy" />
+                  </Button>
+                  <Button Style="{StaticResource Button.Secondary}" Command="{Binding RefreshCommand}" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                      <Path Style="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Refresh}" />
+                      <TextBlock Text="Refresh" Margin="6,0,0,0" />
+                    </StackPanel>
+                  </Button>
+                  <Button Style="{StaticResource Button.Secondary}" Command="{Binding OpenFolderCommand}" ToolTip="{Binding LogDirectory}">
+                    <StackPanel Orientation="Horizontal">
+                      <Path Style="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Folder}" />
+                      <TextBlock Text="Open logs" Margin="6,0,0,0" />
+                    </StackPanel>
+                  </Button>
+                </StackPanel>
+              </Grid>
+              <Border Style="{StaticResource Divider}" Margin="0,0,10,4" />
+              <Grid>
+                <ListBox Height="560" ItemsSource="{Binding Lines}" SelectedItem="{Binding Selected}" ItemTemplate="{StaticResource LogLine}" ItemContainerStyle="{StaticResource LogItem}"
+                         Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.ScrollUnit="Pixel"
+                         AutomationProperties.Name="Log entries">
+                  <ListBox.Template>
+                    <ControlTemplate TargetType="ListBox">
+                      <ScrollViewer Style="{StaticResource ScrollViewer.Page}" CanContentScroll="True" b:ScrollChain.Enabled="True" Focusable="False">
+                        <ItemsPresenter />
+                      </ScrollViewer>
+                    </ControlTemplate>
+                  </ListBox.Template>
+                  <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                  </ListBox.ItemsPanel>
+                </ListBox>
+                <TextBlock Text="No entries match. Clear the filters to see everything." Style="{StaticResource Text.Secondary}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,30,0,0"
+                           Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+                <c:RadialGauge Style="{StaticResource Spinner}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,30,0,0" b:Spin.IsSpinning="{Binding IsLoading}"
+                               Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
+              </Grid>
             </StackPanel>
           </c:SquircleBorder>
         </StackPanel>
