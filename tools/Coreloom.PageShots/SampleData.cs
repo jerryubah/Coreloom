@@ -52,6 +52,7 @@ internal sealed class SampleData
         Settings.Update("Gaming", s =>
         {
             s.Gaming.CoreScheduling = true;
+            s.Gaming.FramePacerTarget = 237;
             s.Gaming.AdaptivePacing = true;
             s.Gaming.CoreProfiles.Add(new CoreProfile { Program = "Cyberpunk2077.exe", Name = "Cyberpunk 2077", FpsGain = 0.07, LowGain = 0.05 });
         });
@@ -300,7 +301,11 @@ internal sealed class SampleOptimize : IOptimizeService
 {
     public bool IsSupported => true;
 
-    public IReadOnlyList<JunkCategory> JunkCategories() => [];
+    public IReadOnlyList<JunkCategory> JunkCategories() => WindowsJunk.Categories(new JunkFolders(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        Path.GetTempPath(),
+        Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData)));
 
     public JunkSize RecycleBinSize() => new(1_400_000_000, 212);
 

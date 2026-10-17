@@ -466,16 +466,11 @@
       <ItemsControl ItemsSource="{Binding Boosts}" ItemTemplate="{StaticResource BoostCard}" Focusable="False">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
-            <!-- stacked in columns in reading order, each card as tall as its text; the last card of each column takes up
-                 the difference so every column ends on the same line -->
-            <c:StackedColumns MinColumnWidth="320" MaxColumns="3" Spacing="12" RowSpacing="12" InOrder="True" FillColumns="True" />
+            <!-- rows of cards that start and end on one line: each row is as tall as its longest card (the short boosts
+                 share rows, the ones with a recommendation share the last), so every column ends on the same line -->
+            <c:AdaptiveGrid MinColumnWidth="320" MaxColumns="3" Spacing="12" RowSpacing="12" />
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
-        <ItemsControl.ItemContainerStyle>
-          <Style TargetType="ContentPresenter">
-            <Setter Property="c:StackedColumns.CanFill" Value="True" />
-          </Style>
-        </ItemsControl.ItemContainerStyle>
       </ItemsControl>
 
       <!-- ============================================================ -->

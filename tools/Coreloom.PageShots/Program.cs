@@ -57,6 +57,7 @@ internal static class Program
 
         var gaming = data.Gaming();
         await ShootAsync(Path.Combine(output, "gaming.png"), new GamingPage { DataContext = gaming }, null, () => gaming.Refresh(data));
+        await ShootAsync(Path.Combine(output, "gaming-narrow.png"), new GamingPage { DataContext = gaming }, null, () => gaming.Refresh(data), 1000);
         gaming.CoreScheduling.OpenDetailsCommand.Execute(null);
         await ShootAsync(Path.Combine(output, "gaming-core-scheduling.png"), new GamingPage { DataContext = gaming }, 1150, () => gaming.Refresh(data));
 
@@ -83,9 +84,9 @@ internal static class Program
     }
 
     /// <summary>Lays the page out at its full height (or <paramref name="height"/>), lets it settle and saves a PNG.</summary>
-    private static async Task ShootAsync(string file, FrameworkElement page, double? height, Action tick)
+    private static async Task ShootAsync(string file, FrameworkElement page, double? height, Action tick, double width = PageWidth)
     {
-        page.Width = PageWidth;
+        page.Width = width;
         if (height is { } h)
         {
             page.Height = h;
@@ -106,6 +107,13 @@ internal static class Program
             Content = canvas,
             Background = Application.Current.TryFindResource("Brush.WindowBackground") as Brush ?? new SolidColorBrush(Color.FromRgb(0x0E, 0x10, 0x14)),
         };
+
+        // As the main window sets them (Views/MainWindow.xaml), so text measures the same.
+        window.SetResourceReference(Control.ForegroundProperty, "Brush.Text");
+        window.FontFamily = (FontFamily)Application.Current.FindResource("UiFont");
+        window.FontSize = 13;
+        TextOptions.SetTextFormattingMode(window, TextFormattingMode.Display);
+        TextOptions.SetTextHintingMode(window, TextHintingMode.Fixed);
         window.Show();
         for (int i = 0; i < 12; i++)
         {
@@ -115,7 +123,8 @@ internal static class Program
         }
 
         page.UpdateLayout();
-        double width = page.ActualWidth, pageHeight = page.ActualHeight;
+        width = page.ActualWidth;
+        double pageHeight = page.ActualHeight;
         var background = new DrawingVisual();
         using (var dc = background.RenderOpen())
         {

@@ -36,7 +36,7 @@ public sealed class MemoryViewModel : PageViewModel
             new ChartSeriesViewModel(MetricIds.MemoryCommitUsed, "Committed", ColorKeys.Memory, ValueStyle.Bytes, fill: false),
             new ChartSeriesViewModel(MetricIds.MemoryUsed, "In use", ColorKeys.Cpu, ValueStyle.Bytes, fill: false));
 
-        Processes = new ProcessListViewModel(Monitor.Processes, ProcessSort.Memory, 8, 16);
+        Processes = new ProcessListViewModel(Monitor.Processes, ProcessSort.Memory, 6, 16);
         ModuleSensors = new SensorTableViewModel(d => d.Category == MetricCategory.Memory && d.IsRaw && d.Kind is MetricKind.Temperature or MetricKind.Voltage);
 
         var modules = Monitor.Summary.MemoryModules;
