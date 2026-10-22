@@ -19,6 +19,7 @@ The Benchmarking page's cards show your latest run, and GPU scores move to a big
 ### In detail
 
 - GPU results saved by 1.5.0 are shown on the new scale (their score, its graphics and compute parts and each test's points are multiplied by ten; the measured rates stay as they were), so old and new runs compare fairly and the Best badge goes to the right one.
+- CPU scores and stress test results don't change.
 - Scores are still Coreloom's own: compare them with your own runs rather than with other benchmark apps.
 
 ### Feedback

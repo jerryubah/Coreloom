@@ -1122,6 +1122,9 @@ public sealed class BenchmarkingViewModel : PageViewModel
                     ShowLoops(loads);
                 }
 
+                // The failure first, then the count: a load counts an error before it describes it, so a failure seen
+                // here with no errors counted is a load that stopped working (a driver reset), not a wrong answer.
+                string? broken = loads.Select(l => l.Load.Failure).FirstOrDefault(f => f is not null);
                 int errors = loads.Sum(l => l.Load.Errors);
                 StressErrors = errors == 0 ? "None" : errors == 1 ? "1 error" : $"{errors} errors";
                 StressElapsed = BenchmarkFormat.Duration(seconds);
@@ -1138,9 +1141,9 @@ public sealed class BenchmarkingViewModel : PageViewModel
                 if (errors > 0)
                 {
                     reason = StressStopReason.Error;
-                    failure = loads.Select(l => l.Load.Failure).FirstOrDefault(f => f is not null);
+                    failure = broken ?? loads.Select(l => l.Load.Failure).FirstOrDefault(f => f is not null);
                 }
-                else if (loads.Select(l => l.Load.Failure).FirstOrDefault(f => f is not null) is { } broken)
+                else if (broken is not null)
                 {
                     reason = StressStopReason.Failed;
                     failure = broken;

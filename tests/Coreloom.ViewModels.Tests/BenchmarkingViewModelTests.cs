@@ -450,8 +450,8 @@ public class BenchmarkingViewModelTests
         ShortStress(page, seconds: 30);
         service.OnLoad = load => _ = Task.Delay(400).ContinueWith(_ =>
         {
+            load.Errors = 1; // counted, then described, as the real loads do
             load.Failure = "Logical processor 7 got a matrix calculation wrong.";
-            load.Errors = 1;
         }, TaskScheduler.Default);
         var clock = Stopwatch.StartNew();
 
