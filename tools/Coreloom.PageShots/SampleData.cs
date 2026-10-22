@@ -442,7 +442,7 @@ internal sealed class SampleBenchmarks : IHardwareBenchmarkService
         {
             Kind = BenchmarkKind.Cpu,
             Finished = when,
-            AppVersion = "1.5.0",
+            AppVersion = "1.5.1",
             Score = CpuBenchmark.GeometricMean(tests.Select(t => t.Score)),
             Subscores = [new("Single-core", CpuBenchmark.GeometricMean(tests.Select(t => t.SingleScore!.Value))), new("Multi-core", CpuBenchmark.GeometricMean(tests.Select(t => t.Score)))],
             Device = "AMD Ryzen 9 9950X3D",
@@ -459,8 +459,8 @@ internal sealed class SampleBenchmarks : IHardwareBenchmarkService
 
     private static BenchmarkResult Gpu(DateTimeOffset when, double scale, bool raisedLimit)
     {
-        double[] scores = [24800, 27100, 38400, 14600, 31200];
-        var tests = GpuTests.All.Select((t, i) => new BenchmarkTestResult(t.Id, t.Name, t.Category, t.Unit, scores[i] * scale * t.Reference / 1000, scores[i] * scale)).ToList();
+        double[] scores = [352000, 338000, 455000, 248000, 452000];
+        var tests = GpuTests.All.Select((t, i) => new BenchmarkTestResult(t.Id, t.Name, t.Category, t.Unit, scores[i] * scale * t.Reference / BenchmarkScale.Gpu, scores[i] * scale)).ToList();
         var readings = new ReadingRecorder();
         foreach (var (name, kind, values) in new (string, MetricKind, double[])[]
         {
@@ -490,7 +490,8 @@ internal sealed class SampleBenchmarks : IHardwareBenchmarkService
         {
             Kind = BenchmarkKind.Gpu,
             Finished = when,
-            AppVersion = "1.5.0",
+            AppVersion = "1.5.1",
+            PointsAtReference = BenchmarkScale.Gpu,
             Score = overall,
             Subscores = [new("Graphics", graphics), new("Compute", compute)],
             Device = "NVIDIA GeForce RTX 5090",
@@ -514,7 +515,7 @@ internal sealed class SampleBenchmarks : IHardwareBenchmarkService
         {
             Kind = BenchmarkKind.Stress,
             Finished = when,
-            AppVersion = "1.5.0",
+            AppVersion = "1.5.1",
             Score = Math.Round(StressScoring.Stability(loops), 1),
             Device = "AMD Ryzen 9 9950X3D",
             Target = "Processor",

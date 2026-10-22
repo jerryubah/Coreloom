@@ -82,6 +82,13 @@ public sealed record BenchmarkResult
     public string AppVersion { get; init; } = string.Empty;
 
     /// <summary>
+    /// Points a test scores at its reference rate: 1,000 for the CPU benchmark, 10,000 for the GPU benchmark since 1.5.1.
+    /// Missing (0) in results saved by 1.5.0, whose GPU scores were on the 1,000 scale; <see cref="BenchmarkScale"/>
+    /// brings those up to date.
+    /// </summary>
+    public int PointsAtReference { get; init; }
+
+    /// <summary>
     /// The headline number: the multi-core score for the CPU benchmark, the overall score for the GPU benchmark, the
     /// stability (percent) for a stress test.
     /// </summary>
@@ -139,6 +146,54 @@ public sealed record BenchmarkResult
 }
 
 /// <summary>
+/// The points scales. The CPU benchmark scores 1,000 points per test at its reference rate. The GPU benchmark scores
+/// 10,000 (since 1.5.1; it was 1,000 in 1.5.0), so a high-end graphics card lands in the hundreds of thousands, the
+/// range Geekbench's GPU (OpenCL) scores are in.
+/// </summary>
+public static class BenchmarkScale
+{
+    public const int Cpu = 1_000;
+
+    public const int Gpu = 10_000;
+
+    /// <summary>The points per reference rate for a kind (stress tests aren't scored in points: 0).</summary>
+    public static int For(BenchmarkKind kind) => kind switch
+    {
+        BenchmarkKind.Cpu => Cpu,
+        BenchmarkKind.Gpu => Gpu,
+        _ => 0,
+    };
+
+    /// <summary>
+    /// A result on today's scale: a GPU result saved by 1.5.0 (on the 1,000-point scale) has its score, parts and test
+    /// points multiplied by ten; anything else is returned as it is (with its scale filled in).
+    /// </summary>
+    public static BenchmarkResult Upgrade(BenchmarkResult result)
+    {
+        int current = For(result.Kind);
+        if (result.PointsAtReference == current)
+        {
+            return result;
+        }
+
+        int was = result.PointsAtReference > 0 ? result.PointsAtReference : Cpu; // 1.5.0 saved no scale: 1,000 for both
+        if (current == 0 || was == current)
+        {
+            return result with { PointsAtReference = current };
+        }
+
+        double factor = (double)current / was;
+        return result with
+        {
+            PointsAtReference = current,
+            Score = result.Score * factor,
+            Subscores = result.Subscores.Select(s => s with { Score = s.Score * factor }).ToList(),
+            Tests = result.Tests.Select(t => t with { Score = t.Score * factor, SingleScore = t.SingleScore * factor }).ToList(),
+        };
+    }
+}
+
+/// <summary>
 /// The saved results, newest first, and which one is best of its kind (the highest CPU score, the highest GPU score).
 /// Stress tests pass or fail and are never "best".
 /// </summary>
@@ -153,7 +208,7 @@ public sealed class BenchmarkHistory
     {
         if (results is not null)
         {
-            _results.AddRange(results.Where(r => r is not null && !string.IsNullOrEmpty(r.Id)).DistinctBy(r => r.Id));
+            _results.AddRange(results.Where(r => r is not null && !string.IsNullOrEmpty(r.Id)).DistinctBy(r => r.Id).Select(BenchmarkScale.Upgrade));
             Sort();
             Trim();
         }
@@ -165,7 +220,7 @@ public sealed class BenchmarkHistory
     {
         ArgumentNullException.ThrowIfNull(result);
         _results.RemoveAll(r => r.Id == result.Id);
-        _results.Add(result);
+        _results.Add(BenchmarkScale.Upgrade(result));
         Sort();
         Trim();
     }

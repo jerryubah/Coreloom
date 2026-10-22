@@ -45,16 +45,16 @@ public sealed class LiveReadingViewModel(string label, string iconKey, string co
 public sealed record ScorePartItem(string Label, string Value);
 
 /// <summary>
-/// The Processor or Graphics card card at the top of the page: the best score with its Best badge, the latest run, a
-/// Run button, and — while its benchmark runs — the test it's on, progress and live readings.
+/// The Processor or Graphics card card at the top of the page: the latest run's score and its parts (the best result is
+/// marked in the results list, not here), a Run button, and — while its benchmark runs — the test it's on, progress and
+/// live readings.
 /// </summary>
 public sealed class BenchmarkCardViewModel : ObservableObject
 {
     private string _device = string.Empty;
-    private string _best = "—";
-    private bool _hasBest;
-    private string _bestDate = "No results yet";
-    private string _latest = string.Empty;
+    private string _score = "—";
+    private bool _hasScore;
+    private string _scoreDate = "No results yet";
     private IReadOnlyList<ScorePartItem> _parts = [];
     private bool _isRunning;
     private double _progress;
@@ -102,30 +102,24 @@ public sealed class BenchmarkCardViewModel : ObservableObject
         set => SetProperty(ref _device, value);
     }
 
-    public string Best
+    /// <summary>The latest run's score ("—" before the first run).</summary>
+    public string Score
     {
-        get => _best;
-        private set => SetProperty(ref _best, value);
+        get => _score;
+        private set => SetProperty(ref _score, value);
     }
 
-    public bool HasBest
+    public bool HasScore
     {
-        get => _hasBest;
-        private set => SetProperty(ref _hasBest, value);
+        get => _hasScore;
+        private set => SetProperty(ref _hasScore, value);
     }
 
-    /// <summary>"Best · 22 Oct 2026" or "No results yet".</summary>
-    public string BestDate
+    /// <summary>"Latest run · 22 Oct 2026, 07:45" or "No results yet".</summary>
+    public string ScoreDate
     {
-        get => _bestDate;
-        private set => SetProperty(ref _bestDate, value);
-    }
-
-    /// <summary>"Latest 12,001 · 97 % of your best" (empty when the latest is the best).</summary>
-    public string Latest
-    {
-        get => _latest;
-        private set => SetProperty(ref _latest, value);
+        get => _scoreDate;
+        private set => SetProperty(ref _scoreDate, value);
     }
 
     public IReadOnlyList<ScorePartItem> Parts
@@ -181,17 +175,14 @@ public sealed class BenchmarkCardViewModel : ObservableObject
         set => SetProperty(ref _unavailableReason, value);
     }
 
+    /// <summary>Shows the latest run of this kind.</summary>
     public void Show(BenchmarkHistory history)
     {
-        var best = history.Best(Kind);
-        HasBest = best is not null;
-        Best = best is null ? "—" : BenchmarkFormat.Score(best.Score);
-        BestDate = best is null ? "No results yet" : $"Best · {BenchmarkFormat.Date(best.Finished)}";
-        Parts = best?.Subscores.Select(s => new ScorePartItem(s.Name, BenchmarkFormat.Score(s.Score))).ToList() ?? [];
         var latest = history.Latest(Kind);
-        Latest = latest is null || best is null || latest.Id == best.Id
-            ? string.Empty
-            : $"Latest {BenchmarkFormat.Score(latest.Score)} · {Math.Round(history.FractionOfBest(latest) * 100).ToString("0", CultureInfo.CurrentCulture)} % of your best";
+        HasScore = latest is not null;
+        Score = latest is null ? "—" : BenchmarkFormat.Score(latest.Score);
+        ScoreDate = latest is null ? "No results yet" : $"Latest run · {BenchmarkFormat.DateTime(latest.Finished)}";
+        Parts = latest?.Subscores.Select(s => new ScorePartItem(s.Name, BenchmarkFormat.Score(s.Score))).ToList() ?? [];
     }
 }
 
@@ -414,8 +405,8 @@ public static class BenchmarkFormat
 }
 
 /// <summary>
-/// The Benchmarking page: CPU and GPU benchmarks scored on Coreloom's own scale (1,000 points per test for a
-/// reference machine; overall scores are geometric means), saved results with a Best badge on each kind's highest
+/// The Benchmarking page: CPU and GPU benchmarks scored on Coreloom's own scale (1,000 points per CPU test and 10,000 per
+/// GPU test at a reference rate; overall scores are geometric means), saved results with a Best badge on each kind's highest
 /// score, a details window per result (every test, the clocks, voltages, temperatures and power during the run, and
 /// what they say about overclocking), and a stress test for the processor, the graphics card or both. Nothing here
 /// changes clocks, voltages or limits.
@@ -955,6 +946,7 @@ public sealed class BenchmarkingViewModel : PageViewModel
             Kind = BenchmarkKind.Cpu,
             Finished = DateTimeOffset.Now,
             AppVersion = _appVersion,
+            PointsAtReference = BenchmarkScale.Cpu,
             Score = scores.MultiScore,
             Subscores = [new("Single-core", scores.SingleScore), new("Multi-core", scores.MultiScore)],
             Device = Cpu.Device,
@@ -1015,6 +1007,7 @@ public sealed class BenchmarkingViewModel : PageViewModel
             Kind = BenchmarkKind.Gpu,
             Finished = DateTimeOffset.Now,
             AppVersion = _appVersion,
+            PointsAtReference = BenchmarkScale.Gpu,
             Score = scores.Score,
             Subscores = [new("Graphics", scores.Graphics), new("Compute", scores.Compute)],
             Device = scores.Adapter.Name,

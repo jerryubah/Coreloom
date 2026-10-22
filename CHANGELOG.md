@@ -7,6 +7,24 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-10-22
+
+The Benchmarking page's cards show your latest run, and GPU scores move to a bigger scale.
+
+### Highlights
+
+- **The cards show your latest run.** The big number on the Processor and Graphics card cards, and the parts under it, are now from the run you did most recently, so you see a new result as soon as it finishes. The *Your best* badge is gone from the cards; the **Best** badge stays on your highest CPU and GPU scores in the results list.
+- **A bigger GPU scale.** Each GPU test now scores 10,000 points at its reference rate instead of 1,000, so GPU scores are ten times higher: an RTX 5090 that scored about 37,000 now scores about 370,000, the range Geekbench's GPU (OpenCL) scores are in. The CPU scale doesn't change.
+
+### In detail
+
+- GPU results saved by 1.5.0 are shown on the new scale (their score, its graphics and compute parts and each test's points are multiplied by ten; the measured rates stay as they were), so old and new runs compare fairly and the Best badge goes to the right one.
+- Scores are still Coreloom's own: compare them with your own runs rather than with other benchmark apps.
+
+### Feedback
+
+Something not right? [Open an issue](https://github.com/jerryubah/Coreloom/issues) with a screenshot and a CoreloomDiag report.
+
 ## [1.5.0] - 2026-10-22
 
 A new **Benchmarking** page: benchmark your processor and graphics card, keep every result with a Best badge on your top scores, open any result for its clocks, voltages and overclocking, and stress test your hardware.

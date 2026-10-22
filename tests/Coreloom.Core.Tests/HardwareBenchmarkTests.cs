@@ -245,6 +245,57 @@ public class BenchmarkHistoryTests
     }
 
     [Fact]
+    public void GpuTests_Score10000_AtTheReference_CpuTests1000()
+    {
+        Assert.Equal(10000, GpuTests.Score(GpuTests.Compute.Reference, GpuTests.Compute.Reference), 6);
+        Assert.Equal(370000, GpuTests.Score(37 * GpuTests.Compute.Reference, GpuTests.Compute.Reference), 6);
+        Assert.Equal(0, GpuTests.Score(0, 100));
+        Assert.Equal(1000, CpuBenchmark.Score(15, 15), 6);
+        Assert.Equal(BenchmarkScale.Gpu, BenchmarkScale.For(BenchmarkKind.Gpu));
+        Assert.Equal(BenchmarkScale.Cpu, BenchmarkScale.For(BenchmarkKind.Cpu));
+        Assert.Equal(0, BenchmarkScale.For(BenchmarkKind.Stress));
+    }
+
+    [Fact]
+    public void GpuResultsSavedBy150_MoveToTheNewScale_AndNothingElseChanges()
+    {
+        var old = Result(BenchmarkKind.Gpu, 37000, 1) with
+        {
+            Subscores = [new("Graphics", 36000), new("Compute", 38000)],
+            Tests = [new("lighting", "Lighting", "Graphics", "fps", 2100, 35000), new("compute", "Compute", "Compute", "GFLOPS", 84000, 38000)],
+        };
+        var upgraded = BenchmarkScale.Upgrade(old);
+        Assert.Equal(370000, upgraded.Score, 6);
+        Assert.Equal(new double[] { 360000, 380000 }, upgraded.Subscores.Select(x => x.Score));
+        Assert.Equal(new double[] { 350000, 380000 }, upgraded.Tests.Select(t => t.Score));
+        Assert.Equal(new double[] { 2100, 84000 }, upgraded.Tests.Select(t => t.Rate));
+        Assert.Equal(BenchmarkScale.Gpu, upgraded.PointsAtReference);
+        Assert.Same(upgraded, BenchmarkScale.Upgrade(upgraded)); // once only
+
+        var cpu = BenchmarkScale.Upgrade(Result(BenchmarkKind.Cpu, 30000, 2));
+        Assert.Equal(30000, cpu.Score);
+        Assert.Equal(BenchmarkScale.Cpu, cpu.PointsAtReference);
+        Assert.Equal(99.5, BenchmarkScale.Upgrade(Result(BenchmarkKind.Stress, 99.5, 3)).Score);
+
+        var history = new BenchmarkHistory([old, Result(BenchmarkKind.Gpu, 300000, 2) with { PointsAtReference = BenchmarkScale.Gpu }]);
+        Assert.Equal(370000, history.Best(BenchmarkKind.Gpu)!.Score, 6); // compared on one scale
+    }
+
+    [Fact]
+    public void TheScale_IsSaved()
+    {
+        string file = Path.Combine(Path.GetTempPath(), "coreloom-bench-" + Guid.NewGuid().ToString("N"), BenchmarkStore.FileName);
+        var store = new BenchmarkStore(file);
+        store.Save([Result(BenchmarkKind.Gpu, 370000, 1) with { PointsAtReference = BenchmarkScale.Gpu }]);
+        Assert.Equal(BenchmarkScale.Gpu, Assert.Single(store.Load()).PointsAtReference);
+        File.WriteAllText(file, "{\"version\":1,\"results\":[{\"id\":\"a\",\"kind\":\"Gpu\",\"score\":37000}]}"); // as 1.5.0 wrote it
+        var loaded = Assert.Single(store.Load());
+        Assert.Equal(0, loaded.PointsAtReference);
+        Assert.Equal(370000, new BenchmarkHistory([loaded]).Results[0].Score, 6);
+        Directory.Delete(Path.GetDirectoryName(file)!, recursive: true);
+    }
+
+    [Fact]
     public void GpuScores_AreGeometricMeans_OverallAndPerCategory()
     {
         BenchmarkTestResult[] tests =

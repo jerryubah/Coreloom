@@ -939,7 +939,7 @@ public static class CpuBenchmark
     }
 
     /// <summary>Points for a rate: 1,000 at the reference rate.</summary>
-    public static double Score(double rate, double reference) => rate > 0 && reference > 0 ? rate / reference * 1000 : 0;
+    public static double Score(double rate, double reference) => rate > 0 && reference > 0 ? rate / reference * BenchmarkScale.Cpu : 0;
 
     /// <summary>The geometric mean (0 when any is 0 or there are none).</summary>
     public static double GeometricMean(IEnumerable<double> values)

@@ -163,6 +163,7 @@ public class BenchmarkingViewModelTests
     {
         Kind = kind,
         Score = score,
+        PointsAtReference = BenchmarkScale.For(kind),
         Device = device,
         Finished = Earlier.AddHours(hours),
         Subscores = kind == BenchmarkKind.Cpu ? [new("Single-core", score / 8), new("Multi-core", score)] : [],
@@ -185,12 +186,13 @@ public class BenchmarkingViewModelTests
         Assert.Equal(BenchmarkKind.Stress, page.Results[0].Result.Kind);
         Assert.Equal(new[] { false, false, true, true, false }, page.Results.Select(r => r.IsBest));
         Assert.Equal(21000, page.Results.Single(r => r.IsBest && r.Result.Kind == BenchmarkKind.Cpu).Result.Score);
-        Assert.True(page.Cpu.HasBest);
-        Assert.Equal(BenchmarkFormat.Score(21000), page.Cpu.Best);
-        Assert.Contains("93 % of your best", page.Cpu.Latest);
+        // The cards show the latest run (19,500, not the best 21,000); the best is marked only in the list.
+        Assert.True(page.Cpu.HasScore);
+        Assert.Equal(BenchmarkFormat.Score(19500), page.Cpu.Score);
+        Assert.StartsWith("Latest run · ", page.Cpu.ScoreDate);
         Assert.Equal(new[] { "Single-core", "Multi-core" }, page.Cpu.Parts.Select(p => p.Label));
-        Assert.Equal(BenchmarkFormat.Score(25000), page.Gpu.Best);
-        Assert.Equal(string.Empty, page.Gpu.Latest); // the latest is the best
+        Assert.Equal(BenchmarkFormat.Score(19500 / 8.0), page.Cpu.Parts[0].Value);
+        Assert.Equal(BenchmarkFormat.Score(25000), page.Gpu.Score);
         Assert.Equal("Passed", page.Results[0].VerdictText);
         Assert.Equal("5 saved results", page.ResultsSummary);
         settings.Dispose();
@@ -219,8 +221,10 @@ public class BenchmarkingViewModelTests
         Assert.Equal(16, result.System.Cores);
         Assert.Equal(32, result.Threads);
         Assert.Equal(80, result.MemoryBandwidth);
-        Assert.True(page.Cpu.HasBest);
+        Assert.True(page.Cpu.HasScore);
+        Assert.Equal(BenchmarkFormat.Score(20000), page.Cpu.Score);
         Assert.True(page.Results[0].IsBest);
+        Assert.Equal(BenchmarkScale.Cpu, result.PointsAtReference);
         Assert.False(page.IsRunning);
         Assert.False(page.Cpu.IsRunning);
         Assert.Equal("—", page.Cpu.Live[0].Value);
@@ -248,7 +252,9 @@ public class BenchmarkingViewModelTests
         Assert.True(limit.Raised); // 575 W against the 500 W default
         Assert.Contains("+15 %", limit.Detail);
         Assert.Contains(gpu.Tuning, t => t.Name == "Peak core clock" && !t.Raised); // 2,850 MHz of 3,090 MHz
-        Assert.True(page.Gpu.HasBest);
+        Assert.True(page.Gpu.HasScore);
+        Assert.Equal(BenchmarkFormat.Score(30000), page.Gpu.Score);
+        Assert.Equal(BenchmarkScale.Gpu, gpu.PointsAtReference);
         settings.Dispose();
     }
 
@@ -274,6 +280,43 @@ public class BenchmarkingViewModelTests
         Assert.Empty(service.Saved);
         Assert.False(page.IsRunning);
         Assert.Contains("Cancelled", page.Status);
+        settings.Dispose();
+    }
+
+    [Fact]
+    public async Task ARunBelowYourBest_IsWhatTheCardShows_AndTheBadgeStaysOnTheBest()
+    {
+        var service = new FakeBenchmarkService { Saved = [Saved(BenchmarkKind.Cpu, 21000, 1)], CpuMulti = 20000 };
+        var (page, _, _, _, settings) = Create(service);
+        page.CpuOptions = new CpuBenchmarkOptions(Seconds: 0.01, WarmupSeconds: 0, Threads: 1, Small: true);
+        Assert.Equal(BenchmarkFormat.Score(21000), page.Cpu.Score);
+
+        await page.RunCpuCommand.ExecuteAsync(null);
+
+        Assert.Equal(BenchmarkFormat.Score(20000), page.Cpu.Score);
+        Assert.Equal(BenchmarkFormat.Score(2500), page.Cpu.Parts[0].Value);
+        Assert.False(page.Results[0].IsBest); // the new run
+        Assert.True(page.Results[1].IsBest);  // 21,000 keeps the badge
+        settings.Dispose();
+    }
+
+    [Fact]
+    public void GpuResultsFrom150_AreShownOnTheNewScale()
+    {
+        var old = Saved(BenchmarkKind.Gpu, 37000, 1) with
+        {
+            PointsAtReference = 0, // saved by 1.5.0
+            Subscores = [new("Graphics", 36000), new("Compute", 38000)],
+            Tests = [new("compute", "Compute", "Compute", "GFLOPS", 84000, 38000)],
+        };
+        var (page, _, _, _, settings) = Create(new FakeBenchmarkService { Saved = [old] });
+
+        Assert.Equal(BenchmarkFormat.Score(370000), page.Gpu.Score);
+        Assert.Equal(new[] { BenchmarkFormat.Score(360000), BenchmarkFormat.Score(380000) }, page.Gpu.Parts.Select(p => p.Value));
+        page.OpenDetailsCommand.Execute(page.Results[0]);
+        var test = Assert.Single(page.Details!.Tests);
+        Assert.Equal(BenchmarkFormat.Score(380000), test.Score);
+        Assert.Equal("84,000 GFLOPS", test.Rate); // rates don't change
         settings.Dispose();
     }
 

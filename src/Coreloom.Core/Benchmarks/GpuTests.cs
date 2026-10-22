@@ -3,9 +3,9 @@ namespace Coreloom.Core.Benchmarks;
 /// <summary>A GPU test: what it does and the rate that scores 1,000 points.</summary>
 /// <param name="Category">"Graphics" (drawing frames) or "Compute" (general GPU computing).</param>
 /// <param name="Reference">
-/// The rate that scores 1,000 points: an estimate for an entry-level gaming graphics card of about 2.5 TFLOPS and
-/// 110 GB/s (a GeForce GTX 1650 class card). It's Coreloom's own scale, worked out from each test's arithmetic rather
-/// than measured on that card.
+/// The rate that scores 10,000 points (<see cref="BenchmarkScale.Gpu"/>): an estimate for an entry-level gaming graphics
+/// card of about 2.5 TFLOPS and 110 GB/s (a GeForce GTX 1650 class card). It's Coreloom's own scale, worked out from each
+/// test's arithmetic rather than measured on that card; a high-end card scores in the hundreds of thousands.
 /// </param>
 public sealed record GpuTestInfo(string Id, string Name, string Category, string Description, string Unit, double Reference);
 
@@ -33,6 +33,9 @@ public static class GpuTests
         "Simulates gravity between 32,768 bodies, each pulling on every other (over a billion pairs a step).", "G pairs/s", 45);
 
     public static IReadOnlyList<GpuTestInfo> All { get; } = [Lighting, RayMarching, Compute, Bandwidth, Physics];
+
+    /// <summary>Points for a rate: 10,000 at the reference rate.</summary>
+    public static double Score(double rate, double reference) => rate > 0 && reference > 0 ? rate / reference * BenchmarkScale.Gpu : 0;
 
     /// <summary>The overall score and the graphics and compute parts (geometric means, so every test counts the same).</summary>
     public static (double Overall, double Graphics, double Compute) Scores(IReadOnlyList<BenchmarkTestResult> tests) => (

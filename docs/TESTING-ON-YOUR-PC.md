@@ -338,6 +338,15 @@ Work through each area and tick what works.
       applies at once. Off puts *Shader Cache Size* back to *Driver Default*.
 - [ ] (Auto HDR was a boost from 1.4.3 to 1.4.6; since 1.4.7 it's set in Windows' *Settings › Display › Graphics*.)
 
+**New in 1.5.1**
+
+- [ ] Benchmarking: the Processor and Graphics card cards show your latest run's score, its parts and "Latest run ·
+      date, time", with no *Your best* badge. Run the CPU benchmark again: the card shows the new score even if it's
+      lower, and the **Best** badge in *Results* stays on the highest one.
+- [ ] GPU scores are ten times higher: your earlier RTX 5090 result (about 37,000) now reads about 370,000 on the card,
+      in the results list and in its details (each test's points too; the fps, GFLOPS and GB/s stay the same). A new
+      GPU run lands in the same range.
+
 **New in 1.5.0**
 
 - [ ] A **Benchmarking** page in the sidebar, under Gaming. The Processor card names your processor and the Graphics

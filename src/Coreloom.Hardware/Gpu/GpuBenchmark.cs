@@ -63,7 +63,7 @@ public static class GpuBenchmark
             var workload = workloads[i];
             progress?.Report(new BenchmarkProgress(workload.Info.Name, i / (double)workloads.Count, workload.Info.Category));
             double rate = Measure(gpu, workload, options.Seconds, cancellationToken);
-            results.Add(new BenchmarkTestResult(workload.Info.Id, workload.Info.Name, workload.Info.Category, workload.Info.Unit, rate, CpuBenchmark.Score(rate, workload.Info.Reference)));
+            results.Add(new BenchmarkTestResult(workload.Info.Id, workload.Info.Name, workload.Info.Category, workload.Info.Unit, rate, GpuTests.Score(rate, workload.Info.Reference)));
         }
 
         progress?.Report(new BenchmarkProgress("Done", 1));

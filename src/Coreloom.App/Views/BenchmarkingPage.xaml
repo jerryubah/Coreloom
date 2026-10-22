@@ -78,8 +78,8 @@
       </c:SquircleBorder>
     </DataTemplate>
 
-    <!-- The Processor and Graphics card cards: the best score, its parts and the latest run; while running, the test,
-         progress and live readings. -->
+    <!-- The Processor and Graphics card cards: the latest run's score and its parts; while running, the test, progress
+         and live readings. -->
     <DataTemplate x:Key="ScoreCard" DataType="{x:Type pages:BenchmarkCardViewModel}">
       <c:SquircleBorder Style="{StaticResource Card.Glow}" GlowKey="{Binding ColorKey}" GlowStrength="0.75" Sheen="0.6" Padding="22,18,22,20">
         <Grid>
@@ -109,15 +109,13 @@
               </StackPanel>
               <TextBlock Text="{Binding Device}" Style="{StaticResource Text.Caption}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Device}" />
             </StackPanel>
-            <ContentControl Grid.Column="2" Template="{StaticResource BestBadge}" Content="Your best" VerticalAlignment="Top" Focusable="False"
-                            Visibility="{Binding HasBest, Converter={StaticResource BoolToVisibility}}" />
           </Grid>
 
-          <!-- Idle: the best score -->
+          <!-- Idle: the latest run's score (the best is marked in the results below) -->
           <StackPanel Grid.Row="1" Margin="0,16,0,0" Visibility="{Binding IsIdle, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="{Binding Best}" Style="{StaticResource Score}" FontSize="44" />
+            <TextBlock Text="{Binding Score}" Style="{StaticResource Score}" FontSize="44" />
             <TextBlock Style="{StaticResource Text.Caption}" Margin="0,2,0,0">
-              <Run Text="{Binding ScoreLabel, Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" /><Run Text="  ·  " /><Run Text="{Binding BestDate, Mode=OneWay}" />
+              <Run Text="{Binding ScoreLabel, Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" /><Run Text="  ·  " /><Run Text="{Binding ScoreDate, Mode=OneWay}" />
             </TextBlock>
             <ItemsControl ItemsSource="{Binding Parts}" Margin="0,14,0,0" Focusable="False">
               <ItemsControl.ItemsPanel>
@@ -136,8 +134,6 @@
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
-            <TextBlock Text="{Binding Latest}" Style="{StaticResource Text.Caption}" Margin="0,10,0,0" TextWrapping="Wrap"
-                       Visibility="{Binding Latest, Converter={StaticResource HasValueToVisibility}}" />
           </StackPanel>
 
           <!-- Running: the test, progress and live readings -->
@@ -409,7 +405,7 @@
       </c:SquircleBorder>
 
       <TextBlock Style="{StaticResource Text.Caption}" Margin="2,14,0,0" TextWrapping="Wrap" TextTrimming="None"
-                 Text="Scores are Coreloom's own: each test scores 1,000 points at a reference rate, and the overall scores are geometric means, so compare them with your own runs rather than with other benchmark apps. Coreloom only reads clocks, voltages and limits; it never changes them." />
+                 Text="Scores are Coreloom's own: each CPU test scores 1,000 points and each GPU test 10,000 at a reference rate, and the overall scores are geometric means, so compare them with your own runs rather than with other benchmark apps. Coreloom only reads clocks, voltages and limits; it never changes them." />
     </StackPanel>
   </ScrollViewer>
 

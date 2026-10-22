@@ -324,13 +324,18 @@ results file.
   sphere/box blends with soft shadows and ambient occlusion, up to 96 steps, 1920 × 1080), *Compute* (a million threads
   of four dependent FP32 multiply-add chains, 256 FLOP per loop, 256 loops), *Memory bandwidth* (a 128 MB uint4 copy)
   and *Physics* (an N-body step of 32,768 bodies with 64-body groupshared tiles). Each is batched to about 30 ms per
-  wait (so no submission runs long), warmed up, then timed for 3 s. References are estimates for a ~2.5 TFLOPS,
-  ~110 GB/s card, worked out from each shader's instruction count, not measured on such a card. Every workload's
+  wait (so no submission runs long), warmed up, then timed for 3 s. A GPU test scores 10,000 points at its reference
+  rate (`BenchmarkScale.Gpu`, since 1.5.1; 1,000 in 1.5.0), so high-end cards score in the hundreds of thousands like
+  Geekbench's OpenCL scores. References are estimates for a ~2.5 TFLOPS, ~110 GB/s card, worked out from each
+  shader's instruction count, not measured on such a card. Every workload's
   answer (a checksum of the frame or the buffer) is the same on every run, which the stress test relies on. Nothing is
   presented on screen and no game is touched.
 - **Results.** `BenchmarkResult` holds the kind, score and parts, every test's rate and points, the readings during
   the run (`ReadingRecorder`: lowest, average and highest per sensor, from the telemetry engine's latest frame each
   second), the tuning notes, the PC (`BenchmarkSystem`) and, for stress tests, the loops, errors and verdict.
+  Each result records its scale (`PointsAtReference`); `BenchmarkScale.Upgrade` multiplies the points of GPU results
+  saved by 1.5.0 (no scale recorded) by ten as they're loaded, rates untouched. The page's Processor and Graphics card
+  cards show the latest result of their kind; the Best badge is only in the results list.
   `BenchmarkHistory` keeps them newest first, picks each kind's best (highest score, earliest on a tie; stress tests
   are never best) and trims to 200 while keeping the bests; `BenchmarkStore` saves `benchmarks.json` in the settings
   folder atomically and keeps an unreadable file as `.bad`.
