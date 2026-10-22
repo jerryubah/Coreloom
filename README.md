@@ -51,6 +51,15 @@ installs drivers or services, and never sends your data anywhere.
   each game's real frame times while you play and sets the game's own limit to a frame rate it holds with steady 1%
   lows, a step at a time, under your refresh rate and in whole rendered frames with frame generation; and shader-cache
   care (cache sizes, a notice when a new driver resets them).
+- **Benchmarking.** A CPU benchmark (eight tests of everyday and demanding work — compression, text processing,
+  cryptography, navigation, ray tracing, machine learning, a photo filter and physics — on one core and on every
+  thread, for a single-core and a multi-core score) and a GPU benchmark (two graphics tests and three compute tests on
+  Coreloom's own off-screen Direct3D 11 device, for a GPU score with graphics and compute parts). Every result is saved
+  with a **Best** badge on your highest CPU and GPU scores; open one for each test, the clocks, temperatures, power and
+  voltages during the run, and what they say about overclocking (Precision Boost Overdrive, a raised graphics power
+  limit, clocks past the rated maximum). A **stress test** loads the processor, the graphics card or both for up to an
+  hour, checks every answer for calculation errors and passes at 97 % stability, like 3DMark's. Scores are Coreloom's
+  own scale; nothing is overclocked or changed.
 - **In-game overlay.** FPS, frame time and 1% lows with a smooth frame-time graph and GPU, CPU and RAM readings on top
   of your games, measured from Windows' graphics events (nothing is injected into games, and Coreloom gives way to the
   game while it runs); while the frame limiter limits the game, its limit is a dashed line on the graph. Turned on

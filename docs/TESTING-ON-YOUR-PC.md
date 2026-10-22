@@ -338,6 +338,32 @@ Work through each area and tick what works.
       applies at once. Off puts *Shader Cache Size* back to *Driver Default*.
 - [ ] (Auto HDR was a boost from 1.4.3 to 1.4.6; since 1.4.7 it's set in Windows' *Settings › Display › Graphics*.)
 
+**New in 1.5.0**
+
+- [ ] A **Benchmarking** page in the sidebar, under Gaming. The Processor card names your processor and the Graphics
+      card card your RTX 5090 (with a list to pick from if Windows shows more than one card).
+- [ ] *Run benchmark* on the Processor card: the card shows the test it's on ("Ray tracing", "Multi-core · 32
+      threads"), a progress bar and live clock, temperature and power; after about a minute the score appears with
+      *Your best*, and a *CPU benchmark* row with a **Best** badge appears under *Results*. Run it again: the badge
+      stays on the higher score, and the card says how the latest compares ("97 % of your best").
+- [ ] *Run benchmark* on the Graphics card card: about 20–30 seconds; the GPU's clock and power climb in its tiles while
+      it runs. Nothing flashes on screen (the tests draw off-screen). *Run both* runs the two back to back. *Cancel*
+      stops a run and saves nothing.
+- [ ] Click a result: every test with its rate and points (single- and multi-core for the CPU); *Clocks, voltages and
+      overclocking* with the fastest core clock, boost, *Precision Boost Overdrive* ("Likely on" with PBO enabled in
+      the BIOS, "Off (stock limits)" without), peak power and core voltage; for the GPU its peak clock against the
+      rated maximum and the power limit against the default (raise it in MSI Afterburner or the NVIDIA app and run
+      again: *Raised* with the percentage). *During the run* lists lowest, average and highest readings, and *System*
+      your parts, driver, memory speed and BIOS. *Delete result* removes it (the badge moves to the next best). Esc, ×
+      or clicking outside closes it.
+- [ ] *Stress test*: pick *Processor*, *1 min*, *Start stress test*. The tiles show time left, stability (after two
+      loops), errors and the processor's temperature, clock and power; a bar appears for each 5-second loop. It
+      should end with *Passed* on a stable PC and save a *Stress test · Processor* row. Try *Graphics card* and *Both*
+      too; *Stop* ends a run early (nothing is saved before the first loop). With an unstable overclock or undervolt it
+      should stop with *Failed* and the error.
+- [ ] Filters above the results (*Processor*, *Graphics card*, *Stress tests*) show one kind. Results are still there
+      after restarting Coreloom (they're in `%AppData%\Coreloom\benchmarks.json`).
+
 **New in 1.4.9**
 
 - [ ] Gaming: the ring counts every boost, 9 on your PC: with all nine switches on it says 9/9. Turn one off (say

@@ -1083,7 +1083,7 @@ public sealed class BenchmarkingViewModel : PageViewModel
                 load.Start();
             }
 
-            StressStatus = $"Stress testing the {string.Join(" and the ", loads.Select(l => l.Load.Name.ToLowerInvariant()))}. You can keep using the PC, but it will be slow.";
+            StressStatus = $"Stress testing the {string.Join(" and the ", loads.Select(l => l.Load.Name.ToLowerInvariant()))}. Leave the PC alone: other work slows the test and counts against its stability.";
             while (reason == StressStopReason.None)
             {
                 try

@@ -294,6 +294,61 @@ and `ISpeedTestService` (`PageContext.Tools`), so tests swap in fakes.
   download and 10 s of upload over six HTTP/1.1 connections, counting bytes as they arrive or are sent and leaving
   out the first 20 % while connections ramp up. The live reading is the last second.
 
+## Benchmarking (1.5.0)
+
+The engines are in Core (`Benchmarks/CpuBenchmark.cs`, `StressTest.cs`, `BenchmarkResults.cs`, `BenchmarkTuning.cs`,
+`GpuTests.cs`) and Hardware (`Gpu/Direct3D.cs`, `Gpu/GpuBenchmark.cs`); the page reaches them through
+`IHardwareBenchmarkService` (`PageContext.Tools.Benchmarks`), whose portable default runs the CPU parts and has no
+GPU (tests swap in fakes), and whose Windows implementation (`App/Services/BenchmarkService.cs`) adds Direct3D and the
+results file.
+
+- **CPU benchmark.** Eight `CpuTest`s, each with a deterministic `CpuWorker` per thread (its own data from a seeded
+  xorshift generator, so every PC does the same work): Deflate compression and decompression of 1 MB of generated
+  text, tokenizing and counting the words of 1 MB in an open-addressing hash table plus phrase searches, SHA-256 and
+  AES-GCM over 1 MB, Dijkstra on a 256 × 256 weighted grid, a double-precision ray tracer (8 spheres, a floor, shadows,
+  three bounces) at 320 × 180, a 384 × 384 FP32 matrix multiply with `Vector<T>` (four rows of B per pass), a
+  13-tap separable Gaussian blur of a 1280 × 720 float image with `Vector<T>`, and an N-body step of 1,024 bodies in
+  FP64 (reset each run). `CpuBenchmark.Measure` runs a test on N dedicated threads that warm up, meet at a `Barrier`
+  and then count iterations for a fixed time; single-core runs at normal priority on one thread, multi-core at below
+  normal on one thread per logical processor. A test's score is its rate ÷ its reference × 1,000; the single- and
+  multi-core scores are geometric means. The references are the single-thread rates of the 2.8 GHz Xeon core Coreloom
+  is developed on (so that core scores 1,000 per test); a GitHub Windows runner's Ice Lake core scores about 1,700.
+  Memory bandwidth (every thread copying its own 8 MB back and forth) and latency (a dependent random walk through 64 MB,
+  a single Sattolo cycle) are measured for the details only.
+- **GPU benchmark.** `Direct3D` is a minimal Direct3D 11 wrapper called through the COM function tables with function
+  pointers (no wrapper library): DXGI adapter listing (`EnumAdapters1`/`GetDesc1`, software adapters left out),
+  `D3D11CreateDevice` on the chosen adapter (feature level 11.1 or 11.0, single-threaded), HLSL compiled at run time with
+  Windows' `d3dcompiler_47.dll`, structured buffers with UAVs, an off-screen RGBA8 render target, constant buffers, an
+  event query to wait for the GPU, and read-backs through staging resources. The workloads: *Lighting* (a full-screen
+  pixel shader, a wave surface lit by 64 moving lights, 2560 × 1440), *Ray marching* (a signed-distance scene of six
+  sphere/box blends with soft shadows and ambient occlusion, up to 96 steps, 1920 × 1080), *Compute* (a million threads
+  of four dependent FP32 multiply-add chains, 256 FLOP per loop, 256 loops), *Memory bandwidth* (a 128 MB uint4 copy)
+  and *Physics* (an N-body step of 32,768 bodies with 64-body groupshared tiles). Each is batched to about 30 ms per
+  wait (so no submission runs long), warmed up, then timed for 3 s. References are estimates for a ~2.5 TFLOPS,
+  ~110 GB/s card, worked out from each shader's instruction count, not measured on such a card. Every workload's
+  answer (a checksum of the frame or the buffer) is the same on every run, which the stress test relies on. Nothing is
+  presented on screen and no game is touched.
+- **Results.** `BenchmarkResult` holds the kind, score and parts, every test's rate and points, the readings during
+  the run (`ReadingRecorder`: lowest, average and highest per sensor, from the telemetry engine's latest frame each
+  second), the tuning notes, the PC (`BenchmarkSystem`) and, for stress tests, the loops, errors and verdict.
+  `BenchmarkHistory` keeps them newest first, picks each kind's best (highest score, earliest on a tie; stress tests
+  are never best) and trims to 200 while keeping the bests; `BenchmarkStore` saves `benchmarks.json` in the settings
+  folder atomically and keeps an unreadable file as `.bad`.
+- **Tuning notes** (`BenchmarkTuning`) only interpret readings: the fastest core clock, the average % Processor
+  Performance as boost, PBO from `AmdTuning.Assess` over the run's package power (PPT when the SMU reports it) against
+  AMD's stock limit, peak power, core voltage, the lowest % Performance Limit (held back), the hottest reading; for the
+  graphics card its peak core and memory clocks against NVML's rated maximums, the power limit against the default
+  (raised, default or lowered, in percent), peak power, voltage, the NVML clock-limit reasons seen, and the hottest
+  core and hot-spot readings.
+- **Stress test.** `IStressLoad` loads work flat out and check answers: `CpuStressLoad` alternates the matrix and ray
+  tracing workers on every logical processor and compares each answer with the one worked out before the start;
+  `GpuStressLoad` alternates batches of ray-marched frames and N-body steps on its own thread and re-checks both
+  answers every 5 s; a driver reset ends it. The page samples every second: `StressLoops` turns the work count into
+  10-second loops (5 s for runs under five minutes), `StressGuard` stops at the processor at 100 °C or the graphics
+  core at 95 °C for 5 s, and the first calculation error stops the run. `StressScoring` judges it like 3DMark: stability
+  is the slowest loop over the fastest, and it passes only when it ran to the end with no errors, two or more loops and
+  97 % or more.
+
 ## Devices
 
 `DevicesViewModel` (the *Devices* page, below Storage) reaches Windows through `IDeviceService` (`PageContext.Tools`;

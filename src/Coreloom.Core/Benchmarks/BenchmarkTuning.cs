@@ -128,9 +128,10 @@ public static partial class BenchmarkTuning
 
         if (double.IsFinite(peakWatts))
         {
+            double averageWatts = packageWatts.Where(double.IsFinite).Average();
             string detail = amd?.StockPptWatts is int ppt && !amd.LimitsSetByMaker
-                ? $"Average {f.Power(Average(BenchmarkReadings.Power))}. AMD's stock limit for this processor is {ppt} W."
-                : $"Average {f.Power(Average(BenchmarkReadings.Power))} for the whole processor.";
+                ? $"Average {f.Power(averageWatts)}. AMD's stock limit for this processor is {ppt} W."
+                : $"Average {f.Power(averageWatts)} for the whole processor.";
             notes.Add(new(G, "Peak power", f.Power(peakWatts).ToString(), detail, Raised: amd?.StockPptWatts is int s && peakWatts > s * AmdTuning.AboveFactor));
         }
 

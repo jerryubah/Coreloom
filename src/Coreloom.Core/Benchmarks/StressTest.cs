@@ -39,6 +39,7 @@ public sealed class CpuStressLoad : IStressLoad
     private readonly int _threads;
     private readonly bool _small;
     private readonly List<Thread> _workers = [];
+    private Thread? _starter;
     private CancellationTokenSource? _stop;
     private long _work;
     private int _errors;
@@ -72,60 +73,84 @@ public sealed class CpuStressLoad : IStressLoad
 
         _stop = new CancellationTokenSource();
         var token = _stop.Token;
-        CpuTest matrix = new MatrixTest(_small), rays = new RayTracingTest(_small);
 
-        // The right answers, worked out once before the load starts (everything is deterministic for a seed).
-        var matrixReference = matrix.CreateWorker(0);
-        matrixReference.Run();
-        long matrixAnswer = matrixReference.Run();
-        var raysReference = rays.CreateWorker(0);
-        raysReference.Run();
-        long raysAnswer = raysReference.Run();
-
-        for (int t = 0; t < _threads; t++)
+        // Works out the right answers first (off the caller's thread: it takes a moment), then starts the workers.
+        _starter = new Thread(() =>
         {
-            int index = t;
-            var thread = new Thread(() =>
+            CpuTest matrix = new MatrixTest(_small), rays = new RayTracingTest(_small);
+            long matrixAnswer = Answer(matrix), raysAnswer = Answer(rays);
+            lock (_workers)
             {
-                var m = matrix.CreateWorker(0);
-                var r = rays.CreateWorker(0);
-                while (!token.IsCancellationRequested)
+                for (int t = 0; t < _threads && !token.IsCancellationRequested; t++)
                 {
-                    long a = m.Run();
-                    long b = r.Run();
-                    if (a != matrixAnswer || b != raysAnswer)
+                    int index = t;
+                    var thread = new Thread(() => Loop(index, matrix, matrixAnswer, rays, raysAnswer, token))
                     {
-                        if (Interlocked.Increment(ref _errors) == 1)
-                        {
-                            Interlocked.CompareExchange(
-                                ref _failure,
-                                $"Logical processor {index + 1} got a {(a != matrixAnswer ? "matrix" : "ray tracing")} calculation wrong.",
-                                null);
-                        }
-                    }
-
-                    Interlocked.Increment(ref _work);
+                        IsBackground = true,
+                        Priority = ThreadPriority.BelowNormal,
+                        Name = $"Coreloom stress {index}",
+                    };
+                    _workers.Add(thread);
+                    thread.Start();
                 }
-            })
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "Coreloom stress start",
+        };
+        _starter.Start();
+    }
+
+    /// <summary>The answer a test gives with seed 0 (after a few runs, so the code it runs is the final, optimized code).</summary>
+    private static long Answer(CpuTest test)
+    {
+        var worker = test.CreateWorker(0);
+        long answer = 0;
+        for (int i = 0; i < 3; i++)
+        {
+            answer = worker.Run();
+        }
+
+        return answer;
+    }
+
+    private void Loop(int index, CpuTest matrix, long matrixAnswer, CpuTest rays, long raysAnswer, CancellationToken token)
+    {
+        var m = matrix.CreateWorker(0);
+        var r = rays.CreateWorker(0);
+        while (!token.IsCancellationRequested)
+        {
+            long a = m.Run();
+            long b = r.Run();
+            if (a != matrixAnswer || b != raysAnswer)
             {
-                IsBackground = true,
-                Priority = ThreadPriority.BelowNormal,
-                Name = $"Coreloom stress {index}",
-            };
-            _workers.Add(thread);
-            thread.Start();
+                if (Interlocked.Increment(ref _errors) == 1)
+                {
+                    Interlocked.CompareExchange(
+                        ref _failure,
+                        $"Logical processor {index + 1} got a {(a != matrixAnswer ? "matrix" : "ray tracing")} calculation wrong.",
+                        null);
+                }
+            }
+
+            Interlocked.Increment(ref _work);
         }
     }
 
     public void Stop()
     {
         _stop?.Cancel();
-        foreach (var worker in _workers)
+        _starter?.Join();
+        lock (_workers)
         {
-            worker.Join();
-        }
+            foreach (var worker in _workers)
+            {
+                worker.Join();
+            }
 
-        _workers.Clear();
+            _workers.Clear();
+        }
     }
 
     public void Dispose()

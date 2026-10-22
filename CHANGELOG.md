@@ -21,7 +21,8 @@ A new **Benchmarking** page: benchmark your processor and graphics card, keep ev
 
 ### In detail
 
-- Scores are Coreloom's own scale: each test scores 1,000 points at a reference rate and the overall scores are geometric means, so every test counts the same. The CPU reference is one core of a 2.8 GHz Intel Xeon server core; the GPU reference is an estimate for an entry-level gaming card (about 2.5 TFLOPS, 110 GB/s) worked out from each test's arithmetic. Compare scores with your own runs, not with other benchmark apps.
+- Scores are Coreloom's own scale: each test scores 1,000 points at a reference rate and the overall scores are geometric means, so every test counts the same. The CPU reference is one core of the 2.8 GHz Intel Xeon Coreloom is built on (a GitHub build machine's Ice Lake core scores about 1,700 single-core). The GPU reference is an estimate for an entry-level gaming card (about 2.5 TFLOPS and 110 GB/s) worked out from each test's arithmetic; it hasn't been checked against real cards yet. Compare scores with your own runs, not with other benchmark apps.
+- Leave the PC alone during a stress test: other work slows it down and counts against its stability.
 - The stress test stops on its own at the first calculation error, if the graphics driver resets, or if the processor stays at 100 °C or the graphics card at 95 °C for five seconds. Processors and graphics cards also protect themselves by slowing down.
 - Coreloom only reads clocks, voltages and power limits; it never changes them. Nothing is added to games, and nothing is drawn on screen by the GPU tests.
 - Results are saved in `benchmarks.json` in Coreloom's settings folder (up to 200, always keeping the best of each kind).
