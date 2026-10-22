@@ -376,6 +376,10 @@ public class BenchmarkingViewModelTests
         Assert.False(page.IsStressRunning);
         Assert.Equal("—", page.StressLive[0].Value);
         Assert.False(page.Results[0].IsBest); // stress tests pass or fail; they're never "best"
+        Assert.Equal(new[] { "Running for", "Stability", "Errors", "Processor", "Processor clock", "Processor power" }, page.StressTiles.Select(t => t.Label));
+        page.OpenDetailsCommand.Execute(page.Results[0]);
+        Assert.False(page.Details!.ShowGroups);
+        Assert.All(page.Details.Tuning, t => Assert.Equal(t.Name, t.Label));
         settings.Dispose();
     }
 
@@ -449,6 +453,10 @@ public class BenchmarkingViewModelTests
         Assert.Equal("Processor and graphics card", result.Target);
         Assert.Contains(result.Readings, r => r.Group == BenchmarkReadings.Graphics);
         Assert.Contains(result.Readings, r => r.Group == BenchmarkReadings.Processor);
+        Assert.Equal(new[] { "Processor", "Processor clock", "Graphics card", "Graphics clock" }, page.StressLive.Select(t => t.Label));
+        page.OpenDetailsCommand.Execute(page.Results[0]);
+        Assert.True(page.Details!.ShowGroups);
+        Assert.Contains(page.Details.Tuning, t => t.Label == "Peak core clock · Graphics card");
         settings.Dispose();
     }
 

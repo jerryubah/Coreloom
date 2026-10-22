@@ -14,7 +14,7 @@ public static class GpuTests
 {
     public static GpuTestInfo Lighting { get; } = new(
         "lighting", "Lighting", "Graphics",
-        "Draws a detailed surface lit by 64 moving lights at 2560 × 1440, one frame after another.", "fps", 80);
+        "Draws a detailed surface lit by 64 moving lights at 2560 × 1440, one frame after another.", "fps", 60);
 
     public static GpuTestInfo RayMarching { get; } = new(
         "raymarching", "Ray marching", "Graphics",
@@ -30,7 +30,7 @@ public static class GpuTests
 
     public static GpuTestInfo Physics { get; } = new(
         "physics", "Physics", "Compute",
-        "Simulates gravity between 32,768 bodies, each pulling on every other (over a billion pairs a step).", "M pairs/s", 55000);
+        "Simulates gravity between 32,768 bodies, each pulling on every other (over a billion pairs a step).", "G pairs/s", 45);
 
     public static IReadOnlyList<GpuTestInfo> All { get; } = [Lighting, RayMarching, Compute, Bandwidth, Physics];
 

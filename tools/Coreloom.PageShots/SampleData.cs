@@ -537,7 +537,7 @@ internal sealed class SampleBenchmarks : IHardwareBenchmarkService
 
         public string Device { get; } = device;
 
-        public long Work => (long)(_clock.Elapsed.TotalSeconds * 1000 * (1 - (0.006 * Math.Sin(_clock.Elapsed.TotalSeconds))));
+        public long Work => (long)((_clock.Elapsed.TotalSeconds * 1000) - (60 * Math.Sin(_clock.Elapsed.TotalSeconds / 10))); // ±0.6 % per loop
 
         public int Errors => 0;
 

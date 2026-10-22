@@ -14,11 +14,21 @@ using Coreloom.ViewModels.Services;
 namespace Coreloom.ViewModels.Pages;
 
 /// <summary>A live reading shown while a benchmark or stress test runs (clock, temperature, power).</summary>
-public sealed class LiveReadingViewModel(string label, string iconKey, string colorKey) : ObservableObject
+public sealed class LiveReadingViewModel(string label, string iconKey, string colorKey, string? toolTip = null) : ObservableObject
 {
     private string _value = "—";
+    private string? _detail;
 
     public string Label { get; } = label;
+
+    public string? ToolTip { get; } = toolTip;
+
+    /// <summary>A line under the value ("14 min 25 s left").</summary>
+    public string? Detail
+    {
+        get => _detail;
+        set => SetProperty(ref _detail, value);
+    }
 
     public string IconKey { get; } = iconKey;
 
@@ -209,7 +219,7 @@ public sealed class BenchmarkResultViewModel : ObservableObject
             _ => "Stability",
         };
         Detail = result.IsStress
-            ? $"{BenchmarkFormat.Duration(result.Seconds)} · {result.Verdict}"
+            ? $"Ran {BenchmarkFormat.Duration(result.Seconds)}{(result.Errors > 0 ? $" · {result.Errors} error{(result.Errors == 1 ? string.Empty : "s")}" : string.Empty)}"
             : string.Join(" · ", result.Subscores.Where(s => s.Name != ScoreLabel && s.Name != "Multi-core").Select(s => $"{s.Name} {BenchmarkFormat.Score(s.Score)}"));
         VerdictColorKey = !result.IsStress ? ColorKeys.Neutral : result.Passed ? ColorKeys.ToneCool : result.Errors > 0 || result.Verdict.StartsWith("Failed", StringComparison.Ordinal) ? ColorKeys.ToneHot : ColorKeys.ToneWarm;
         VerdictText = !result.IsStress ? string.Empty : result.Passed ? "Passed" : result.Verdict.Split(':')[0];
@@ -267,8 +277,8 @@ public sealed record TestRowItem(string Name, string Category, string Rate, stri
 /// <summary>A reading's row in a result's details (lowest, average, highest).</summary>
 public sealed record ReadingRowItem(string Group, string Name, string Min, string Average, string Max);
 
-/// <summary>An overclocking and tuning fact in a result's details.</summary>
-public sealed record TuningRowItem(string Group, string Name, string Value, string Detail, bool Raised);
+/// <summary>An overclocking and tuning fact in a result's details; <paramref name="Label"/> names the part only when there are two.</summary>
+public sealed record TuningRowItem(string Group, string Name, string Label, string Value, string Detail, bool Raised);
 
 /// <summary>A stress test loop's bar (its work against the best loop).</summary>
 public sealed record LoopBarItem(double Percent, string ToolTip, bool Low)
@@ -297,7 +307,8 @@ public sealed class BenchmarkDetailsViewModel
             topScore > 0 ? t.Score / topScore : 0)).ToList();
         HasSingle = r.Tests.Any(t => t.SingleScore is not null);
         Readings = r.Readings.Select(x => new ReadingRowItem(x.Group, x.Name, Format(f, x, x.Min), Format(f, x, x.Average), Format(f, x, x.Max))).ToList();
-        Tuning = r.Tuning.Select(t => new TuningRowItem(t.Group, t.Name, t.Value, t.Detail, t.Raised)).ToList();
+        ShowGroups = r.Readings.Select(x => x.Group).Concat(r.Tuning.Select(t => t.Group)).Distinct().Count() > 1;
+        Tuning = r.Tuning.Select(t => new TuningRowItem(t.Group, t.Name, ShowGroups ? $"{t.Name} · {t.Group}" : t.Name, t.Value, t.Detail, t.Raised)).ToList();
         var system = new List<KeyValueItem>();
         void Add(string key, string? value)
         {
@@ -349,6 +360,9 @@ public sealed class BenchmarkDetailsViewModel
 
     public IReadOnlyList<ReadingRowItem> Readings { get; }
 
+    /// <summary>Readings from both the processor and the graphics card (a combined stress test): each row names its part.</summary>
+    public bool ShowGroups { get; }
+
     public bool HasReadings => Readings.Count > 0;
 
     public IReadOnlyList<TuningRowItem> Tuning { get; }
@@ -394,7 +408,7 @@ public static class BenchmarkFormat
     {
         var t = TimeSpan.FromSeconds(Math.Max(0, Math.Round(seconds)));
         return t.TotalHours >= 1 ? $"{(int)t.TotalHours} h {t.Minutes:00} min"
-            : t.TotalMinutes >= 1 ? $"{(int)t.TotalMinutes} min {t.Seconds:00} s"
+            : t.TotalMinutes >= 1 ? t.Seconds == 0 ? $"{(int)t.TotalMinutes} min" : $"{(int)t.TotalMinutes} min {t.Seconds:00} s"
             : $"{t.Seconds} s";
     }
 }
@@ -433,6 +447,8 @@ public sealed class BenchmarkingViewModel : PageViewModel
     private string _stressStatus = "Runs your hardware flat out and checks every answer, the way OCCT and 3DMark do.";
     private string? _stressVerdict;
     private string _stressVerdictColorKey = ColorKeys.Neutral;
+    private readonly LiveReadingViewModel _cpuTemperature, _cpuClock, _cpuPower, _gpuTemperature, _gpuClock, _gpuPower;
+    private readonly LiveReadingViewModel _elapsedTile, _stabilityTile, _errorsTile;
 
     public BenchmarkingViewModel(PageContext context)
         : base("benchmarking", "Benchmarking", "Icon.Benchmark", context)
@@ -473,13 +489,16 @@ public sealed class BenchmarkingViewModel : PageViewModel
             new(null, "Until stopped"),
         ];
         _stressDuration = Durations[2];
-        StressLive =
-        [
-            new("Processor", "Icon.Temperature", ColorKeys.Temperature),
-            new("Processor clock", "Icon.Gauge", ColorKeys.Cpu),
-            new("Graphics card", "Icon.Temperature", ColorKeys.Temperature),
-            new("Graphics clock", "Icon.Gauge", ColorKeys.Gpu),
-        ];
+        _cpuTemperature = new("Processor", "Icon.Temperature", ColorKeys.Temperature);
+        _cpuClock = new("Processor clock", "Icon.Gauge", ColorKeys.Cpu);
+        _cpuPower = new("Processor power", "Icon.Power", ColorKeys.Power);
+        _gpuTemperature = new("Graphics card", "Icon.Temperature", ColorKeys.Temperature);
+        _gpuClock = new("Graphics clock", "Icon.Gauge", ColorKeys.Gpu);
+        _gpuPower = new("Graphics power", "Icon.Power", ColorKeys.Power);
+        _elapsedTile = new("Running for", "Icon.Clock", ColorKeys.Accent);
+        _stabilityTile = new("Stability", "Icon.Pulse", ColorKeys.Accent, "The slowest loop as a percentage of the fastest. 97 % or more passes.");
+        _errorsTile = new("Errors", "Icon.Check", ColorKeys.Accent, "Answers that came out different from the first time: an unstable overclock, undervolt or overheating.");
+        ShowStressTiles(_stressTarget);
 
         RunCpuCommand = new AsyncRelayCommand(() => RunAsync(cpu: true, gpu: false), () => !IsBusy);
         RunGpuCommand = new AsyncRelayCommand(() => RunAsync(cpu: false, gpu: true), () => !IsBusy && Gpu.IsAvailable);
@@ -642,6 +661,7 @@ public sealed class BenchmarkingViewModel : PageViewModel
         {
             if (SetProperty(ref _stressTarget, value))
             {
+                ShowStressTiles(value);
                 StartStressCommand.NotifyCanExecuteChanged();
             }
         }
@@ -655,21 +675,33 @@ public sealed class BenchmarkingViewModel : PageViewModel
         set => SetProperty(ref _stressDuration, value);
     }
 
-    public IReadOnlyList<LiveReadingViewModel> StressLive { get; }
+    /// <summary>The live readings of the parts being stress tested (temperatures, clocks, power).</summary>
+    public IReadOnlyList<LiveReadingViewModel> StressLive { get; private set; } = [];
+
+    /// <summary>Everything shown while a stress test runs: time, stability, errors, then the live readings.</summary>
+    public ObservableCollection<LiveReadingViewModel> StressTiles { get; } = [];
 
     public ObservableCollection<LoopBarItem> StressLoops { get; } = [];
 
     public string StressElapsed
     {
         get => _stressElapsed;
-        private set => SetProperty(ref _stressElapsed, value);
+        private set
+        {
+            SetProperty(ref _stressElapsed, value);
+            _elapsedTile.Value = value;
+        }
     }
 
     /// <summary>"12 min 30 s left" (empty when it runs until stopped).</summary>
     public string StressRemaining
     {
         get => _stressRemaining;
-        private set => SetProperty(ref _stressRemaining, value);
+        private set
+        {
+            SetProperty(ref _stressRemaining, value);
+            _elapsedTile.Detail = string.IsNullOrEmpty(value) ? null : value;
+        }
     }
 
     public double StressProgress
@@ -681,13 +713,21 @@ public sealed class BenchmarkingViewModel : PageViewModel
     public string StressStability
     {
         get => _stressStability;
-        private set => SetProperty(ref _stressStability, value);
+        private set
+        {
+            SetProperty(ref _stressStability, value);
+            _stabilityTile.Value = value;
+        }
     }
 
     public string StressErrors
     {
         get => _stressErrors;
-        private set => SetProperty(ref _stressErrors, value);
+        private set
+        {
+            SetProperty(ref _stressErrors, value);
+            _errorsTile.Value = value;
+        }
     }
 
     public string StressStatus
@@ -1077,7 +1117,7 @@ public sealed class BenchmarkingViewModel : PageViewModel
                     gpuTemp = frame.GetValue(MetricIds.GpuTemperature(slot)) ?? double.NaN;
                 }
 
-                ShowStressLive(frame, slot, target);
+                ShowStressLive(frame, slot);
                 bool newLoop = false;
                 foreach (var (load, loops) in loads)
                 {
@@ -1156,7 +1196,7 @@ public sealed class BenchmarkingViewModel : PageViewModel
         string verdict = reason switch
         {
             _ when passed => "Passed",
-            StressStopReason.Finished => $"Failed: stability {BenchmarkFormat.Percent(stability)} is under {StressScoring.PassStability:0} % (the hardware slowed down as it heated up)",
+            StressStopReason.Finished => $"Failed: stability {BenchmarkFormat.Percent(stability)} is under {StressScoring.PassStability:0} % (it slowed down during the test, often from heat or power limits)",
             StressStopReason.Error => $"Failed: {failure ?? "a calculation error"}",
             StressStopReason.Failed => $"Failed: {failure}",
             StressStopReason.ProcessorTooHot => $"Stopped: the processor stayed at {Formatter.Temperature(StressGuard.ProcessorLimit)} or hotter",
@@ -1358,13 +1398,33 @@ public sealed class BenchmarkingViewModel : PageViewModel
         live[2].Value = frame.GetValue(MetricIds.GpuPower(slot)) is double p ? Formatter.Power(p).ToString() : "—";
     }
 
-    private void ShowStressLive(TelemetryFrame frame, int slot, StressTargetOption target)
+    private void ShowStressLive(TelemetryFrame frame, int slot)
     {
-        StressLive[0].Value = target.Processor && frame.GetValue(MetricIds.CpuTemperature) is double ct ? Formatter.Temperature(ct).ToString() : "—";
+        _cpuTemperature.Value = frame.GetValue(MetricIds.CpuTemperature) is double ct ? Formatter.Temperature(ct).ToString() : "—";
         double clock = frame.GetValue(MetricIds.CpuClockEffectiveAverage) ?? frame.GetValue(MetricIds.CpuClockAverage) ?? double.NaN;
-        StressLive[1].Value = target.Processor && double.IsFinite(clock) ? Formatter.ClockGigahertz(clock).ToString() : "—";
-        StressLive[2].Value = target.Graphics && frame.GetValue(MetricIds.GpuTemperature(slot)) is double gt ? Formatter.Temperature(gt).ToString() : "—";
-        StressLive[3].Value = target.Graphics && frame.GetValue(MetricIds.GpuCoreClock(slot)) is double gc ? Formatter.Clock(gc).ToString() : "—";
+        _cpuClock.Value = double.IsFinite(clock) ? Formatter.ClockGigahertz(clock).ToString() : "—";
+        _cpuPower.Value = frame.GetValue(MetricIds.CpuPower) is double cp ? Formatter.Power(cp).ToString() : "—";
+        _gpuTemperature.Value = frame.GetValue(MetricIds.GpuTemperature(slot)) is double gt ? Formatter.Temperature(gt).ToString() : "—";
+        _gpuClock.Value = frame.GetValue(MetricIds.GpuCoreClock(slot)) is double gc ? Formatter.Clock(gc).ToString() : "—";
+        _gpuPower.Value = frame.GetValue(MetricIds.GpuPower(slot)) is double gp ? Formatter.Power(gp).ToString() : "—";
+    }
+
+    /// <summary>The tiles for a stress test of <paramref name="target"/>: its parts' readings only.</summary>
+    private void ShowStressTiles(StressTargetOption target)
+    {
+        StressLive = target switch
+        {
+            { Processor: true, Graphics: true } => [_cpuTemperature, _cpuClock, _gpuTemperature, _gpuClock],
+            { Graphics: true } => [_gpuTemperature, _gpuClock, _gpuPower],
+            _ => [_cpuTemperature, _cpuClock, _cpuPower],
+        };
+        StressTiles.Clear();
+        foreach (var tile in new[] { _elapsedTile, _stabilityTile, _errorsTile }.Concat(StressLive))
+        {
+            StressTiles.Add(tile);
+        }
+
+        OnPropertyChanged(nameof(StressLive));
     }
 
     /// <summary>The monitoring slot of the graphics card the benchmark runs on (matched by name).</summary>

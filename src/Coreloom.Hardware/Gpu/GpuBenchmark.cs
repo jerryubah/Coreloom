@@ -249,7 +249,7 @@ internal abstract class GpuWorkload(Direct3D gpu)
 
     public abstract GpuTestInfo Info { get; }
 
-    /// <summary>Work one unit does, in the test's unit (a frame, GFLOP, GB, million pairs).</summary>
+    /// <summary>Work one unit does, in the test's unit (a frame, GFLOP, GB, billions of pairs).</summary>
     public abstract double WorkPerUnit { get; }
 
     /// <summary>Sets the GPU up for this test's units.</summary>
@@ -645,7 +645,7 @@ internal sealed class PhysicsWorkload : DispatchWorkload
 
     private PhysicsWorkload(Direct3D gpu, int bodies, (nint Buffer, nint View) positions, (nint Buffer, nint View) pulls)
         : base(gpu, Shader, "Gravity", (uint)(bodies / 64), (uint)bodies, [positions.View, pulls.View], pulls.Buffer, bodies * 16, 16) =>
-        _work = (double)bodies * bodies / 1e6;
+        _work = (double)bodies * bodies / 1e9; // billions of pairs
 
     public override GpuTestInfo Info => GpuTests.Physics;
 

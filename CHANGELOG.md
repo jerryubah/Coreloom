@@ -7,6 +7,29 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-22
+
+A new **Benchmarking** page: benchmark your processor and graphics card, keep every result with a Best badge on your top scores, open any result for its clocks, voltages and overclocking, and stress test your hardware.
+
+### Highlights
+
+- **CPU benchmark.** Eight tests of everyday and demanding work, in the spirit of Geekbench: file compression, text processing, cryptography (SHA-256 and AES), navigation (shortest routes on a map), ray tracing, machine learning (matrix multiplication with AVX), a photo filter and physics. Each runs first on one core, then on every thread at once, for a **single-core** and a **multi-core** score. Memory bandwidth and latency are measured too. It takes about a minute.
+- **GPU benchmark.** Five tests on your graphics card, in the spirit of 3DMark: two graphics tests (a surface lit by 64 moving lights at 1440p, and a ray-marched 3D scene with soft shadows at 1080p) and three compute tests (FP32 arithmetic, memory bandwidth, an N-body physics step), for a **GPU score** with **graphics** and **compute** parts. It draws off-screen on Coreloom's own Direct3D 11 device; with more than one graphics card you pick which. *Run both* runs the two benchmarks back to back.
+- **Every result saved, the best one badged.** Results are kept on your PC, newest first, with a filter for CPU, GPU and stress tests. The highest CPU score and the highest GPU score wear a **Best** badge (it moves when you beat it), and each card at the top shows your best score, its parts, and how your latest run compares.
+- **Details for every result.** Click a result for each test's rate and points (single- and multi-core for the CPU), the clocks, temperatures, power and voltages during the run (lowest, average, highest), and what they say about how the hardware was set up: the fastest core clock and boost, whether **Precision Boost Overdrive** looks on (from power going past AMD's stock limit), peak power, core voltage, whether anything held the processor back; and for the graphics card its peak core and memory clocks against the card's rated maximums, its **power limit against the default** (raised, default or lowered), voltage and what limited its clocks. Settings beyond stock are marked *Raised*. Plus the PC it ran on (processor, graphics card and driver, memory and speed, motherboard, BIOS, Windows).
+- **Stress test.** Load the processor, the graphics card or both for 1, 5, 15, 30 or 60 minutes or until you stop. Every answer is checked against the first one, so a calculation error (an unstable overclock or undervolt) is caught; the run is split into loops and, as in 3DMark, passes with no errors and at least 97 % stability (the slowest loop against the fastest). Live temperatures, clocks, errors and loop bars while it runs; the result is saved with its verdict and readings.
+
+### In detail
+
+- Scores are Coreloom's own scale: each test scores 1,000 points at a reference rate and the overall scores are geometric means, so every test counts the same. The CPU reference is one core of a 2.8 GHz Intel Xeon server core; the GPU reference is an estimate for an entry-level gaming card (about 2.5 TFLOPS, 110 GB/s) worked out from each test's arithmetic. Compare scores with your own runs, not with other benchmark apps.
+- The stress test stops on its own at the first calculation error, if the graphics driver resets, or if the processor stays at 100 °C or the graphics card at 95 °C for five seconds. Processors and graphics cards also protect themselves by slowing down.
+- Coreloom only reads clocks, voltages and power limits; it never changes them. Nothing is added to games, and nothing is drawn on screen by the GPU tests.
+- Results are saved in `benchmarks.json` in Coreloom's settings folder (up to 200, always keeping the best of each kind).
+
+### Feedback
+
+Scores that look off, or a stress test that fails on a PC you know is stable? [Open an issue](https://github.com/jerryubah/Coreloom/issues) with the result's details and a CoreloomDiag report.
+
 ## [1.4.9] - 2026-10-17
 
 The Gaming page's boost count matches its switches, and core scheduling's power plan note is no longer red.

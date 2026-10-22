@@ -17,10 +17,21 @@
       <Setter Property="Fill" Value="{DynamicResource Brush.Accent}" />
     </Style>
 
+    <!-- Scores: Inter with tabular digits (a monospaced comma would look spaced out in "38,754"). -->
+    <Style x:Key="Score" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+      <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+      <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
+    </Style>
+
     <!-- Numbers in tiles. -->
     <Style x:Key="TileValue" TargetType="TextBlock">
-      <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
-      <Setter Property="FontSize" Value="18" />
+      <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+      <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+      <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
+      <Setter Property="FontSize" Value="19" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Margin" Value="0,5,0,0" />
       <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
@@ -35,8 +46,9 @@
 
     <!-- Numbers in the details' tables. -->
     <Style x:Key="Cell" TargetType="TextBlock">
-      <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
-      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+      <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+      <Setter Property="FontSize" Value="12.5" />
       <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
       <Setter Property="VerticalAlignment" Value="Center" />
       <Setter Property="TextTrimming" Value="CharacterEllipsis" />
@@ -54,13 +66,14 @@
 
     <!-- A live reading while something runs: a dot in its color, its name and value. -->
     <DataTemplate x:Key="LiveTile" DataType="{x:Type pages:LiveReadingViewModel}">
-      <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="12,10">
+      <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="12,10" ToolTip="{Binding ToolTip}">
         <StackPanel>
           <StackPanel Orientation="Horizontal">
             <Ellipse Width="7" Height="7" Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" VerticalAlignment="Center" />
             <TextBlock Text="{Binding Label}" Style="{StaticResource Text.Label}" Margin="7,0,0,0" TextTrimming="CharacterEllipsis" />
           </StackPanel>
           <TextBlock Text="{Binding Value}" Style="{StaticResource TileValue}" />
+          <TextBlock Text="{Binding Detail}" Style="{StaticResource Text.Caption}" FontSize="11" Visibility="{Binding Detail, Converter={StaticResource HasValueToVisibility}}" />
         </StackPanel>
       </c:SquircleBorder>
     </DataTemplate>
@@ -102,7 +115,7 @@
 
           <!-- Idle: the best score -->
           <StackPanel Grid.Row="1" Margin="0,16,0,0" Visibility="{Binding IsIdle, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="{Binding Best}" FontFamily="{StaticResource MonoFont}" FontSize="42" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
+            <TextBlock Text="{Binding Best}" Style="{StaticResource Score}" FontSize="44" />
             <TextBlock Style="{StaticResource Text.Caption}" Margin="0,2,0,0">
               <Run Text="{Binding ScoreLabel, Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" /><Run Text="  ·  " /><Run Text="{Binding BestDate, Mode=OneWay}" />
             </TextBlock>
@@ -176,7 +189,7 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="140" />
+            <ColumnDefinition Width="200" />
             <ColumnDefinition Width="112" />
             <ColumnDefinition Width="Auto" />
           </Grid.ColumnDefinitions>
@@ -203,7 +216,7 @@
             <TextBlock Text="{Binding Detail}" Style="{StaticResource Text.Caption}" FontSize="11" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Detail}" />
           </StackPanel>
           <StackPanel Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Right">
-            <TextBlock Text="{Binding Score}" FontFamily="{StaticResource MonoFont}" FontSize="19" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" HorizontalAlignment="Right" />
+            <TextBlock Text="{Binding Score}" Style="{StaticResource Score}" FontSize="19" HorizontalAlignment="Right" />
             <TextBlock Text="{Binding ScoreLabel}" Style="{StaticResource Text.Caption}" FontSize="11" HorizontalAlignment="Right" />
           </StackPanel>
           <Path Grid.Column="5" Data="M0,0 L4,4 0,8" Stroke="{DynamicResource Brush.TextTertiary}" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
@@ -336,31 +349,13 @@
           <!-- While it runs: time, stability, errors, temperatures and clocks, and the loops so far -->
           <StackPanel Visibility="{Binding IsStressRunning, Converter={StaticResource BoolToVisibility}}">
             <ProgressBar Style="{StaticResource ProgressBar.Thin}" Maximum="1" Margin="0,2,0,14" b:Smooth.Value="{Binding StressProgress}" />
-            <c:AdaptiveGrid MinColumnWidth="130" MaxColumns="7" Spacing="10" UniformRowHeight="True">
-              <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="12,10">
-                <StackPanel>
-                  <TextBlock Text="Running for" Style="{StaticResource Text.Label}" />
-                  <TextBlock Text="{Binding StressElapsed}" Style="{StaticResource TileValue}" />
-                  <TextBlock Text="{Binding StressRemaining}" Style="{StaticResource Text.Caption}" FontSize="11" />
-                </StackPanel>
-              </c:SquircleBorder>
-              <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="12,10" ToolTip="The slowest loop as a percentage of the fastest. 97 % or more passes.">
-                <StackPanel>
-                  <TextBlock Text="Stability" Style="{StaticResource Text.Label}" />
-                  <TextBlock Text="{Binding StressStability}" Style="{StaticResource TileValue}" />
-                </StackPanel>
-              </c:SquircleBorder>
-              <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="12,10" ToolTip="Answers that came out different from the first time: an unstable overclock, undervolt or overheating.">
-                <StackPanel>
-                  <TextBlock Text="Errors" Style="{StaticResource Text.Label}" />
-                  <TextBlock Text="{Binding StressErrors}" Style="{StaticResource TileValue}" />
-                </StackPanel>
-              </c:SquircleBorder>
-              <ContentPresenter Content="{Binding StressLive[0]}" ContentTemplate="{StaticResource LiveTile}" />
-              <ContentPresenter Content="{Binding StressLive[1]}" ContentTemplate="{StaticResource LiveTile}" />
-              <ContentPresenter Content="{Binding StressLive[2]}" ContentTemplate="{StaticResource LiveTile}" />
-              <ContentPresenter Content="{Binding StressLive[3]}" ContentTemplate="{StaticResource LiveTile}" />
-            </c:AdaptiveGrid>
+            <ItemsControl ItemsSource="{Binding StressTiles}" ItemTemplate="{StaticResource LiveTile}" Focusable="False">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <c:AdaptiveGrid MinColumnWidth="130" MaxColumns="7" Spacing="10" UniformRowHeight="True" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+            </ItemsControl>
             <StackPanel Margin="0,14,0,0">
               <TextBlock Text="Loops" Style="{StaticResource Text.Label}" Margin="0,0,0,6" />
               <ItemsControl ItemsSource="{Binding StressLoops}" ItemTemplate="{StaticResource LoopBar}" Focusable="False" Height="52">
@@ -459,7 +454,7 @@
               </TextBlock>
             </StackPanel>
             <StackPanel Grid.Column="2" Margin="0,0,10,0" VerticalAlignment="Center" HorizontalAlignment="Right">
-              <TextBlock Text="{Binding Item.Score}" FontFamily="{StaticResource MonoFont}" FontSize="30" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" HorizontalAlignment="Right" />
+              <TextBlock Text="{Binding Item.Score}" Style="{StaticResource Score}" FontSize="30" HorizontalAlignment="Right" />
               <TextBlock Text="{Binding Item.ScoreLabel}" Style="{StaticResource Text.Caption}" HorizontalAlignment="Right" />
             </StackPanel>
             <Button Grid.Column="3" Style="{StaticResource Button.Icon}" Width="32" Height="32" Margin="6,0,-6,0" VerticalAlignment="Top"
@@ -516,7 +511,7 @@
                     <ColumnDefinition Width="110" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="130" />
+                    <ColumnDefinition Width="150" />
                     <ColumnDefinition Width="90" />
                   </Grid.ColumnDefinitions>
                   <TextBlock Text="Test" Style="{StaticResource ColumnHead}" />
@@ -537,7 +532,7 @@
                           <ColumnDefinition Width="110" />
                           <ColumnDefinition Width="Auto" />
                           <ColumnDefinition Width="Auto" />
-                          <ColumnDefinition Width="130" />
+                          <ColumnDefinition Width="150" />
                           <ColumnDefinition Width="90" />
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
@@ -577,9 +572,7 @@
                           <ColumnDefinition Width="*" />
                           <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Style="{StaticResource Text.Label}" TextTrimming="CharacterEllipsis">
-                          <Run Text="{Binding Name, Mode=OneWay}" /><Run Text="  ·  " Foreground="{DynamicResource Brush.TextTertiary}" /><Run Text="{Binding Group, Mode=OneWay}" Foreground="{DynamicResource Brush.TextTertiary}" />
-                        </TextBlock>
+                        <TextBlock Text="{Binding Label}" Style="{StaticResource Text.Label}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Label}" />
                         <Border Grid.Column="1" CornerRadius="6" Padding="6,1" Margin="8,0,0,0" Background="{DynamicResource Brush.ElevatedSoft}"
                                 Visibility="{Binding Raised, Converter={StaticResource BoolToVisibility}}">
                           <TextBlock Text="Raised" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Elevated}" />
@@ -601,13 +594,13 @@
               <StackPanel>
                 <Grid>
                   <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="120" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="110" />
                     <ColumnDefinition Width="110" />
                     <ColumnDefinition Width="110" />
                   </Grid.ColumnDefinitions>
-                  <TextBlock Text="Part" Style="{StaticResource ColumnHead}" />
+                  <TextBlock Text="Part" Width="120" Style="{StaticResource ColumnHead}" Visibility="{Binding ShowGroups, Converter={StaticResource BoolToVisibility}}" />
                   <TextBlock Grid.Column="1" Text="Reading" Style="{StaticResource ColumnHead}" />
                   <TextBlock Grid.Column="2" Text="Lowest" Style="{StaticResource ColumnHead}" TextAlignment="Right" />
                   <TextBlock Grid.Column="3" Text="Average" Style="{StaticResource ColumnHead}" TextAlignment="Right" />
@@ -618,13 +611,14 @@
                     <DataTemplate DataType="{x:Type pages:ReadingRowItem}">
                       <Grid Margin="0,3">
                         <Grid.ColumnDefinitions>
-                          <ColumnDefinition Width="120" />
+                          <ColumnDefinition Width="Auto" />
                           <ColumnDefinition Width="*" />
                           <ColumnDefinition Width="110" />
                           <ColumnDefinition Width="110" />
                           <ColumnDefinition Width="110" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="{Binding Group}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Group}" Width="120" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                   Visibility="{Binding DataContext.ShowGroups, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource BoolToVisibility}}" />
                         <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                         <TextBlock Grid.Column="2" Text="{Binding Min}" Style="{StaticResource Cell}" TextAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}" />
                         <TextBlock Grid.Column="3" Text="{Binding Average}" Style="{StaticResource Cell}" TextAlignment="Right" />
@@ -643,7 +637,7 @@
             <ItemsControl ItemsSource="{Binding System}" Focusable="False">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                  <c:AdaptiveGrid MinColumnWidth="300" MaxColumns="2" Spacing="24" />
+                  <c:AdaptiveGrid MinColumnWidth="300" MaxColumns="2" Spacing="24" RowSpacing="0" />
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
