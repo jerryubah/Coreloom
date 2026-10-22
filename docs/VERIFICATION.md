@@ -147,6 +147,42 @@ How this change was checked in the Linux container (no Windows, no nuget.org):
 | In-place update of portable copies | File operations unit-tested on Linux (staging, copy, rollback, cleanup) | Windows specifics: the elevated helper starting without a prompt, locked files and antivirus timing, the hidden `.coreloom-update` folder, the splash while copying, `Compress-Archive` zips from the real release |
 | Per-copy trust key `HKLM\SOFTWARE\Coreloom\Updates\Copies\<id>` | Code review | Registry writes and clean-up on Windows |
 
+### 1.5.0: the Benchmarking page (CPU and GPU benchmarks, saved results with a Best badge, details, stress tests)
+
+- **CPU benchmark, measured.** All eight tests ran in the Linux sandbox (2.8 GHz Xeon, 2 threads) and on GitHub's
+  Windows runner (Ice Lake Xeon, 4 threads): every test gives the same answer for the same seed, the references are
+  the sandbox's single-thread rates (so it scores 1,000 per test), and the runner scored about 1,700 single-core and
+  4,000–4,300 multi-core on two runs. Memory bandwidth and latency were measured on both. **Not measured on your PC:**
+  what a Ryzen 9 9950X3D scores, how steady its scores are run to run, and how Windows' scheduler spreads 32 threads.
+- **GPU benchmark, on WARP only.** The Direct3D 11 code (adapter listing, device, run-time HLSL compilation, buffers,
+  render target, event query, read-backs) and all five shaders ran on WARP, Windows' software renderer, on the build
+  machine: at full size from the page-shot tool (Lighting 0.4 fps, Ray marching 2.3 fps, Compute 60 GFLOPS, Memory
+  bandwidth 17.5 GB/s, Physics 1.0 billion pairs/s on four CPU threads), and at small size in the Hardware tests, which
+  also check that every answer is the same on every run, that a broken shader reports the compiler's message, that
+  cancelling works and that the GPU stress load runs without errors. **Not verified:** any real graphics card (the
+  runner has none), so the RTX 5090's scores, how long each test takes on it, and the reference rates (estimates from
+  each shader's arithmetic for a ~2.5 TFLOPS, ~110 GB/s card) are unchecked.
+- **Stress test.** The processor load ran 40 s at full size on every sandbox thread with no calculation errors (the
+  answers stay the same as the code is recompiled by .NET's tiered JIT). Loops, stability, the pass rule, the
+  temperature guard and stopping on an error or a driver reset are unit- and view-model-tested with fake loads. **Not
+  verified:** a real overclock caught by it, real thermals, or whether background activity on a desktop pushes
+  stability under 97 %.
+- **Readings and tuning notes.** Unit-tested from recorded readings: PBO likely on / off / not reached against the stock
+  PPT, a raised, default and lowered GPU power limit, clocks past the rated maximum, the clock-limit reasons. On your PC
+  they depend on LibreHardwareMonitor's and NVML's readings, which weren't available here.
+- **Seen as rendered on Windows.** The page-shot tool drew the Benchmarking page over sample results (a 9950X3D and an
+  RTX 5090) at 1600 and 1000 DIP: idle with saved results and badges, a CPU benchmark running, a stress test running
+  with its loops, and the CPU, GPU and stress details (top and scrolled to the end). The pictures were looked at, and
+  the spacing of the comma in scores, the stress tiles (only the tested parts), the group labels and the system rows
+  were fixed from them.
+- **Tests.** Core tests: 678 passed (new: the CPU tests' answers, scoring, the run and cancelling, results history and
+  file, readings, tuning notes, stress scoring, loops, guard and the processor load). View-model tests: 175 passed
+  (new: the Benchmarking page's results and badges, both benchmarks with readings and tuning, cancelling, no Direct3D,
+  details and deleting, filters, and stress tests passing, throttling, erroring, overheating, both parts and stopping
+  early). Hardware tests: 83 passed (6 new, the GPU benchmark on WARP).
+- **GitHub Actions.** Branch CI on `release-1.5.0` passed: 936 tests on Windows (Core 678, view models 175, Hardware
+  83), none skipped, and the Linux tests.
+
 ### 1.4.9: the boost count matches the switches, a grey power plan note
 
 - **Tests.** Core tests: 653 passed (the power plan check is now informational). View-model tests: 162 passed, with a
