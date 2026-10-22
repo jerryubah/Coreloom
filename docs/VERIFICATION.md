@@ -161,6 +161,10 @@ How this change was checked in the Linux container (no Windows, no nuget.org):
 - **GitHub Actions.** Branch CI on `release-1.5.1` and `release-1.5.1-b` passed: 941 tests on Windows (Core 681, view
   models 177, Hardware 83; on `-b` the timer check skipped itself on a slow runner timer, as it's designed to), and
   the Linux tests.
+- **Release build.** The first release run failed in one view-model test: its fake stress load described an error
+  before counting it, so the page sometimes took it for a stopped load. Real loads count first; the page now reads a
+  load's failure before its count (so it can't mix the two up whatever the order), the fake counts first, and branch
+  CI passed again on both branches before releasing.
 - **Not verified:** a GPU run on your RTX 5090 on the new scale (it's the old scale × 10, so your ~37,000 should read
   ~370,000).
 
