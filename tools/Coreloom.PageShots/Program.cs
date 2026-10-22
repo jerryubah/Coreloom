@@ -6,6 +6,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Coreloom.App.Themes;
 using Coreloom.App.Views;
+using Coreloom.Core.Benchmarks;
 using Coreloom.Core.Settings;
 using Coreloom.ViewModels.Pages;
 
@@ -75,6 +76,90 @@ internal static class Program
 
         var storage = data.Page(c => new StorageViewModel(c));
         await ShootAsync(Path.Combine(output, "storage.png"), new StoragePage { DataContext = storage }, null, () => storage.Refresh(data));
+
+        await ShootBenchmarkingAsync(output, data);
+        await CheckBenchmarksAsync(output);
+    }
+
+    private static async Task ShootBenchmarkingAsync(string output, SampleData data)
+    {
+        var bench = data.Page(c => new BenchmarkingViewModel(c));
+        await ShootAsync(Path.Combine(output, "benchmarking.png"), new BenchmarkingPage { DataContext = bench }, null, () => bench.Refresh(data));
+        await ShootAsync(Path.Combine(output, "benchmarking-narrow.png"), new BenchmarkingPage { DataContext = bench }, null, () => bench.Refresh(data), 1000);
+
+        foreach (var (kind, name) in new[] { (BenchmarkKind.Cpu, "cpu"), (BenchmarkKind.Gpu, "gpu"), (BenchmarkKind.Stress, "stress") })
+        {
+            bench.OpenDetailsCommand.Execute(bench.Results.First(r => r.Result.Kind == kind && (kind == BenchmarkKind.Stress || r.IsBest)));
+            await ShootAsync(Path.Combine(output, $"benchmarking-details-{name}.png"), new BenchmarkingPage { DataContext = bench }, 1150, () => bench.Refresh(data));
+            var scrolled = new BenchmarkingPage { DataContext = bench };
+            await ShootAsync(Path.Combine(output, $"benchmarking-details-{name}-end.png"), scrolled, 1150, () =>
+            {
+                bench.Refresh(data);
+                (scrolled.FindName("DetailsScroll") as ScrollViewer)?.ScrollToEnd();
+            });
+            bench.CloseDetailsCommand.Execute(null);
+        }
+
+        bench.RunCpuCommand.Execute(null);
+        await ShootAsync(Path.Combine(output, "benchmarking-running.png"), new BenchmarkingPage { DataContext = bench }, null, () => bench.Refresh(data));
+        bench.CancelCommand.Execute(null);
+        await Task.Delay(500);
+
+        bench.StartStressCommand.Execute(null);
+        await Task.Delay(TimeSpan.FromSeconds(32)); // three 10-second loops
+        await ShootAsync(Path.Combine(output, "benchmarking-stress.png"), new BenchmarkingPage { DataContext = bench }, null, () => bench.Refresh(data));
+        bench.StopStressCommand.Execute(null);
+        await Task.Delay(1500);
+    }
+
+    /// <summary>
+    /// Runs the real CPU benchmark on the build machine and the real GPU benchmark on WARP (Windows' software renderer),
+    /// at full size, and writes what they measured to benchmark-check.txt.
+    /// </summary>
+    private static async Task CheckBenchmarksAsync(string output)
+    {
+        var lines = new List<string> { $"Processor: {Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER")}, {Environment.ProcessorCount} logical processors" };
+        try
+        {
+            var cpu = await CpuBenchmark.RunAsync(new CpuBenchmarkOptions(Seconds: 1, WarmupSeconds: 0.3), null, CancellationToken.None);
+            foreach (var t in cpu.Tests)
+            {
+                lines.Add($"CPU {t.Name}: single {t.SingleRate:0.###} {t.Unit} = {t.SingleScore:0} · multi {t.MultiRate:0.###} {t.Unit} = {t.MultiScore:0}");
+            }
+
+            lines.Add($"CPU single-core {cpu.SingleScore:0} · multi-core {cpu.MultiScore:0} on {cpu.Threads} threads · memory {cpu.MemoryBandwidthGBs:0.0} GB/s, {cpu.MemoryLatencyNs:0.0} ns");
+        }
+        catch (Exception e)
+        {
+            lines.Add($"CPU benchmark failed: {e}");
+        }
+
+        try
+        {
+            foreach (var adapter in Coreloom.Hardware.Gpu.GpuBenchmark.Adapters())
+            {
+                lines.Add($"Adapter: {adapter.Name} ({adapter.Memory / (1L << 20):0} MB)");
+            }
+
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            var gpu = await Coreloom.Hardware.Gpu.GpuBenchmark.RunAsync(new GpuBenchmarkOptions(Seconds: 1.5, Software: true), null, null, CancellationToken.None);
+            foreach (var t in gpu.Tests)
+            {
+                lines.Add($"GPU {t.Name} on {gpu.Adapter.Name}: {t.Rate:0.###} {t.Unit} = {t.Score:0.#}");
+            }
+
+            lines.Add($"GPU overall {gpu.Score:0.#} · graphics {gpu.Graphics:0.#} · compute {gpu.Compute:0.#} in {clock.Elapsed.TotalSeconds:0.0} s");
+        }
+        catch (Exception e)
+        {
+            lines.Add($"GPU benchmark failed: {e}");
+        }
+
+        File.WriteAllLines(Path.Combine(output, "benchmark-check.txt"), lines);
+        foreach (string line in lines)
+        {
+            Console.WriteLine(line);
+        }
     }
 
     private static void Refresh(this PageViewModel page, SampleData data)

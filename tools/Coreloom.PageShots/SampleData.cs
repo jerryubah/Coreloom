@@ -1,4 +1,5 @@
 using System.IO;
+using Coreloom.Core.Benchmarks;
 using Coreloom.Core.Gaming;
 using Coreloom.Core.Hardware;
 using Coreloom.Core.History;
@@ -93,7 +94,7 @@ internal sealed class SampleData
         Monitor = Monitor,
         Settings = Settings,
         Timeline = new TimelineViewModel(Engine.History),
-        Tools = new ToolServices { Gaming = new SampleGaming(), CoreScheduling = new SampleCores(), Optimizer = new SampleOptimize() },
+        Tools = new ToolServices { Gaming = new SampleGaming(), CoreScheduling = new SampleCores(), Optimizer = new SampleOptimize(), Benchmarks = new SampleBenchmarks() },
     };
 }
 
@@ -350,4 +351,202 @@ internal sealed class SampleOptimize : IOptimizeService
     public Task<MaintenanceResult> FlushDnsAsync(CancellationToken cancellationToken) => Task.FromResult(new MaintenanceResult(true, "Done."));
 
     public Task<MaintenanceResult> OptimizeDrivesAsync(CancellationToken cancellationToken) => Task.FromResult(new MaintenanceResult(true, "Done."));
+}
+
+/// <summary>
+/// Saved results for the Benchmarking page (a 9950X3D and an RTX 5090, some with PBO and a raised power limit), and
+/// benchmarks that wait until cancelled, so the running state can be drawn.
+/// </summary>
+internal sealed class SampleBenchmarks : IHardwareBenchmarkService
+{
+    private static readonly Coreloom.Core.Formatting.UnitFormatter F = new();
+
+    public bool GpuSupported => true;
+
+    public IReadOnlyList<GpuAdapter> GraphicsCards() => [new("NVIDIA GeForce RTX 5090", 0x10DE, 0x2B85, 32d * (1L << 30), 1, false)];
+
+    public async Task<CpuBenchmarkScores> RunCpuAsync(CpuBenchmarkOptions options, IProgress<BenchmarkProgress> progress, CancellationToken cancellationToken)
+    {
+        progress.Report(new BenchmarkProgress("Ray tracing", 0.56, "Multi-core · 32 threads"));
+        await Task.Delay(Timeout.Infinite, cancellationToken);
+        throw new OperationCanceledException();
+    }
+
+    public async Task<GpuBenchmarkScores> RunGpuAsync(GpuAdapter? card, IProgress<BenchmarkProgress> progress, CancellationToken cancellationToken)
+    {
+        await Task.Delay(Timeout.Infinite, cancellationToken);
+        throw new OperationCanceledException();
+    }
+
+    public IStressLoad ProcessorStress(string device) => new SampleLoad("Processor", device);
+
+    public IStressLoad? GraphicsStress(GpuAdapter? card) => new SampleLoad("Graphics card", card?.Name ?? "GPU");
+
+    public IReadOnlyList<BenchmarkResult> LoadResults()
+    {
+        var now = DateTimeOffset.Now;
+        return
+        [
+            Stress(now.AddMinutes(-40), passed: false),
+            Gpu(now.AddHours(-2), 1.0, raisedLimit: true),
+            Cpu(now.AddHours(-3), 1.0, pbo: true),
+            Stress(now.AddDays(-1), passed: true),
+            Cpu(now.AddDays(-2), 0.93, pbo: false),
+            Gpu(now.AddDays(-3), 0.95, raisedLimit: false),
+            Cpu(now.AddDays(-9), 0.91, pbo: false),
+        ];
+    }
+
+    public void SaveResults(IReadOnlyList<BenchmarkResult> results)
+    {
+    }
+
+    private static BenchmarkSystem System => new()
+    {
+        Processor = "AMD Ryzen 9 9950X3D", Cores = 16, Threads = 32, GraphicsCard = "NVIDIA GeForce RTX 5090", GraphicsDriver = "581.57",
+        GraphicsMemory = 32d * (1L << 30), Memory = 64d * (1L << 30), MemorySpeed = "6,000 MT/s", Motherboard = "ASRock X870E Nova WiFi",
+        Bios = "3.25", OperatingSystem = "Windows 11 Pro 24H2",
+    };
+
+    private static BenchmarkResult Cpu(DateTimeOffset when, double scale, bool pbo)
+    {
+        double[] single = [2410, 2290, 2620, 2180, 2350, 2470, 2550, 2400];
+        double[] multi = [34800, 39500, 41200, 30100, 38900, 47800, 36400, 44100];
+        var tests = CpuTests.All().Select((t, i) => new BenchmarkTestResult(t.Id, t.Name, t.Category, t.Unit,
+            multi[i] * scale * t.Reference / 1000, multi[i] * scale, single[i] * scale * t.Reference / 1000, single[i] * scale)).ToList();
+        var readings = new ReadingRecorder();
+        foreach (double v in new[] { 5050, 5120, 5180 })
+        {
+            readings.Add(BenchmarkReadings.Processor, BenchmarkReadings.Clock, MetricKind.Clock, v * (pbo ? 1.02 : 1));
+        }
+
+        foreach (var (name, kind, values) in new (string, MetricKind, double[])[]
+        {
+            (BenchmarkReadings.FastestCore, MetricKind.Clock, [5640, 5720, pbo ? 5810 : 5745]),
+            (BenchmarkReadings.Temperature, MetricKind.Temperature, [62, 78, pbo ? 89 : 84]),
+            (BenchmarkReadings.Power, MetricKind.Power, [96, pbo ? 238 : 199, pbo ? 246 : 201]),
+            (BenchmarkReadings.Voltage, MetricKind.Voltage, [1.12, 1.24, pbo ? 1.36 : 1.33]),
+            (BenchmarkReadings.Load, MetricKind.Load, [6, 100, 100]),
+            (BenchmarkReadings.Performance, MetricKind.Level, [125, 118, 121]),
+            (BenchmarkReadings.PerformanceLimit, MetricKind.Level, [100, 100, pbo ? 100 : 96]),
+        })
+        {
+            foreach (double v in values)
+            {
+                readings.Add(BenchmarkReadings.Processor, name, kind, v);
+            }
+        }
+
+        double[] watts = pbo ? [180, 246, 248, 251, 250, 252, 249] : [180, 228, 229, 230, 229, 230, 229];
+        return new BenchmarkResult
+        {
+            Kind = BenchmarkKind.Cpu,
+            Finished = when,
+            AppVersion = "1.5.0",
+            Score = CpuBenchmark.GeometricMean(tests.Select(t => t.Score)),
+            Subscores = [new("Single-core", CpuBenchmark.GeometricMean(tests.Select(t => t.SingleScore!.Value))), new("Multi-core", CpuBenchmark.GeometricMean(tests.Select(t => t.Score)))],
+            Device = "AMD Ryzen 9 9950X3D",
+            Tests = tests,
+            Readings = readings.Readings(),
+            Tuning = BenchmarkTuning.Processor(readings, AmdProcessors.Create("AMD Ryzen 9 9950X3D 16-Core Processor"), watts, true, F),
+            System = System,
+            Seconds = 61,
+            Threads = 32,
+            MemoryBandwidth = 71.4,
+            MemoryLatency = 74.8,
+        };
+    }
+
+    private static BenchmarkResult Gpu(DateTimeOffset when, double scale, bool raisedLimit)
+    {
+        double[] scores = [24800, 27100, 38400, 14600, 31200];
+        var tests = GpuTests.All.Select((t, i) => new BenchmarkTestResult(t.Id, t.Name, t.Category, t.Unit, scores[i] * scale * t.Reference / 1000, scores[i] * scale)).ToList();
+        var readings = new ReadingRecorder();
+        foreach (var (name, kind, values) in new (string, MetricKind, double[])[]
+        {
+            (BenchmarkReadings.Clock, MetricKind.Clock, [2602, 2745, raisedLimit ? 2880 : 2805]),
+            (BenchmarkReadings.MemoryClock, MetricKind.Clock, [14001, 14001, 14001]),
+            (BenchmarkReadings.Temperature, MetricKind.Temperature, [48, 66, 71]),
+            (BenchmarkReadings.HotSpot, MetricKind.Temperature, [58, 77, 83]),
+            (BenchmarkReadings.Power, MetricKind.Power, [120, 512, raisedLimit ? 598 : 571]),
+            (BenchmarkReadings.PowerLimit, MetricKind.Power, [raisedLimit ? 600 : 575]),
+            (BenchmarkReadings.Voltage, MetricKind.Voltage, [0.89, 0.98, 1.05]),
+            (BenchmarkReadings.Load, MetricKind.Load, [96, 99, 100]),
+            (BenchmarkReadings.Fan, MetricKind.Control, [42, 55, 61]),
+        })
+        {
+            foreach (double v in values)
+            {
+                readings.Add(BenchmarkReadings.Graphics, name, kind, v);
+            }
+        }
+
+        var card = new DeviceInfo(MetricIds.GpuDeviceId(0), MetricCategory.Gpu, "NVIDIA GeForce RTX 5090")
+        {
+            Properties = [new("Max core clock", "3,090 MHz"), new("Max memory clock", "14,001 MHz"), new("Default power limit", "575 W")],
+        };
+        var (overall, graphics, compute) = GpuTests.Scores(tests);
+        return new BenchmarkResult
+        {
+            Kind = BenchmarkKind.Gpu,
+            Finished = when,
+            AppVersion = "1.5.0",
+            Score = overall,
+            Subscores = [new("Graphics", graphics), new("Compute", compute)],
+            Device = "NVIDIA GeForce RTX 5090",
+            Tests = tests,
+            Readings = readings.Readings(),
+            Tuning = BenchmarkTuning.Graphics(readings, card, 0x4, F),
+            System = System,
+            Seconds = 24,
+        };
+    }
+
+    private static BenchmarkResult Stress(DateTimeOffset when, bool passed)
+    {
+        var loops = Enumerable.Range(0, 30).Select(i => passed ? 100 - (i % 7 == 3 ? 1.4 : (i % 5) * 0.3) : Math.Max(88, 100 - (i * 0.45))).ToList();
+        var readings = new ReadingRecorder();
+        readings.Add(BenchmarkReadings.Processor, BenchmarkReadings.Temperature, MetricKind.Temperature, 71);
+        readings.Add(BenchmarkReadings.Processor, BenchmarkReadings.Temperature, MetricKind.Temperature, passed ? 86 : 95);
+        readings.Add(BenchmarkReadings.Processor, BenchmarkReadings.Clock, MetricKind.Clock, passed ? 5150 : 4720);
+        readings.Add(BenchmarkReadings.Processor, BenchmarkReadings.Clock, MetricKind.Clock, 5230);
+        return new BenchmarkResult
+        {
+            Kind = BenchmarkKind.Stress,
+            Finished = when,
+            AppVersion = "1.5.0",
+            Score = Math.Round(StressScoring.Stability(loops), 1),
+            Device = "AMD Ryzen 9 9950X3D",
+            Target = "Processor",
+            Readings = readings.Readings(),
+            System = System,
+            Seconds = 300,
+            Threads = 32,
+            Loops = StressScoring.Relative(loops),
+            Passed = passed,
+            Verdict = passed ? "Passed" : $"Failed: stability {StressScoring.Stability(loops):0.0} % is under 97 % (the hardware slowed down as it heated up)",
+        };
+    }
+
+    /// <summary>Work at a slightly wavering rate, like real hardware.</summary>
+    private sealed class SampleLoad(string name, string device) : IStressLoad
+    {
+        private readonly System.Diagnostics.Stopwatch _clock = new();
+
+        public string Name { get; } = name;
+
+        public string Device { get; } = device;
+
+        public long Work => (long)(_clock.Elapsed.TotalSeconds * 1000 * (1 - (0.006 * Math.Sin(_clock.Elapsed.TotalSeconds))));
+
+        public int Errors => 0;
+
+        public string? Failure => null;
+
+        public void Start() => _clock.Start();
+
+        public void Stop() => _clock.Stop();
+
+        public void Dispose() => Stop();
+    }
 }

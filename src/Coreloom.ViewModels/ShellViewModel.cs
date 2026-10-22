@@ -70,6 +70,7 @@ public sealed class ShellViewModel : ObservableObject
 
         Overview = new OverviewViewModel(context);
         Gaming = new GamingViewModel(context);
+        Benchmarking = new BenchmarkingViewModel(context);
         Gpu = new GpuViewModel(context);
         Cpu = new CpuViewModel(context);
         Memory = new MemoryViewModel(context);
@@ -97,7 +98,7 @@ public sealed class ShellViewModel : ObservableObject
             Navigate(Settings);
         };
 
-        Pages = [Overview, Gaming, Gpu, Cpu, Memory, Storage, Devices, Network, Optimize, History];
+        Pages = [Overview, Gaming, Benchmarking, Gpu, Cpu, Memory, Storage, Devices, Network, Optimize, History];
         _currentPage = Overview;
         NavigateCommand = new RelayCommand<PageViewModel>(page =>
         {
@@ -152,6 +153,8 @@ public sealed class ShellViewModel : ObservableObject
 
     /// <summary>Game library, boosts, frame limiter and shader caches (above Graphics).</summary>
     public GamingViewModel Gaming { get; }
+
+    public BenchmarkingViewModel Benchmarking { get; }
 
     public GpuViewModel Gpu { get; }
 

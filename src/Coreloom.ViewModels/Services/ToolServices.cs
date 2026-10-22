@@ -15,6 +15,57 @@ public interface IDiskBenchmarkService
     Task<DiskBenchmarkResult> RunAsync(DiskBenchmarkOptions options, IProgress<DiskBenchmarkProgress> progress, CancellationToken cancellationToken);
 }
 
+/// <summary>
+/// The Benchmarking page's work: the CPU benchmark, the GPU benchmark (Direct3D 11, Windows only), the stress test
+/// loads, and the saved results.
+/// </summary>
+public interface IHardwareBenchmarkService
+{
+    /// <summary>False where the GPU benchmark can't run (no Direct3D: tests, other systems).</summary>
+    bool GpuSupported { get; }
+
+    /// <summary>The graphics cards the GPU benchmark can run on, best first.</summary>
+    IReadOnlyList<GpuAdapter> GraphicsCards();
+
+    Task<CpuBenchmarkScores> RunCpuAsync(CpuBenchmarkOptions options, IProgress<BenchmarkProgress> progress, CancellationToken cancellationToken);
+
+    Task<GpuBenchmarkScores> RunGpuAsync(GpuAdapter? card, IProgress<BenchmarkProgress> progress, CancellationToken cancellationToken);
+
+    /// <summary>A processor stress load (not started).</summary>
+    IStressLoad ProcessorStress(string device);
+
+    /// <summary>A graphics card stress load (not started), or null where the GPU benchmark can't run.</summary>
+    IStressLoad? GraphicsStress(GpuAdapter? card);
+
+    IReadOnlyList<BenchmarkResult> LoadResults();
+
+    void SaveResults(IReadOnlyList<BenchmarkResult> results);
+}
+
+/// <summary>The CPU benchmark and stress test from Coreloom.Core, results kept in memory, and no GPU benchmark.</summary>
+public sealed class PortableBenchmarkService : IHardwareBenchmarkService
+{
+    private List<BenchmarkResult> _saved = [];
+
+    public bool GpuSupported => false;
+
+    public IReadOnlyList<GpuAdapter> GraphicsCards() => [];
+
+    public Task<CpuBenchmarkScores> RunCpuAsync(CpuBenchmarkOptions options, IProgress<BenchmarkProgress> progress, CancellationToken cancellationToken) =>
+        CpuBenchmark.RunAsync(options, progress, cancellationToken);
+
+    public Task<GpuBenchmarkScores> RunGpuAsync(GpuAdapter? card, IProgress<BenchmarkProgress> progress, CancellationToken cancellationToken) =>
+        Task.FromException<GpuBenchmarkScores>(new NotSupportedException("The GPU benchmark needs Direct3D 11 on Windows."));
+
+    public IStressLoad ProcessorStress(string device) => new CpuStressLoad(device);
+
+    public IStressLoad? GraphicsStress(GpuAdapter? card) => null;
+
+    public IReadOnlyList<BenchmarkResult> LoadResults() => _saved;
+
+    public void SaveResults(IReadOnlyList<BenchmarkResult> results) => _saved = [.. results];
+}
+
 /// <summary>Measures the internet connection (the Network page's speed test).</summary>
 public interface ISpeedTestService
 {
@@ -309,6 +360,8 @@ public sealed class UnsupportedCoreSchedulingService : ICoreSchedulingService
 /// <summary>The tools the pages offer (benchmarks, speed test, Smart Optimize, devices, gaming). Tests swap in fakes.</summary>
 public sealed class ToolServices
 {
+    public IHardwareBenchmarkService Benchmarks { get; init; } = new PortableBenchmarkService();
+
     public IDiskBenchmarkService DiskBenchmark { get; init; } = new DiskBenchmarkService();
 
     public ISpeedTestService SpeedTest { get; init; } = new SpeedTestService();

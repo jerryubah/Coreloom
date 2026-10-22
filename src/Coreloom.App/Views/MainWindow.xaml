@@ -28,6 +28,7 @@
     <!-- View lookup for each page view model. -->
     <DataTemplate DataType="{x:Type pages:OverviewViewModel}"><views:OverviewPage /></DataTemplate>
     <DataTemplate DataType="{x:Type pages:GamingViewModel}"><views:GamingPage /></DataTemplate>
+    <DataTemplate DataType="{x:Type pages:BenchmarkingViewModel}"><views:BenchmarkingPage /></DataTemplate>
     <DataTemplate DataType="{x:Type pages:GpuViewModel}"><views:GpuPage /></DataTemplate>
     <DataTemplate DataType="{x:Type pages:CpuViewModel}"><views:CpuPage /></DataTemplate>
     <DataTemplate DataType="{x:Type pages:MemoryViewModel}"><views:MemoryPage /></DataTemplate>

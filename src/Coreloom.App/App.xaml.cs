@@ -286,6 +286,7 @@ public partial class App : Application
             Overhead = Services.OverheadMeters.Shared,
             Tools = new ToolServices
             {
+                Benchmarks = new Services.WindowsBenchmarkService(paths.SettingsDirectory),
                 SpeedTest = new SpeedTestService($"Coreloom/{app.DisplayVersion}"),
                 Optimizer = new WindowsOptimizeService(),
                 Devices = _devices = new WindowsDeviceService(),

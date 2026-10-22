@@ -17,6 +17,11 @@ public partial class GamingPage : UserControl
     public GamingPage() => InitializeComponent();
 }
 
+public partial class BenchmarkingPage : UserControl
+{
+    public BenchmarkingPage() => InitializeComponent();
+}
+
 public partial class GpuPage : UserControl
 {
     public GpuPage() => InitializeComponent();

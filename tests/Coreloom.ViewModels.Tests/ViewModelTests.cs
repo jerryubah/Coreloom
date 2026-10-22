@@ -409,8 +409,10 @@ public class ShellViewModelTests
         var (shell, _, settings, stubs) = Create();
         Assert.Same(shell.Overview, shell.CurrentPage);
         Assert.NotNull(stubs.Applied);
-        Assert.Equal(10, shell.Pages.Count);
-        Assert.Same(shell.Gaming, shell.Pages[shell.Pages.IndexOf(shell.Gpu) - 1]); // Gaming sits above Graphics
+        Assert.Equal(11, shell.Pages.Count);
+        Assert.Same(shell.Gaming, shell.Pages[1]);
+        Assert.Same(shell.Benchmarking, shell.Pages[shell.Pages.IndexOf(shell.Gaming) + 1]); // Benchmarking sits below Gaming
+        Assert.Same(shell.Benchmarking, shell.Pages[shell.Pages.IndexOf(shell.Gpu) - 1]); // and above Graphics
         Assert.Same(shell.History, shell.Pages[^1]);
         Assert.Same(shell.Optimize, shell.Pages[^2]); // Smart Optimize sits above Performance History
         Assert.Same(shell.Devices, shell.Pages[shell.Pages.IndexOf(shell.Storage) + 1]); // Devices sits below Storage

@@ -333,3 +333,117 @@ public class StressTestTests
         Assert.Equal(done, load.Work); // stopped means stopped
     }
 }
+
+public class BenchmarkTuningTests
+{
+    private static readonly Formatting.UnitFormatter F = new(culture: System.Globalization.CultureInfo.InvariantCulture);
+
+    private static ReadingRecorder Processor(double performanceLimit = 100)
+    {
+        var r = new ReadingRecorder();
+        r.Add(BenchmarkReadings.Processor, BenchmarkReadings.FastestCore, MetricKind.Clock, 5750);
+        r.Add(BenchmarkReadings.Processor, BenchmarkReadings.Performance, MetricKind.Level, 150);
+        r.Add(BenchmarkReadings.Processor, BenchmarkReadings.Power, MetricKind.Power, 200);
+        r.Add(BenchmarkReadings.Processor, BenchmarkReadings.Voltage, MetricKind.Voltage, 1.3);
+        r.Add(BenchmarkReadings.Processor, BenchmarkReadings.PerformanceLimit, MetricKind.Level, performanceLimit);
+        r.Add(BenchmarkReadings.Processor, BenchmarkReadings.Temperature, MetricKind.Temperature, 88);
+        return r;
+    }
+
+    [Fact]
+    public void Pbo_IsLikelyOn_WhenPowerGoesWellAboveTheStockLimit()
+    {
+        var ryzen = Hardware.AmdProcessors.Create("AMD Ryzen 9 9950X3D 16-Core Processor");
+        var notes = BenchmarkTuning.Processor(Processor(), ryzen, [260, 262, 259, 261], wattsFromPpt: true, F);
+
+        var pbo = Assert.Single(notes, n => n.Name == "Precision Boost Overdrive");
+        Assert.Equal("Likely on", pbo.Value);
+        Assert.True(pbo.Raised);
+        Assert.Contains("230 W", pbo.Detail);
+        Assert.True(Assert.Single(notes, n => n.Name == "Peak power").Raised);
+        Assert.Equal("5.75 GHz", Assert.Single(notes, n => n.Name == "Fastest core clock").Value);
+        Assert.Equal("150 % of base clock", Assert.Single(notes, n => n.Name == "Boost").Value);
+        Assert.Equal("No", Assert.Single(notes, n => n.Name == "Held back").Value);
+    }
+
+    [Fact]
+    public void Pbo_IsOff_WhenPowerHoldsAtTheStockLimit_AndIntelHasNoPboNote()
+    {
+        var ryzen = Hardware.AmdProcessors.Create("AMD Ryzen 9 9950X3D 16-Core Processor");
+        var notes = BenchmarkTuning.Processor(Processor(performanceLimit: 84), ryzen, [228, 229, 230, 229, 228, 230], wattsFromPpt: true, F);
+        Assert.Equal("Off (stock limits)", Assert.Single(notes, n => n.Name == "Precision Boost Overdrive").Value);
+        Assert.Equal("Down to 84 %", Assert.Single(notes, n => n.Name == "Held back").Value);
+
+        var intel = BenchmarkTuning.Processor(Processor(), null, [250, 251, 252], wattsFromPpt: false, F);
+        Assert.DoesNotContain(intel, n => n.Name == "Precision Boost Overdrive");
+        Assert.False(Assert.Single(intel, n => n.Name == "Peak power").Raised);
+    }
+
+    private static ReadingRecorder Graphics(double clock, double limit)
+    {
+        var r = new ReadingRecorder();
+        r.Add(BenchmarkReadings.Graphics, BenchmarkReadings.Clock, MetricKind.Clock, clock);
+        r.Add(BenchmarkReadings.Graphics, BenchmarkReadings.PowerLimit, MetricKind.Power, limit);
+        r.Add(BenchmarkReadings.Graphics, BenchmarkReadings.Power, MetricKind.Power, 430);
+        r.Add(BenchmarkReadings.Graphics, BenchmarkReadings.Temperature, MetricKind.Temperature, 70);
+        r.Add(BenchmarkReadings.Graphics, BenchmarkReadings.HotSpot, MetricKind.Temperature, 82);
+        return r;
+    }
+
+    private static DeviceInfo Card() => new(MetricIds.GpuDeviceId(0), MetricCategory.Gpu, "NVIDIA GeForce RTX 4090")
+    {
+        Properties = [new("Max core clock", "3,105 MHz"), new("Max memory clock", "10,501 MHz"), new("Default power limit", "450 W")],
+    };
+
+    [Fact]
+    public void GraphicsNotes_CompareWithTheCardsOwnDefaults()
+    {
+        var stock = BenchmarkTuning.Graphics(Graphics(2790, 450), Card(), 0x1, F);
+        var limit = Assert.Single(stock, n => n.Name == "Power limit");
+        Assert.Equal("The card's default.", limit.Detail);
+        Assert.False(limit.Raised);
+        Assert.False(Assert.Single(stock, n => n.Name == "Peak core clock").Raised);
+        Assert.Equal("Nothing reported", Assert.Single(stock, n => n.Name == "Held back by").Value); // "Idle" doesn't count
+        Assert.Contains("Hot spot: 82 °C", Assert.Single(stock, n => n.Name == "Hottest").Detail);
+
+        var tuned = BenchmarkTuning.Graphics(Graphics(3200, 600), Card(), 0x4 | 0x20, F);
+        Assert.True(Assert.Single(tuned, n => n.Name == "Peak core clock").Raised);
+        var raised = Assert.Single(tuned, n => n.Name == "Power limit");
+        Assert.True(raised.Raised);
+        Assert.Contains("+33 %", raised.Detail);
+        Assert.Equal("Power limit, Thermal limit", Assert.Single(tuned, n => n.Name == "Held back by").Value);
+
+        var saving = BenchmarkTuning.Graphics(Graphics(2500, 315), Card(), 0, F);
+        Assert.StartsWith("Lowered from the 450 W default (-30 %)", Assert.Single(saving, n => n.Name == "Power limit").Detail);
+    }
+
+    [Fact]
+    public void Numbers_AreReadFromProperties()
+    {
+        Assert.Equal(3090, BenchmarkTuning.Number("3,090 MHz"));
+        Assert.Equal(575, BenchmarkTuning.Number("575 W"));
+        Assert.Equal(1.05, BenchmarkTuning.Number("1.05 V"));
+        Assert.True(double.IsNaN(BenchmarkTuning.Number(null)));
+        Assert.True(double.IsNaN(BenchmarkTuning.Number("none")));
+    }
+
+    [Fact]
+    public void ProcessorReadings_TakeTheFastestCore_AndPreferPpt()
+    {
+        var samples = new Dictionary<string, MetricSample>
+        {
+            [MetricIds.CpuCoreClock(1)] = new(5500, default),
+            [MetricIds.CpuCoreClock(2)] = new(5700, default),
+            [MetricIds.CpuCoreEffectiveClock(2)] = new(9999, default), // effective clocks aren't the core clock
+            [MetricIds.CpuPower] = new(190, default),
+            [MetricIds.CpuPpt] = new(210, default),
+        };
+        var recorder = new ReadingRecorder();
+        var (watts, fromPpt) = BenchmarkReadings.RecordProcessor(recorder, new TelemetryFrame(1, 0, DateTime.Now, TimeSpan.Zero, samples));
+
+        Assert.Equal(5700, recorder.Max(BenchmarkReadings.Processor, BenchmarkReadings.FastestCore));
+        Assert.Equal(190, recorder.Max(BenchmarkReadings.Processor, BenchmarkReadings.Power));
+        Assert.Equal(210, watts);
+        Assert.True(fromPpt);
+    }
+}
