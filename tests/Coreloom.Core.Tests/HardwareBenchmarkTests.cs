@@ -432,11 +432,11 @@ public class BenchmarkTuningTests
     {
         var samples = new Dictionary<string, MetricSample>
         {
-            [MetricIds.CpuCoreClock(1)] = new(5500, default),
-            [MetricIds.CpuCoreClock(2)] = new(5700, default),
-            [MetricIds.CpuCoreEffectiveClock(2)] = new(9999, default), // effective clocks aren't the core clock
-            [MetricIds.CpuPower] = new(190, default),
-            [MetricIds.CpuPpt] = new(210, default),
+            [MetricIds.CpuCoreClock(1)] = new(5500, null!),
+            [MetricIds.CpuCoreClock(2)] = new(5700, null!),
+            [MetricIds.CpuCoreEffectiveClock(2)] = new(9999, null!), // effective clocks aren't the core clock
+            [MetricIds.CpuPower] = new(190, null!),
+            [MetricIds.CpuPpt] = new(210, null!),
         };
         var recorder = new ReadingRecorder();
         var (watts, fromPpt) = BenchmarkReadings.RecordProcessor(recorder, new TelemetryFrame(1, 0, DateTime.Now, TimeSpan.Zero, samples));
