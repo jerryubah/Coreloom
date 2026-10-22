@@ -147,6 +147,23 @@ How this change was checked in the Linux container (no Windows, no nuget.org):
 | In-place update of portable copies | File operations unit-tested on Linux (staging, copy, rollback, cleanup) | Windows specifics: the elevated helper starting without a prompt, locked files and antivirus timing, the hidden `.coreloom-update` folder, the splash while copying, `Compress-Archive` zips from the real release |
 | Per-copy trust key `HKLM\SOFTWARE\Coreloom\Updates\Copies\<id>` | Code review | Registry writes and clean-up on Windows |
 
+### 1.5.1: the cards show the latest run, GPU scores on a 10,000-point scale
+
+- **Tests.** Core tests: 681 passed (new: GPU tests score 10,000 at the reference rate, 1.5.0 GPU results multiplied by
+  ten once with rates untouched and the CPU and stress results left alone, the scale saved in `benchmarks.json` and a
+  file written by 1.5.0 read on the new scale; the one- and two-thread timing test no longer compares the two rates,
+  which failed once on a busy build machine). View-model tests: 177 passed (the cards show the latest run and its
+  parts, a run below the best is what the card shows while the Best badge stays on the best, a 1.5.0 GPU result of
+  37,000 reads 370,000 on the card and in its details).
+- **Seen as rendered on Windows.** Page shots of the Benchmarking page: the cards with the latest run and "Latest run ·
+  date, time", no badge on them, the Best badges in the list, and GPU scores in the hundreds of thousands fitting the
+  cards, the list and the details table at 1600 and 1000 DIP.
+- **GitHub Actions.** Branch CI on `release-1.5.1` and `release-1.5.1-b` passed: 941 tests on Windows (Core 681, view
+  models 177, Hardware 83; on `-b` the timer check skipped itself on a slow runner timer, as it's designed to), and
+  the Linux tests.
+- **Not verified:** a GPU run on your RTX 5090 on the new scale (it's the old scale × 10, so your ~37,000 should read
+  ~370,000).
+
 ### 1.5.0: the Benchmarking page (CPU and GPU benchmarks, saved results with a Best badge, details, stress tests)
 
 - **CPU benchmark, measured.** All eight tests ran in the Linux sandbox (2.8 GHz Xeon, 2 threads) and on GitHub's
