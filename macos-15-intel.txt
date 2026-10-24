@@ -1,0 +1,205 @@
+ProductName:		macOS
+ProductVersion:		15.7.9
+BuildVersion:		24G830
+Darwin iad01-dz249-71c32fbb-7968-4a37-a537-867d8c3ad362-967D8419E8A0.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:50:07 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_X86_64 x86_64
+hw.model: Macmini6,2
+hw.memsize: 15032385536
+hw.physicalcpu: 4
+hw.logicalcpu: 4
+hw.perflevel0.physicalcpu: 4
+hw.perflevel0.name: Standard
+hw.cpufrequency: 3190000000
+hw.cpufrequency_max: 3190000000
+hw.l2cachesize: 262144
+hw.l3cachesize: 12582912
+machdep.cpu.brand_string: Intel(R) Core(TM) i7-8700B CPU @ 3.20GHz
+vm.swapusage: total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)
+kern.memorystatus_vm_pressure_level: 1
+*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[__NSDictionaryM __setObject:forKey:]: object cannot be nil (key: IOReportChannels)'
+*** First throw call stack:
+(
+	0   CoreFoundation                      0x00007ff814628e6a __exceptionPreprocess + 242
+	1   libobjc.A.dylib                     0x00007ff8140f324b objc_exception_throw + 62
+	2   CoreFoundation                      0x00007ff81455e340 -[__NSDictionaryM __setObject:forKey:] + 2091
+	3   probe                               0x000000010494ece1 ioreport + 2193
+	4   probe                               0x000000010494dbd0 main + 512
+	5   dyld                                0x00007ff81412b530 start + 3056
+)
+libc++abi: terminating due to uncaught exception of type NSException
+CPU: Intel(R) Core(TM) i7-8700B CPU @ 3.20GHz
+Model: Macmini6,2
+Metal: Apple Paravirtual device unified=0 maxWS=1073741824
+
+== HID temperature sensors
+0 sensors
+page ff08 usage 1: 0 services
+page ff08 usage 2: 0 services
+page ff08 usage 3: 0 services
+page ff08 usage 4: 0 services
+
+== SMC (struct size 80)
+IOServiceOpen: 0x0
+#KEY: type ui32 size 4 kr=0x0 bytes 00 00 02 8d
+FNum: type ui8  size 1 kr=0x0 bytes 01
+F0Ac: type flt  size 4 kr=0x0 bytes 00 00 00 00 = 0.00
+F0Mx: type flt  size 4 kr=0x0 bytes 00 40 9c 45 = 5000.00
+TC0P: type sp78 size 2 kr=0x0 bytes 21 10
+TC0D: info kr=0x0 result=-124
+Tp09: info kr=0x0 result=-124
+Tp01: info kr=0x0 result=-124
+TG0P: info kr=0x0 result=-124
+PSTR: type flt  size 4 kr=0x0 bytes 45 14 44 42 = 49.02
+PCPC: type sp87 size 2 kr=0x0 bytes 10 bf
+PPBR: info kr=0x0 result=-124
+B0TE: info kr=0x0 result=-124
+
+== IOReport
+110 channels in all groups
+  AGPMStatistics / : 2
+  Cursor / Graphics: 1
+  Cursor / Total: 1
+  Hub Stats / EventName Received: 1
+  Hub Stats / User Client IO: 14
+  IOHIDDevice Input Report Errors / Input Report IDs: 3
+  Internal Statistics / : 63
+  Interrupt Statistics (by index) / ASMC 0: 5
+  Interrupt Statistics (by index) / ASTR 0: 5
+  Interrupt Statistics (by index) / display 0: 5
+  Interrupt Statistics (by index) / pci8086,1e31 1: 5
+  Interrupt Statistics (by index) / power-button 0: 5
+probe exit 134
+
+== pmset
+System-wide power settings:
+Currently in use:
+ standby              0
+ Sleep On Power Button 1
+ autorestart          0
+ hibernatefile        /var/vm/sleepimage
+ proximitywake        1
+ disksleep            0
+ standbydelayhigh     4200
+ sleep                0 (sleep prevented by cloudd, addonsd, mds_stores, mds)
+ hibernatemode        0
+ ttyskeepawake        1
+ displaysleep         0 (display sleep prevented by addonsd)
+ highstandbythreshold 50
+ standbydelaylow      4200
+Note: No thermal warning level has been recorded
+Note: No performance warning level has been recorded
+Note: No CPU power status has been recorded
+== system_profiler
+2026-10-24 21:19:57.088 system_profiler[1263:7029] Device PreExisted [00000001000002e8] Apple Paravirtual device
+2026-10-24 21:19:57.382 system_profiler[1292:7093] dimmManufacturer = 1, should be 2
+Hardware:
+
+    Hardware Overview:
+
+      Model Name: Mac mini
+      Model Identifier: Macmini6,2
+      Processor Name: Unknown
+      Processor Speed: 3.19 GHz
+      Number of Processors: 1
+      Total Number of Cores: 4
+      L2 Cache (per Core): 256 KB
+      L3 Cache: 12 MB
+      Memory: 14 GB
+      System Firmware Version: 1.00
+      OS Loader Version: 583~2317
+      Serial Number (system): C02J8A9EG1HW
+      Hardware UUID: 4203018E-580F-C1B5-9525-B745CECA79EB
+      Provisioning UDID: 4203018E-580F-C1B5-9525-B745CECA79EB
+
+Graphics/Displays:
+
+    Apple Paravirtualized Graphics Device:
+
+      Chipset Model: Apple Paravirtualized Graphics Device
+      Type: GPU
+      VRAM (Total): 64 MB
+      Vendor: Apple (0x106b)
+      Device ID: 0xeeee
+      Revision ID: 0x0000
+      Metal Support: Metal 2
+      Displays:
+        Display:
+          Resolution: 1920 x 1080 (1080p FHD - Full High Definition)
+          UI Looks like: 1920 x 1080 @ 30.00Hz
+          Framebuffer Depth: 24-Bit Color (ARGB8888)
+          Main Display: Yes
+          Mirror: Off
+          Online: Yes
+          Connection Type: Internal
+
+Memory:
+
+    Memory Slots:
+
+      ECC: Disabled
+      Upgradeable Memory: Yes
+
+        Location:
+
+          Size: 3 GB
+          Type: RAM
+          Speed: 1600 MHz
+          Status: OK
+          Manufacturer: 0x0000
+          Part Number: None
+          Serial Number: None
+
+        Location:
+
+          Size: 11 GB
+          Type: RAM
+          Speed: 1600 MHz
+          Status: OK
+          Manufacturer: Unknown
+          Part Number: None
+          Serial Number: None
+
+== dotnet
+8.0.101 [/Users/runner/.dotnet/sdk]
+8.0.204 [/Users/runner/.dotnet/sdk]
+8.0.303 [/Users/runner/.dotnet/sdk]
+8.0.424 [/Users/runner/.dotnet/sdk]
+9.0.102 [/Users/runner/.dotnet/sdk]
+9.0.203 [/Users/runner/.dotnet/sdk]
+9.0.317 [/Users/runner/.dotnet/sdk]
+10.0.103 [/Users/runner/.dotnet/sdk]
+10.0.203 [/Users/runner/.dotnet/sdk]
+10.0.302 [/Users/runner/.dotnet/sdk]
+10.0.400 [/Users/runner/.dotnet/sdk]
+== xcode
+/Applications/Xcode_16.4.app/Contents/Developer
+Firefox.app
+Google Chrome for Testing.app
+Google Chrome.app
+Microsoft Edge.app
+PowerShell.app
+Python 3.11
+Python 3.12
+Python 3.13
+Python 3.14
+Safari.app
+Utilities
+Xcode_16.0.0.app
+Xcode_16.0.app
+Xcode_16.1.0.app
+Xcode_16.1.app
+Xcode_16.2.0.app
+Xcode_16.2.app
+Xcode_16.3.0.app
+Xcode_16.3.app
+Xcode_16.4.0.app
+Xcode_16.4.app
+Xcode_16.app
+Xcode_26.0.1.app
+Xcode_26.0.app
+Xcode_26.1.1.app
+Xcode_26.1.app
+Xcode_26.2.0.app
+Xcode_26.2.app
+Xcode_26.3.0.app
+Xcode_26.3.app
+Xcode.app
