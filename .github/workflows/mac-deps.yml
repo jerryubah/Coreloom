@@ -1,0 +1,58 @@
+name: Mac dependencies
+
+# Developer helper (not part of releases): restores the Avalonia packages the macOS app uses and publishes the .nupkg
+# files on the mac-deps-output branch, for building where nuget.org isn't reachable.
+on:
+  push:
+    branches: ['deps-mac']
+
+permissions:
+  contents: write
+
+jobs:
+  deps:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - name: Restore
+        shell: bash
+        env:
+          AVALONIA_TELEMETRY_OPTOUT: '1'
+        run: |
+          mkdir -p probe && cd probe
+          curl -s https://api.nuget.org/v3-flatcontainer/avalonia/index.json | python3 -c "import json,sys; v=json.load(sys.stdin)['versions']; print('\n'.join(v[-40:]))" > ../avalonia-versions.txt
+          cat > Probe.csproj <<'XML'
+          <Project Sdk="Microsoft.NET.Sdk">
+            <PropertyGroup>
+              <TargetFramework>net10.0</TargetFramework>
+              <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+            </PropertyGroup>
+            <ItemGroup>
+              <PackageReference Include="Avalonia" Version="11.3.*" />
+              <PackageReference Include="Avalonia.Desktop" Version="11.3.*" />
+              <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.*" />
+              <PackageReference Include="Avalonia.Headless" Version="11.3.*" />
+              <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+            </ItemGroup>
+          </Project>
+          XML
+          dotnet restore Probe.csproj
+          dotnet list Probe.csproj package --include-transitive > ../resolved.txt
+          cat ../resolved.txt
+          mkdir -p ../out/packages
+          find ~/.nuget/packages -name '*.nupkg' -exec cp {} ../out/packages/ \;
+          du -sh ../out/packages
+          cp ../avalonia-versions.txt ../resolved.txt ../out/
+      - name: Publish on mac-deps-output
+        shell: bash
+        run: |
+          cd out
+          git init -q -b mac-deps-output
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Avalonia packages"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" mac-deps-output
