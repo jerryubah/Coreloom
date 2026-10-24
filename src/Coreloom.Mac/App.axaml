@@ -1,0 +1,20 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Coreloom.Mac.App"
+             Name="Coreloom"
+             RequestedThemeVariant="Dark">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://Coreloom/Themes/Icons.axaml" />
+        <ResourceInclude Source="avares://Coreloom/Themes/Controls.axaml" />
+        <ResourceInclude Source="avares://Coreloom/Themes/Templates.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Application.Resources>
+
+  <Application.Styles>
+    <FluentTheme DensityStyle="Compact" />
+    <StyleInclude Source="avares://Coreloom/Themes/Styles.axaml" />
+  </Application.Styles>
+</Application>

@@ -1,0 +1,28 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:c="using:Coreloom.Mac.Controls">
+
+  <!-- A row that lights up under the pointer (sensor tables, lists). -->
+  <Style Selector="Border.hover-row:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.ControlHover}" />
+  </Style>
+
+  <!-- Menus and their items take the app's colors. -->
+  <Style Selector="ContextMenu">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Tooltip}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.TooltipBorder}" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="FontSize" Value="13" />
+  </Style>
+
+  <!-- Selection in text boxes uses the accent, softly. -->
+  <Style Selector="TextBox">
+    <Setter Property="SelectionBrush" Value="{DynamicResource Brush.AccentSoft}" />
+  </Style>
+
+  <!-- The page's scroll bars are the overlay kind macOS uses; a touch of the accent while dragging. -->
+  <Style Selector="ScrollBar /template/ Thumb">
+    <Setter Property="Background" Value="{DynamicResource Brush.TextTertiary}" />
+  </Style>
+</Styles>

@@ -12,6 +12,8 @@ public class HardwareVendorTests
     [InlineData("Advanced Micro Devices, Inc.", HardwareVendor.Amd)]
     [InlineData("GenuineIntel", HardwareVendor.Intel)]
     [InlineData("Intel", HardwareVendor.Intel)]
+    [InlineData("Apple", HardwareVendor.Apple)]
+    [InlineData("Apple Inc.", HardwareVendor.Apple)]
     [InlineData("Microsoft", HardwareVendor.Unknown)]
     [InlineData("", HardwareVendor.Unknown)]
     [InlineData(null, HardwareVendor.Unknown)]
@@ -31,6 +33,11 @@ public class HardwareVendorTests
     [InlineData("Intel(R) Core(TM) i9-14900K", HardwareVendor.Intel)]
     [InlineData("Intel(R) Arc(TM) A770 Graphics", HardwareVendor.Intel)]
     [InlineData("Intel(R) UHD Graphics 770", HardwareVendor.Intel)]
+    [InlineData("Apple M4 Pro", HardwareVendor.Apple)]
+    [InlineData("Apple M1 (Virtual)", HardwareVendor.Apple)]
+    [InlineData("Apple Paravirtual device", HardwareVendor.Apple)]
+    [InlineData("AMD Radeon Pro 5500M", HardwareVendor.Amd)]
+    [InlineData("Intel Iris Plus Graphics", HardwareVendor.Intel)]
     [InlineData("Microsoft Basic Render Driver", HardwareVendor.Unknown)]
     [InlineData("", HardwareVendor.Unknown)]
     public void DeviceNames(string name, HardwareVendor expected) =>
@@ -48,7 +55,7 @@ public class HardwareVendorTests
     [Fact]
     public void Keys_RoundTrip_AndUnknownIsEmpty()
     {
-        foreach (var vendor in new[] { HardwareVendor.Nvidia, HardwareVendor.Amd, HardwareVendor.Intel })
+        foreach (var vendor in new[] { HardwareVendor.Nvidia, HardwareVendor.Amd, HardwareVendor.Intel, HardwareVendor.Apple })
         {
             Assert.Equal(vendor, HardwareVendors.FromKey(HardwareVendors.Key(vendor)));
             Assert.False(string.IsNullOrEmpty(HardwareVendors.DisplayName(vendor)));

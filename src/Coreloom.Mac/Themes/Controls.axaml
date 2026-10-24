@@ -1,0 +1,928 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="using:Coreloom.Mac.Controls"
+                    xmlns:conv="using:Coreloom.Mac.Converters">
+
+  <!-- ================================================================================= -->
+  <!-- Converters                                                                         -->
+  <!-- ================================================================================= -->
+  <conv:InverseBoolConverter x:Key="InverseBool" />
+  <conv:HasValueConverter x:Key="HasValue" />
+  <conv:EqualsToBoolConverter x:Key="EqualsToBool" />
+  <conv:ColorKeyToBrushConverter x:Key="ColorKeyToBrush" />
+  <conv:LevelToBrushConverter x:Key="LevelToBrush" />
+  <conv:IconKeyToGeometryConverter x:Key="IconKeyToGeometry" />
+  <conv:FractionToPercentConverter x:Key="FractionToPercent" />
+  <conv:HexToBrushConverter x:Key="HexToBrush" />
+  <conv:IntToDoubleConverter x:Key="IntToDouble" />
+  <conv:MultiEqualsConverter x:Key="MultiEquals" />
+  <conv:StatusToGlowKeyConverter x:Key="StatusToGlowKey" />
+  <conv:StatusToBrushConverter x:Key="StatusToBrush" />
+  <conv:CheckStateToIconConverter x:Key="CheckStateToIcon" />
+  <conv:CheckStateToBrushConverter x:Key="CheckStateToBrush" />
+  <conv:BoolToBrushConverter x:Key="BoolToBrush" />
+  <conv:BoolToDoubleConverter x:Key="BoolToDouble" />
+  <conv:BoolToThicknessConverter x:Key="BoolToThickness" />
+  <conv:BoolToValueConverter x:Key="BoolToValue" />
+  <conv:TextShadowConverter x:Key="TextShadow" />
+
+  <!-- ================================================================================= -->
+  <!-- Typography                                                                          -->
+  <!-- ================================================================================= -->
+  <!-- Inter for the interface, JetBrains Mono for measured values; both ship with the app (SIL OFL 1.1). -->
+  <FontFamily x:Key="UiFont">avares://Coreloom/Assets/Fonts#Inter</FontFamily>
+  <FontFamily x:Key="MonoFont">avares://Coreloom/Assets/Fonts#JetBrains Mono</FontFamily>
+  <FontFamily x:Key="ContentControlThemeFontFamily">avares://Coreloom/Assets/Fonts#Inter</FontFamily>
+
+  <ControlTheme x:Key="Text.Mono" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="Text.PageTitle" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="27" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="Text.Section" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="15" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="Text.SectionTitle" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="17" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="Text.CardTitle" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="Text.Body" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="Text.Secondary" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="12.5" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="Text.Caption" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="11.5" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.TextTertiary}" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="Text.Label" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </ControlTheme>
+
+  <!-- A card's headline number: big, bold Inter with tabular digits (they keep their width as the value counts). -->
+  <ControlTheme x:Key="Text.ValueLarge" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+    <Setter Property="FontSize" Value="32" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    <Setter Property="FontFeatures" Value="+tnum" />
+    <Setter Property="LineHeight" Value="38" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="Text.Value" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+    <Setter Property="FontSize" Value="21" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    <Setter Property="FontFeatures" Value="+tnum" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="Text.ValueSmall" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="Text.Unit" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+    <Setter Property="Margin" Value="4,0,0,0" />
+  </ControlTheme>
+
+  <!-- ================================================================================= -->
+  <!-- Icons                                                                              -->
+  <!-- ================================================================================= -->
+  <!-- The stroke follows the text color around it (the inherited foreground), like the Windows app's icons. -->
+  <ControlTheme x:Key="IconPath" TargetType="Path">
+    <Setter Property="Width" Value="18" />
+    <Setter Property="Height" Value="18" />
+    <Setter Property="Stretch" Value="Uniform" />
+    <Setter Property="Stroke" Value="{Binding $self.(TextElement.Foreground)}" />
+    <Setter Property="StrokeThickness" Value="1.7" />
+    <Setter Property="StrokeJoin" Value="Round" />
+    <Setter Property="StrokeLineCap" Value="Round" />
+  </ControlTheme>
+
+  <!-- ================================================================================= -->
+  <!-- Cards and surfaces                                                                 -->
+  <!-- ================================================================================= -->
+  <!-- Cards are c:SquircleBorder (smooth "squircle" corners, the same everywhere). A card's top rim catches a little
+       light (Sheen), like the edge of a pane of glass. -->
+  <ControlTheme x:Key="Card" TargetType="c:SquircleBorder">
+    <Setter Property="Background" Value="{DynamicResource Brush.Card}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.CardBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="18" />
+    <Setter Property="Padding" Value="18,16" />
+    <Setter Property="Sheen" Value="0.55" />
+  </ControlTheme>
+
+  <!-- A card with data that glows in its own color (set GlowKey), lit from below, its rim lighting up under the pointer. -->
+  <ControlTheme x:Key="Card.Glow" TargetType="c:SquircleBorder" BasedOn="{StaticResource Card}">
+    <Setter Property="EdgeGlow" Value="True" />
+  </ControlTheme>
+
+  <!-- A page's hero card: a stronger glow (GlowKey Accent unless set). -->
+  <ControlTheme x:Key="Card.Hero" TargetType="c:SquircleBorder" BasedOn="{StaticResource Card.Glow}">
+    <Setter Property="GlowKey" Value="Accent" />
+    <Setter Property="GlowStrength" Value="1.5" />
+    <Setter Property="Sheen" Value="0.8" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="Card.Inset" TargetType="c:SquircleBorder">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="12,10" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="Divider" TargetType="Border">
+    <Setter Property="Height" Value="1" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Divider}" />
+    <Setter Property="Margin" Value="0,12" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="Badge" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource Brush.ControlHover}" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="6,1" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </ControlTheme>
+
+  <!-- ================================================================================= -->
+  <!-- Buttons                                                                            -->
+  <!-- ================================================================================= -->
+  <ControlTheme x:Key="Button.Subtle" TargetType="Button">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="Padding" Value="12,7" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                          BorderThickness="1" CornerRadius="10" Padding="{TemplateBinding Padding}">
+          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                            RecognizesAccessKey="True" />
+        </c:SquircleBorder>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ c|SquircleBorder#Root">
+      <Setter Property="Background" Value="{DynamicResource Brush.ControlHover}" />
+    </Style>
+    <Style Selector="^:pressed /template/ c|SquircleBorder#Root">
+      <Setter Property="Background" Value="{DynamicResource Brush.ControlPressed}" />
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.45" />
+    </Style>
+    <Style Selector="^:focus-visible /template/ c|SquircleBorder#Root">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="Button.Secondary" TargetType="Button" BasedOn="{StaticResource Button.Subtle}">
+    <Setter Property="Background" Value="{DynamicResource Brush.Input}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.InputBorder}" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="Button.Primary" TargetType="Button">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Padding" Value="12,7" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                            HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+        </c:SquircleBorder>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ c|SquircleBorder#Root">
+      <Setter Property="Background" Value="{DynamicResource Brush.AccentHover}" />
+    </Style>
+    <Style Selector="^:pressed /template/ c|SquircleBorder#Root">
+      <Setter Property="Opacity" Value="0.85" />
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.45" />
+    </Style>
+  </ControlTheme>
+
+  <!-- A banner's main button: the accent as a gradient, brightening on hover. -->
+  <ControlTheme x:Key="Button.AccentGradient" TargetType="Button" BasedOn="{StaticResource Button.Primary}">
+    <Setter Property="Background" Value="{DynamicResource Brush.AccentGradient}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" CornerRadius="10" />
+          <c:SquircleBorder Name="Sheen" Background="{DynamicResource Brush.OnAccent}" CornerRadius="10" Opacity="0" />
+          <ContentPresenter Name="PART_ContentPresenter" Margin="{TemplateBinding Padding}" Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ c|SquircleBorder#Sheen">
+      <Setter Property="Opacity" Value="0.1" />
+    </Style>
+    <Style Selector="^:pointerover /template/ c|SquircleBorder#Root">
+      <Setter Property="Background" Value="{TemplateBinding Background}" />
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="Button.Icon" TargetType="Button" BasedOn="{StaticResource Button.Subtle}">
+    <Setter Property="Width" Value="34" />
+    <Setter Property="Height" Value="34" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="ToggleButton.Icon" TargetType="ToggleButton">
+    <Setter Property="Width" Value="34" />
+    <Setter Property="Height" Value="34" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" CornerRadius="10">
+          <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </c:SquircleBorder>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ c|SquircleBorder#Root">
+      <Setter Property="Background" Value="{DynamicResource Brush.ControlHover}" />
+    </Style>
+    <Style Selector="^:checked /template/ c|SquircleBorder#Root">
+      <Setter Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
+    </Style>
+    <Style Selector="^:checked">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+  </ControlTheme>
+
+  <!-- A link-like button: accent text, underlined on hover (used where the Windows app had a hyperlink). -->
+  <ControlTheme x:Key="Button.Link" TargetType="Button">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ContentPresenter Name="PART_ContentPresenter" Background="{TemplateBinding Background}" Content="{TemplateBinding Content}" Padding="{TemplateBinding Padding}" />
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover">
+      <Setter Property="Opacity" Value="0.8" />
+    </Style>
+  </ControlTheme>
+
+  <!-- ================================================================================= -->
+  <!-- Toggle switch (CheckBox)                                                           -->
+  <!-- ================================================================================= -->
+  <!-- Liquid toggle: a pill track and a white pill knob. Pressing it turns the knob into a lens of clear glass that swells
+       over the track; letting go, it flows across with a springy overshoot and turns white again while the track floods
+       with the accent. -->
+  <ControlTheme x:Key="ToggleSwitch" TargetType="CheckBox">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid Background="Transparent" ColumnDefinitions="*,Auto">
+          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                            VerticalAlignment="Center" Margin="0,0,16,0" IsVisible="{TemplateBinding Content, Converter={x:Static ObjectConverters.IsNotNull}}" />
+          <Panel Name="Switch" Grid.Column="1" Width="46" Height="26" VerticalAlignment="Center">
+            <Border Name="TrackOff" CornerRadius="13" Background="{DynamicResource Brush.Track}"
+                    BorderBrush="{DynamicResource Brush.InputBorder}" BorderThickness="1" />
+            <Border Name="TrackOn" CornerRadius="13" Background="{DynamicResource Brush.Accent}" Opacity="0">
+              <Border.Transitions>
+                <Transitions>
+                  <DoubleTransition Property="Opacity" Duration="0:0:0.22" />
+                </Transitions>
+              </Border.Transitions>
+            </Border>
+            <Border CornerRadius="13" IsHitTestVisible="False">
+              <Border.Background>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                  <GradientStop Color="#2EFFFFFF" Offset="0" />
+                  <GradientStop Color="#00FFFFFF" Offset="0.55" />
+                </LinearGradientBrush>
+              </Border.Background>
+            </Border>
+            <!-- the knob: slides across (the outer panel), swells when pressed (the inner one) -->
+            <Panel Name="KnobSlide" Width="28" Height="22" HorizontalAlignment="Left" Margin="2,0,0,0" RenderTransform="translateX(0px)">
+              <Panel.Transitions>
+                <Transitions>
+                  <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.45" Easing="BackEaseOut" />
+                </Transitions>
+              </Panel.Transitions>
+              <Panel Name="Knob" RenderTransformOrigin="50%,50%" RenderTransform="scale(1)">
+                <Panel.Transitions>
+                  <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                  </Transitions>
+                </Panel.Transitions>
+                <Border Name="KnobShadow" CornerRadius="12" Margin="-1,0,-1,-2" Background="#30000000">
+                  <Border.Transitions>
+                    <Transitions>
+                      <DoubleTransition Property="Opacity" Duration="0:0:0.18" />
+                    </Transitions>
+                  </Border.Transitions>
+                </Border>
+                <Border Name="KnobGlass" CornerRadius="11" Opacity="0" BorderThickness="1.2">
+                  <Border.Transitions>
+                    <Transitions>
+                      <DoubleTransition Property="Opacity" Duration="0:0:0.18" />
+                    </Transitions>
+                  </Border.Transitions>
+                  <Border.Background>
+                    <RadialGradientBrush GradientOrigin="30%,25%" Center="50%,50%" RadiusX="75%" RadiusY="75%">
+                      <GradientStop Color="#33FFFFFF" Offset="0" />
+                      <GradientStop Color="#0AFFFFFF" Offset="0.7" />
+                      <GradientStop Color="#1AFFFFFF" Offset="1" />
+                    </RadialGradientBrush>
+                  </Border.Background>
+                  <Border.BorderBrush>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                      <GradientStop Color="#E6FFFFFF" Offset="0" />
+                      <GradientStop Color="#30FFFFFF" Offset="0.45" />
+                      <GradientStop Color="#99FFFFFF" Offset="1" />
+                    </LinearGradientBrush>
+                  </Border.BorderBrush>
+                </Border>
+                <Border Name="KnobCover" CornerRadius="11" Background="#FFFFFFFF">
+                  <Border.Transitions>
+                    <Transitions>
+                      <DoubleTransition Property="Opacity" Duration="0:0:0.18" />
+                    </Transitions>
+                  </Border.Transitions>
+                </Border>
+              </Panel>
+            </Panel>
+          </Panel>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:checked /template/ Border#TrackOn">
+      <Setter Property="Opacity" Value="1" />
+    </Style>
+    <Style Selector="^:checked /template/ Panel#KnobSlide">
+      <Setter Property="RenderTransform" Value="translateX(14px)" />
+    </Style>
+    <Style Selector="^:pressed /template/ Panel#Knob">
+      <Setter Property="RenderTransform" Value="scale(1.5, 1.4)" />
+    </Style>
+    <Style Selector="^:pressed /template/ Border#KnobCover">
+      <Setter Property="Opacity" Value="0" />
+    </Style>
+    <Style Selector="^:pressed /template/ Border#KnobShadow">
+      <Setter Property="Opacity" Value="0" />
+    </Style>
+    <Style Selector="^:pressed /template/ Border#KnobGlass">
+      <Setter Property="Opacity" Value="1" />
+    </Style>
+    <Style Selector="^:pointerover /template/ Border#TrackOff">
+      <Setter Property="Background" Value="{DynamicResource Brush.InputHover}" />
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.45" />
+    </Style>
+  </ControlTheme>
+
+  <!-- Compact check box (Performance History metric picker). -->
+  <ControlTheme x:Key="CheckBox.Compact" TargetType="CheckBox">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="Row" Background="Transparent" CornerRadius="6" Padding="6,5">
+          <Grid ColumnDefinitions="Auto,*">
+            <Border Name="Box" Width="16" Height="16" CornerRadius="4" BorderThickness="1.5"
+                    BorderBrush="{DynamicResource Brush.TextTertiary}" Background="Transparent" VerticalAlignment="Center">
+              <Path Name="Mark" Data="M3.5,8.5 L6.5,11.5 12.5,4.5" Stroke="{DynamicResource Brush.OnAccent}" StrokeThickness="1.8"
+                    StrokeLineCap="Round" StrokeJoin="Round" IsVisible="False" />
+            </Border>
+            <ContentPresenter Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+          </Grid>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:checked /template/ Border#Box">
+      <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+    <Style Selector="^:checked /template/ Path#Mark">
+      <Setter Property="IsVisible" Value="True" />
+    </Style>
+    <Style Selector="^:pointerover /template/ Border#Row">
+      <Setter Property="Background" Value="{DynamicResource Brush.ControlHover}" />
+    </Style>
+  </ControlTheme>
+
+  <!-- ================================================================================= -->
+  <!-- Text box                                                                           -->
+  <!-- ================================================================================= -->
+  <ControlTheme x:Key="TextBox.Default" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Input}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.InputBorder}" />
+    <Setter Property="CaretBrush" Value="{DynamicResource Brush.Text}" />
+    <Setter Property="SelectionBrush" Value="{DynamicResource Brush.AccentSoft}" />
+    <Setter Property="SelectionForegroundBrush" Value="{DynamicResource Brush.Text}" />
+    <Setter Property="Padding" Value="10,7" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="10">
+          <Panel Margin="{TemplateBinding Padding}">
+            <TextBlock Name="PART_Watermark" Text="{TemplateBinding Watermark}" Foreground="{DynamicResource Brush.TextTertiary}"
+                       IsVisible="{TemplateBinding Text, Converter={x:Static StringConverters.IsNullOrEmpty}}" IsHitTestVisible="False" VerticalAlignment="Center" />
+            <ScrollViewer Name="PART_ScrollViewer" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" VerticalAlignment="Center">
+              <TextPresenter Name="PART_TextPresenter" Text="{TemplateBinding Text, Mode=TwoWay}" CaretIndex="{TemplateBinding CaretIndex}"
+                             SelectionStart="{TemplateBinding SelectionStart}" SelectionEnd="{TemplateBinding SelectionEnd}"
+                             TextAlignment="{TemplateBinding TextAlignment}" TextWrapping="{TemplateBinding TextWrapping}"
+                             LineHeight="{TemplateBinding LineHeight}" PasswordChar="{TemplateBinding PasswordChar}"
+                             RevealPassword="{TemplateBinding RevealPassword}" SelectionBrush="{TemplateBinding SelectionBrush}"
+                             SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}" CaretBrush="{TemplateBinding CaretBrush}" />
+            </ScrollViewer>
+          </Panel>
+        </c:SquircleBorder>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:focus /template/ c|SquircleBorder#Root">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+    <Style Selector="^:pointerover /template/ c|SquircleBorder#Root">
+      <Setter Property="Background" Value="{DynamicResource Brush.InputHover}" />
+    </Style>
+  </ControlTheme>
+
+  <!-- A text box with no chrome of its own (the search field draws the box). -->
+  <ControlTheme x:Key="TextBox.Bare" TargetType="TextBox" BasedOn="{StaticResource TextBox.Default}">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="CaretBrush" Value="{DynamicResource Brush.Accent}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ScrollViewer Name="PART_ScrollViewer" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" VerticalAlignment="Center" Background="Transparent">
+          <TextPresenter Name="PART_TextPresenter" Text="{TemplateBinding Text, Mode=TwoWay}" CaretIndex="{TemplateBinding CaretIndex}"
+                         SelectionStart="{TemplateBinding SelectionStart}" SelectionEnd="{TemplateBinding SelectionEnd}"
+                         TextAlignment="{TemplateBinding TextAlignment}" TextWrapping="{TemplateBinding TextWrapping}"
+                         SelectionBrush="{TemplateBinding SelectionBrush}" SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
+                         CaretBrush="{TemplateBinding CaretBrush}" />
+        </ScrollViewer>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <!-- ================================================================================= -->
+  <!-- Quick search (c:QuickSearch)                                                       -->
+  <!-- ================================================================================= -->
+  <ControlTheme x:Key="QuickSearchItem" TargetType="ListBoxItem">
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <c:SquircleBorder Name="Row" Background="Transparent" CornerRadius="10" Padding="8,7" Margin="0,1">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <c:SquircleBorder Name="Tile" Width="30" Height="30" CornerRadius="9" VerticalAlignment="Center"
+                              Background="{Binding IsFilter, Converter={StaticResource BoolToBrush}, ConverterParameter=Brush.AccentSoft|Brush.ControlHover}">
+              <Path Theme="{StaticResource IconPath}" Width="14" Height="14"
+                    Stroke="{Binding IsFilter, Converter={StaticResource BoolToBrush}, ConverterParameter=Brush.Accent|Brush.TextSecondary}"
+                    Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
+            </c:SquircleBorder>
+            <StackPanel Grid.Column="1" Margin="11,0,8,0" VerticalAlignment="Center">
+              <TextBlock Text="{Binding Title}" FontSize="13" TextTrimming="CharacterEllipsis"
+                         FontWeight="{Binding IsQuiet, Converter={StaticResource BoolToValue}, ConverterParameter=Medium|SemiBold}"
+                         Foreground="{Binding IsQuiet, Converter={StaticResource BoolToBrush}, ConverterParameter=Brush.TextSecondary|Brush.Text}" />
+              <TextBlock Text="{Binding Detail}" FontSize="11.5" Foreground="{DynamicResource Brush.TextTertiary}" TextTrimming="CharacterEllipsis" Margin="0,1,0,0"
+                         IsVisible="{Binding Detail, Converter={StaticResource HasValue}}" />
+            </StackPanel>
+            <c:SquircleBorder Name="Enter" Grid.Column="2" CornerRadius="5" Padding="6,2" Background="{DynamicResource Brush.ControlHover}" VerticalAlignment="Center" Opacity="0">
+              <TextBlock Text="↩" FontSize="11" Foreground="{DynamicResource Brush.TextSecondary}" />
+            </c:SquircleBorder>
+          </Grid>
+        </c:SquircleBorder>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:selected /template/ c|SquircleBorder#Row">
+      <Setter Property="Background" Value="{DynamicResource Brush.ControlHover}" />
+    </Style>
+    <Style Selector="^:selected /template/ c|SquircleBorder#Enter">
+      <Setter Property="Opacity" Value="1" />
+    </Style>
+  </ControlTheme>
+
+  <!-- The search field: icon, text, a clear button, and the panel that drops down from it (⌘K or ⌘F jump here). -->
+  <ControlTheme x:Key="{x:Type c:QuickSearch}" TargetType="c:QuickSearch">
+    <Setter Property="Height" Value="38" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <c:SquircleBorder Name="Ring" Margin="-3" CornerRadius="15" BorderThickness="3" BorderBrush="{DynamicResource Brush.AccentSoft}" Opacity="0" IsHitTestVisible="False" />
+          <c:SquircleBorder Name="Field" CornerRadius="12" Background="{DynamicResource Brush.Input}" BorderBrush="{DynamicResource Brush.InputBorder}" BorderThickness="1">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <Path Name="Glass" Theme="{StaticResource IconPath}" Width="14" Height="14" Margin="13,0,0,0" Data="{StaticResource Icon.Search}"
+                    Stroke="{DynamicResource Brush.TextTertiary}" IsHitTestVisible="False" />
+              <TextBox Name="PART_TextBox" Grid.Column="1" Theme="{StaticResource TextBox.Bare}" Margin="9,0,4,0"
+                       Text="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                       AutomationProperties.Name="{TemplateBinding Placeholder}" />
+              <TextBlock Name="Placeholder" Grid.Column="1" Margin="9,0,4,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                         Text="{TemplateBinding Placeholder}" Foreground="{DynamicResource Brush.TextTertiary}" TextTrimming="CharacterEllipsis" />
+              <Button Name="ClearButton" Grid.Column="2" Theme="{StaticResource Button.Icon}" Width="26" Height="26" Margin="0,0,5,0" IsVisible="False"
+                      Command="{Binding ClearCommand, RelativeSource={RelativeSource TemplatedParent}}" ToolTip.Tip="Clear" AutomationProperties.Name="Clear search">
+                <Path Theme="{StaticResource IconPath}" Width="10" Height="10" Data="{StaticResource Icon.Close}" />
+              </Button>
+            </Grid>
+          </c:SquircleBorder>
+
+          <Popup Name="PART_Popup" PlacementTarget="{Binding #Field}" Placement="BottomEdgeAlignedLeft" VerticalOffset="0"
+                 IsLightDismissEnabled="False" Focusable="False"
+                 IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}">
+            <c:SquircleBorder Name="PART_Panel" Margin="0,6,0,16" Width="{Binding #Field.Bounds.Width}" CornerRadius="16" Padding="6"
+                              Background="{DynamicResource Brush.Tooltip}" BorderBrush="{DynamicResource Brush.TooltipBorder}" BorderThickness="1" Sheen="0.6">
+              <ListBox Name="PART_List" Focusable="False" Background="Transparent" BorderThickness="0" MaxHeight="380"
+                       ItemContainerTheme="{StaticResource QuickSearchItem}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+            </c:SquircleBorder>
+          </Popup>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:hastext /template/ TextBlock#Placeholder">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
+    <Style Selector="^:hastext /template/ Button#ClearButton">
+      <Setter Property="IsVisible" Value="True" />
+    </Style>
+    <Style Selector="^:searching /template/ TextBlock#Placeholder">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
+    <Style Selector="^:searching /template/ c|SquircleBorder#Field">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+    <Style Selector="^:searching /template/ c|SquircleBorder#Ring">
+      <Setter Property="Opacity" Value="1" />
+    </Style>
+    <Style Selector="^:searching /template/ Path#Glass">
+      <Setter Property="Stroke" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+    <Style Selector="^:pointerover /template/ c|SquircleBorder#Field">
+      <Setter Property="Background" Value="{DynamicResource Brush.InputHover}" />
+    </Style>
+  </ControlTheme>
+
+  <!-- ================================================================================= -->
+  <!-- Scrolling                                                                          -->
+  <!-- ================================================================================= -->
+  <!-- Pages scroll with macOS's own feel (momentum, rubber banding) and overlay scroll bars that appear while scrolling. -->
+  <ControlTheme x:Key="ScrollViewer.Page" TargetType="ScrollViewer" BasedOn="{StaticResource {x:Type ScrollViewer}}">
+    <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+    <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+    <Setter Property="Focusable" Value="False" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="ScrollViewer.Window" TargetType="ScrollViewer" BasedOn="{StaticResource ScrollViewer.Page}" />
+
+  <!-- ================================================================================= -->
+  <!-- Slider (thin track, filled with the accent up to a round thumb)                    -->
+  <!-- ================================================================================= -->
+  <ControlTheme x:Key="SliderFill" TargetType="RepeatButton">
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel Background="Transparent">
+          <Border Height="4" CornerRadius="2" Background="{TemplateBinding Background}" />
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <ControlTheme x:Key="SliderThumb" TargetType="Thumb">
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel Width="18" Height="18" Background="Transparent">
+          <Ellipse Name="Knob" Width="14" Height="14" Fill="{DynamicResource Brush.Text}" Stroke="{DynamicResource Brush.Accent}" StrokeThickness="3" />
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Ellipse#Knob">
+      <Setter Property="Width" Value="16" />
+      <Setter Property="Height" Value="16" />
+    </Style>
+    <Style Selector="^:pressed /template/ Ellipse#Knob">
+      <Setter Property="Width" Value="16" />
+      <Setter Property="Height" Value="16" />
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="Slider.Default" TargetType="Slider">
+    <Setter Property="IsSnapToTickEnabled" Value="True" />
+    <Setter Property="TickFrequency" Value="1" />
+    <Setter Property="SmallChange" Value="1" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="MinHeight" Value="22" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel Background="Transparent" VerticalAlignment="Center">
+          <Border Height="4" CornerRadius="2" Background="{DynamicResource Brush.Track}" Margin="2,0" />
+          <Track Name="PART_Track" Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}"
+                 Value="{TemplateBinding Value, Mode=TwoWay}" Orientation="Horizontal" IsDirectionReversed="{TemplateBinding IsDirectionReversed}">
+            <Track.DecreaseButton>
+              <RepeatButton Name="PART_DecreaseButton" Theme="{StaticResource SliderFill}" Background="{DynamicResource Brush.Accent}" />
+            </Track.DecreaseButton>
+            <Track.IncreaseButton>
+              <RepeatButton Name="PART_IncreaseButton" Theme="{StaticResource SliderFill}" Background="Transparent" />
+            </Track.IncreaseButton>
+            <Thumb Name="thumb" Theme="{StaticResource SliderThumb}" />
+          </Track>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.45" />
+    </Style>
+  </ControlTheme>
+
+  <!-- ================================================================================= -->
+  <!-- Tool tip                                                                           -->
+  <!-- ================================================================================= -->
+  <ControlTheme x:Key="{x:Type ToolTip}" TargetType="ToolTip">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Tooltip}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.TooltipBorder}" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+    <Setter Property="MaxWidth" Value="360" />
+    <Setter Property="Padding" Value="10,7" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <c:SquircleBorder Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                          CornerRadius="10" Padding="{TemplateBinding Padding}">
+          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}">
+            <ContentPresenter.Styles>
+              <Style Selector="TextBlock">
+                <Setter Property="TextWrapping" Value="Wrap" />
+              </Style>
+            </ContentPresenter.Styles>
+          </ContentPresenter>
+        </c:SquircleBorder>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <!-- ================================================================================= -->
+  <!-- Progress bar (thin, rounded)                                                       -->
+  <!-- ================================================================================= -->
+  <ControlTheme x:Key="ProgressBar.Thin" TargetType="ProgressBar">
+    <Setter Property="Height" Value="4" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Track}" />
+    <Setter Property="Maximum" Value="100" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <Border Name="PART_Track" Background="{TemplateBinding Background}" CornerRadius="2" />
+          <Border Name="PART_Indicator" Background="{TemplateBinding Foreground}" CornerRadius="2" HorizontalAlignment="Left" />
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <!-- ================================================================================= -->
+  <!-- Combo box                                                                          -->
+  <!-- ================================================================================= -->
+  <ControlTheme x:Key="ComboBoxItem.Default" TargetType="ComboBoxItem">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    <Setter Property="Padding" Value="10,7" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="Root" Background="Transparent" CornerRadius="6" Padding="{TemplateBinding Padding}" Margin="4,1">
+          <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#Root">
+      <Setter Property="Background" Value="{DynamicResource Brush.ControlHover}" />
+    </Style>
+    <Style Selector="^:selected /template/ Border#Root">
+      <Setter Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="ComboBox.Default" TargetType="ComboBox">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    <Setter Property="MinWidth" Value="200" />
+    <Setter Property="Height" Value="34" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="MaxDropDownHeight" Value="420" />
+    <Setter Property="ItemContainerTheme" Value="{StaticResource ComboBoxItem.Default}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <c:SquircleBorder Name="Root" Background="{DynamicResource Brush.Input}" BorderBrush="{DynamicResource Brush.InputBorder}" BorderThickness="1" CornerRadius="10">
+            <Path Data="M0,0 L4,4 8,0" Stroke="{DynamicResource Brush.TextSecondary}" StrokeThickness="1.5"
+                  StrokeLineCap="Round" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0" />
+          </c:SquircleBorder>
+          <ContentControl Name="ContentSite" IsHitTestVisible="False" Margin="12,0,32,0" VerticalAlignment="Center" HorizontalAlignment="Left"
+                          Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding ItemTemplate}" />
+          <Popup Name="PART_Popup" WindowManagerAddShadowHint="False" IsOpen="{TemplateBinding IsDropDownOpen, Mode=TwoWay}"
+                 MinWidth="{Binding Bounds.Width, RelativeSource={RelativeSource TemplatedParent}}" MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                 PlacementTarget="Root" Placement="BottomEdgeAlignedLeft" VerticalOffset="4" IsLightDismissEnabled="True"
+                 InheritsTransform="True">
+            <c:SquircleBorder Background="{DynamicResource Brush.Tooltip}" BorderBrush="{DynamicResource Brush.TooltipBorder}" BorderThickness="1" CornerRadius="14" Padding="0,4">
+              <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" />
+              </ScrollViewer>
+            </c:SquircleBorder>
+          </Popup>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ c|SquircleBorder#Root">
+      <Setter Property="Background" Value="{DynamicResource Brush.InputHover}" />
+    </Style>
+    <Style Selector="^:dropdownopen /template/ c|SquircleBorder#Root">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.45" />
+    </Style>
+  </ControlTheme>
+
+  <!-- ================================================================================= -->
+  <!-- Segmented control (ListBox)                                                        -->
+  <!-- ================================================================================= -->
+  <ControlTheme x:Key="SegmentItem" TargetType="ListBoxItem">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+    <Setter Property="FontSize" Value="12.5" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <c:SquircleBorder Name="Root" Background="Transparent" CornerRadius="8" Padding="11,5" Margin="1">
+          <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </c:SquircleBorder>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    </Style>
+    <Style Selector="^:selected /template/ c|SquircleBorder#Root">
+      <Setter Property="Background" Value="{DynamicResource Brush.Card}" />
+    </Style>
+    <Style Selector="^:selected">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="Segmented" TargetType="ListBox">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="ItemContainerTheme" Value="{StaticResource SegmentItem}" />
+    <Setter Property="SelectionMode" Value="Single,AlwaysSelected" />
+    <Setter Property="ItemsPanel">
+      <ItemsPanelTemplate>
+        <StackPanel Orientation="Horizontal" />
+      </ItemsPanelTemplate>
+    </Setter>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <c:SquircleBorder Background="{TemplateBinding Background}" CornerRadius="11" Padding="2">
+          <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" />
+        </c:SquircleBorder>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <!-- ================================================================================= -->
+  <!-- Navigation (ListBox)                                                               -->
+  <!-- ================================================================================= -->
+  <ControlTheme x:Key="NavItem" TargetType="ListBoxItem">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+    <Setter Property="FontSize" Value="13.5" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Margin" Value="0,1" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <c:SquircleBorder Name="Root" Background="Transparent" CornerRadius="11" Height="38">
+            <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" VerticalAlignment="Center" />
+          </c:SquircleBorder>
+          <Border Name="Indicator" Width="3" Height="16" CornerRadius="1.5" HorizontalAlignment="Left"
+                  Background="{DynamicResource Brush.Accent}" Opacity="0" />
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ c|SquircleBorder#Root">
+      <Setter Property="Background" Value="{DynamicResource Brush.ControlHover}" />
+    </Style>
+    <Style Selector="^:pointerover">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    </Style>
+    <Style Selector="^:selected /template/ c|SquircleBorder#Root">
+      <Setter Property="Background" Value="{DynamicResource Brush.NavSelected}" />
+    </Style>
+    <Style Selector="^:selected /template/ Border#Indicator">
+      <Setter Property="Opacity" Value="1" />
+    </Style>
+    <Style Selector="^:selected">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="NavList" TargetType="ListBox">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="ItemContainerTheme" Value="{StaticResource NavItem}" />
+    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ScrollViewer Focusable="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" />
+        </ScrollViewer>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <!-- ================================================================================= -->
+  <!-- Chart legend                                                                       -->
+  <!-- ================================================================================= -->
+  <ControlTheme x:Key="LegendToggle" TargetType="CheckBox">
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="Root" Background="Transparent" CornerRadius="6" Padding="6,3">
+          <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#Root">
+      <Setter Property="Background" Value="{DynamicResource Brush.ControlHover}" />
+    </Style>
+    <Style Selector="^:unchecked /template/ Border#Root">
+      <Setter Property="Opacity" Value="0.45" />
+    </Style>
+  </ControlTheme>
+
+</ResourceDictionary>

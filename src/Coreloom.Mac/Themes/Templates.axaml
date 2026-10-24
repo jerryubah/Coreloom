@@ -1,0 +1,494 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="using:Coreloom.Mac.Controls"
+                    xmlns:b="using:Coreloom.Mac.Behaviors"
+                    xmlns:inf="using:Coreloom.ViewModels.Infrastructure"
+                    xmlns:pages="using:Coreloom.ViewModels.Pages"
+                    xmlns:overlay="using:Coreloom.ViewModels.Overlay">
+
+  <!-- ================================================================================= -->
+  <!-- Value with unit (animated number)                                                  -->
+  <!-- ================================================================================= -->
+  <DataTemplate x:Key="ValueLarge" DataType="inf:MetricViewModel">
+    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
+      <TextBlock Theme="{StaticResource Text.ValueLarge}" b:AnimatedText.Formatter="{Binding NumberFormatter}" b:AnimatedText.Value="{Binding Value}" />
+      <TextBlock Theme="{StaticResource Text.Unit}" Text="{Binding Unit}" VerticalAlignment="Bottom" Margin="5,0,0,5" FontSize="14" />
+    </StackPanel>
+  </DataTemplate>
+
+  <!-- ================================================================================= -->
+  <!-- Metric tile (secondary metrics grid)                                               -->
+  <!-- ================================================================================= -->
+  <DataTemplate x:Key="MetricTile" DataType="inf:MetricViewModel">
+    <c:SquircleBorder Theme="{StaticResource Card.Inset}" ToolTip.Tip="{Binding ToolTip}" ToolTip.ShowDelay="400" MinHeight="74">
+      <StackPanel>
+        <Grid>
+          <TextBlock Theme="{StaticResource Text.Label}" Text="{Binding Label}" Margin="0,0,24,0" />
+          <Border Theme="{StaticResource Badge}" HorizontalAlignment="Right" Padding="5,0" IsVisible="{Binding IsDerived}">
+            <TextBlock Text="derived" FontSize="10" Foreground="{DynamicResource Brush.TextSecondary}" />
+          </Border>
+        </Grid>
+        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="18" FontWeight="SemiBold"
+                     b:AnimatedText.Formatter="{Binding NumberFormatter}" b:AnimatedText.Value="{Binding Value}">
+            <TextBlock.Foreground>
+              <MultiBinding Converter="{StaticResource LevelToBrush}" ConverterParameter="Text">
+                <Binding Path="Level" />
+                <Binding Path="ColorKey" />
+              </MultiBinding>
+            </TextBlock.Foreground>
+          </TextBlock>
+          <TextBlock Theme="{StaticResource Text.Unit}" Text="{Binding Unit}" VerticalAlignment="Bottom" Margin="4,0,0,2" />
+        </StackPanel>
+        <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Detail}" Margin="0,2,0,0" IsVisible="{Binding Detail, Converter={StaticResource HasValue}}" />
+        <TextBlock Theme="{StaticResource Text.Caption}" Text="Unavailable" Margin="0,2,0,0" IsVisible="{Binding !HasValue}" />
+      </StackPanel>
+    </c:SquircleBorder>
+  </DataTemplate>
+
+  <!-- ================================================================================= -->
+  <!-- Gauge card (page heroes)                                                           -->
+  <!-- ================================================================================= -->
+  <DataTemplate x:Key="GaugeCard" DataType="inf:MetricViewModel">
+    <c:SquircleBorder Theme="{StaticResource Card.Glow}" GlowKey="{Binding GlowKey}" ToolTip.Tip="{Binding ToolTip}" ToolTip.ShowDelay="400">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel VerticalAlignment="Center">
+          <TextBlock Theme="{StaticResource Text.Label}" Text="{Binding Label}" />
+          <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ValueLarge}" Margin="0,6,0,0" HorizontalAlignment="Left" />
+          <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Detail}" Margin="0,4,0,0" IsVisible="{Binding Detail, Converter={StaticResource HasValue}}" />
+          <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding StatsText}" Margin="0,2,0,0" IsVisible="{Binding StatsText, Converter={StaticResource HasValue}}" />
+        </StackPanel>
+        <c:RadialGauge Grid.Column="1" Width="80" Height="80" Thickness="10" Orb="True" Margin="12,0,0,0" VerticalAlignment="Center"
+                       Value="{Binding Fraction}" TrackBrush="{DynamicResource Brush.Track}"
+                       ToneScale="True" TemperatureScale="{Binding IsTemperature}" CoolAt="{Binding GaugeCoolAt}" WarmAt="{Binding GaugeWarmAt}" HotAt="{Binding GaugeHotAt}"
+                       IsUnavailable="{Binding !HasValue}" />
+      </Grid>
+    </c:SquircleBorder>
+  </DataTemplate>
+
+  <!-- ================================================================================= -->
+  <!-- Overview summary card                                                              -->
+  <!-- ================================================================================= -->
+  <DataTemplate x:Key="SummaryCard" DataType="pages:SummaryCardViewModel">
+    <c:SquircleBorder Theme="{StaticResource Card.Glow}" GlowKey="{Binding Metric.GlowKey}" Padding="18,16,18,14" ToolTip.Tip="{Binding Metric.ToolTip}" ToolTip.ShowDelay="500">
+      <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <Border Width="26" Height="26" CornerRadius="8" Background="{DynamicResource Brush.ControlHover}">
+            <Path Theme="{StaticResource IconPath}" Width="14" Height="14" StrokeThickness="1.6"
+                  Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
+                  Stroke="{Binding Metric.GlowKey, Converter={StaticResource ColorKeyToBrush}}" />
+          </Border>
+          <TextBlock Grid.Column="1" Theme="{StaticResource Text.CardTitle}" Text="{Binding Title}" VerticalAlignment="Center" Margin="10,0,0,0" />
+          <Border Grid.Column="2" Theme="{StaticResource Badge}" IsVisible="{Binding Metric.IsDerived}">
+            <TextBlock Text="derived" FontSize="10" Foreground="{DynamicResource Brush.TextSecondary}" />
+          </Border>
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="0,14,0,0" ColumnDefinitions="*,Auto">
+          <StackPanel VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Theme="{StaticResource Text.ValueLarge}" b:AnimatedText.Formatter="{Binding Metric.NumberFormatter}" b:AnimatedText.Value="{Binding Metric.Value}">
+                <TextBlock.Foreground>
+                  <MultiBinding Converter="{StaticResource LevelToBrush}" ConverterParameter="Text">
+                    <Binding Path="Metric.Level" />
+                    <Binding Path="Metric.ColorKey" />
+                  </MultiBinding>
+                </TextBlock.Foreground>
+              </TextBlock>
+              <TextBlock Theme="{StaticResource Text.Unit}" Text="{Binding Metric.Unit}" VerticalAlignment="Bottom" Margin="5,0,0,5" FontSize="14" />
+            </StackPanel>
+            <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Metric.Detail}" Margin="0,4,0,0" TextWrapping="NoWrap"
+                       IsVisible="{Binding Metric.Detail, Converter={StaticResource HasValue}}" />
+          </StackPanel>
+          <c:RadialGauge Grid.Column="1" Width="60" Height="60" Thickness="8" Margin="10,0,0,0"
+                         Value="{Binding Metric.Fraction}" TrackBrush="{DynamicResource Brush.Track}"
+                         ToneScale="True" TemperatureScale="{Binding Metric.IsTemperature}" CoolAt="{Binding Metric.GaugeCoolAt}" WarmAt="{Binding Metric.GaugeWarmAt}" HotAt="{Binding Metric.GaugeHotAt}"
+                         IsUnavailable="{Binding !Metric.HasValue}" />
+        </Grid>
+
+        <c:Sparkline Grid.Row="2" MinHeight="34" Margin="-2,12,-2,0"
+                     MetricId="{Binding Metric.MetricId}" ColorKey="{Binding Metric.GlowKey}"
+                     Timeline="{Binding DataContext.Timeline, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+
+        <TextBlock Grid.Row="3" Theme="{StaticResource Text.Caption}" Margin="0,8,0,0" Text="{Binding Metric.StatsText}"
+                   IsVisible="{Binding DataContext.ShowStatisticsOnCards, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+      </Grid>
+    </c:SquircleBorder>
+  </DataTemplate>
+
+  <!-- ================================================================================= -->
+  <!-- Chart legend and card                                                              -->
+  <!-- ================================================================================= -->
+  <DataTemplate x:Key="LegendItem" DataType="inf:ChartSeriesViewModel">
+    <CheckBox Theme="{StaticResource LegendToggle}" IsChecked="{Binding IsVisible}" ToolTip.Tip="Show or hide this series">
+      <StackPanel Orientation="Horizontal">
+        <Ellipse Width="8" Height="8" Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" VerticalAlignment="Center" />
+        <TextBlock Text="{Binding Label}" Margin="6,0,0,0" FontSize="12" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center" />
+        <TextBlock Text="{Binding CurrentText}" Margin="6,0,0,0" FontFamily="{StaticResource MonoFont}" FontSize="11.5" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center" />
+      </StackPanel>
+    </CheckBox>
+  </DataTemplate>
+
+  <DataTemplate x:Key="ChartCard" DataType="inf:ChartViewModel">
+    <c:SquircleBorder Theme="{StaticResource Card}" Padding="18,14,14,10">
+      <Grid RowDefinitions="Auto,*">
+        <Grid Margin="0,0,0,6" ColumnDefinitions="Auto,*">
+          <TextBlock Theme="{StaticResource Text.CardTitle}" Text="{Binding Title}" VerticalAlignment="Center" Margin="0,0,12,0" />
+          <ItemsControl Grid.Column="1" ItemsSource="{Binding Series}" ItemTemplate="{StaticResource LegendItem}" HorizontalAlignment="Right" Focusable="False">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Right" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+          </ItemsControl>
+        </Grid>
+        <c:LiveLineChart Grid.Row="1" MinHeight="170" Chart="{Binding}"
+                         Timeline="{Binding DataContext.Timeline, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+      </Grid>
+    </c:SquircleBorder>
+  </DataTemplate>
+
+  <!-- ================================================================================= -->
+  <!-- Specification list                                                                 -->
+  <!-- ================================================================================= -->
+  <DataTemplate x:Key="KeyValueRow" DataType="inf:KeyValueItem">
+    <Grid Margin="0,4">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" SharedSizeGroup="SpecKey" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <TextBlock Theme="{StaticResource Text.Secondary}" Text="{Binding Key}" Margin="0,0,24,0" />
+      <TextBlock Grid.Column="1" Text="{Binding Value}" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" TextAlignment="Right" />
+    </Grid>
+  </DataTemplate>
+
+  <!-- ================================================================================= -->
+  <!-- Sensor table                                                                       -->
+  <!-- ================================================================================= -->
+  <DataTemplate x:Key="SensorRow" DataType="inf:SensorRowViewModel">
+    <Border Name="Row" Classes="hover-row" Background="Transparent" CornerRadius="6" Padding="8,5" ToolTip.Tip="{Binding ToolTip}" ToolTip.ShowDelay="600">
+      <Grid ColumnDefinitions="*,Auto,120,Auto">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="{Binding Name}" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding Device}" FontSize="11.5" Foreground="{DynamicResource Brush.TextTertiary}" Margin="8,0,0,0"
+                     TextTrimming="CharacterEllipsis" IsVisible="{Binding Descriptor.IsRaw}" />
+        </StackPanel>
+        <Border Grid.Column="1" Theme="{StaticResource Badge}" Margin="8,0" IsVisible="{Binding IsDerived}">
+          <TextBlock Text="derived" FontSize="10" Foreground="{DynamicResource Brush.TextSecondary}" />
+        </Border>
+        <TextBlock Grid.Column="2" Text="{Binding Value}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Brush.Text}" TextAlignment="Right" />
+        <TextBlock Grid.Column="3" Text="{Binding Source}" FontSize="11" Foreground="{DynamicResource Brush.TextTertiary}" Width="132"
+                   TextAlignment="Right" TextTrimming="CharacterEllipsis" Margin="12,0,0,0" />
+      </Grid>
+    </Border>
+  </DataTemplate>
+
+  <DataTemplate x:Key="SensorGroup" DataType="inf:SensorGroupViewModel">
+    <StackPanel Margin="0,0,0,10">
+      <TextBlock Text="{Binding Name}" Theme="{StaticResource Text.Label}" Margin="8,6,0,4" />
+      <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource SensorRow}" Focusable="False" />
+    </StackPanel>
+  </DataTemplate>
+
+  <DataTemplate x:Key="SensorTable" DataType="inf:SensorTableViewModel">
+    <StackPanel>
+      <TextBlock Theme="{StaticResource Text.Secondary}" Text="No sensors reported." Margin="8,4" IsVisible="{Binding IsEmpty}" />
+      <ItemsControl ItemsSource="{Binding Groups}" ItemTemplate="{StaticResource SensorGroup}" Focusable="False" />
+    </StackPanel>
+  </DataTemplate>
+
+  <!-- A long sensor list as two cards side by side (stacked in narrow windows). -->
+  <DataTemplate x:Key="SensorColumns" DataType="inf:SensorTableViewModel">
+    <Panel>
+      <c:SquircleBorder Theme="{StaticResource Card}" IsVisible="{Binding IsEmpty}">
+        <TextBlock Theme="{StaticResource Text.Secondary}" Text="No sensors reported." />
+      </c:SquircleBorder>
+      <c:AdaptiveGrid MinColumnWidth="460" MaxColumns="2" Spacing="16" IsVisible="{Binding !IsEmpty}">
+        <c:SquircleBorder Theme="{StaticResource Card}" Padding="10,8,10,2">
+          <ItemsControl ItemsSource="{Binding FirstColumn}" ItemTemplate="{StaticResource SensorGroup}" Focusable="False" />
+        </c:SquircleBorder>
+        <c:SquircleBorder Theme="{StaticResource Card}" Padding="10,8,10,2" IsVisible="{Binding HasSecondColumn}">
+          <ItemsControl ItemsSource="{Binding SecondColumn}" ItemTemplate="{StaticResource SensorGroup}" Focusable="False" />
+        </c:SquircleBorder>
+      </c:AdaptiveGrid>
+    </Panel>
+  </DataTemplate>
+
+  <!-- ================================================================================= -->
+  <!-- Process list                                                                       -->
+  <!-- ================================================================================= -->
+  <DataTemplate x:Key="ProcessList" DataType="inf:ProcessListViewModel">
+    <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <c:FitRows MinRows="{Binding MinRows}" />
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate DataType="inf:ProcessRowViewModel">
+          <Grid Margin="0,5" IsVisible="{Binding Name, Converter={StaticResource HasValue}}" RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto">
+            <TextBlock Text="{Binding Name}" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
+            <TextBlock Grid.Column="1" Text="{Binding Secondary}" FontSize="11.5" Foreground="{DynamicResource Brush.TextTertiary}" Margin="12,0" />
+            <TextBlock Grid.Column="2" Text="{Binding Primary}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Brush.Text}" MinWidth="64" TextAlignment="Right" />
+            <ProgressBar Grid.Row="1" Grid.ColumnSpan="3" Theme="{StaticResource ProgressBar.Thin}" Height="3" Margin="0,5,0,0"
+                         Value="{Binding Fraction, Mode=OneWay, Converter={StaticResource FractionToPercent}}" />
+          </Grid>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+  </DataTemplate>
+
+  <!-- ================================================================================= -->
+  <!-- Donut legend row                                                                   -->
+  <!-- ================================================================================= -->
+  <DataTemplate x:Key="DonutLegendRow" DataType="inf:DonutSegmentViewModel">
+    <Grid Margin="0,4" ColumnDefinitions="Auto,*,Auto">
+      <Ellipse Width="9" Height="9" Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" VerticalAlignment="Center" />
+      <TextBlock Grid.Column="1" Text="{Binding Label}" Margin="8,0,12,0" Theme="{StaticResource Text.Secondary}" />
+      <TextBlock Grid.Column="2" Text="{Binding ValueText}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
+    </Grid>
+  </DataTemplate>
+
+  <!-- ================================================================================= -->
+  <!-- Volume (storage)                                                                   -->
+  <!-- ================================================================================= -->
+  <DataTemplate x:Key="VolumeRow" DataType="pages:VolumeViewModel">
+    <Grid Margin="0,6" ColumnDefinitions="Auto,*">
+      <Panel Width="54" Height="54">
+        <c:DonutChart Segments="{Binding Segments}" Thickness="6" GapDegrees="4" />
+        <TextBlock Text="{Binding Letter}" FontWeight="SemiBold" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"
+                   Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" MaxWidth="40" />
+      </Panel>
+      <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+        <Grid>
+          <TextBlock Text="{Binding Name}" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" Margin="0,0,48,0" />
+          <TextBlock Text="{Binding PercentText}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" HorizontalAlignment="Right" />
+        </Grid>
+        <ProgressBar Theme="{StaticResource ProgressBar.Thin}" Margin="0,6,0,0" Foreground="{Binding Used.ColorKey, Converter={StaticResource ColorKeyToBrush}}"
+                     Value="{Binding Fraction, Mode=OneWay, Converter={StaticResource FractionToPercent}}" />
+        <TextBlock Theme="{StaticResource Text.Caption}" Margin="0,5,0,0">
+          <Run Text="{Binding UsedText, Mode=OneWay}" /><Run Text=" used · " /><Run Text="{Binding FreeText, Mode=OneWay}" /><Run Text=" free of " /><Run Text="{Binding CapacityText, Mode=OneWay}" />
+        </TextBlock>
+      </StackPanel>
+    </Grid>
+  </DataTemplate>
+
+  <!-- ================================================================================= -->
+  <!-- Health (Graphics and Processor pages, and the Overview's health card)              -->
+  <!-- ================================================================================= -->
+  <DataTemplate x:Key="HealthCheckRow" DataType="pages:HealthCheckViewModel">
+    <Grid Background="Transparent" ToolTip.Tip="{Binding Detail}" ColumnDefinitions="Auto,*">
+      <Path Theme="{StaticResource IconPath}" Width="15" Height="15" VerticalAlignment="Top" Margin="0,1,9,0"
+            Data="{Binding StateKey, Converter={StaticResource CheckStateToIcon}}" Stroke="{Binding StateKey, Converter={StaticResource CheckStateToBrush}}" />
+      <StackPanel Grid.Column="1">
+        <TextBlock Text="{Binding Title}" FontSize="13" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
+        <TextBlock Text="{Binding Detail}" Theme="{StaticResource Text.Caption}" TextTrimming="CharacterEllipsis" Margin="0,1,0,0" />
+      </StackPanel>
+    </Grid>
+  </DataTemplate>
+
+  <DataTemplate x:Key="HealthCheckLine" DataType="pages:HealthCheckViewModel">
+    <Grid Background="Transparent" Margin="0,2" ToolTip.Tip="{Binding Detail}" ColumnDefinitions="Auto,*">
+      <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Margin="0,0,7,0" VerticalAlignment="Center"
+            Data="{Binding StateKey, Converter={StaticResource CheckStateToIcon}}" Stroke="{Binding StateKey, Converter={StaticResource CheckStateToBrush}}" />
+      <TextBlock Grid.Column="1" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" FontSize="12.5">
+        <Run Text="{Binding Title, Mode=OneWay}" Foreground="{DynamicResource Brush.Text}" /><Run Text=" · " Foreground="{DynamicResource Brush.TextTertiary}" /><Run Text="{Binding Detail, Mode=OneWay}" Foreground="{DynamicResource Brush.TextSecondary}" />
+      </TextBlock>
+    </Grid>
+  </DataTemplate>
+
+  <!-- A part's health across the page: shield and status on the left, the checks on the right. -->
+  <DataTemplate x:Key="HealthCard" DataType="pages:HealthReportViewModel">
+    <c:SquircleBorder Theme="{StaticResource Card.Glow}" Padding="18,14" GlowStrength="0.8"
+                      GlowKey="{Binding StatusKey, Converter={StaticResource StatusToGlowKey}}">
+      <Grid ColumnDefinitions="Auto,*">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,28,0" MinWidth="230">
+          <Panel Width="46" Height="46" VerticalAlignment="Center">
+            <Ellipse Fill="{Binding StatusKey, Converter={StaticResource StatusToBrush}, ConverterParameter=Brush.TextTertiary}" Opacity="0.14" />
+            <Path Theme="{StaticResource IconPath}" Width="22" Height="22" Data="{StaticResource Icon.Shield}"
+                  Stroke="{Binding StatusKey, Converter={StaticResource StatusToBrush}, ConverterParameter=Brush.TextTertiary}" StrokeThickness="1.8" />
+          </Panel>
+          <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+            <TextBlock Theme="{StaticResource Text.Label}" Text="{Binding Name, StringFormat='{}{0} health'}" />
+            <TextBlock Text="{Binding StatusText}" FontSize="20" FontWeight="SemiBold" Margin="0,1,0,0"
+                       Foreground="{Binding StatusKey, Converter={StaticResource StatusToBrush}, ConverterParameter=Brush.TextSecondary}" />
+            <TextBlock Text="{Binding Summary}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" MaxWidth="260" />
+          </StackPanel>
+        </StackPanel>
+        <ItemsControl Grid.Column="1" ItemsSource="{Binding Checks}" ItemTemplate="{StaticResource HealthCheckRow}" Focusable="False" VerticalAlignment="Center">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <c:AdaptiveGrid MinColumnWidth="200" MaxColumns="3" Spacing="20" RowSpacing="10" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+        </ItemsControl>
+      </Grid>
+    </c:SquircleBorder>
+  </DataTemplate>
+
+  <!-- ================================================================================= -->
+  <!-- Readings window (the overlay on macOS, and its preview in the settings card)       -->
+  <!-- ================================================================================= -->
+  <DataTemplate x:Key="OverlayValue" DataType="overlay:OverlayValueViewModel">
+    <TextBlock Margin="{Binding Group.ValueSpacing}" Foreground="{Binding Color, Converter={StaticResource HexToBrush}}" VerticalAlignment="Bottom">
+      <Run Text="{Binding Number, Mode=OneWay}" /><Run Text="{Binding Unit, Mode=OneWay, StringFormat='&#x2009;{0}'}" FontSize="{Binding Group.SmallFontSize, Mode=OneWay}" FontWeight="Medium" />
+    </TextBlock>
+  </DataTemplate>
+
+  <!-- A line: "GPU  97 %  72 °C  12 W". Labels line up in a column when stacked. -->
+  <DataTemplate x:Key="OverlayGroup" DataType="overlay:OverlayGroupViewModel">
+    <Grid Margin="{Binding Overlay.GroupSpacing}" TextElement.FontSize="{Binding FontSize}">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" SharedSizeGroup="OverlayLabel" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <TextBlock Text="{Binding Label}" Opacity="0.55" Margin="{Binding LabelSpacing}" VerticalAlignment="Bottom"
+                 FontSize="{Binding SmallFontSize}" FontWeight="SemiBold" IsVisible="{Binding Overlay.ShowLabels}"
+                 Effect="{Binding Overlay.TextShadow, Converter={StaticResource TextShadow}}" />
+      <ItemsControl Grid.Column="1" ItemsSource="{Binding Values}" ItemTemplate="{StaticResource OverlayValue}" Focusable="False" VerticalAlignment="Bottom"
+                    Effect="{Binding Overlay.TextShadow, Converter={StaticResource TextShadow}}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+      </ItemsControl>
+      <!-- while the window is being moved: this line's size (S, M, L), click to change -->
+      <Button Grid.Column="2" Margin="8,0,0,0" Padding="6,0" MinWidth="22" VerticalAlignment="Center"
+              Command="{Binding CycleSizeCommand}" ToolTip.Tip="{Binding SizeToolTip}" Focusable="False" Cursor="Hand">
+        <Button.IsVisible>
+          <MultiBinding Converter="{x:Static BoolConverters.And}">
+            <Binding Path="Overlay.IsMoving" />
+            <Binding Path="(c:OverlayHost.IsLive)" RelativeSource="{RelativeSource Self}" />
+          </MultiBinding>
+        </Button.IsVisible>
+        <Button.Template>
+          <ControlTemplate>
+            <Border Background="#CC2D6BFF" CornerRadius="5" Padding="{TemplateBinding Padding}">
+              <TextBlock Text="{Binding SizeLabel}" FontSize="11" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center" />
+            </Border>
+          </ControlTemplate>
+        </Button.Template>
+      </Button>
+    </Grid>
+  </DataTemplate>
+
+  <!-- The readings window: a squircle of smoked glass (its own background color and opacity) with a soft sheen toward
+       the top and no outline, the lines stacked or on one line. -->
+  <DataTemplate x:Key="OverlayContent" DataType="overlay:OverlayViewModel">
+    <Panel TextElement.FontFamily="{StaticResource UiFont}" TextElement.FontSize="{Binding FontSize}"
+           TextElement.FontWeight="{Binding FontWeight}" TextElement.Foreground="{Binding TextColor, Converter={StaticResource HexToBrush}}"
+           TextElement.FontFeatures="+tnum" IsVisible="{Binding HasContent}">
+      <Panel Opacity="{Binding BackgroundOpacity}">
+        <c:SquircleBorder CornerRadius="{Binding CornerRadius}" Background="{Binding BackgroundColor, Converter={StaticResource HexToBrush}}" />
+        <c:SquircleBorder CornerRadius="{Binding CornerRadius}">
+          <c:SquircleBorder.Background>
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+              <GradientStop Color="#10FFFFFF" Offset="0" />
+              <GradientStop Color="#00FFFFFF" Offset="0.5" />
+            </LinearGradientBrush>
+          </c:SquircleBorder.Background>
+        </c:SquircleBorder>
+      </Panel>
+      <ItemsControl ItemsSource="{Binding Groups}" ItemTemplate="{StaticResource OverlayGroup}" Margin="{Binding Padding}"
+                    Opacity="{Binding TextOpacity}" Grid.IsSharedSizeScope="True" Focusable="False">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="{Binding IsHorizontal, Converter={StaticResource BoolToValue}, ConverterParameter=Horizontal|Vertical}" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+      </ItemsControl>
+    </Panel>
+  </DataTemplate>
+
+  <!-- ================================================================================= -->
+  <!-- Tools: drive benchmark and internet speed test (values on the four-color scale)   -->
+  <!-- ================================================================================= -->
+  <DataTemplate x:Key="ToneTile" DataType="pages:ToneValueViewModel">
+    <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="14,12" MinHeight="98">
+      <StackPanel>
+        <Grid>
+          <StackPanel Orientation="Horizontal">
+            <Path Theme="{StaticResource IconPath}" Width="14" Height="14" VerticalAlignment="Center"
+                  Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+            <TextBlock Theme="{StaticResource Text.Label}" Text="{Binding Label}" Margin="7,0,0,0" VerticalAlignment="Center" />
+          </StackPanel>
+          <Ellipse Width="7" Height="7" HorizontalAlignment="Right" VerticalAlignment="Center"
+                   Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" b:Pulse.IsPulsing="{Binding IsActive}" IsVisible="{Binding IsActive}" />
+        </Grid>
+        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}"
+                     b:AnimatedText.Formatter="{Binding NumberFormatter}" b:AnimatedText.Value="{Binding Value}" />
+          <TextBlock Theme="{StaticResource Text.Unit}" Text="{Binding Unit}" VerticalAlignment="Bottom" Margin="5,0,0,3" />
+        </StackPanel>
+        <ProgressBar Theme="{StaticResource ProgressBar.Thin}" Margin="0,8,0,0" Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}"
+                     b:Smooth.Value="{Binding Fraction, Converter={StaticResource FractionToPercent}}" />
+        <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Detail}" Margin="0,6,0,0" TextTrimming="CharacterEllipsis"
+                   IsVisible="{Binding Detail, Converter={StaticResource HasValue}}" />
+      </StackPanel>
+    </c:SquircleBorder>
+  </DataTemplate>
+
+  <DataTemplate x:Key="ToneGauge" DataType="pages:ToneValueViewModel">
+    <StackPanel HorizontalAlignment="Center">
+      <Panel Width="164" Height="164">
+        <c:RadialGauge Thickness="15" Orb="True" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True" Tone="{Binding Tone}" Value="{Binding Fraction}" />
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" HorizontalAlignment="Center"
+                Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}"
+                b:Pulse.IsPulsing="{Binding IsActive}" />
+          <TextBlock FontFamily="{StaticResource UiFont}" FontSize="29" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,4,0,0"
+                     Foreground="{DynamicResource Brush.Text}" FontFeatures="+tnum"
+                     b:AnimatedText.Formatter="{Binding NumberFormatter}" b:AnimatedText.Value="{Binding Value}" />
+          <TextBlock Text="{Binding Unit}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Center" />
+        </StackPanel>
+      </Panel>
+      <TextBlock Text="{Binding Label}" Theme="{StaticResource Text.CardTitle}" HorizontalAlignment="Center" Margin="0,6,0,0" />
+      <TextBlock Text="{Binding Detail}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Center" Margin="0,2,0,0" MinHeight="16" />
+    </StackPanel>
+  </DataTemplate>
+
+  <DataTemplate x:Key="ToneCell" DataType="pages:ToneValueViewModel">
+    <StackPanel>
+      <Grid>
+        <StackPanel Orientation="Horizontal">
+          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}"
+                     b:AnimatedText.Formatter="{Binding NumberFormatter}" b:AnimatedText.Value="{Binding Value}" />
+          <TextBlock Theme="{StaticResource Text.Unit}" Text="{Binding Unit}" VerticalAlignment="Bottom" Margin="4,0,0,1" />
+        </StackPanel>
+        <Ellipse Width="6" Height="6" HorizontalAlignment="Right" VerticalAlignment="Center"
+                 Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" b:Pulse.IsPulsing="{Binding IsActive}" IsVisible="{Binding IsActive}" />
+      </Grid>
+      <ProgressBar Theme="{StaticResource ProgressBar.Thin}" Margin="0,6,0,0" Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}"
+                   b:Smooth.Value="{Binding Fraction, Converter={StaticResource FractionToPercent}}" />
+      <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Detail}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" MinHeight="15" />
+    </StackPanel>
+  </DataTemplate>
+
+  <DataTemplate x:Key="DiskBenchmarkRow" DataType="pages:DiskBenchmarkRowViewModel">
+    <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="14,12" Margin="0,0,0,8">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="1.2*" MinWidth="130" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource Brush.Text}" />
+            <Border Theme="{StaticResource Badge}" Margin="8,0,0,0">
+              <TextBlock Text="{Binding ShortName}" FontFamily="{StaticResource MonoFont}" FontSize="10" Foreground="{DynamicResource Brush.TextSecondary}" />
+            </Border>
+          </StackPanel>
+          <TextBlock Text="{Binding Description}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,3,0,0" />
+        </StackPanel>
+        <ContentControl Grid.Column="1" Content="{Binding Read}" ContentTemplate="{StaticResource ToneCell}" Margin="0,0,14,0" VerticalAlignment="Center" />
+        <ContentControl Grid.Column="2" Content="{Binding Write}" ContentTemplate="{StaticResource ToneCell}" VerticalAlignment="Center" />
+      </Grid>
+    </c:SquircleBorder>
+  </DataTemplate>
+</ResourceDictionary>

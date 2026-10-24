@@ -41,6 +41,9 @@ public sealed class ShellDependencies
 
     /// <summary>What Coreloom's own parts cost (Settings › Diagnostics); null where it isn't measured.</summary>
     public IOverheadService? Overhead { get; init; }
+
+    /// <summary>The system Coreloom runs on: the pages' wording and what they offer follow it (Windows by default).</summary>
+    public Coreloom.Core.HostPlatform Platform { get; init; } = Coreloom.Core.HostPlatform.Windows;
 }
 
 /// <summary>
@@ -65,7 +68,7 @@ public sealed class ShellViewModel : ObservableObject
     {
         _deps = deps;
         Timeline = new TimelineViewModel(deps.Monitor.Engine.History);
-        var context = new PageContext { Monitor = deps.Monitor, Settings = deps.Settings, Timeline = Timeline, Tools = deps.Tools ?? new ToolServices() };
+        var context = new PageContext { Monitor = deps.Monitor, Settings = deps.Settings, Timeline = Timeline, Tools = deps.Tools ?? new ToolServices(), Platform = deps.Platform };
         _context = context;
 
         Overview = new OverviewViewModel(context);

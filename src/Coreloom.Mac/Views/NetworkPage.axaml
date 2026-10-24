@@ -1,0 +1,136 @@
+<UserControl x:Class="Coreloom.Mac.Views.NetworkPage"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:Coreloom.Mac.Controls"
+             xmlns:b="using:Coreloom.Mac.Behaviors"
+             xmlns:pages="using:Coreloom.ViewModels.Pages">
+
+  <ScrollViewer Theme="{StaticResource ScrollViewer.Window}">
+    <StackPanel Margin="32,14,28,32" b:Motion.Entrance="True">
+
+      <c:AdaptiveGrid MinColumnWidth="200" MaxColumns="4" Spacing="12" UniformRowHeight="True">
+        <ContentControl Content="{Binding Download}" ContentTemplate="{StaticResource MetricTile}" />
+        <ContentControl Content="{Binding Upload}" ContentTemplate="{StaticResource MetricTile}" />
+        <ContentControl Content="{Binding Received}" ContentTemplate="{StaticResource MetricTile}" />
+        <ContentControl Content="{Binding Sent}" ContentTemplate="{StaticResource MetricTile}" />
+      </c:AdaptiveGrid>
+
+      <ContentControl Content="{Binding Chart}" ContentTemplate="{StaticResource ChartCard}" Height="300" Margin="0,16,0,0" />
+
+      <!-- Internet speed test -->
+      <c:SquircleBorder Theme="{StaticResource Card.Glow}" GlowKey="NetworkDown" GlowStrength="0.8" Margin="0,16,0,0" DataContext="{Binding SpeedTest}" Padding="20,18">
+        <StackPanel>
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <c:SquircleBorder Width="38" Height="38" CornerRadius="11" Background="{DynamicResource Brush.AccentSoft}" VerticalAlignment="Top">
+              <Path Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Globe}" Stroke="{DynamicResource Brush.Accent}" />
+            </c:SquircleBorder>
+            <StackPanel Grid.Column="1" Margin="12,0,16,0">
+              <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Internet speed test" />
+              <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Status}" TextWrapping="Wrap" Margin="0,2,0,0" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+              <Button Theme="{StaticResource Button.Primary}" Padding="18,8" Command="{Binding RunCommand}"
+                      IsVisible="{Binding IsIdle}">
+                <StackPanel Orientation="Horizontal">
+                  <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
+                  <TextBlock Text="{Binding RunText}" Margin="7,0,0,0" />
+                </StackPanel>
+              </Button>
+              <Button Theme="{StaticResource Button.Secondary}" Padding="18,8" Content="Cancel" Command="{Binding CancelCommand}"
+                      IsVisible="{Binding IsRunning}" />
+            </StackPanel>
+          </Grid>
+
+          <ProgressBar Theme="{StaticResource ProgressBar.Thin}" Margin="0,14,0,0" Maximum="1"
+                       b:Smooth.Value="{Binding Progress}" IsVisible="{Binding IsRunning}" />
+          <Border Background="{DynamicResource Brush.CriticalSoft}" CornerRadius="8" Padding="12,8" Margin="0,12,0,0"
+                  IsVisible="{Binding Error, Converter={StaticResource HasValue}}">
+            <StackPanel Orientation="Horizontal">
+              <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Critical}" />
+              <TextBlock Text="{Binding Error}" Margin="8,0,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
+            </StackPanel>
+          </Border>
+
+          <c:AdaptiveGrid MinColumnWidth="300" MaxColumns="2" Spacing="20" Margin="0,16,0,0">
+            <!-- Live gauge -->
+            <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="16,18">
+              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ContentControl Content="{Binding Live}" ContentTemplate="{StaticResource ToneGauge}" />
+                <Border Theme="{StaticResource Badge}" HorizontalAlignment="Center" Margin="0,8,0,0" Padding="10,3">
+                  <TextBlock Text="{Binding Phase}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+                </Border>
+              </StackPanel>
+            </c:SquircleBorder>
+            <!-- Results -->
+            <StackPanel>
+              <ItemsControl ItemsSource="{Binding Results}" ItemTemplate="{StaticResource ToneTile}" Focusable="False">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <c:AdaptiveGrid MinColumnWidth="150" MaxColumns="2" Spacing="12" UniformRowHeight="True" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+              </ItemsControl>
+              <StackPanel Orientation="Horizontal" Margin="2,12,0,0" IsVisible="{Binding Server, Converter={StaticResource HasValue}}">
+                <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Network}" VerticalAlignment="Center" />
+                <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Server}" Margin="7,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+              </StackPanel>
+              <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Finished}" Margin="22,2,0,0"
+                         IsVisible="{Binding Finished, Converter={StaticResource HasValue}}" />
+            </StackPanel>
+          </c:AdaptiveGrid>
+        </StackPanel>
+      </c:SquircleBorder>
+
+      <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,16,0,0">
+        <StackPanel>
+          <Grid Margin="0,0,0,10">
+            <StackPanel>
+              <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Adapters" />
+              <TextBlock Theme="{StaticResource Text.Caption}" Text="The active adapter is the one carrying your default route, unless you pick one." Margin="0,2,0,0" />
+            </StackPanel>
+            <Button Theme="{StaticResource Button.Secondary}" HorizontalAlignment="Right" Content="Choose automatically" Padding="10,5"
+                    Command="{Binding UseAutomaticCommand}"
+                    IsVisible="{Binding !IsAutomaticSelection}" />
+          </Grid>
+          <ItemsControl ItemsSource="{Binding Adapters}" Focusable="False">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="{x:Type pages:AdapterViewModel}">
+                <c:SquircleBorder Theme="{StaticResource Card.Inset}" Margin="0,0,0,8">
+                  <Grid ColumnDefinitions="*,110,110,Auto">
+                    <StackPanel>
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12.5" />
+                        <Border Theme="{StaticResource Badge}" Margin="8,0,0,0" Background="{DynamicResource Brush.AccentSoft}"
+                                IsVisible="{Binding IsActive}">
+                          <TextBlock Text="active" FontSize="10" Foreground="{DynamicResource Brush.Accent}" />
+                        </Border>
+                      </StackPanel>
+                      <TextBlock Theme="{StaticResource Text.Caption}" Margin="0,3,0,0">
+                        <Run Text="{Binding Kind, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding Status, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding LinkSpeed, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding Address, Mode=OneWay}" />
+                      </TextBlock>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                      <TextBlock Text="Down" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Right" />
+                      <TextBlock HorizontalAlignment="Right" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold">
+                        <Run Text="{Binding Download.Number, Mode=OneWay}" /><Run Text=" " /><Run Text="{Binding Download.Unit, Mode=OneWay}" />
+                      </TextBlock>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
+                      <TextBlock Text="Up" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Right" />
+                      <TextBlock HorizontalAlignment="Right" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold">
+                        <Run Text="{Binding Upload.Number, Mode=OneWay}" /><Run Text=" " /><Run Text="{Binding Upload.Unit, Mode=OneWay}" />
+                      </TextBlock>
+                    </StackPanel>
+                    <Button Grid.Column="3" Theme="{StaticResource Button.Subtle}" Content="Use" Padding="10,4" Margin="14,0,0,0" VerticalAlignment="Center"
+                            Command="{Binding DataContext.UseAdapterCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}" ToolTip.Tip="Show this adapter on the dashboard" />
+                  </Grid>
+                </c:SquircleBorder>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </c:SquircleBorder>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

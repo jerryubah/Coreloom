@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- macOS hardware monitoring: IOKit, Mach, sysctl, libproc, IOReport, the SMC and Metal, called directly (no helpers,
+       no kernel extensions, nothing that needs administrator rights). Read only: nothing here changes a clock, a voltage
+       or a fan. It builds anywhere; the calls only work on macOS. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Coreloom.Hardware.Mac</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsTrimmable>false</IsTrimmable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Coreloom.Core\Coreloom.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Coreloom.Hardware.Mac.Tests" />
+    <InternalsVisibleTo Include="Coreloom" />
+  </ItemGroup>
+
+</Project>

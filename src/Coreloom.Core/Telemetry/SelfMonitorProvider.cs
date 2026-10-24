@@ -7,6 +7,8 @@ namespace Coreloom.Core.Telemetry;
 /// </summary>
 public sealed class SelfMonitorProvider : ITelemetryProvider
 {
+    private readonly Func<double> _uptimeSeconds;
+    private readonly Func<double>? _privateBytes;
     private Process? _process;
     private MetricHandle? _cpu;
     private MetricHandle? _workingSet;
@@ -16,6 +18,14 @@ public sealed class SelfMonitorProvider : ITelemetryProvider
     private MetricHandle? _uptime;
     private TimeSpan _lastCpu;
     private long _lastWallTicks;
+
+    /// <param name="uptimeSeconds">The system's uptime including sleep (Windows' tick count by default; macOS passes its boot time).</param>
+    /// <param name="privateBytes">The process's own memory where the platform measures it differently (macOS: its footprint).</param>
+    public SelfMonitorProvider(Func<double>? uptimeSeconds = null, Func<double>? privateBytes = null)
+    {
+        _uptimeSeconds = uptimeSeconds ?? (() => Environment.TickCount64 / 1000.0);
+        _privateBytes = privateBytes;
+    }
 
     public string Name => "Coreloom process";
 
@@ -56,11 +66,14 @@ public sealed class SelfMonitorProvider : ITelemetryProvider
             DeviceId = MetricIds.SystemDeviceId,
         }, Provenance.Measured, 0, "GC heap size (GC.GetTotalMemory without forcing a collection); a leak shows as steady growth that never drops back");
 
-        _handles = context.Register(new MetricDescriptor(MetricIds.AppHandles, "Coreloom handle count", MetricCategory.Application, MetricKind.Count)
+        if (OperatingSystem.IsWindows())
         {
-            Group = "Coreloom",
-            DeviceId = MetricIds.SystemDeviceId,
-        }, Provenance.Measured, 0, "Open Windows handles in this process; a leak shows as steady growth");
+            _handles = context.Register(new MetricDescriptor(MetricIds.AppHandles, "Coreloom handle count", MetricCategory.Application, MetricKind.Count)
+            {
+                Group = "Coreloom",
+                DeviceId = MetricIds.SystemDeviceId,
+            }, Provenance.Measured, 0, "Open Windows handles in this process; a leak shows as steady growth");
+        }
 
         _uptime = context.Register(new MetricDescriptor(MetricIds.SystemUptime, "System uptime", MetricCategory.System, MetricKind.Duration)
         {
@@ -93,10 +106,15 @@ public sealed class SelfMonitorProvider : ITelemetryProvider
         }
 
         writer.Write(_workingSet!, _process.WorkingSet64);
-        writer.Write(_private!, _process.PrivateMemorySize64);
+        writer.Write(_private!, _privateBytes?.Invoke() ?? (OperatingSystem.IsWindows() ? _process.PrivateMemorySize64 : double.NaN));
+
         writer.Write(_managed!, GC.GetTotalMemory(forceFullCollection: false));
-        writer.Write(_handles!, _process.HandleCount);
-        writer.Write(_uptime!, Environment.TickCount64 / 1000.0);
+        if (_handles is not null)
+        {
+            writer.Write(_handles, _process.HandleCount);
+        }
+
+        writer.Write(_uptime!, _uptimeSeconds());
     }
 
     public void Shutdown()

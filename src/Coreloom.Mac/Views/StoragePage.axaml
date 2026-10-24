@@ -1,0 +1,147 @@
+<UserControl x:Class="Coreloom.Mac.Views.StoragePage"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:Coreloom.Mac.Controls"
+             xmlns:b="using:Coreloom.Mac.Behaviors"
+             xmlns:pages="using:Coreloom.ViewModels.Pages">
+
+  <ScrollViewer Theme="{StaticResource ScrollViewer.Window}">
+    <StackPanel Margin="32,14,28,32" b:Motion.Entrance="True">
+
+      <c:AdaptiveGrid MinColumnWidth="300" MaxColumns="3" Spacing="16">
+        <ContentControl Content="{Binding TotalRead}" ContentTemplate="{StaticResource MetricTile}" />
+        <ContentControl Content="{Binding TotalWrite}" ContentTemplate="{StaticResource MetricTile}" />
+      </c:AdaptiveGrid>
+
+      <!-- Health of the drives -->
+      <ContentControl Content="{Binding Health}" ContentTemplate="{StaticResource HealthCard}" Margin="0,16,0,0" />
+
+      <ContentControl Content="{Binding TotalChart}" ContentTemplate="{StaticResource ChartCard}" Height="260" Margin="0,16,0,0" />
+
+      <!-- Drive speed test -->
+      <c:SquircleBorder Theme="{StaticResource Card.Glow}" GlowKey="Storage" GlowStrength="0.8" Margin="0,16,0,0" DataContext="{Binding Benchmark}" Padding="20,18">
+        <StackPanel>
+          <Grid ColumnDefinitions="Auto,*">
+            <c:SquircleBorder Width="38" Height="38" CornerRadius="11" Background="{DynamicResource Brush.AccentSoft}" VerticalAlignment="Top">
+              <Path Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Gauge}" Stroke="{DynamicResource Brush.Accent}" />
+            </c:SquircleBorder>
+            <StackPanel Grid.Column="1" Margin="12,0,0,0">
+              <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Drive speed test" />
+              <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Status}" TextWrapping="Wrap" Margin="0,2,0,0" />
+            </StackPanel>
+          </Grid>
+
+          <!-- Drive, size and start -->
+          <WrapPanel Margin="0,14,0,0" Orientation="Horizontal">
+            <ComboBox Theme="{StaticResource ComboBox.Default}" MinWidth="280" Margin="0,0,10,8" ItemsSource="{Binding Drives}" DisplayMemberBinding="{Binding Text}"
+                      SelectedItem="{Binding SelectedDrive}" IsEnabled="{Binding IsIdle}" AutomationProperties.Name="Drive to test" />
+            <ListBox Theme="{StaticResource Segmented}" Margin="0,0,10,8" VerticalAlignment="Center" ItemsSource="{Binding Sizes}" DisplayMemberBinding="{Binding Text}"
+                     SelectedItem="{Binding SelectedSize}" IsEnabled="{Binding IsIdle}" AutomationProperties.Name="Test size" />
+            <Button Theme="{StaticResource Button.Icon}" Margin="0,0,10,8" Command="{Binding RefreshDrivesCommand}" ToolTip.Tip="Refresh the list of drives"
+                    AutomationProperties.Name="Refresh drives">
+              <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Refresh}" />
+            </Button>
+            <Button Theme="{StaticResource Button.Primary}" Padding="18,8" Margin="0,0,10,8" Command="{Binding RunCommand}"
+                    IsVisible="{Binding IsIdle}">
+              <StackPanel Orientation="Horizontal">
+                <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
+                <TextBlock Text="Start test" Margin="7,0,0,0" />
+              </StackPanel>
+            </Button>
+            <Button Theme="{StaticResource Button.Secondary}" Padding="18,8" Margin="0,0,10,8" Content="Cancel" Command="{Binding CancelCommand}"
+                    IsVisible="{Binding IsRunning}" />
+          </WrapPanel>
+
+          <ProgressBar Theme="{StaticResource ProgressBar.Thin}" Margin="0,4,0,0" Maximum="1"
+                       b:Smooth.Value="{Binding Progress}" IsVisible="{Binding IsRunning}" />
+          <Border Background="{DynamicResource Brush.CriticalSoft}" CornerRadius="8" Padding="12,8" Margin="0,8,0,0"
+                  IsVisible="{Binding Error, Converter={StaticResource HasValue}}">
+            <StackPanel Orientation="Horizontal">
+              <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Critical}" />
+              <TextBlock Text="{Binding Error}" Margin="8,0,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
+            </StackPanel>
+          </Border>
+
+          <!-- Gauges and results -->
+          <c:AdaptiveGrid MinColumnWidth="400" MaxColumns="2" Spacing="20" Margin="0,16,0,0">
+            <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="16,18">
+              <c:AdaptiveGrid MinColumnWidth="170" MaxColumns="2" Spacing="12" VerticalAlignment="Center">
+                <ContentControl Content="{Binding ReadGauge}" ContentTemplate="{StaticResource ToneGauge}" />
+                <ContentControl Content="{Binding WriteGauge}" ContentTemplate="{StaticResource ToneGauge}" />
+              </c:AdaptiveGrid>
+            </c:SquircleBorder>
+            <StackPanel>
+              <Grid Margin="14,0,14,6">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="1.2*" MinWidth="130" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Test" Theme="{StaticResource Text.Label}" />
+                <TextBlock Grid.Column="1" Text="Read" Theme="{StaticResource Text.Label}" />
+                <TextBlock Grid.Column="2" Text="Write" Theme="{StaticResource Text.Label}" />
+              </Grid>
+              <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource DiskBenchmarkRow}" Focusable="False" />
+              <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Summary}" Margin="2,2,0,0"
+                         IsVisible="{Binding Summary, Converter={StaticResource HasValue}}" />
+            </StackPanel>
+          </c:AdaptiveGrid>
+        </StackPanel>
+      </c:SquircleBorder>
+
+      <!-- Drives side by side end on one line: the shorter card's chart grows, so its volumes line up at the bottom -->
+      <ItemsControl ItemsSource="{Binding Disks}" Margin="0,16,0,0" Focusable="False">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <c:AdaptiveGrid MinColumnWidth="520" MaxColumns="2" Spacing="16" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="{x:Type pages:DiskViewModel}">
+            <c:SquircleBorder Theme="{StaticResource Card}">
+              <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+                <!-- Header -->
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <c:SquircleBorder Width="34" Height="34" CornerRadius="10" Background="{DynamicResource Brush.ControlHover}">
+                    <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Storage}" Stroke="{DynamicResource Series.Storage.Brush}" />
+                  </c:SquircleBorder>
+                  <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Name}" Theme="{StaticResource Text.CardTitle}" />
+                    <TextBlock Theme="{StaticResource Text.Caption}" Margin="0,2,0,0">
+                      <Run Text="{Binding Kind, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding Capacity, Mode=OneWay}" />
+                    </TextBlock>
+                  </StackPanel>
+                  <Border Grid.Column="2" Theme="{StaticResource Badge}" Padding="8,3" IsVisible="{Binding Temperature.HasValue}"
+                          ToolTip.Tip="{Binding Temperature.ToolTip}">
+                    <StackPanel Orientation="Horizontal">
+                      <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Temperature}" />
+                      <TextBlock Margin="4,0,0,0" FontFamily="{StaticResource MonoFont}" FontSize="11.5" FontWeight="SemiBold">
+                        <Run Text="{Binding Temperature.Number, Mode=OneWay}" /><Run Text="{Binding Temperature.Unit, Mode=OneWay}" />
+                      </TextBlock>
+                    </StackPanel>
+                  </Border>
+                </Grid>
+
+                <!-- Live metrics -->
+                <c:AdaptiveGrid Grid.Row="1" MinColumnWidth="120" MaxColumns="3" Spacing="10" Margin="0,14,0,0">
+                  <ContentControl Content="{Binding Read}" ContentTemplate="{StaticResource MetricTile}" />
+                  <ContentControl Content="{Binding Write}" ContentTemplate="{StaticResource MetricTile}" />
+                  <ContentControl Content="{Binding Activity}" ContentTemplate="{StaticResource MetricTile}" />
+                </c:AdaptiveGrid>
+
+                <TextBlock Grid.Row="2" Theme="{StaticResource Text.Caption}" Text="{Binding Health}" Margin="0,10,0,0"
+                           IsVisible="{Binding Health, Converter={StaticResource HasValue}}" />
+
+                <c:LiveLineChart Grid.Row="3" MinHeight="170" Margin="0,12,0,0" Chart="{Binding Chart}"
+                                 Timeline="{Binding DataContext.Timeline, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+
+                <!-- Volumes -->
+                <ItemsControl Grid.Row="4" ItemsSource="{Binding Volumes}" ItemTemplate="{StaticResource VolumeRow}" Margin="0,10,0,0" Focusable="False" />
+              </Grid>
+            </c:SquircleBorder>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

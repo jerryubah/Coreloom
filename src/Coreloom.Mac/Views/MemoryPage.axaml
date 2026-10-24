@@ -1,0 +1,90 @@
+<UserControl x:Class="Coreloom.Mac.Views.MemoryPage"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:Coreloom.Mac.Controls"
+             xmlns:b="using:Coreloom.Mac.Behaviors"
+             xmlns:pages="using:Coreloom.ViewModels.Pages">
+
+  <ScrollViewer Theme="{StaticResource ScrollViewer.Window}">
+    <StackPanel Margin="32,14,28,32" b:Motion.Entrance="True">
+
+      <c:AdaptiveGrid MinColumnWidth="420" MaxColumns="2" Spacing="16">
+        <!-- Donut hero and the readings beside it, ending on one line (the donut stays centred, the tiles share the height) -->
+        <c:SquircleBorder Theme="{StaticResource Card}">
+          <Grid ColumnDefinitions="Auto,*">
+            <Grid Width="190" Height="190" VerticalAlignment="Center">
+              <c:DonutChart Segments="{Binding Segments}" Thickness="16" />
+              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="{Binding CenterText}" FontFamily="{StaticResource MonoFont}" FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding CenterCaption}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Center" />
+              </StackPanel>
+            </Grid>
+            <StackPanel Grid.Column="1" Margin="28,0,0,0" VerticalAlignment="Center">
+              <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Physical memory" Margin="0,0,0,10" />
+              <ItemsControl ItemsSource="{Binding Segments}" ItemTemplate="{StaticResource DonutLegendRow}" Focusable="False" />
+              <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Load.StatsText}" Margin="0,10,0,0" />
+            </StackPanel>
+          </Grid>
+        </c:SquircleBorder>
+
+        <ItemsControl ItemsSource="{Binding Details}" ItemTemplate="{StaticResource MetricTile}" Focusable="False">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <c:AdaptiveGrid MinColumnWidth="180" MaxColumns="2" Spacing="12" UniformRowHeight="True" StretchRows="True" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+        </ItemsControl>
+      </c:AdaptiveGrid>
+
+      <!-- Health of the memory -->
+      <ContentControl Content="{Binding Health}" ContentTemplate="{StaticResource HealthCard}" Margin="0,16,0,0" />
+
+      <c:AdaptiveGrid MinColumnWidth="460" MaxColumns="2" Spacing="16" Margin="0,16,0,0">
+        <ContentControl Content="{Binding UsageChart}" ContentTemplate="{StaticResource ChartCard}" Height="280" />
+        <ContentControl Content="{Binding CommitChart}" ContentTemplate="{StaticResource ChartCard}" Height="280" />
+      </c:AdaptiveGrid>
+
+      <!-- Processes and modules end on one line: when the modules card is taller, the process list shows more apps -->
+      <c:AdaptiveGrid MinColumnWidth="460" MaxColumns="2" Spacing="16" Margin="0,16,0,0">
+        <c:SquircleBorder Theme="{StaticResource Card}">
+          <Grid RowDefinitions="Auto,Auto,*">
+            <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Top processes by memory" />
+            <TextBlock Grid.Row="1" Theme="{StaticResource Text.Caption}" Text="Working set, grouped by application" Margin="0,2,0,10" />
+            <ContentControl Grid.Row="2" Content="{Binding Processes}" ContentTemplate="{StaticResource ProcessList}" />
+          </Grid>
+        </c:SquircleBorder>
+        <c:SquircleBorder Theme="{StaticResource Card}">
+          <StackPanel>
+            <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Modules" Margin="0,0,0,10" />
+            <ItemsControl ItemsSource="{Binding Modules}" Focusable="False" IsVisible="{Binding HasModules}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type pages:MemoryModuleItem}">
+                  <c:SquircleBorder Theme="{StaticResource Card.Inset}" Margin="0,0,0,8">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <StackPanel>
+                        <TextBlock Text="{Binding Slot}" FontWeight="SemiBold" FontSize="12.5" />
+                        <TextBlock Text="{Binding Part}" Theme="{StaticResource Text.Caption}" Margin="0,2,0,0" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                        <TextBlock HorizontalAlignment="Right" FontSize="12.5">
+                          <Run Text="{Binding Size, Mode=OneWay}" /><Run Text=" " /><Run Text="{Binding Type, Mode=OneWay}" />
+                        </TextBlock>
+                        <TextBlock Text="{Binding Speed}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Right" Margin="0,2,0,0" />
+                      </StackPanel>
+                    </Grid>
+                  </c:SquircleBorder>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Theme="{StaticResource Text.Secondary}" Text="Module details were not reported by the firmware."
+                       IsVisible="{Binding !HasModules}" />
+            <Border Theme="{StaticResource Divider}" />
+            <ItemsControl ItemsSource="{Binding Specifications}" ItemTemplate="{StaticResource KeyValueRow}" Focusable="False" Grid.IsSharedSizeScope="True" />
+            <ContentControl Content="{Binding ModuleSensors}" ContentTemplate="{StaticResource SensorTable}" Margin="0,8,0,0"
+                              IsVisible="{Binding !ModuleSensors.IsEmpty}" />
+          </StackPanel>
+        </c:SquircleBorder>
+      </c:AdaptiveGrid>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

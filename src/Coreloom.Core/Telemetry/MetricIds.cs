@@ -40,6 +40,13 @@ public static class MetricIds
     public const string CpuSocTemperature = "cpu/temp/soc";
     public const string CpuIodTemperature = "cpu/temp/iod";
 
+    // Apple silicon: the performance and efficiency clusters (IOReport), and the Neural Engine.
+    public const string CpuLoadPerformanceCores = "cpu/load/p-cores";
+    public const string CpuLoadEfficiencyCores = "cpu/load/e-cores";
+    public const string CpuClockPerformanceCores = "cpu/clock/p-cores";
+    public const string CpuClockEfficiencyCores = "cpu/clock/e-cores";
+    public const string NeuralEnginePower = "cpu/power/ane";
+
     public static string CpuThreadLoad(int logicalIndex) => $"cpu/thread/{Inv(logicalIndex)}/load";
 
     public static string CpuCoreClock(int coreNumber) => $"cpu/core/{Inv(coreNumber)}/clock";
@@ -121,6 +128,17 @@ public static class MetricIds
     public const string MemoryCommitLimit = "mem/commit/limit";
     public const string MemoryCache = "mem/cache";
 
+    // macOS: the parts of "Memory Used" Activity Monitor shows, swap and memory pressure.
+    public const string MemoryApp = "mem/app";
+    public const string MemoryWired = "mem/wired";
+    public const string MemoryCompressed = "mem/compressed";
+    public const string MemorySwapUsed = "mem/swap/used";
+    public const string MemorySwapTotal = "mem/swap/total";
+
+    /// <summary>macOS memory pressure: 1 normal, 2 warning, 4 critical (kern.memorystatus_vm_pressure_level).</summary>
+    public const string MemoryPressure = "mem/pressure";
+    public const string MemoryPower = "mem/power";
+
     // ---- Storage -----------------------------------------------------------------------------
     public const string DiskTotalRead = "disk/total/read";
     public const string DiskTotalWrite = "disk/total/write";
@@ -165,6 +183,17 @@ public static class MetricIds
 
     // ---- System / application ----------------------------------------------------------------
     public const string SystemUptime = "sys/uptime";
+
+    /// <summary>The whole computer's power draw (the SMC's system total on Macs).</summary>
+    public const string SystemPower = "sys/power";
+
+    // Battery (MacBooks).
+    public const string BatteryCharge = "battery/charge";
+    public const string BatteryHealth = "battery/health";
+    public const string BatteryCycles = "battery/cycles";
+    public const string BatteryTemperature = "battery/temp";
+    public const string BatteryPower = "battery/power";
+    public const string BatteryDeviceId = "battery";
     public const string AppCpu = "app/cpu";
     public const string AppWorkingSet = "app/memory";
     public const string AppPrivateBytes = "app/private";

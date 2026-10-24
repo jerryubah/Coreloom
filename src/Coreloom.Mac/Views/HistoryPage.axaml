@@ -1,0 +1,107 @@
+<UserControl x:Class="Coreloom.Mac.Views.HistoryPage"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:Coreloom.Mac.Controls"
+             xmlns:b="using:Coreloom.Mac.Behaviors"
+             xmlns:pages="using:Coreloom.ViewModels.Pages">
+
+  <Grid Margin="32,14,28,24" b:Motion.Entrance="True" ColumnDefinitions="290,*">
+
+    <!-- Metric picker -->
+    <c:SquircleBorder Theme="{StaticResource Card}" Padding="14,14,8,10">
+      <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+        <StackPanel Margin="0,0,6,10">
+          <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Metrics" />
+          <TextBlock Theme="{StaticResource Text.Caption}" Margin="0,2,0,0"
+                     Text="Pick up to six to compare on a shared timeline. History is kept in memory for the last hour." TextWrapping="Wrap" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,0,6,8">
+          <TextBox Name="FilterBox" Theme="{StaticResource TextBox.Default}" Text="{Binding Filter}"
+                   AutomationProperties.Name="Filter metrics" />
+          <TextBlock Text="Filter (e.g. temperature, GPU)" IsHitTestVisible="False" Margin="12,0,0,0" VerticalAlignment="Center"
+                     Foreground="{DynamicResource Brush.TextTertiary}" FontSize="13"
+                     IsVisible="{Binding Text, ElementName=FilterBox, Converter={StaticResource HasValue}, ConverterParameter=Invert}" />
+        </Grid>
+
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+          <ItemsControl ItemsSource="{Binding FilteredOptions}" Focusable="False" Margin="0,0,6,0">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="{x:Type pages:HistoryMetricOption}">
+                <CheckBox Theme="{StaticResource CheckBox.Compact}" IsChecked="{Binding IsSelected}" ToolTip.Tip="{Binding Id}">
+                  <StackPanel>
+                    <TextBlock Text="{Binding Name}" FontSize="12.5" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Theme="{StaticResource Text.Caption}" TextTrimming="CharacterEllipsis">
+                      <Run Text="{Binding Group, Mode=OneWay}" /><Run Text="  " /><Run Text="{Binding Device, Mode=OneWay}" />
+                    </TextBlock>
+                  </StackPanel>
+                </CheckBox>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+
+        <Grid Grid.Row="3" Margin="0,10,6,0">
+          <TextBlock Text="{Binding SelectionText}" Theme="{StaticResource Text.Caption}" VerticalAlignment="Center" />
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Theme="{StaticResource Button.Subtle}" Content="Clear" Padding="10,4" Command="{Binding ClearSelectionCommand}" />
+            <Button Theme="{StaticResource Button.Secondary}" Padding="10,4" Margin="6,0,0,0" Command="{Binding ExportCommand}"
+                    ToolTip.Tip="Export the visible time window of the selected metrics to a CSV file">
+              <StackPanel Orientation="Horizontal">
+                <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Download}" />
+                <TextBlock Text="Export CSV" Margin="6,0,0,0" />
+              </StackPanel>
+            </Button>
+          </StackPanel>
+        </Grid>
+      </Grid>
+    </c:SquircleBorder>
+
+    <!-- Stacked, time-aligned charts (hover is synchronized through the shared timeline) -->
+    <Grid Grid.Column="1" Margin="16,0,0,0">
+      <c:SquircleBorder Theme="{StaticResource Card}" VerticalAlignment="Top"
+              IsVisible="{Binding Charts.Count, Converter={StaticResource HasValue}, ConverterParameter=Invert}">
+        <StackPanel Margin="8,18">
+          <Path Theme="{StaticResource IconPath}" Width="22" Height="22" Data="{StaticResource Icon.History}" HorizontalAlignment="Center" />
+          <TextBlock Text="Select metrics on the left to chart them here." Theme="{StaticResource Text.Secondary}" HorizontalAlignment="Center" Margin="0,10,0,0" />
+          <TextBlock Text="Use the window selector above to look back up to an hour." Theme="{StaticResource Text.Caption}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+        </StackPanel>
+      </c:SquircleBorder>
+
+      <ScrollViewer Theme="{StaticResource ScrollViewer.Page}">
+        <ItemsControl ItemsSource="{Binding Charts}" Focusable="False">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="{x:Type pages:HistoryChartViewModel}">
+              <c:SquircleBorder Theme="{StaticResource Card}" Padding="18,14,14,10" Margin="0,0,0,12">
+                <Grid RowDefinitions="Auto,Auto">
+                  <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Ellipse Width="9" Height="9" VerticalAlignment="Center" Fill="{Binding Metric.ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+                    <StackPanel Grid.Column="1" Margin="10,0,12,0">
+                      <TextBlock Text="{Binding Chart.Title}" Theme="{StaticResource Text.CardTitle}" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding Metric.StatsText}" Theme="{StaticResource Text.Caption}" Margin="0,2,0,0"
+                                 IsVisible="{Binding Metric.StatsText, Converter={StaticResource HasValue}}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                      <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="19" FontWeight="SemiBold"
+                                 b:AnimatedText.Formatter="{Binding Metric.NumberFormatter}"
+                                 b:AnimatedText.Value="{Binding Metric.Value}" Foreground="{DynamicResource Brush.Text}" />
+                      <TextBlock Theme="{StaticResource Text.Unit}" Text="{Binding Metric.Unit}" VerticalAlignment="Bottom" Margin="4,0,0,3" />
+                      <Button Theme="{StaticResource Button.Icon}" Margin="10,0,0,0" ToolTip.Tip="Remove from comparison"
+                              Command="{Binding DataContext.RemoveChartCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                              CommandParameter="{Binding}">
+                        <Path Theme="{StaticResource IconPath}" Width="10" Height="10" Data="{StaticResource Icon.Close}" />
+                      </Button>
+                    </StackPanel>
+                  </Grid>
+                  <c:LiveLineChart Grid.Row="1" Height="170" Margin="0,10,0,0" Chart="{Binding Chart}"
+                                   Timeline="{Binding DataContext.Timeline, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                </Grid>
+              </c:SquircleBorder>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Grid>
+  </Grid>
+</UserControl>

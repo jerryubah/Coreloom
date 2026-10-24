@@ -16,6 +16,26 @@ public enum UpdatePackageKind
     /// and copied over it once Coreloom has exited (see <see cref="FolderUpdate"/>).
     /// </summary>
     PortableZip,
+
+    /// <summary>The Mac app on Apple silicon: the release's <c>-macos-arm64.zip</c> (the app bundle) replaces Coreloom.app.</summary>
+    MacArm64,
+
+    /// <summary>The Mac app on Intel: the release's <c>-macos-x64.zip</c> replaces Coreloom.app.</summary>
+    MacX64,
+}
+
+public static class UpdatePackageKinds
+{
+    public static bool IsMac(this UpdatePackageKind kind) => kind is UpdatePackageKind.MacArm64 or UpdatePackageKind.MacX64;
+
+    /// <summary>The end of the package's file name ("-Setup.exe", "-Portable.zip", "-macos-arm64.zip").</summary>
+    public static string Suffix(this UpdatePackageKind kind) => kind switch
+    {
+        UpdatePackageKind.Installer => "-Setup.exe",
+        UpdatePackageKind.MacArm64 => "-macos-arm64.zip",
+        UpdatePackageKind.MacX64 => "-macos-x64.zip",
+        _ => "-Portable.zip",
+    };
 }
 
 /// <summary>
@@ -156,7 +176,7 @@ public sealed class PendingUpdateStore
     public string? PackagePath(PendingUpdate pending, UpdatePackageKind kind)
     {
         string name = pending.InstallerFileName;
-        string extension = kind == UpdatePackageKind.Installer ? ".exe" : ".zip";
+        string extension = kind == UpdatePackageKind.Installer ? ".exe" : ".zip"; // every other kind is a zip
         if (string.IsNullOrWhiteSpace(name) || name != Path.GetFileName(name) || name.Contains("..", StringComparison.Ordinal)
             || name.IndexOfAny(['\\', '/', ':']) >= 0 || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0
             || !name.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
@@ -216,6 +236,8 @@ public sealed class PendingUpdateStore
                 string name = Path.GetFileName(file);
                 bool download = name.EndsWith("-Setup.exe", StringComparison.OrdinalIgnoreCase)
                     || name.EndsWith("-Portable.zip", StringComparison.OrdinalIgnoreCase)
+                    || name.EndsWith("-macos-arm64.zip", StringComparison.OrdinalIgnoreCase)
+                    || name.EndsWith("-macos-x64.zip", StringComparison.OrdinalIgnoreCase)
                     || name.EndsWith(".partial", StringComparison.OrdinalIgnoreCase);
                 bool keep = keepFileName is not null
                     && (name.Equals(keepFileName, StringComparison.OrdinalIgnoreCase) || name.Equals(keepFileName + ".partial", StringComparison.OrdinalIgnoreCase));
@@ -246,7 +268,7 @@ public sealed class PendingUpdateStore
         const string prefix = "Coreloom-";
         try
         {
-            foreach (string suffix in new[] { "-win-x64-Setup.exe", "-win-x64-Portable.zip" })
+            foreach (string suffix in new[] { "-win-x64-Setup.exe", "-win-x64-Portable.zip", "-macos-arm64.zip", "-macos-x64.zip" })
             {
                 foreach (string file in System.IO.Directory.EnumerateFiles(Directory, prefix + "*" + suffix))
                 {

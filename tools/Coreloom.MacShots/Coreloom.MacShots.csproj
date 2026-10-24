@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Draws the macOS interface with sample data into PNGs, headlessly (no Mac or display needed), for checking layouts
+       and for the README and the website. Runs on Linux and macOS. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Coreloom.MacShots</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+    <PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Coreloom.Mac\Coreloom.Mac.csproj" />
+  </ItemGroup>
+
+</Project>

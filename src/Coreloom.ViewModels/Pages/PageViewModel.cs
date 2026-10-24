@@ -59,6 +59,12 @@ public abstract partial class PageViewModel : ObservableObject
 
     protected PageContext Context { get; }
 
+    /// <summary>The system Coreloom runs on: wording and what the page offers follow it.</summary>
+    public Coreloom.Core.HostPlatform Platform => Context.Platform;
+
+    /// <summary>True in the macOS app.</summary>
+    public bool IsMac => Context.IsMac;
+
     protected MonitorContext Monitor => Context.Monitor;
 
     protected SettingsService Settings => Context.Settings;
@@ -182,6 +188,12 @@ public sealed class PageContext
 
     /// <summary>Drive benchmark, internet speed test and Smart Optimize's Windows services.</summary>
     public ToolServices Tools { get; init; } = new();
+
+    /// <summary>The system Coreloom runs on (Windows unless the Mac app says otherwise).</summary>
+    public Coreloom.Core.HostPlatform Platform { get; init; } = Coreloom.Core.HostPlatform.Windows;
+
+    /// <summary>True in the macOS app.</summary>
+    public bool IsMac => Platform == Coreloom.Core.HostPlatform.MacOS;
 
     /// <summary>GPU slot to show on Overview/GPU pages (user preference or automatic).</summary>
     public int GpuSlot => Settings.Current.Monitoring.PreferredGpuSlot is int slot && Monitor.Gpus().Any(g => g.Slot == slot)

@@ -588,9 +588,12 @@ public sealed class UpdatesViewModel : ObservableObject
         var checksums = release.Checksums;
         if (package is null || checksums is null)
         {
-            _problem = _installer.PackageKind == UpdatePackageKind.Installer
-                ? "This release doesn't include the Windows installer and its checksums, so Coreloom can't install it."
-                : "This release doesn't include the portable zip and its checksums, so Coreloom can't install it.";
+            _problem = _installer.PackageKind switch
+            {
+                UpdatePackageKind.Installer => "This release doesn't include the Windows installer and its checksums, so Coreloom can't install it.",
+                UpdatePackageKind.PortableZip => "This release doesn't include the portable zip and its checksums, so Coreloom can't install it.",
+                _ => "This release doesn't include the Mac app for this Mac and its checksums, so Coreloom can't install it.",
+            };
             Phase = UpdatePhase.Available;
             RaiseState();
             return;

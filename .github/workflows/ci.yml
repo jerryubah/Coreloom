@@ -85,7 +85,56 @@ jobs:
         if: success() || failure()
         run: dotnet test tests/Coreloom.ViewModels.Tests/Coreloom.ViewModels.Tests.csproj -c Release --logger trx --results-directory artifacts/test-results
 
+      # The macOS back-end's decoding and arithmetic (the tests that read a real Mac skip here).
+      - name: Test Coreloom.Hardware.Mac (portable parts)
+        if: success() || failure()
+        run: dotnet test tests/Coreloom.Hardware.Mac.Tests/Coreloom.Hardware.Mac.Tests.csproj -c Release --logger trx --results-directory artifacts/test-results
+
       # Each test project's counts as a notice and each failed test as an annotation on the run's summary page.
       - name: Test report
         if: always()
         run: python3 build/test-report.py artifacts/test-results
+
+  macos:
+    name: macOS (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            arch: arm64
+          - os: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      # Hosted Macs are virtual machines: real processor, memory, disk, network and GPU counters, but no temperature,
+      # power or fan sensors. The readings report shows what this Mac gave.
+      - name: Test the macOS back-end on this Mac
+        env:
+          CORELOOM_MAC_REPORT: ${{ github.workspace }}/artifacts/mac-readings-${{ matrix.arch }}.md
+        run: dotnet test tests/Coreloom.Hardware.Mac.Tests/Coreloom.Hardware.Mac.Tests.csproj -c Release --logger trx --results-directory artifacts/test-results
+
+      - name: Show the readings
+        if: always()
+        run: cat artifacts/mac-readings-*.md 2>/dev/null | head -300 || true
+
+      - name: Test report
+        if: always()
+        run: python3 build/test-report.py artifacts/test-results
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: macos-${{ matrix.arch }}-results
+          path: |
+            artifacts/test-results/
+            artifacts/mac-readings-*.md
+          if-no-files-found: ignore

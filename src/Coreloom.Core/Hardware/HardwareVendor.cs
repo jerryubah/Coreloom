@@ -9,6 +9,9 @@ public enum HardwareVendor
     Nvidia,
     Amd,
     Intel,
+
+    /// <summary>Apple silicon (M-series processors and their graphics).</summary>
+    Apple,
 }
 
 /// <summary>
@@ -41,7 +44,12 @@ public static partial class HardwareVendors
             return HardwareVendor.Amd;
         }
 
-        return VendorIntel().IsMatch(vendor) ? HardwareVendor.Intel : HardwareVendor.Unknown;
+        if (VendorIntel().IsMatch(vendor))
+        {
+            return HardwareVendor.Intel;
+        }
+
+        return VendorApple().IsMatch(vendor) ? HardwareVendor.Apple : HardwareVendor.Unknown;
     }
 
     public static HardwareVendor FromDeviceName(string? name)
@@ -62,7 +70,12 @@ public static partial class HardwareVendors
             return HardwareVendor.Nvidia;
         }
 
-        return NameAmd().IsMatch(name) ? HardwareVendor.Amd : HardwareVendor.Unknown;
+        if (NameAmd().IsMatch(name))
+        {
+            return HardwareVendor.Amd;
+        }
+
+        return NameApple().IsMatch(name) ? HardwareVendor.Apple : HardwareVendor.Unknown;
     }
 
     /// <summary>File-name key for the brand mark: "nvidia", "amd", "intel" (empty when unknown).</summary>
@@ -71,6 +84,7 @@ public static partial class HardwareVendors
         HardwareVendor.Nvidia => "nvidia",
         HardwareVendor.Amd => "amd",
         HardwareVendor.Intel => "intel",
+        HardwareVendor.Apple => "apple",
         _ => string.Empty,
     };
 
@@ -80,6 +94,7 @@ public static partial class HardwareVendors
         HardwareVendor.Nvidia => "NVIDIA",
         HardwareVendor.Amd => "AMD",
         HardwareVendor.Intel => "Intel",
+        HardwareVendor.Apple => "Apple",
         _ => string.Empty,
     };
 
@@ -89,6 +104,7 @@ public static partial class HardwareVendors
         "nvidia" => HardwareVendor.Nvidia,
         "amd" => HardwareVendor.Amd,
         "intel" => HardwareVendor.Intel,
+        "apple" => HardwareVendor.Apple,
         _ => HardwareVendor.Unknown,
     };
 
@@ -100,6 +116,12 @@ public static partial class HardwareVendors
 
     [GeneratedRegex(@"intel", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex VendorIntel();
+
+    [GeneratedRegex(@"^apple\b|apple inc", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex VendorApple();
+
+    [GeneratedRegex(@"\bapple\s+m\d|\bapple\s+(?:silicon|paravirtual)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex NameApple();
 
     [GeneratedRegex(@"\bintel\b|\bxeon\b|\bpentium\b|\bceleron\b|\barc\s*(?:\(tm\)\s*)?(?:graphics|[ab]\d{3})|\buhd graphics\b|\biris\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex NameIntel();

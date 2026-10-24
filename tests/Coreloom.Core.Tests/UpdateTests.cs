@@ -91,6 +91,57 @@ public class GitHubReleaseClientTests
     }
 
     [Fact]
+    public void AReleaseWithMacAndWindowsDownloads_GivesEachCopyItsOwnPackage()
+    {
+        static ReleaseAsset Asset(string name) => new(name, new Uri("https://github.com/o/r/releases/download/v1.6.0/" + name), 1);
+        var release = new ReleaseInfo(SemanticVersion.Parse("1.6.0"), "v1.6.0", "Coreloom 1.6.0", "", new Uri("https://github.com/o/r"), null, false,
+        [
+            // Stable names for the download buttons first, so they'd win if the updater matched them by mistake.
+            Asset("Coreloom-Windows-Setup.exe"), Asset("Coreloom-macOS-Apple-Silicon.dmg"), Asset("Coreloom-macOS-Intel.dmg"),
+            Asset("Coreloom-1.6.0-macos-arm64.dmg"), Asset("Coreloom-1.6.0-macos-x64.dmg"),
+            Asset("Coreloom-1.6.0-macos-arm64.zip"), Asset("Coreloom-1.6.0-macos-x64.zip"),
+            Asset("Coreloom-1.6.0-win-x64-Setup.exe"), Asset("Coreloom-1.6.0-win-x64-Portable.zip"), Asset("SHA256SUMS.txt"),
+        ]);
+
+        Assert.Equal("Coreloom-1.6.0-win-x64-Setup.exe", release.PackageFor(UpdatePackageKind.Installer)!.Name);
+        Assert.Equal("Coreloom-1.6.0-win-x64-Portable.zip", release.PackageFor(UpdatePackageKind.PortableZip)!.Name);
+        Assert.Equal("Coreloom-1.6.0-macos-arm64.zip", release.PackageFor(UpdatePackageKind.MacArm64)!.Name);
+        Assert.Equal("Coreloom-1.6.0-macos-x64.zip", release.PackageFor(UpdatePackageKind.MacX64)!.Name);
+        Assert.Null(release.MacApp(UpdatePackageKind.Installer));
+        Assert.True(UpdatePackageKind.MacX64.IsMac());
+        Assert.False(UpdatePackageKind.PortableZip.IsMac());
+    }
+
+    [Fact]
+    public void MacPackages_AreSavedAsZips_AndCleanedUp()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), "coreloom-mac-update-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        var store = new PendingUpdateStore(dir);
+        var pending = new PendingUpdate { Version = "1.6.0", InstallerFileName = "Coreloom-1.6.0-macos-arm64.zip", Sha256 = new string('a', 64) };
+        Assert.Equal(Path.Combine(dir, "Coreloom-1.6.0-macos-arm64.zip"), store.PackagePath(pending, UpdatePackageKind.MacArm64));
+        Assert.Null(store.PackagePath(pending with { InstallerFileName = "Coreloom.exe" }, UpdatePackageKind.MacArm64));
+
+        File.WriteAllText(Path.Combine(dir, "Coreloom-1.5.9-macos-arm64.zip"), "old");
+        File.WriteAllText(Path.Combine(dir, "Coreloom-1.6.0-macos-x64.zip"), "current");
+        File.WriteAllText(Path.Combine(dir, "Coreloom-1.7.0-macos-arm64.zip"), "newer");
+        store.DeletePackagesUpTo(SemanticVersion.Parse("1.6.0"));
+        Assert.Equal(new[] { "Coreloom-1.7.0-macos-arm64.zip" }, Directory.GetFiles(dir).Select(Path.GetFileName));
+        store.DeleteDownloads(keepFileName: null);
+        Assert.Empty(Directory.GetFiles(dir));
+        Directory.Delete(dir);
+    }
+
+    [Fact]
+    public void Platforms_AreNamed()
+    {
+        Assert.Equal("macOS", HostPlatform.MacOS.Name());
+        Assert.Equal("Mac", HostPlatform.MacOS.Computer());
+        Assert.Equal("PC", HostPlatform.Windows.Computer());
+        Assert.True(HostPlatform.MacOS.IsMac());
+    }
+
+    [Fact]
     public async Task GetLatestAsync_UsesApiAndSendsUserAgent()
     {
         HttpRequestMessage? captured = null;

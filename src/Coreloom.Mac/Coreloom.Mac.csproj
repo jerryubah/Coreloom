@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The macOS app (Coreloom.app): the same view models and core as the Windows app, an Avalonia interface on the
+       native macOS backend, and macOS hardware monitoring (Coreloom.Hardware.Mac). build/mac/bundle.sh packages it. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Coreloom.Mac</RootNamespace>
+    <AssemblyName>Coreloom</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <TieredPGO>true</TieredPGO>
+    <ApplicationIcon />
+    <!-- Info.plist, the icon and the entitlements live beside the project and are put into the bundle by bundle.sh. -->
+    <CFBundleIdentifier>com.jerryubah.coreloom</CFBundleIdentifier>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Native" />
+    <PackageReference Include="Avalonia.Skia" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Coreloom.Core\Coreloom.Core.csproj" />
+    <ProjectReference Include="..\Coreloom.ViewModels\Coreloom.ViewModels.csproj" />
+    <ProjectReference Include="..\Coreloom.Hardware.Mac\Coreloom.Hardware.Mac.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Inter and JetBrains Mono (SIL Open Font License 1.1), the same files as the Windows app. -->
+    <AvaloniaResource Include="..\Coreloom.App\Fonts\*.ttf" Link="Assets\Fonts\%(Filename)%(Extension)" />
+    <None Include="..\Coreloom.App\Fonts\LICENSE-*.txt" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The app icon (light and dark-mode tiles) for the sidebar, About and the menu bar. -->
+    <AvaloniaResource Include="..\..\assets\branding\png\coreloom-64.png" Link="Assets\coreloom-64.png" />
+    <AvaloniaResource Include="..\..\assets\branding\png\coreloom-128.png" Link="Assets\coreloom-128.png" />
+    <AvaloniaResource Include="..\..\assets\branding\png\coreloom-256.png" Link="Assets\coreloom-256.png" />
+    <AvaloniaResource Include="..\..\assets\branding\dark\png\coreloom-dark-64.png" Link="Assets\coreloom-dark-64.png" />
+    <AvaloniaResource Include="..\..\assets\branding\dark\png\coreloom-dark-128.png" Link="Assets\coreloom-dark-128.png" />
+    <AvaloniaResource Include="..\..\assets\branding\dark\png\coreloom-dark-256.png" Link="Assets\coreloom-dark-256.png" />
+    <AvaloniaResource Include="Assets\*.png" />
+    <None Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Coreloom.MacShots" />
+  </ItemGroup>
+
+</Project>
