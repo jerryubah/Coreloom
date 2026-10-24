@@ -225,12 +225,14 @@ public sealed class SettingsViewModel : PageViewModel
         Subtitle = "Appearance, monitoring, dashboard, alerts and updates";
         Logs = new LogViewerViewModel(deps.Diagnostics, deps.Shell);
 
-        ThemeOptions = [new(ThemePreference.Dark, "Dark"), new(ThemePreference.Light, "Light"), new(ThemePreference.System, "Use Windows setting")];
+        ThemeOptions = [new(ThemePreference.Dark, "Dark"), new(ThemePreference.Light, "Light"), new(ThemePreference.System, IsMac ? "Use macOS setting" : "Use Windows setting")];
         AccentOptions = AccentPalette.Presets.Select(p => new AccentOption(p.Name, p.Hex)).ToArray();
         PollingOptions = [new(250, "0.25 s"), new(500, "0.5 s"), new(1000, "1 s (recommended)"), new(2000, "2 s (lighter)"), new(5000, "5 s (lightest)")];
         WindowOptions = Enum.GetValues<HistoryWindow>().Select(w => new Option<HistoryWindow>(w, w.ToLongLabel())).ToArray();
         TemperatureOptions = [new(TemperatureUnit.Celsius, "Celsius (°C)"), new(TemperatureUnit.Fahrenheit, "Fahrenheit (°F)")];
-        DataUnitOptions = [new(DataUnitStyle.Binary, "Binary — 1 GB = 1024 MB (Windows)"), new(DataUnitStyle.Decimal, "Decimal — 1 GB = 1000 MB")];
+        DataUnitOptions = IsMac
+            ? [new(DataUnitStyle.Decimal, "Decimal — 1 GB = 1000 MB (macOS)"), new(DataUnitStyle.Binary, "Binary — 1 GB = 1024 MB")]
+            : [new(DataUnitStyle.Binary, "Binary — 1 GB = 1024 MB (Windows)"), new(DataUnitStyle.Decimal, "Decimal — 1 GB = 1000 MB")];
         NetworkUnitOptions = [new(NetworkUnitStyle.BitsPerSecond, "Bits per second (Mbps)"), new(NetworkUnitStyle.BytesPerSecond, "Bytes per second (MB/s)")];
         UpdateFrequencyOptions = [new(UpdateCheckFrequency.OnStartup, "Every launch"), new(UpdateCheckFrequency.Daily, "Daily"), new(UpdateCheckFrequency.Weekly, "Weekly"), new(UpdateCheckFrequency.Never, "Never (manual only)")];
         CooldownOptions = [new(5, "5 minutes"), new(10, "10 minutes"), new(30, "30 minutes"), new(60, "1 hour")];
@@ -547,11 +549,17 @@ public sealed class SettingsViewModel : PageViewModel
         {
             var desktop = Settings.Current.Desktop;
             bool ok = await _deps.Startup.SetStartAtLogonAsync(desktop.StartWithWindows, desktop.LaunchMinimized);
-            StartupMessage = !ok
-                ? "Could not update the sign-in task. Check Task Scheduler or the log in Settings › Diagnostics."
-                : desktop.StartWithWindows
-                    ? "Starts at sign-in with administrator rights through Task Scheduler, so there is no UAC prompt."
-                    : null;
+            StartupMessage = IsMac
+                ? !ok
+                    ? "Could not update the login item. Check System Settings › General › Login Items, or the log in Settings › Diagnostics."
+                    : desktop.StartWithWindows
+                        ? "Opens at login (listed in System Settings › General › Login Items)."
+                        : null
+                : !ok
+                    ? "Could not update the sign-in task. Check Task Scheduler or the log in Settings › Diagnostics."
+                    : desktop.StartWithWindows
+                        ? "Starts at sign-in with administrator rights through Task Scheduler, so there is no UAC prompt."
+                        : null;
         }
         catch (Exception ex)
         {
@@ -666,7 +674,9 @@ public sealed class SettingsViewModel : PageViewModel
 
     public bool IsElevated => _deps.Elevation.IsElevated;
 
-    public string PrivilegeText => IsElevated ? "Running as administrator" : "Running as a standard user";
+    public string PrivilegeText => IsMac
+        ? "Runs as you, with no administrator rights, helper or kernel extension"
+        : IsElevated ? "Running as administrator" : "Running as a standard user";
 
     public string PawnIoText => Monitor.Engine.Capabilities.PawnIoInstalled
         ? $"PawnIO driver installed (v{Monitor.Engine.Capabilities.PawnIoVersion})"
@@ -674,7 +684,9 @@ public sealed class SettingsViewModel : PageViewModel
 
     public bool LowLevelSensorsAccessible => Monitor.Engine.Capabilities.LowLevelSensorsAccessible;
 
-    public string LowLevelExplanation => LowLevelSensorsAccessible
+    public string LowLevelExplanation => IsMac
+        ? "Coreloom reads the Mac's sensors through macOS itself: the temperature sensors, the energy and clock counters (IOReport) and the System Management Controller, the same sources macOS's own tools use. A virtual Mac has none of them."
+        : LowLevelSensorsAccessible
         ? "CPU temperature, package power, per-core clocks and motherboard sensors are available."
         : "CPU temperature, package power, per-core clocks and motherboard sensors are read by LibreHardwareMonitor through the PawnIO driver. Coreloom already runs as administrator; what is missing is the PawnIO driver, which Coreloom never installs. Everything else works without it.";
 

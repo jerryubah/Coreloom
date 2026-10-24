@@ -61,7 +61,7 @@ public sealed class SensorHub : IDisposable
     private Smc.Connection? _smc;
     private SmcKeys? _smcKeys;
     private SensorSample _last = new();
-    private TimeSpan _lastAt = TimeSpan.MinValue;
+    private TimeSpan? _lastAt;
     private bool _opened;
     private int _users;
 
@@ -144,7 +144,7 @@ public sealed class SensorHub : IDisposable
         lock (_gate)
         {
             var now = _clock.Elapsed;
-            if (now - _lastAt < Reuse)
+            if (_lastAt is { } last && now - last < Reuse)
             {
                 return _last;
             }
@@ -271,7 +271,7 @@ public sealed class SensorHub : IDisposable
         _smc = null;
         _smcKeys = null;
         _opened = false;
-        _lastAt = TimeSpan.MinValue;
+        _lastAt = null;
     }
 
     public void Dispose()

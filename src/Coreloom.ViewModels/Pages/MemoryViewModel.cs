@@ -13,18 +13,29 @@ public sealed class MemoryViewModel : PageViewModel
     private string _centerText = "—";
     private string _centerCaption = string.Empty;
     private int _deviceVersion = -1;
+    private string? _pressureText;
+    private string _pressureColorKey = ColorKeys.ToneCool;
 
     public MemoryViewModel(PageContext context)
         : base("memory", "Memory", "Icon.Memory", context, MonitoringSection.Memory)
     {
         Load = new MetricViewModel(MetricIds.MemoryLoad, "Utilization", ValueStyle.Percent, ColorKeys.Memory, Thresholds.Memory);
-        Used = new MetricViewModel(MetricIds.MemoryUsed, "In use", ValueStyle.Bytes, ColorKeys.Memory);
+        Used = new MetricViewModel(MetricIds.MemoryUsed, IsMac ? "Memory used" : "In use", ValueStyle.Bytes, ColorKeys.Memory);
         Available = new MetricViewModel(MetricIds.MemoryAvailable, "Available", ValueStyle.Bytes, ColorKeys.Neutral);
-        Total = new MetricViewModel(MetricIds.MemoryTotal, "Usable", ValueStyle.Bytes, ColorKeys.Neutral);
-        Committed = new MetricViewModel(MetricIds.MemoryCommitUsed, "Committed", ValueStyle.Bytes, ColorKeys.Memory);
-        CommitLimit = new MetricViewModel(MetricIds.MemoryCommitLimit, "Commit limit", ValueStyle.Bytes, ColorKeys.Neutral);
-        Cache = new MetricViewModel(MetricIds.MemoryCache, "Cached", ValueStyle.Bytes, ColorKeys.Neutral);
-        Details = [Used, Available, Committed, Cache];
+        Total = new MetricViewModel(MetricIds.MemoryTotal, IsMac ? "Physical memory" : "Usable", ValueStyle.Bytes, ColorKeys.Neutral);
+
+        // macOS has no commit charge: its counterpart is swap, and "Memory used" splits into app, wired and compressed memory.
+        Committed = IsMac
+            ? new MetricViewModel(MetricIds.MemorySwapUsed, "Swap used", ValueStyle.Bytes, ColorKeys.Memory)
+            : new MetricViewModel(MetricIds.MemoryCommitUsed, "Committed", ValueStyle.Bytes, ColorKeys.Memory);
+        CommitLimit = IsMac
+            ? new MetricViewModel(MetricIds.MemorySwapTotal, "Swap size", ValueStyle.Bytes, ColorKeys.Neutral)
+            : new MetricViewModel(MetricIds.MemoryCommitLimit, "Commit limit", ValueStyle.Bytes, ColorKeys.Neutral);
+        Cache = new MetricViewModel(MetricIds.MemoryCache, IsMac ? "Cached files" : "Cached", ValueStyle.Bytes, ColorKeys.Neutral);
+        App = new MetricViewModel(MetricIds.MemoryApp, "App memory", ValueStyle.Bytes, ColorKeys.Memory);
+        Wired = new MetricViewModel(MetricIds.MemoryWired, "Wired memory", ValueStyle.Bytes, ColorKeys.Cpu);
+        Compressed = new MetricViewModel(MetricIds.MemoryCompressed, "Compressed", ValueStyle.Bytes, ColorKeys.Storage);
+        Details = IsMac ? [Used, App, Wired, Compressed, Cache, Committed] : [Used, Available, Committed, Cache];
 
         InUseSegment = new DonutSegmentViewModel("In use", ColorKeys.Memory);
         AvailableSegment = new DonutSegmentViewModel("Available", ColorKeys.Neutral);
@@ -32,9 +43,15 @@ public sealed class MemoryViewModel : PageViewModel
 
         UsageChart = new ChartViewModel("Memory utilization", ChartScale.Percent,
             new ChartSeriesViewModel(MetricIds.MemoryLoad, "In use", ColorKeys.Memory, ValueStyle.Percent));
-        CommitChart = new ChartViewModel("Committed memory", ChartScale.Auto,
-            new ChartSeriesViewModel(MetricIds.MemoryCommitUsed, "Committed", ColorKeys.Memory, ValueStyle.Bytes, fill: false),
-            new ChartSeriesViewModel(MetricIds.MemoryUsed, "In use", ColorKeys.Cpu, ValueStyle.Bytes, fill: false));
+        CommitChart = IsMac
+            ? new ChartViewModel("Memory used", ChartScale.Auto,
+                new ChartSeriesViewModel(MetricIds.MemoryApp, "App memory", ColorKeys.Memory, ValueStyle.Bytes, fill: false),
+                new ChartSeriesViewModel(MetricIds.MemoryWired, "Wired", ColorKeys.Cpu, ValueStyle.Bytes, fill: false),
+                new ChartSeriesViewModel(MetricIds.MemoryCompressed, "Compressed", ColorKeys.Storage, ValueStyle.Bytes, fill: false),
+                new ChartSeriesViewModel(MetricIds.MemorySwapUsed, "Swap", ColorKeys.NetworkDown, ValueStyle.Bytes, fill: false))
+            : new ChartViewModel("Committed memory", ChartScale.Auto,
+                new ChartSeriesViewModel(MetricIds.MemoryCommitUsed, "Committed", ColorKeys.Memory, ValueStyle.Bytes, fill: false),
+                new ChartSeriesViewModel(MetricIds.MemoryUsed, "In use", ColorKeys.Cpu, ValueStyle.Bytes, fill: false));
 
         Processes = new ProcessListViewModel(Monitor.Processes, ProcessSort.Memory, 6, 16);
         ModuleSensors = new SensorTableViewModel(d => d.Category == MetricCategory.Memory && d.IsRaw && d.Kind is MetricKind.Temperature or MetricKind.Voltage);
@@ -66,6 +83,28 @@ public sealed class MemoryViewModel : PageViewModel
     public MetricViewModel CommitLimit { get; }
 
     public MetricViewModel Cache { get; }
+
+    /// <summary>macOS: the parts of "Memory used" (Activity Monitor's breakdown).</summary>
+    public MetricViewModel App { get; }
+
+    public MetricViewModel Wired { get; }
+
+    public MetricViewModel Compressed { get; }
+
+    /// <summary>macOS memory pressure ("Normal", "Warning", "Critical"), or null where there's none.</summary>
+    public string? PressureText
+    {
+        get => _pressureText;
+        private set => SetProperty(ref _pressureText, value);
+    }
+
+    public string PressureColorKey
+    {
+        get => _pressureColorKey;
+        private set => SetProperty(ref _pressureColorKey, value);
+    }
+
+    public bool HasPressure => PressureText is not null;
 
     public IReadOnlyList<MetricViewModel> Details { get; }
 
@@ -116,7 +155,9 @@ public sealed class MemoryViewModel : PageViewModel
         {
             _deviceVersion = Devices.Version;
             var device = Devices.Get(MetricIds.MemoryDeviceId);
-            Subtitle = device is null ? null : string.Join(" · ", new[] { device.GetProperty("Installed"), device.GetProperty("Modules"), device.GetProperty("Speed") }.Where(s => s is not null));
+            Subtitle = device is null ? null : string.Join(" · ", (IsMac
+                ? new[] { device.GetProperty("Installed"), device.Kind }
+                : new[] { device.GetProperty("Installed"), device.GetProperty("Modules"), device.GetProperty("Speed") }).Where(s => s is not null));
             var items = ToItems(device);
             if (!Specifications.SequenceEqual(items))
             {
@@ -130,6 +171,30 @@ public sealed class MemoryViewModel : PageViewModel
 
         UpdateMetrics(frame, true, Load, Used);
         UpdateMetrics(frame, false, Available, Total, Committed, CommitLimit, Cache);
+        if (IsMac)
+        {
+            UpdateMetrics(frame, false, App, Wired, Compressed);
+            bool had = HasPressure;
+            if (frame.TryGetValue(MetricIds.MemoryPressure, out double pressure))
+            {
+                (PressureText, PressureColorKey) = pressure switch
+                {
+                    >= 4 => ("Critical", ColorKeys.ToneHot),
+                    >= 2 => ("Warning", ColorKeys.ToneWarm),
+                    _ => ("Normal", ColorKeys.ToneCool),
+                };
+            }
+            else
+            {
+                PressureText = null;
+            }
+
+            if (had != HasPressure)
+            {
+                OnPropertyChanged(nameof(HasPressure));
+            }
+        }
+
         var f = Formatter;
         if (Used.HasValue && Available.HasValue)
         {

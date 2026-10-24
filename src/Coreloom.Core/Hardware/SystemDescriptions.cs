@@ -210,6 +210,24 @@ public static partial class SystemDescriptions
             : threads;
     }
 
+    /// <summary>"MacBook Pro (14-inch, 2024) (Mac16,8)" → "MacBook Pro (14-inch, 2024)": the model without its identifier.</summary>
+    public static string? MacModelName(string? model)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+        {
+            return null;
+        }
+
+        string name = Collapse(model);
+        int open = name.LastIndexOf(" (", StringComparison.Ordinal);
+        if (open > 0 && name.EndsWith(')') && name[(open + 2)..^1].Contains(',', StringComparison.Ordinal))
+        {
+            name = name[..open];
+        }
+
+        return name;
+    }
+
     /// <summary>"Windows 11 Pro" + "24H2 (build 26100.4061)" → "Windows 11 Pro 24H2".</summary>
     public static string WindowsLine(string operatingSystem, string? osVersion)
     {

@@ -127,8 +127,12 @@ public sealed class CpuViewModel : PageViewModel
     {
         Load = new MetricViewModel(MetricIds.CpuLoad, "Utilization", ValueStyle.Percent, ColorKeys.Cpu, Thresholds.Load);
         Temperature = new MetricViewModel(MetricIds.CpuTemperature, "Temperature", ValueStyle.Temperature, ColorKeys.Temperature, Thresholds.CpuTemperature);
-        Power = new MetricViewModel(MetricIds.CpuPower, "Package power", ValueStyle.Power, ColorKeys.Power, gaugeMaximum: 200);
-        Clock = new MetricViewModel(MetricIds.CpuClockEffectiveAverage, "Effective clock", ValueStyle.ClockGigahertz, ColorKeys.Cpu, gaugeMaximum: 6000);
+        Power = new MetricViewModel(MetricIds.CpuPower, IsMac ? "CPU power" : "Package power", ValueStyle.Power, ColorKeys.Power, gaugeMaximum: IsMac ? 60 : 200);
+
+        // Apple silicon's live clock is its clusters' (IOReport); there is no "effective clock" counter.
+        Clock = IsMac
+            ? new MetricViewModel(MetricIds.CpuClockAverage, "Average clock", ValueStyle.ClockGigahertz, ColorKeys.Cpu, gaugeMaximum: 4600)
+            : new MetricViewModel(MetricIds.CpuClockEffectiveAverage, "Effective clock", ValueStyle.ClockGigahertz, ColorKeys.Cpu, gaugeMaximum: 6000);
         DerivedClock = new MetricViewModel(MetricIds.CpuClockDerived, "Speed (estimated)", ValueStyle.ClockGigahertz, ColorKeys.Cpu);
         AverageClock = new MetricViewModel(MetricIds.CpuClockAverage, "Average core clock", ValueStyle.ClockGigahertz, ColorKeys.Cpu);
         MaxThread = new MetricViewModel(MetricIds.CpuLoadMaxThread, "Busiest thread", ValueStyle.Percent, ColorKeys.Cpu);
@@ -138,21 +142,38 @@ public sealed class CpuViewModel : PageViewModel
         Boost = new MetricViewModel(MetricIds.CpuPerformance, "Boost", ValueStyle.Percent, ColorKeys.Cpu);
         PerformanceLimit = new MetricViewModel(MetricIds.CpuPerformanceLimit, "Performance limit", ValueStyle.Percent, ColorKeys.Cpu);
 
-        Details = [DerivedClock, AverageClock, MaxThread, Boost, PerformanceLimit, Voltage, Ccd1, Ccd2];
+        PerformanceClock = new MetricViewModel(MetricIds.CpuClockPerformanceCores, "Performance cores", ValueStyle.ClockGigahertz, ColorKeys.Cpu);
+        EfficiencyClock = new MetricViewModel(MetricIds.CpuClockEfficiencyCores, "Efficiency cores", ValueStyle.ClockGigahertz, ColorKeys.Cpu);
+        PerformanceLoad = new MetricViewModel(MetricIds.CpuLoadPerformanceCores, "Performance cores load", ValueStyle.Percent, ColorKeys.Cpu, Thresholds.Load);
+        EfficiencyLoad = new MetricViewModel(MetricIds.CpuLoadEfficiencyCores, "Efficiency cores load", ValueStyle.Percent, ColorKeys.Cpu, Thresholds.Load);
+        NeuralEnginePower = new MetricViewModel(MetricIds.NeuralEnginePower, "Neural Engine power", ValueStyle.Power, ColorKeys.Power);
+
+        Details = IsMac
+            ? [PerformanceClock, EfficiencyClock, PerformanceLoad, EfficiencyLoad, MaxThread, NeuralEnginePower]
+            : [DerivedClock, AverageClock, MaxThread, Boost, PerformanceLimit, Voltage, Ccd1, Ccd2];
 
         LoadChart = new ChartViewModel("Utilization", ChartScale.Percent,
             new ChartSeriesViewModel(MetricIds.CpuLoad, "Total", ColorKeys.Cpu, ValueStyle.Percent),
             new ChartSeriesViewModel(MetricIds.CpuLoadMaxThread, "Busiest thread", ColorKeys.Temperature, ValueStyle.Percent, fill: false));
         TemperatureChart = new ChartViewModel("Temperature", ChartScale.Temperature,
-            new ChartSeriesViewModel(MetricIds.CpuTemperature, "Package (Tctl/Tdie)", ColorKeys.Temperature, ValueStyle.Temperature, fill: false),
+            new ChartSeriesViewModel(MetricIds.CpuTemperature, IsMac ? "CPU" : "Package (Tctl/Tdie)", ColorKeys.Temperature, ValueStyle.Temperature, fill: false),
             new ChartSeriesViewModel(MetricIds.CpuCcdTemperature(1), "CCD1", ColorKeys.Cpu, ValueStyle.Temperature, fill: false),
             new ChartSeriesViewModel(MetricIds.CpuCcdTemperature(2), "CCD2", ColorKeys.Memory, ValueStyle.Temperature, fill: false));
-        PowerChart = new ChartViewModel("Package power", ChartScale.Auto,
-            new ChartSeriesViewModel(MetricIds.CpuPower, "Package", ColorKeys.Power, ValueStyle.Power),
-            new ChartSeriesViewModel(MetricIds.CpuPpt, "PPT", ColorKeys.Temperature, ValueStyle.Power, fill: false));
-        ClockChart = new ChartViewModel("Clocks", ChartScale.Auto,
-            new ChartSeriesViewModel(MetricIds.CpuClockEffectiveAverage, "Effective (avg)", ColorKeys.Cpu, ValueStyle.ClockMegahertz, fill: false),
-            new ChartSeriesViewModel(MetricIds.CpuClockDerived, "Speed (estimated)", ColorKeys.Neutral, ValueStyle.ClockMegahertz, fill: false));
+        PowerChart = IsMac
+            ? new ChartViewModel("CPU power", ChartScale.Auto,
+                new ChartSeriesViewModel(MetricIds.CpuPower, "CPU", ColorKeys.Power, ValueStyle.Power),
+                new ChartSeriesViewModel(MetricIds.NeuralEnginePower, "Neural Engine", ColorKeys.Temperature, ValueStyle.Power, fill: false))
+            : new ChartViewModel("Package power", ChartScale.Auto,
+                new ChartSeriesViewModel(MetricIds.CpuPower, "Package", ColorKeys.Power, ValueStyle.Power),
+                new ChartSeriesViewModel(MetricIds.CpuPpt, "PPT", ColorKeys.Temperature, ValueStyle.Power, fill: false));
+        ClockChart = IsMac
+            ? new ChartViewModel("Clocks", ChartScale.Auto,
+                new ChartSeriesViewModel(MetricIds.CpuClockPerformanceCores, "Performance cores", ColorKeys.Cpu, ValueStyle.ClockMegahertz, fill: false),
+                new ChartSeriesViewModel(MetricIds.CpuClockEfficiencyCores, "Efficiency cores", ColorKeys.Memory, ValueStyle.ClockMegahertz, fill: false),
+                new ChartSeriesViewModel(MetricIds.CpuClockAverage, "Average", ColorKeys.Neutral, ValueStyle.ClockMegahertz, fill: false))
+            : new ChartViewModel("Clocks", ChartScale.Auto,
+                new ChartSeriesViewModel(MetricIds.CpuClockEffectiveAverage, "Effective (avg)", ColorKeys.Cpu, ValueStyle.ClockMegahertz, fill: false),
+                new ChartSeriesViewModel(MetricIds.CpuClockDerived, "Speed (estimated)", ColorKeys.Neutral, ValueStyle.ClockMegahertz, fill: false));
 
         for (int i = 0; i < Monitor.Summary.LogicalProcessors; i++)
         {
@@ -198,6 +219,17 @@ public sealed class CpuViewModel : PageViewModel
     public MetricViewModel DerivedClock { get; }
 
     public MetricViewModel AverageClock { get; }
+
+    /// <summary>Apple silicon: the performance and efficiency clusters' clocks and loads, and the Neural Engine's power.</summary>
+    public MetricViewModel PerformanceClock { get; }
+
+    public MetricViewModel EfficiencyClock { get; }
+
+    public MetricViewModel PerformanceLoad { get; }
+
+    public MetricViewModel EfficiencyLoad { get; }
+
+    public MetricViewModel NeuralEnginePower { get; }
 
     public MetricViewModel MaxThread { get; }
 
@@ -287,7 +319,7 @@ public sealed class CpuViewModel : PageViewModel
 
             Amd.SetDevice(device, Monitor.Summary.CpuName);
 
-            Subtitle = string.Join(" · ", new[] { device?.GetProperty("Cores") is { } c ? $"{c} cores" : null, device?.GetProperty("Threads") is { } t ? $"{t} threads" : null, device?.GetProperty("L3 cache") is { } l3 ? $"{l3} L3" : null }.Where(s => s is not null));
+            Subtitle = string.Join(" · ", new[] { device?.GetProperty("Cores") is { } c ? CoresText(c) : null, device?.GetProperty("Threads") is { } t ? $"{t} threads" : null, device?.GetProperty("L3 cache") is { } l3 ? $"{l3} L3" : null }.Where(s => s is not null));
             var items = ToItems(device);
             if (!Specifications.SequenceEqual(items))
             {
@@ -307,12 +339,22 @@ public sealed class CpuViewModel : PageViewModel
 
         UpdateMetrics(frame, true, Load, Temperature, Power, Clock);
         UpdateMetrics(frame, false, DerivedClock, AverageClock, MaxThread, Boost, PerformanceLimit, Voltage, Ccd1, Ccd2);
+        if (IsMac)
+        {
+            UpdateMetrics(frame, false, PerformanceClock, EfficiencyClock, PerformanceLoad, EfficiencyLoad, NeuralEnginePower);
+            Clock.Detail = PerformanceClock.HasValue ? $"P-cores {PerformanceClock.Number} {PerformanceClock.Unit}" + (EfficiencyClock.HasValue ? $" · E-cores {EfficiencyClock.Number} {EfficiencyClock.Unit}" : string.Empty) : null;
+        }
+
         Boost.Detail = Boost.HasValue ? Boost.Value > 101 ? "Above base clock" : "Of base clock" : null;
         PerformanceLimit.Detail = PerformanceLimit.HasValue
             ? PerformanceLimit.Value >= 99.5 ? "Not held back" : "Held back by power, heat or policy"
             : null;
         Load.Detail = MaxThread.HasValue ? $"Busiest thread {MaxThread.Number}%" : null;
-        Clock.Detail = Clock.HasValue ? null : DerivedClock.HasValue ? $"Estimated {DerivedClock.Number} {DerivedClock.Unit}" : null;
+        if (!IsMac)
+        {
+            Clock.Detail = Clock.HasValue ? null : DerivedClock.HasValue ? $"Estimated {DerivedClock.Number} {DerivedClock.Unit}" : null;
+        }
+
         Temperature.Detail = Ccd1.HasValue ? $"CCD1 {Ccd1.Number}° · CCD2 {(Ccd2.HasValue ? Ccd2.Number + "°" : "—")}" : null;
 
         LowLevelUnavailable = !Temperature.HasValue;
@@ -342,6 +384,13 @@ public sealed class CpuViewModel : PageViewModel
         Processes.Update(Formatter, frame.GetValue(MetricIds.MemoryTotal) ?? 0);
         BoardSensors.Update(frame, Formatter, Catalog);
         Sensors.Update(frame, Formatter, Catalog);
+    }
+
+    /// <summary>"24 (8P + 16E)" → "24 cores (8P + 16E)"; "8" → "8 cores".</summary>
+    internal static string CoresText(string cores)
+    {
+        int paren = cores.IndexOf(" (", StringComparison.Ordinal);
+        return paren > 0 ? $"{cores[..paren]} cores{cores[paren..]}" : $"{cores} cores";
     }
 
     private void RebuildCores()

@@ -315,9 +315,10 @@ public sealed class BenchmarkDetailsViewModel
         Add("Graphics driver", r.System.GraphicsDriver);
         Add("Graphics memory", r.System.GraphicsMemory > 0 ? f.Bytes(r.System.GraphicsMemory, 0).ToString() : null);
         Add("Memory", r.System.Memory > 0 ? $"{f.Bytes(r.System.Memory, 0)}{(string.IsNullOrEmpty(r.System.MemorySpeed) ? string.Empty : " · " + r.System.MemorySpeed)}" : null);
-        Add("Motherboard", r.System.Motherboard);
-        Add("BIOS", r.System.Bios);
-        Add("Windows", r.System.OperatingSystem);
+        bool mac = r.System.OperatingSystem.StartsWith("macOS", StringComparison.Ordinal);
+        Add(mac ? "Model" : "Motherboard", r.System.Motherboard);
+        Add(mac ? "Firmware" : "BIOS", r.System.Bios);
+        Add(mac ? "macOS" : "Windows", r.System.OperatingSystem);
         Add("Coreloom", r.AppVersion);
         Add("Ran for", BenchmarkFormat.Duration(r.Seconds));
         if (r.MemoryBandwidth > 0)
@@ -451,22 +452,22 @@ public sealed class BenchmarkingViewModel : PageViewModel
             + "machine learning, photo filtering and physics — first on one core, then on every thread at once.",
             [new("Clock", "Icon.Gauge", ColorKeys.Cpu), new("Temperature", "Icon.Temperature", ColorKeys.Temperature), new("Power", "Icon.Power", ColorKeys.Power)]);
         Gpu = new BenchmarkCardViewModel(
-            BenchmarkKind.Gpu, "Graphics card", "Icon.Gpu", ColorKeys.Gpu, "GPU score",
+            BenchmarkKind.Gpu, IsMac ? "Graphics" : "Graphics card", "Icon.Gpu", ColorKeys.Gpu, "GPU score",
             "Two graphics tests (64 moving lights at 1440p, a ray-marched 3D scene at 1080p) and three compute tests (raw FP32 "
-            + "arithmetic, memory bandwidth, an N-body physics step), drawn off-screen with Direct3D 11.",
+            + $"arithmetic, memory bandwidth, an N-body physics step), drawn off-screen with {(IsMac ? "Metal" : "Direct3D 11")}.",
             [new("Clock", "Icon.Gauge", ColorKeys.Gpu), new("Temperature", "Icon.Temperature", ColorKeys.Temperature), new("Power", "Icon.Power", ColorKeys.Power)]);
         Filters =
         [
             new("all", "All"),
             new("cpu", "Processor"),
-            new("gpu", "Graphics card"),
+            new("gpu", IsMac ? "Graphics" : "Graphics card"),
             new("stress", "Stress tests"),
         ];
         _filter = Filters[0];
         StressTargets =
         [
             new("cpu", "Processor", true, false),
-            new("gpu", "Graphics card", false, true),
+            new("gpu", IsMac ? "Graphics" : "Graphics card", false, true),
             new("both", "Both", true, true),
         ];
         _stressTarget = StressTargets[0];
@@ -823,6 +824,7 @@ public sealed class BenchmarkingViewModel : PageViewModel
         SelectedCard = GraphicsCards.FirstOrDefault(c => SameCard(c.Name, shown)) ?? GraphicsCards.FirstOrDefault();
         Gpu.IsAvailable = SelectedCard is not null;
         Gpu.UnavailableReason = Gpu.IsAvailable ? null
+            : IsMac ? (Service.GpuSupported ? "macOS doesn't list a GPU that supports Metal." : "The GPU benchmark needs Metal.")
             : Service.GpuSupported ? "Windows doesn't list a graphics card that supports Direct3D 11 compute shaders."
             : "The GPU benchmark needs Windows and Direct3D 11.";
         if (!Gpu.IsAvailable)

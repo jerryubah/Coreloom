@@ -536,7 +536,7 @@ public sealed class OverviewViewModel : PageViewModel
         var cpuTempCard = _cards[DashboardCatalog.CpuTemperature].Metric;
         cpuTempCard.Detail = cpuTempCard.HasValue
             ? (_ccd1.HasValue ? $"CCD1 {_ccd1.Number}° · CCD2 {(_ccd2.HasValue ? _ccd2.Number + "°" : "—")}" : null)
-            : "Needs administrator + PawnIO";
+            : IsMac ? "Not reported by this Mac" : "Needs administrator + PawnIO";
         _cards[DashboardCatalog.Memory].Metric.Detail = _memoryUsed.HasValue && _memoryTotal.HasValue
             ? $"{f.BytesAs(_memoryUsed.Value, f.ByteUnitIndex(_memoryTotal.Value), 1).Number} of {f.Bytes(_memoryTotal.Value, 1)}"
             : null;
@@ -625,20 +625,38 @@ public sealed class OverviewViewModel : PageViewModel
         bool integrated = gpuDevice?.IsIntegrated ?? gpu.IsIntegrated;
 
         Specs.SetIdentity(
-            SystemDescriptions.BoardName(summary.Motherboard) ?? summary.ComputerName,
+            (IsMac ? SystemDescriptions.MacModelName(summary.Motherboard) : SystemDescriptions.BoardName(summary.Motherboard)) ?? summary.ComputerName,
             gpuName ?? cpuName,
             SystemDescriptions.GpuSizeFor(gpuName, integrated),
             SystemDescriptions.GpuBadge(gpuName));
 
-        _leftSpecs = Rows(
-            ("Processor", cpuName),
-            ("Cores", summary.LogicalProcessors > 0 ? SystemDescriptions.CoresLine(summary.PhysicalCores, summary.LogicalProcessors) : null),
-            ("Memory", SystemDescriptions.MemoryLine(summary.InstalledMemoryBytes, summary.MemoryModules, Formatter)));
-        _rightSpecs = Rows(
-            ("Graphics memory", gpuDevice?.GetProperty("VRAM")),
-            ("Driver", gpuDevice?.GetProperty("Driver")),
-            ("System", SystemDescriptions.WindowsLine(summary.OperatingSystem, summary.OsVersion)),
-            ("BIOS", summary.Bios));
+        if (IsMac)
+        {
+            // A Mac's chip carries its GPU and its memory is unified: the rows say so in the Mac's own terms.
+            bool unified = gpuDevice?.Vendor == "Apple";
+            _leftSpecs = Rows(
+                ("Chip", cpuName),
+                ("Cores", cpu?.GetProperty("Cores") is { } cores ? $"{cores} · {summary.LogicalProcessors} threads" : SystemDescriptions.CoresLine(summary.PhysicalCores, summary.LogicalProcessors)),
+                ("Memory", SystemDescriptions.MemoryLine(summary.InstalledMemoryBytes, summary.MemoryModules, Formatter) + (unified ? " unified" : string.Empty)));
+            _rightSpecs = Rows(
+                ("GPU cores", gpuDevice?.GetProperty("GPU cores")),
+                ("Graphics memory", unified ? null : gpuDevice?.GetProperty("Memory")),
+                ("System", SystemDescriptions.WindowsLine(summary.OperatingSystem, summary.OsVersion)),
+                ("Firmware", summary.Bios));
+        }
+        else
+        {
+            _leftSpecs = Rows(
+                ("Processor", cpuName),
+                ("Cores", summary.LogicalProcessors > 0 ? SystemDescriptions.CoresLine(summary.PhysicalCores, summary.LogicalProcessors) : null),
+                ("Memory", SystemDescriptions.MemoryLine(summary.InstalledMemoryBytes, summary.MemoryModules, Formatter)));
+            _rightSpecs = Rows(
+                ("Graphics memory", gpuDevice?.GetProperty("VRAM")),
+                ("Driver", gpuDevice?.GetProperty("Driver")),
+                ("System", SystemDescriptions.WindowsLine(summary.OperatingSystem, summary.OsVersion)),
+                ("BIOS", summary.Bios));
+        }
+
         _driveCount = Devices.GetByCategory(MetricCategory.Storage)
             .Count(d => d.Id.StartsWith("disk/", StringComparison.Ordinal) && !string.Equals(d.GetProperty("Removable"), "Yes", StringComparison.OrdinalIgnoreCase));
 
@@ -646,7 +664,9 @@ public sealed class OverviewViewModel : PageViewModel
         Subtitle = null;
 
         // Volumes for the storage panel (system drive first).
-        string systemLetter = Path.GetPathRoot(Environment.SystemDirectory)?.TrimEnd('\\', ':', '/') is { Length: 1 } l ? l.ToUpperInvariant() : "C";
+        string systemLetter = IsMac
+            ? Devices.GetByCategory(MetricCategory.Storage).FirstOrDefault(d => d.Kind == "Volume" && d.GetProperty("Mount point") == "/")?.Id[4..] ?? string.Empty
+            : Path.GetPathRoot(Environment.SystemDirectory)?.TrimEnd('\\', ':', '/') is { Length: 1 } l ? l.ToUpperInvariant() : "C";
         var volumes = Devices.GetByCategory(MetricCategory.Storage)
             .Where(d => d.Kind == "Volume" && d.Id.StartsWith("vol/", StringComparison.Ordinal))
             .Select(d => (Letter: d.Id[4..], d.Name))

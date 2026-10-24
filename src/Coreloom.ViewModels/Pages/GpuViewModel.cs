@@ -22,13 +22,14 @@ public sealed class GpuViewModel : PageViewModel
     private HardwareVendor _vendor;
     private string? _clockReasons;
     private bool _suppressSelection;
+    private bool _unified;
 
     public GpuViewModel(PageContext context)
         : base("gpu", "Graphics", "Icon.Gpu", context, MonitoringSection.Gpu)
     {
         Load = new MetricViewModel(MetricIds.GpuLoad(0), "Utilization", ValueStyle.Percent, ColorKeys.Gpu, Thresholds.Load);
         Temperature = new MetricViewModel(MetricIds.GpuTemperature(0), "Temperature", ValueStyle.Temperature, ColorKeys.Temperature, Thresholds.GpuTemperature);
-        Power = new MetricViewModel(MetricIds.GpuPower(0), "Power draw", ValueStyle.Power, ColorKeys.Power, gaugeMaximum: 600);
+        Power = new MetricViewModel(MetricIds.GpuPower(0), IsMac ? "GPU power" : "Power draw", ValueStyle.Power, ColorKeys.Power, gaugeMaximum: IsMac ? 60 : 600);
         MemoryLoad = new MetricViewModel(MetricIds.GpuMemoryLoad(0), "VRAM", ValueStyle.Percent, ColorKeys.Memory, Thresholds.Memory);
 
         HotSpot = new MetricViewModel(MetricIds.GpuHotSpotTemperature(0), "Hot spot", ValueStyle.Temperature, ColorKeys.Temperature, new Thresholds(90, 100, 60));
@@ -273,8 +274,35 @@ public sealed class GpuViewModel : PageViewModel
         ClockChart.Series[0].MetricId = MetricIds.GpuCoreClock(slot);
         ClockChart.Series[1].MetricId = MetricIds.GpuMemoryClock(slot);
         MemoryChart.Series[0].MetricId = MetricIds.GpuMemoryUsed(slot);
+        if (_unified)
+        {
+            _unified = false;
+            ApplyMemoryModel(true);
+        }
+
         Sensors.Invalidate();
         _deviceVersion = -1;
+    }
+
+    /// <summary>
+    /// An Apple silicon GPU shares the Mac's memory, so it has no VRAM gauge: the fourth gauge shows its renderer's load
+    /// (Activity Monitor's other GPU figure) and the memory figures read "in use" rather than "VRAM".
+    /// </summary>
+    private void ApplyMemoryModel(bool unified)
+    {
+        if (unified == _unified)
+        {
+            return;
+        }
+
+        _unified = unified;
+        string slot = (_slot < 0 ? 0 : _slot).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        MemoryLoad.Retarget(unified ? $"gpu/{slot}/load/renderer" : MetricIds.GpuMemoryLoad(_slot < 0 ? 0 : _slot));
+        MemoryLoad.Label = unified ? "Renderer" : "VRAM";
+        MemoryUsed.Label = unified ? "Memory in use" : "VRAM used";
+        MemoryChart.Title = unified ? "GPU memory in use" : "VRAM usage";
+        UsageChart.Series[1].MetricId = unified ? $"gpu/{slot}/load/renderer" : MetricIds.GpuMemoryControllerLoad(_slot < 0 ? 0 : _slot);
+        UsageChart.Series[1].Label = unified ? "Renderer" : "Memory controller";
     }
 
     private void RefreshDevices()
@@ -300,7 +328,10 @@ public sealed class GpuViewModel : PageViewModel
         var device = Devices.Get(MetricIds.GpuDeviceId(_slot));
         GpuName = device?.Name ?? SelectedGpu?.Name ?? "No GPU detected";
         Vendor = HardwareVendors.Detect(device?.Vendor, GpuName);
-        Subtitle = device is null ? "No supported GPU was detected" : string.Join(" · ", new[] { device.Kind, device.GetProperty("Driver") is { } d ? $"Driver {d}" : null, device.GetProperty("VRAM") }.Where(s => !string.IsNullOrEmpty(s)));
+        Subtitle = device is null ? "No supported GPU was detected"
+            : IsMac ? string.Join(" · ", new[] { device.Kind, device.GetProperty("GPU cores") is { } cores ? $"{cores} GPU cores" : null, "Metal" }.Where(s => !string.IsNullOrEmpty(s)))
+            : string.Join(" · ", new[] { device.Kind, device.GetProperty("Driver") is { } d ? $"Driver {d}" : null, device.GetProperty("VRAM") }.Where(s => !string.IsNullOrEmpty(s)));
+        ApplyMemoryModel(IsMac && device?.Vendor == "Apple");
         var items = ToItems(device);
         if (!Specifications.SequenceEqual(items))
         {

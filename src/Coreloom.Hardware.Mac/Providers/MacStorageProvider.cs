@@ -31,7 +31,7 @@ public sealed class MacStorageProvider : ITelemetryProvider
     private MetricHandle? _totalRead;
     private MetricHandle? _totalWrite;
     private TimeSpan _lastRescan;
-    private TimeSpan _lastVolumes = TimeSpan.MinValue;
+    private TimeSpan? _lastVolumes;
     private bool _acquired;
 
     public MacStorageProvider(SensorHub sensors) => _sensors = sensors;
@@ -407,7 +407,7 @@ public sealed class MacStorageProvider : ITelemetryProvider
             writer.Write(_totalWrite!, totalWrite);
         }
 
-        if (now - _lastVolumes >= VolumeInterval)
+        if (_lastVolumes is not { } lastVolumes || now - lastVolumes >= VolumeInterval)
         {
             _lastVolumes = now;
             foreach (var volume in _volumes.Values)

@@ -200,7 +200,7 @@ public sealed class StorageBenchmarkViewModel : ObservableObject
         [
             new(DiskTests.SequentialRead, DiskTests.SequentialWrite, "Sequential", "Large files: copying, installing, loading games"),
             new(DiskTests.RandomDeepRead, DiskTests.RandomDeepWrite, "Random, busy", "Many small reads and writes at once"),
-            new(DiskTests.RandomRead, DiskTests.RandomWrite, "Random", "One small read or write at a time: how snappy Windows feels"),
+            new(DiskTests.RandomRead, DiskTests.RandomWrite, "Random", "One small read or write at a time: how snappy the system feels"),
         ];
         RunCommand = new AsyncRelayCommand(RunAsync, () => !IsRunning && SelectedDrive is not null);
         CancelCommand = new RelayCommand(() => _cts?.Cancel(), () => IsRunning);
