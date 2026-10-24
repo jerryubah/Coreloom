@@ -120,8 +120,9 @@ static void ioreport(void) {
         if (!c) { printf("group %s: none\n", g.UTF8String); continue; }
         if (!merged) merged = CFDictionaryCreateMutableCopy(kCFAllocatorDefault, 0, c);
         else {
-            NSMutableArray *a = [((__bridge NSDictionary *)merged)[@"IOReportChannels"] mutableCopy];
-            [a addObjectsFromArray:((__bridge NSDictionary *)c)[@"IOReportChannels"]];
+            NSMutableArray *a = [(((__bridge NSDictionary *)merged)[@"IOReportChannels"] ?: @[]) mutableCopy];
+            NSArray *more = ((__bridge NSDictionary *)c)[@"IOReportChannels"];
+            if (more) [a addObjectsFromArray:more];
             CFDictionarySetValue(merged, CFSTR("IOReportChannels"), (__bridge CFArrayRef)a);
         }
     }

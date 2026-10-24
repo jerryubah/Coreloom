@@ -32,10 +32,9 @@ jobs:
         shell: bash
         run: |
           cd out
-          git init -q -b mac-probe-output
+          git init -q -b mac-probe-${{ matrix.os }}
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" mac-probe-output 2>/dev/null && git reset -q --soft FETCH_HEAD || true
           git add -A
           git commit -q -m "Probe ${{ matrix.os }}"
-          for i in 1 2 3; do git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:mac-probe-output && break; sleep 5; git fetch -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" mac-probe-output && git rebase -q FETCH_HEAD; done
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:mac-probe-${{ matrix.os }}
