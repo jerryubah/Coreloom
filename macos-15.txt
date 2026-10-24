@@ -1,0 +1,148 @@
+ProductName:		macOS
+ProductVersion:		15.7.9
+BuildVersion:		24G830
+Darwin sat12-bq155-952d0bcf-f2a2-42aa-bb10-a892c4fad0c6-569E4EEAF6AC.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:51:34 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_ARM64_VMAPPLE arm64
+hw.model: VirtualMac2,1
+hw.memsize: 7516192768
+hw.physicalcpu: 3
+hw.logicalcpu: 3
+hw.perflevel0.physicalcpu: 3
+hw.perflevel0.name: Standard
+hw.l2cachesize: 12582912
+machdep.cpu.brand_string: Apple M1 (Virtual)
+vm.swapusage: total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)
+kern.memorystatus_vm_pressure_level: 1
+*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[__NSDictionaryM __setObject:forKey:]: object cannot be nil (key: IOReportChannels)'
+*** First throw call stack:
+(
+	0   CoreFoundation                      0x000000019def78a0 __exceptionPreprocess + 176
+	1   libobjc.A.dylib                     0x000000019d9bab90 objc_exception_throw + 88
+	2   CoreFoundation                      0x000000019de28c6c -[__NSDictionaryM __setObject:forKey:] + 1876
+	3   probe                               0x0000000102ccdc70 ioreport + 2004
+	4   probe                               0x0000000102cccbb8 main + 504
+	5   dyld                                0x000000019d9fab98 start + 6076
+)
+libc++abi: terminating due to uncaught exception of type NSException
+CPU: Apple M1 (Virtual)
+Model: VirtualMac2,1
+Metal: Apple Paravirtual device unified=1 maxWS=5010800640
+
+== HID temperature sensors
+0 sensors
+page ff08 usage 1: 0 services
+page ff08 usage 2: 0 services
+page ff08 usage 3: 0 services
+page ff08 usage 4: 0 services
+
+== SMC (struct size 80)
+no AppleSMC service
+
+== IOReport
+116 channels in all groups
+  Cursor / Graphics: 1
+  Cursor / Total: 1
+  Hub Stats / EventName Received: 1
+  Hub Stats / User Client IO: 14
+  IOHIDDevice Input Report Errors / Input Report IDs: 4
+  Internal Statistics / : 5
+  Interrupt Statistics (by index) / aes 0: 5
+  Interrupt Statistics (by index) / avp-rtc 0: 5
+  Interrupt Statistics (by index) / ethernet 0: 5
+  Interrupt Statistics (by index) / ethernet 1: 5
+  Interrupt Statistics (by index) / ethernet 2: 5
+  Interrupt Statistics (by index) / gfx 0: 5
+  Interrupt Statistics (by index) / iosurface-mapper 0: 5
+  Interrupt Statistics (by index) / pci106b,1a00 0: 10
+  Interrupt Statistics (by index) / pci106b,1a01 0: 5
+  Interrupt Statistics (by index) / pci106b,1a03 0: 5
+  Interrupt Statistics (by index) / pci106b,1a06 1: 5
+  Interrupt Statistics (by index) / pci106b,1a08 0: 5
+  Interrupt Statistics (by index) / pci106b,1a0c 0: 5
+  Interrupt Statistics (by index) / pci1af4,1053 0: 5
+  Interrupt Statistics (by index) / pci1af4,1059 0: 10
+  Interrupt Statistics (by index) / pl061-buttons 0: 5
+probe exit 134
+
+== pmset
+System-wide power settings:
+Currently in use:
+ powernap             1
+ sleep                0 (sleep prevented by runningboardd, runningboardd, powerd, addonsd)
+ Sleep On Power Button 1
+ ttyskeepawake        1
+ tcpkeepalive         1
+ disksleep            0
+ standby              0
+ displaysleep         0 (display sleep prevented by addonsd)
+Note: No thermal warning level has been recorded
+Note: No performance warning level has been recorded
+Note: No CPU power status has been recorded
+== system_profiler
+Hardware:
+
+    Hardware Overview:
+
+      Model Name: Apple Virtual Machine 1
+      Model Identifier: VirtualMac2,1
+      Model Number: VM0001LL/A
+      Chip: Apple M1 (Virtual)
+      Total Number of Cores: 3
+      Memory: 7 GB
+      System Firmware Version: mBoot-18000.161.10
+      OS Loader Version: 11881.140.96.701.1
+      Serial Number (system): Z4GXPTD5F3
+      Hardware UUID: 943768CA-CD2C-54E5-85BF-0A99977A25A6
+      Provisioning UDID: 4e6f1b826a87ef3d6213ca2a02ceca953d66e555
+      Activation Lock Status: Disabled
+
+Memory:
+
+      Memory: 7 GB
+      Type: Unknown
+      Manufacturer: Unknown
+
+== dotnet
+8.0.101 [/Users/runner/.dotnet/sdk]
+8.0.204 [/Users/runner/.dotnet/sdk]
+8.0.303 [/Users/runner/.dotnet/sdk]
+8.0.424 [/Users/runner/.dotnet/sdk]
+9.0.102 [/Users/runner/.dotnet/sdk]
+9.0.203 [/Users/runner/.dotnet/sdk]
+9.0.317 [/Users/runner/.dotnet/sdk]
+10.0.103 [/Users/runner/.dotnet/sdk]
+10.0.203 [/Users/runner/.dotnet/sdk]
+10.0.302 [/Users/runner/.dotnet/sdk]
+10.0.400 [/Users/runner/.dotnet/sdk]
+== xcode
+/Applications/Xcode_16.4.app/Contents/Developer
+Firefox.app
+Google Chrome for Testing.app
+Google Chrome.app
+Microsoft Edge.app
+PowerShell.app
+Python 3.11
+Python 3.12
+Python 3.13
+Python 3.14
+Safari.app
+Utilities
+Xcode_16.0.0.app
+Xcode_16.0.app
+Xcode_16.1.0.app
+Xcode_16.1.app
+Xcode_16.2.0.app
+Xcode_16.2.app
+Xcode_16.3.0.app
+Xcode_16.3.app
+Xcode_16.4.0.app
+Xcode_16.4.app
+Xcode_16.app
+Xcode_26.0.1.app
+Xcode_26.0.app
+Xcode_26.1.1.app
+Xcode_26.1.app
+Xcode_26.2.0.app
+Xcode_26.2.app
+Xcode_26.3.0.app
+Xcode_26.3.app
+Xcode.app
