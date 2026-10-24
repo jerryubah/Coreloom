@@ -1,0 +1,41 @@
+name: Mac probe
+
+# Developer helper (not part of releases): what macOS runners expose to an unprivileged app.
+on:
+  push:
+    branches: ['probe-mac']
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Probe
+        shell: bash
+        run: |
+          mkdir -p out
+          o=out/${{ matrix.os }}.txt
+          { sw_vers; uname -a; sysctl hw.model hw.memsize hw.physicalcpu hw.logicalcpu hw.perflevel0.physicalcpu hw.perflevel1.physicalcpu hw.perflevel0.name hw.perflevel1.name hw.cpufrequency hw.cpufrequency_max hw.l2cachesize hw.l3cachesize machdep.cpu.brand_string vm.swapusage kern.memorystatus_vm_pressure_level 2>&1; } > $o
+          clang -fobjc-arc -framework Foundation -framework IOKit -framework Metal -lIOReport probe/probe.m -o probe/probe >> $o 2>&1 || echo "compile failed" >> $o
+          ./probe/probe >> $o 2>&1 || echo "probe exit $?" >> $o
+          { echo; echo "== pmset"; pmset -g 2>&1; pmset -g therm 2>&1; echo "== system_profiler"; system_profiler SPHardwareDataType SPDisplaysDataType SPMemoryDataType 2>&1 | head -80; echo "== dotnet"; dotnet --list-sdks; echo "== xcode"; xcode-select -p; ls /Applications | head -40; } >> $o
+          cat $o | head -400
+      - name: Publish
+        shell: bash
+        run: |
+          cd out
+          git init -q -b mac-probe-output
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" mac-probe-output 2>/dev/null && git reset -q --soft FETCH_HEAD || true
+          git add -A
+          git commit -q -m "Probe ${{ matrix.os }}"
+          for i in 1 2 3; do git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:mac-probe-output && break; sleep 5; git fetch -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" mac-probe-output && git rebase -q FETCH_HEAD; done
