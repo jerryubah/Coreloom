@@ -1,0 +1,33 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'Probe' has the following package references
+   [net10.0]: 
+   Top-level Package             Requested   Resolved
+   > Avalonia                    11.3.*      11.3.22 
+   > Avalonia.Desktop            11.3.*      11.3.22 
+   > Avalonia.Headless           11.3.*      11.3.22 
+   > Avalonia.Themes.Fluent      11.3.*      11.3.22 
+   > CommunityToolkit.Mvvm       8.4.2       8.4.2   
+
+   Transitive Package                            Resolved          
+   > Avalonia.Angle.Windows.Natives              2.1.25547.20250602
+   > Avalonia.BuildServices                      11.3.2            
+   > Avalonia.FreeDesktop                        11.3.22           
+   > Avalonia.Native                             11.3.22           
+   > Avalonia.Remote.Protocol                    11.3.22           
+   > Avalonia.Skia                               11.3.22           
+   > Avalonia.Win32                              11.3.22           
+   > Avalonia.X11                                11.3.22           
+   > HarfBuzzSharp                               8.3.1.1           
+   > HarfBuzzSharp.NativeAssets.Linux            8.3.1.1           
+   > HarfBuzzSharp.NativeAssets.macOS            8.3.1.1           
+   > HarfBuzzSharp.NativeAssets.WebAssembly      8.3.1.1           
+   > HarfBuzzSharp.NativeAssets.Win32            8.3.1.1           
+   > MicroCom.Runtime                            0.11.0            
+   > SkiaSharp                                   2.88.9            
+   > SkiaSharp.NativeAssets.Linux                2.88.9            
+   > SkiaSharp.NativeAssets.macOS                2.88.9            
+   > SkiaSharp.NativeAssets.WebAssembly          2.88.9            
+   > SkiaSharp.NativeAssets.Win32                2.88.9            
+   > Tmds.DBus.Protocol                          0.21.3            
+
