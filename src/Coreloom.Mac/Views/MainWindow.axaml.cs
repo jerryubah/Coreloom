@@ -116,6 +116,7 @@ public partial class MainWindow : Window
     {
         if (placement is null || placement.Width < MinWidth || placement.Height < MinHeight)
         {
+            FitToScreen();
             return;
         }
 
@@ -136,6 +137,25 @@ public partial class MainWindow : Window
         {
             WindowState = WindowState.Maximized;
         }
+    }
+
+    /// <summary>
+    /// The first opening: the default size, made smaller to fit a small screen (a 13-inch MacBook Air, a scaled display),
+    /// with room around it, and centred.
+    /// </summary>
+    private void FitToScreen()
+    {
+        var screen = Screens.Primary ?? Screens.All.FirstOrDefault();
+        if (screen is null || screen.Scaling <= 0)
+        {
+            return;
+        }
+
+        double width = screen.WorkingArea.Width / screen.Scaling;
+        double height = screen.WorkingArea.Height / screen.Scaling;
+        Width = Math.Max(MinWidth, Math.Min(Width, width * 0.92));
+        Height = Math.Max(MinHeight, Math.Min(Height, height * 0.92));
+        WindowStartupLocation = WindowStartupLocation.CenterScreen;
     }
 
     public WindowPlacement? CapturePlacement()

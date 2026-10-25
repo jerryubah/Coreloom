@@ -30,6 +30,12 @@ public sealed record BluetoothDeviceInfo(string Id, string Name, ulong Address, 
 public sealed record BluetoothRadioInfo(bool IsPresent, bool IsOn, bool CanToggle)
 {
     public static BluetoothRadioInfo None { get; } = new(false, false, false);
+
+    /// <summary>macOS: Coreloom hasn't been allowed to use Bluetooth yet; macOS asks when the person clicks Allow.</summary>
+    public static BluetoothRadioInfo PermissionNeeded { get; } = new(false, false, false) { NeedsPermission = true };
+
+    /// <summary>The system asks the person before an app may use Bluetooth, and hasn't asked yet.</summary>
+    public bool NeedsPermission { get; init; }
 }
 
 /// <summary>How a connect, disconnect or eject went, in words for the user.</summary>

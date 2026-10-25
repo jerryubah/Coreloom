@@ -667,10 +667,12 @@ public sealed class OverviewViewModel : PageViewModel
 
         if (IsMac)
         {
-            // A Mac's chip carries its GPU and its memory is unified: the rows say so in the Mac's own terms.
-            bool unified = gpuDevice?.Vendor == "Apple";
+            // Apple silicon: one chip carries the GPU and the memory is unified. An Intel Mac has a processor and its own
+            // graphics memory (a virtual Mac's Apple-made display adapter doesn't make it Apple silicon).
+            bool appleSilicon = cpuName?.StartsWith("Apple", StringComparison.Ordinal) == true;
+            bool unified = appleSilicon && gpuDevice?.Vendor == "Apple";
             _leftSpecs = Rows(
-                ("Chip", cpuName),
+                (appleSilicon ? "Chip" : "Processor", cpuName),
                 ("Cores", cpu?.GetProperty("Cores") is { } cores ? $"{cores} · {summary.LogicalProcessors} threads" : SystemDescriptions.CoresLine(summary.PhysicalCores, summary.LogicalProcessors)),
                 ("Memory", SystemDescriptions.MemoryLine(summary.InstalledMemoryBytes, summary.MemoryModules, Formatter) + (unified ? " unified" : string.Empty)));
             _rightSpecs = Rows(

@@ -1,7 +1,13 @@
 name: Release
 
-# Builds, tests and packages Coreloom, then publishes a GitHub release with the installer, the portable zip and
-# SHA256SUMS.txt. Three ways to start it:
+# Builds, tests and packages Coreloom for Windows and macOS, then publishes a GitHub release with:
+# - Windows: the installer and the portable zip;
+# - macOS: a disk image and an update zip for Apple silicon and for Intel, each built, signed, checked and opened on a
+#   Mac of that kind first (build/mac/verify-app.sh);
+# - stable names for the download buttons (Coreloom-Windows-Setup.exe, Coreloom-macOS-Apple-Silicon.dmg,
+#   Coreloom-macOS-Intel.dmg), so https://github.com/<repo>/releases/latest/download/<name> always gets the newest;
+# - SHA256SUMS.txt for every file (the in-app updaters check their download against it).
+# Three ways to start it:
 # - Push to main with a new version heading in CHANGELOG.md (e.g. "## [1.3.0] - 2026-11-03"): if that version has
 #   no tag yet, this workflow creates the tag on the pushed commit and publishes the release. This is the usual way.
 # - Push a tag like v1.2.0 (or v1.3.0-beta.1 for a pre-release).
@@ -26,6 +32,7 @@ permissions:
 env:
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
+  AVALONIA_TELEMETRY_OPTOUT: 1
 
 jobs:
   decide:
@@ -53,8 +60,86 @@ jobs:
           INPUT_TAG: ${{ inputs.tag }}
         run: bash ./build/release-decide.sh
 
-  release:
+  mac:
+    name: macOS app (${{ matrix.arch }})
     needs: decide
+    if: needs.decide.outputs.skip != 'true'
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: macos-15
+            arch: arm64
+          - os: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 50
+    env:
+      # A Developer ID is optional: without these secrets the app is signed ad hoc (see docs/RELEASING.md).
+      HAS_DEVELOPER_ID: ${{ secrets.MAC_CERT_P12 != '' && secrets.MAC_SIGN_IDENTITY != '' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.decide.outputs.ref }}
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Test the macOS back-end on this Mac
+        run: dotnet test tests/Coreloom.Hardware.Mac.Tests/Coreloom.Hardware.Mac.Tests.csproj -c Release
+
+      - name: Install dmgbuild (lays out the disk image's window)
+        run: |
+          python3 -m venv "$RUNNER_TEMP/dmgbuild"
+          "$RUNNER_TEMP/dmgbuild/bin/pip" install --quiet dmgbuild
+          echo "$RUNNER_TEMP/dmgbuild/bin" >> "$GITHUB_PATH"
+
+      - name: Load the Developer ID certificate
+        if: env.HAS_DEVELOPER_ID == 'true'
+        env:
+          MAC_CERT_P12: ${{ secrets.MAC_CERT_P12 }}
+          MAC_CERT_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+        run: |
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          security create-keychain -p "$RUNNER_TEMP" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$RUNNER_TEMP" "$keychain"
+          echo "$MAC_CERT_P12" | base64 --decode > "$RUNNER_TEMP/developer-id.p12"
+          security import "$RUNNER_TEMP/developer-id.p12" -P "$MAC_CERT_PASSWORD" -A -t cert -f pkcs12 -k "$keychain"
+          rm -f "$RUNNER_TEMP/developer-id.p12"
+          security set-key-partition-list -S apple-tool:,apple: -k "$RUNNER_TEMP" "$keychain" > /dev/null
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+
+      # Builds, signs and packages the app, checks the packages as macOS and the updater will, then installs it, opens
+      # every page and quits it. A release isn't published unless both Macs pass.
+      - name: Build, package and verify
+        env:
+          MAC_SIGN_IDENTITY: ${{ secrets.MAC_SIGN_IDENTITY }}
+          MAC_NOTARY_APPLE_ID: ${{ secrets.MAC_NOTARY_APPLE_ID }}
+          MAC_NOTARY_TEAM_ID: ${{ secrets.MAC_NOTARY_TEAM_ID }}
+          MAC_NOTARY_PASSWORD: ${{ secrets.MAC_NOTARY_PASSWORD }}
+        run: bash build/mac/verify-app.sh ${{ matrix.arch }} artifacts/mac-verify ${{ needs.decide.outputs.version }}
+
+      - name: Upload the packages
+        uses: actions/upload-artifact@v6
+        with:
+          name: macapp-${{ matrix.arch }}
+          path: |
+            artifacts/mac/*.zip
+            artifacts/mac/*.dmg
+          if-no-files-found: error
+
+      - name: Upload what the check saw
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: mac-verify-${{ matrix.arch }}-${{ needs.decide.outputs.version }}
+          path: artifacts/mac-verify/
+          if-no-files-found: ignore
+
+  release:
+    needs: [decide, mac]
     if: needs.decide.outputs.skip != 'true'
     runs-on: windows-latest
     timeout-minutes: 45
@@ -87,6 +172,39 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: ./artifacts/publish/win-x64/CoreloomDiag.exe --samples 2 --interval 500 --out artifacts/coreloomdiag-release.md
+
+      - name: Add the Mac apps
+        uses: actions/download-artifact@v6
+        with:
+          pattern: macapp-*
+          merge-multiple: true
+          path: artifacts/release
+
+      # Stable names for the download buttons on the README and the website, and checksums for every file.
+      - name: Download names and checksums
+        shell: pwsh
+        run: |
+          $v = '${{ needs.decide.outputs.version }}'
+          $dir = 'artifacts/release'
+          $stable = [ordered]@{
+            "Coreloom-$v-win-x64-Setup.exe" = 'Coreloom-Windows-Setup.exe'
+            "Coreloom-$v-macos-arm64.dmg"   = 'Coreloom-macOS-Apple-Silicon.dmg'
+            "Coreloom-$v-macos-x64.dmg"     = 'Coreloom-macOS-Intel.dmg'
+          }
+          foreach ($pair in $stable.GetEnumerator()) {
+            $source = Join-Path $dir $pair.Key
+            if (-not (Test-Path $source)) { throw "Missing $($pair.Key)" }
+            Copy-Item $source (Join-Path $dir $pair.Value) -Force
+          }
+          foreach ($required in @("Coreloom-$v-macos-arm64.zip", "Coreloom-$v-macos-x64.zip", "Coreloom-$v-win-x64-Portable.zip")) {
+            if (-not (Test-Path (Join-Path $dir $required))) { throw "Missing $required" }
+          }
+          $lines = Get-ChildItem $dir -File | Where-Object { $_.Name -ne 'SHA256SUMS.txt' } | Sort-Object Name | ForEach-Object {
+            "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)"
+          }
+          [System.IO.File]::WriteAllText((Join-Path $dir 'SHA256SUMS.txt'), (($lines -join "`n") + "`n"), (New-Object System.Text.UTF8Encoding($false)))
+          Get-Content (Join-Path $dir 'SHA256SUMS.txt')
+          Get-ChildItem $dir -File | ForEach-Object { '{0,-52} {1,10:N1} MB' -f $_.Name, ($_.Length / 1MB) }
 
       - name: Release notes
         shell: pwsh
@@ -123,7 +241,9 @@ jobs:
             else {
               $ghArgs += '--verify-tag'
             }
-            if ('${{ needs.decide.outputs.prerelease }}' -eq 'true') { $ghArgs += '--prerelease' }
+            # A stable version becomes the repository's "Latest release", which the download buttons'
+            # releases/latest/download/<name> links point to.
+            if ('${{ needs.decide.outputs.prerelease }}' -eq 'true') { $ghArgs += '--prerelease' } else { $ghArgs += '--latest' }
             gh @ghArgs @assets
             if ($LASTEXITCODE -ne 0) { throw "gh release create failed ($LASTEXITCODE)" }
           }

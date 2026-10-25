@@ -138,6 +138,12 @@ public interface IDeviceService
     /// <summary>"Safely remove" for drives.</summary>
     Task<DeviceActionResult> EjectAsync(WiredDevice device, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// macOS: asks the system for Bluetooth access (its own "would like to use Bluetooth" prompt), on the person's click;
+    /// true once the answer is in. Nothing to ask elsewhere.
+    /// </summary>
+    Task<bool> RequestBluetoothAccessAsync(CancellationToken cancellationToken) => Task.FromResult(true);
+
     /// <summary>Opens Windows' Bluetooth settings (to pair a new device).</summary>
     void OpenBluetoothSettings();
 }

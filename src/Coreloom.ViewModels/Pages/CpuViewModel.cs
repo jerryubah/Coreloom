@@ -155,9 +155,13 @@ public sealed class CpuViewModel : PageViewModel
         EfficiencyLoad = new MetricViewModel(MetricIds.CpuLoadEfficiencyCores, "E-core utilization", ValueStyle.Percent, ColorKeys.Cpu, Thresholds.Load);
         NeuralEnginePower = new MetricViewModel(MetricIds.NeuralEnginePower, "Neural Engine power", ValueStyle.Power, ColorKeys.Power);
 
-        Details = IsMac
+        // Apple silicon has performance and efficiency clusters and a Neural Engine; an Intel Mac has neither.
+        bool appleSilicon = IsMac && Monitor.Summary.CpuName?.StartsWith("Apple", StringComparison.Ordinal) == true;
+        Details = appleSilicon
             ? [PerformanceClock, EfficiencyClock, PerformanceLoad, EfficiencyLoad, MaxThread, NeuralEnginePower]
-            : [DerivedClock, AverageClock, MaxThread, Boost, PerformanceLimit, Voltage, Ccd1, Ccd2];
+            : IsMac
+                ? [MaxThread]
+                : [DerivedClock, AverageClock, MaxThread, Boost, PerformanceLimit, Voltage, Ccd1, Ccd2];
 
         LoadChart = new ChartViewModel("Utilization", ChartScale.Percent,
             new ChartSeriesViewModel(MetricIds.CpuLoad, "Total", ColorKeys.Cpu, ValueStyle.Percent),
@@ -169,18 +173,24 @@ public sealed class CpuViewModel : PageViewModel
                 new ChartSeriesViewModel(MetricIds.CpuTemperature, "Package (Tctl/Tdie)", ColorKeys.Temperature, ValueStyle.Temperature, fill: false),
                 new ChartSeriesViewModel(MetricIds.CpuCcdTemperature(1), "CCD1", ColorKeys.Cpu, ValueStyle.Temperature, fill: false),
                 new ChartSeriesViewModel(MetricIds.CpuCcdTemperature(2), "CCD2", ColorKeys.Memory, ValueStyle.Temperature, fill: false));
-        PowerChart = IsMac
+        PowerChart = appleSilicon
             ? new ChartViewModel("CPU power", ChartScale.Auto,
                 new ChartSeriesViewModel(MetricIds.CpuPower, "CPU", ColorKeys.Power, ValueStyle.Power),
                 new ChartSeriesViewModel(MetricIds.NeuralEnginePower, "Neural Engine", ColorKeys.Temperature, ValueStyle.Power, fill: false))
+            : IsMac
+                ? new ChartViewModel("CPU power", ChartScale.Auto,
+                    new ChartSeriesViewModel(MetricIds.CpuPower, "CPU", ColorKeys.Power, ValueStyle.Power))
             : new ChartViewModel("Package power", ChartScale.Auto,
                 new ChartSeriesViewModel(MetricIds.CpuPower, "Package", ColorKeys.Power, ValueStyle.Power),
                 new ChartSeriesViewModel(MetricIds.CpuPpt, "PPT", ColorKeys.Temperature, ValueStyle.Power, fill: false));
-        ClockChart = IsMac
+        ClockChart = appleSilicon
             ? new ChartViewModel("Clocks", ChartScale.Auto,
                 new ChartSeriesViewModel(MetricIds.CpuClockPerformanceCores, "Performance cores", ColorKeys.Cpu, ValueStyle.ClockMegahertz, fill: false),
                 new ChartSeriesViewModel(MetricIds.CpuClockEfficiencyCores, "Efficiency cores", ColorKeys.Memory, ValueStyle.ClockMegahertz, fill: false),
                 new ChartSeriesViewModel(MetricIds.CpuClockAverage, "Average", ColorKeys.Neutral, ValueStyle.ClockMegahertz, fill: false))
+            : IsMac
+                ? new ChartViewModel("Clocks", ChartScale.Auto,
+                    new ChartSeriesViewModel(MetricIds.CpuClockAverage, "Average", ColorKeys.Cpu, ValueStyle.ClockMegahertz, fill: false))
             : new ChartViewModel("Clocks", ChartScale.Auto,
                 new ChartSeriesViewModel(MetricIds.CpuClockEffectiveAverage, "Effective (avg)", ColorKeys.Cpu, ValueStyle.ClockMegahertz, fill: false),
                 new ChartSeriesViewModel(MetricIds.CpuClockDerived, "Speed (estimated)", ColorKeys.Neutral, ValueStyle.ClockMegahertz, fill: false));

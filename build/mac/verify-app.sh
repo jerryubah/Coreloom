@@ -68,7 +68,12 @@ if hdiutil attach "$DMG" -nobrowse -readonly -mountpoint "$mount" > /dev/null; t
   { echo; echo "## Disk image contents"; echo '```'; ls -la "$mount"; echo '```'; } >> "$OUT/package.md"
   [[ -d "$mount/Coreloom.app" ]] || fail "the disk image has no Coreloom.app"
   [[ -L "$mount/Applications" ]] || fail "the disk image has no Applications link"
-  codesign --verify --deep --strict "$mount/Coreloom.app" || fail "the app in the disk image"
+  if dmg_check="$(codesign --verify --deep --strict --verbose=2 "$mount/Coreloom.app" 2>&1)"; then
+    echo "- disk image: Coreloom.app's signature checks out" >> "$OUT/package.md"
+  else
+    { echo; echo "## The app in the disk image: signature check failed"; echo '```'; echo "$dmg_check"; xattr -lr "$mount/Coreloom.app" | head -20; echo '```'; } >> "$OUT/package.md"
+    fail "the app in the disk image"
+  fi
   [[ -f "$mount/.DS_Store" ]] && echo "- disk image: window layout (.DS_Store) present" >> "$OUT/package.md"
   [[ -d "$mount/.background" ]] && echo "- disk image: background present" >> "$OUT/package.md"
   hdiutil detach "$mount" > /dev/null || hdiutil detach -force "$mount" > /dev/null
@@ -128,7 +133,8 @@ fi
 # ---- What it wrote ---------------------------------------------------------------------------------------------
 mkdir -p "$OUT/logs"
 cp -R "$HOME/Library/Logs/Coreloom/." "$OUT/logs/" 2> /dev/null || true
-find "$HOME/Library/Logs/DiagnosticReports" -name 'Coreloom*' -newermt "@$started" -exec cp {} "$OUT/logs/" \; 2> /dev/null || true
+minutes=$(( ($(date +%s) - started) / 60 + 2 ))
+find "$HOME/Library/Logs/DiagnosticReports" -name 'Coreloom*' -mmin "-$minutes" -exec cp {} "$OUT/logs/" \; 2> /dev/null || true
 if ls "$OUT"/logs/Coreloom*.ips > /dev/null 2>&1 || ls "$OUT"/logs/Coreloom*.crash > /dev/null 2>&1; then
   fail "a crash report was written"
 fi

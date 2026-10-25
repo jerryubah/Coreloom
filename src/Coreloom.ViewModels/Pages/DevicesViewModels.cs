@@ -287,6 +287,7 @@ public sealed class DevicesViewModel : PageViewModel
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         PairCommand = new RelayCommand(_service.OpenBluetoothSettings);
         ClearSearchCommand = new RelayCommand(() => Search = string.Empty);
+        AllowBluetoothCommand = new AsyncRelayCommand(AllowBluetoothAsync);
     }
 
     /// <summary>For tests: the clock "last connected" texts use.</summary>
@@ -307,6 +308,12 @@ public sealed class DevicesViewModel : PageViewModel
     public IAsyncRelayCommand RefreshCommand { get; }
 
     public IRelayCommand PairCommand { get; }
+
+    /// <summary>macOS: asks for Bluetooth access (only when clicked), then lists the devices.</summary>
+    public IAsyncRelayCommand AllowBluetoothCommand { get; }
+
+    /// <summary>macOS hasn't asked yet whether Coreloom may use Bluetooth: the page offers to ask.</summary>
+    public bool NeedsBluetoothPermission => _radio.NeedsPermission;
 
     public IRelayCommand ClearSearchCommand { get; }
 
@@ -347,7 +354,8 @@ public sealed class DevicesViewModel : PageViewModel
     }
 
     /// <summary>"Bluetooth is on", "Bluetooth is off", "No Bluetooth adapter".</summary>
-    public string RadioText => !_radio.IsPresent ? "No Bluetooth adapter" : _radio.IsOn ? "Bluetooth is on" : "Bluetooth is off";
+    public string RadioText => _radio.NeedsPermission ? "Bluetooth access needed"
+        : !_radio.IsPresent ? "No Bluetooth adapter" : _radio.IsOn ? "Bluetooth is on" : "Bluetooth is off";
 
     /// <summary>Why the switch didn't work, when it didn't.</summary>
     public string? RadioMessage
@@ -363,7 +371,9 @@ public sealed class DevicesViewModel : PageViewModel
     public int WiredCount => _wired.Count;
 
     /// <summary>"2 connected · 6 paired".</summary>
-    public string BluetoothSummary => !_radio.IsPresent && _bluetooth.Count == 0
+    public string BluetoothSummary => _radio.NeedsPermission
+            ? "Coreloom lists your Bluetooth accessories and their batteries once you allow it. macOS asks once."
+        : !_radio.IsPresent && _bluetooth.Count == 0
             ? IsMac ? "This Mac has no Bluetooth, or macOS isn't sharing it with Coreloom (System Settings › Privacy & Security › Bluetooth)." : "This PC has no Bluetooth adapter, or it's turned off in Device Manager."
         : !_radio.IsOn && _radio.IsPresent ? "Turn Bluetooth on to connect your devices."
         : _bluetooth.Count == 0 ? "No Bluetooth devices are paired yet."
@@ -482,6 +492,20 @@ public sealed class DevicesViewModel : PageViewModel
         }
     }
 
+    private async Task AllowBluetoothAsync()
+    {
+        try
+        {
+            await _service.RequestBluetoothAccessAsync(CancellationToken.None);
+        }
+        catch (Exception e) when (IsExpected(e))
+        {
+            // the radio card says what it can
+        }
+
+        await RefreshBluetoothAsync();
+    }
+
     private async Task RefreshBluetoothAsync()
     {
         if (_bluetoothBusy)
@@ -557,6 +581,7 @@ public sealed class DevicesViewModel : PageViewModel
     private void RadioChanged()
     {
         OnPropertyChanged(nameof(HasRadio));
+        OnPropertyChanged(nameof(NeedsBluetoothPermission));
         OnPropertyChanged(nameof(IsRadioOn));
         OnPropertyChanged(nameof(CanToggleRadio));
         OnPropertyChanged(nameof(RadioText));

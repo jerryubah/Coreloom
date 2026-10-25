@@ -16,6 +16,7 @@ concurrency:
 env:
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
+  AVALONIA_TELEMETRY_OPTOUT: 1
 
 jobs:
   windows:
@@ -106,7 +107,7 @@ jobs:
           - os: macos-15-intel
             arch: x64
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 40
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v5
 
@@ -125,6 +126,14 @@ jobs:
         if: always()
         run: cat artifacts/mac-readings-*.md 2>/dev/null | head -300 || true
 
+      # The app as it ships: built, signed ad hoc and packaged (zip and disk image), checked the way macOS and the
+      # updater will, then installed, opened on every page (screenshots) and quit.
+      - name: Package and open the app
+        if: success() || failure()
+        run: |
+          python3 -m venv "$RUNNER_TEMP/dmgbuild" && "$RUNNER_TEMP/dmgbuild/bin/pip" install --quiet dmgbuild && export PATH="$RUNNER_TEMP/dmgbuild/bin:$PATH"
+          bash build/mac/verify-app.sh ${{ matrix.arch }} artifacts/mac-verify
+
       - name: Test report
         if: always()
         run: python3 build/test-report.py artifacts/test-results
@@ -137,4 +146,15 @@ jobs:
           path: |
             artifacts/test-results/
             artifacts/mac-readings-*.md
+            artifacts/mac-verify/
           if-no-files-found: ignore
+
+      # A ready-to-open copy of every build (signed ad hoc): download "Coreloom-macos-<arch>" from the run's page.
+      - name: Upload the disk image
+        if: success()
+        uses: actions/upload-artifact@v6
+        with:
+          name: Coreloom-macos-${{ matrix.arch }}
+          path: artifacts/mac/*.dmg
+          if-no-files-found: ignore
+          retention-days: 30

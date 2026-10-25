@@ -82,6 +82,16 @@ internal sealed class FakeDevices : IDeviceService
     {
     }
 
+    public int AccessRequests { get; private set; }
+
+    /// <summary>macOS's prompt, answered "Allow": the radio and devices appear.</summary>
+    public Task<bool> RequestBluetoothAccessAsync(CancellationToken cancellationToken)
+    {
+        AccessRequests++;
+        Radio = new BluetoothRadioInfo(true, true, true);
+        return Task.FromResult(true);
+    }
+
     private void Set(string id, bool connected)
     {
         int i = Bluetooth.FindIndex(d => d.Id == id);
@@ -139,6 +149,34 @@ public class DevicesViewModelTests
         Assert.Equal("Driver not installed", dell.ProblemText);
         Assert.Equal("Keyboard · Corsair · USB", page.WiredGroups[0].Devices[0].Detail);
         settings.Dispose();
+    }
+
+    [Fact]
+    public async Task Bluetooth_IsAskedForOnlyWhenTheButtonIsClicked()
+    {
+        var (monitor, settings, _) = Fixture.Create();
+        var fake = new FakeDevices { Radio = BluetoothRadioInfo.PermissionNeeded };
+        var context = new PageContext
+        {
+            Monitor = monitor,
+            Settings = settings,
+            Timeline = new TimelineViewModel(monitor.Engine.History),
+            Tools = new ToolServices { Devices = fake },
+        };
+        var page = new DevicesViewModel(context);
+        page.Activate(monitor.Engine.LatestFrame);
+        await page.RefreshAsync();
+
+        Assert.True(page.NeedsBluetoothPermission);
+        Assert.Equal("Bluetooth access needed", page.RadioText);
+        Assert.Contains("once you allow it", page.BluetoothSummary);
+        Assert.Equal(0, fake.AccessRequests);
+
+        await page.AllowBluetoothCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, fake.AccessRequests);
+        Assert.False(page.NeedsBluetoothPermission);
+        Assert.Equal("Bluetooth is on", page.RadioText);
     }
 
     [Fact]

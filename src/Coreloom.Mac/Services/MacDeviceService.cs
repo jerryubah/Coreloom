@@ -19,11 +19,14 @@ public sealed partial class MacDeviceService : IDeviceService, IDisposable
 {
     private const string LogCategory = "Devices";
     private const string BluetoothFramework = "/System/Library/Frameworks/IOBluetooth.framework/IOBluetooth";
+    private const string CoreBluetoothFramework = "/System/Library/Frameworks/CoreBluetooth.framework/CoreBluetooth";
+    private const long NotDetermined = 0; // CBManagerAuthorization: 0 not determined, 1 restricted, 2 denied, 3 allowed
     private readonly Func<Func<object?>, Task<object?>> _onMain;
     private readonly object _gate = new();
     private Timer? _poll;
     private string _lastState = string.Empty;
     private bool _bluetoothLoaded;
+    private nint _askingManager; // the CBCentralManager whose creation made macOS ask (kept until the answer is in)
 
     [LibraryImport(BluetoothFramework)]
     private static partial int IOBluetoothPreferenceGetControllerPowerState();
@@ -52,8 +55,60 @@ public sealed partial class MacDeviceService : IDeviceService, IDisposable
 
     // ---- Bluetooth -----------------------------------------------------------------------------------------
 
+    /// <summary>
+    /// Whether Coreloom may use Bluetooth (CBManager.authorization: asking it doesn't prompt). Until macOS has asked, any
+    /// IOBluetooth call would make it ask, and wait for the answer on the main thread, so nothing calls it before the
+    /// person clicks Allow Bluetooth on the Devices page.
+    /// </summary>
+    private static long Authorization()
+    {
+        if (!NativeLibrary.TryLoad(CoreBluetoothFramework, out _))
+        {
+            return -1;
+        }
+
+        nint manager = ObjC.Class("CBManager");
+        return manager != 0 && ObjC.SendBool(manager, ObjC.Sel("respondsToSelector:"), ObjC.Sel("authorization"))
+            ? ObjC.SendLongResult(manager, ObjC.Sel("authorization"))
+            : -1;
+    }
+
+    private static bool NeedsPermission => Authorization() == NotDetermined;
+
+    /// <summary>Makes macOS ask (by creating a Bluetooth central manager, which doesn't block) and waits for the answer.</summary>
+    public async Task<bool> RequestBluetoothAccessAsync(CancellationToken cancellationToken)
+    {
+        if (!NeedsPermission)
+        {
+            return true;
+        }
+
+        await Main<bool>(() =>
+        {
+            if (_askingManager == 0)
+            {
+                nint central = ObjC.Class("CBCentralManager");
+                _askingManager = central == 0 ? 0 : ObjC.Send(ObjC.Send(central, ObjC.Sel("alloc")), ObjC.Sel("init"));
+            }
+
+            return true;
+        });
+        for (int i = 0; i < 600 && NeedsPermission; i++)
+        {
+            await Task.Delay(250, cancellationToken);
+        }
+
+        Log.Info(LogCategory, $"Bluetooth access: {Authorization() switch { 3 => "allowed", 2 => "denied", 1 => "restricted", 0 => "not answered", _ => "unknown" }}.");
+        return !NeedsPermission;
+    }
+
     public async Task<BluetoothRadioInfo> RadioAsync(CancellationToken cancellationToken)
     {
+        if (NeedsPermission)
+        {
+            return BluetoothRadioInfo.PermissionNeeded;
+        }
+
         StartPolling();
         return await Main(() =>
         {
@@ -114,6 +169,11 @@ public sealed partial class MacDeviceService : IDeviceService, IDisposable
 
     public async Task<IReadOnlyList<BluetoothDeviceInfo>> BluetoothDevicesAsync(CancellationToken cancellationToken)
     {
+        if (NeedsPermission)
+        {
+            return [];
+        }
+
         var batteries = await Task.Run(AccessoryBatteries, cancellationToken);
         return await Main<IReadOnlyList<BluetoothDeviceInfo>>(() =>
         {

@@ -14,7 +14,7 @@ size = None
 
 files = [app]
 symlinks = {"Applications": "/Applications"}
-hide_extensions = [os.path.basename(app)]
+# (No hidden extensions: hiding one sets Finder flags on the bundle, which a strict signature check rejects.)
 
 # The window: 660 x 420 points, the size of the background picture.
 window_rect = ((240, 160), (660, 420))

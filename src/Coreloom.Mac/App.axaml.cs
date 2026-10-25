@@ -64,6 +64,9 @@ public partial class App : Application
     private bool _trayHintShown;
     private DateTime _lastCrashDialog = DateTime.MinValue;
 
+    /// <summary>The single-instance lock Program.Main took before the interface started.</summary>
+    internal static SingleInstance? PrimaryInstance { get; set; }
+
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
     public override void OnFrameworkInitializationCompleted()
@@ -105,15 +108,10 @@ public partial class App : Application
     {
         var args = MacCommandLine.Parse(arguments);
 
-        // A restart (Move to Applications, an update) passes our old PID: wait for it so the instance lock is free.
-        if (args.WaitForProcessId is int pid)
-        {
-            SingleInstance.WaitForProcessExit(pid, TimeSpan.FromSeconds(15));
-        }
-
+        // Program.Main took the single-instance lock (a second launch never gets this far).
         var paths = AppPaths.ForMac(AppContext.BaseDirectory);
-        _instance = new SingleInstance(paths.SettingsDirectory);
-        if (!_instance.TryAcquire())
+        _instance = PrimaryInstance ?? new SingleInstance(paths.SettingsDirectory);
+        if (PrimaryInstance is null && !_instance.TryAcquire())
         {
             _instance.SignalPrimary(args.Page);
             _instance.Dispose();
