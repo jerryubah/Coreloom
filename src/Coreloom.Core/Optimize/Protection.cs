@@ -63,6 +63,58 @@ public sealed record ProtectionStatus
     public bool ScanOverdue(DateTime now) => IsDefenderInCharge && (Latest(LastQuickScan, LastFullScan) is not { } scanned || now - scanned > TimeSpan.FromDays(7));
 
     public static DateTime? Latest(DateTime? a, DateTime? b) => a is null ? b : b is null ? a : a > b ? a : b;
+
+    /// <summary>
+    /// macOS: the built-in protections and whether each is on (XProtect, Gatekeeper, System Integrity Protection,
+    /// FileVault, the firewall). Empty on Windows, where Defender's fields above apply.
+    /// </summary>
+    public IReadOnlyList<SecurityCheck> Checks { get; init; } = [];
+}
+
+/// <summary>
+/// One of macOS's protections: on or off, what it does, and whether it matters for safety (the firewall and FileVault
+/// are recommended; XProtect, Gatekeeper and System Integrity Protection should never be off).
+/// </summary>
+public sealed record SecurityCheck(string Id, string Name, bool IsOn, string Detail, bool Essential);
+
+/// <summary>Reads the output of macOS's own security tools (spctl, csrutil, fdesetup, socketfilterfw).</summary>
+public static class MacSecurity
+{
+    /// <summary>"assessments enabled" → true; "assessments disabled" → false.</summary>
+    public static bool? Gatekeeper(string? spctlStatus) =>
+        spctlStatus is null ? null
+        : spctlStatus.Contains("assessments enabled", StringComparison.OrdinalIgnoreCase) ? true
+        : spctlStatus.Contains("assessments disabled", StringComparison.OrdinalIgnoreCase) ? false
+        : null;
+
+    /// <summary>"System Integrity Protection status: enabled." → true.</summary>
+    public static bool? IntegrityProtection(string? csrutilStatus)
+    {
+        if (csrutilStatus is null)
+        {
+            return null;
+        }
+
+        int colon = csrutilStatus.IndexOf("status:", StringComparison.OrdinalIgnoreCase);
+        string state = colon >= 0 ? csrutilStatus[(colon + 7)..].TrimStart() : csrutilStatus;
+        return state.StartsWith("enabled", StringComparison.OrdinalIgnoreCase) ? true
+            : state.StartsWith("disabled", StringComparison.OrdinalIgnoreCase) ? false
+            : null;
+    }
+
+    /// <summary>"FileVault is On." → true; "FileVault is Off." → false (also while encryption is in progress: on).</summary>
+    public static bool? FileVault(string? fdesetupStatus) =>
+        fdesetupStatus is null ? null
+        : fdesetupStatus.Contains("FileVault is On", StringComparison.OrdinalIgnoreCase) || fdesetupStatus.Contains("Encryption in progress", StringComparison.OrdinalIgnoreCase) ? true
+        : fdesetupStatus.Contains("FileVault is Off", StringComparison.OrdinalIgnoreCase) ? false
+        : null;
+
+    /// <summary>"Firewall is enabled. (State = 1)" → true; "Firewall is disabled. (State = 0)" → false.</summary>
+    public static bool? Firewall(string? socketFilterState) =>
+        socketFilterState is null ? null
+        : socketFilterState.Contains("(State = 0)", StringComparison.Ordinal) || socketFilterState.Contains("disabled", StringComparison.OrdinalIgnoreCase) ? false
+        : socketFilterState.Contains("enabled", StringComparison.OrdinalIgnoreCase) || socketFilterState.Contains("(State = 1)", StringComparison.Ordinal) || socketFilterState.Contains("(State = 2)", StringComparison.Ordinal) ? true
+        : null;
 }
 
 /// <summary>

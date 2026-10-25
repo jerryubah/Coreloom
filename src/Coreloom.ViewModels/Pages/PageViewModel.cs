@@ -65,6 +65,9 @@ public abstract partial class PageViewModel : ObservableObject
     /// <summary>True in the macOS app.</summary>
     public bool IsMac => Context.IsMac;
 
+    /// <summary>"PC" or "Mac": how the page refers to the computer.</summary>
+    public string Computer => Coreloom.Core.HostPlatforms.Computer(Context.Platform);
+
     protected MonitorContext Monitor => Context.Monitor;
 
     protected SettingsService Settings => Context.Settings;

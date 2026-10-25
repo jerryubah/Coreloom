@@ -817,24 +817,39 @@ public sealed class GamingViewModel : PageViewModel
         Adaptive = new AdaptivePacingController(this);
         CoreScheduling = new CoreSchedulingController(this, context.Tools.CoreScheduling);
         FramePacer = new FramePacerViewModel(this);
-        Boosts =
-        [
-            new(GamingTweak.GpuScheduling, "Hardware-accelerated GPU scheduling", "The graphics card schedules its own work: lower latency and steadier frames. Takes effect after a restart.", "Icon.Gpu", "HAGS", SetTweakAsync, "Latency"),
-            new(GamingTweak.UltimatePower, "Ultimate Performance power plan", "Keeps the processor at full speed with no power-saving delays. Turning it off goes back to your previous plan.", "Icon.Power", null, SetTweakAsync, "Performance"),
-            new(GamingTweak.GameMode, "Game Mode", "Windows gives the game priority and holds back updates and notifications while you play.", "Icon.Controller", null, SetTweakAsync, "Performance"),
-            new(GamingTweak.WindowedOptimizations, "Optimizations for windowed games", "Borderless and windowed games use the faster flip presentation: lower latency, variable refresh and Auto HDR.", "Icon.Window", "Windows 11", SetTweakAsync, "Latency"),
-            new(GamingTweak.NoBackgroundRecording, "No background recording", "Stops Xbox Game Bar from recording the last minutes of play in the background, which costs frames.", "Icon.Camera", null, SetTweakAsync, "Performance"),
-            new(GamingTweak.MaxGpuPerformance, "Maximum graphics card performance", "The driver's \"Prefer maximum performance\" mode: no downclocking between scenes, fewer frame-time spikes.", "Icon.Rocket", "NVIDIA", SetTweakAsync, "Frame stability"),
-            new(GamingTweak.GSync, "G-SYNC & adaptive refresh", "Matches your display's refresh to the frames the graphics card sends, so there's no tearing and less stutter, in fullscreen and windowed games.", "Icon.Pulse", "NVIDIA", SetTweakAsync, "Smoothness",
-                GSyncSetup.Recommendation(0, 0), "Improves how frames are shown, not the frame rate itself."),
-            new(GamingTweak.ShaderCache, "NVIDIA shader cache", "Keeps the shaders games compile, so they aren't compiled again mid-play: fewer repeat stutters and steadier frame times the next times you play.", "Icon.Database", "NVIDIA", SetTweakAsync, "Frame stability",
-                "Recommended: 10 GB when the current limit is smaller, or a larger size for a big game library.", "Doesn't remove every shader stutter or raise the average frame rate."),
-            new(GamingTweak.CoreScheduling, "Intelligent CPU core scheduling", "Keeps games on the cores that suit them, such as a Ryzen X3D's 3D V-Cache cores, after checking AMD's own scheduling.", "Icon.Cpu", "Ryzen X3D", SetTweakAsync, "Frame stability",
-                "Recommended: on. A per-game profile is only offered after a test in that game shows a clear gain.",
-                "Chooses cores, never clocks or voltages; nothing is added to games."),
-        ];
-        ShaderCache = Boosts.First(b => b.Tweak == GamingTweak.ShaderCache);
-        CoreSchedulingBoost = Boosts.First(b => b.Tweak == GamingTweak.CoreScheduling);
+        GamingTweakViewModel shaderCache = new(GamingTweak.ShaderCache, "NVIDIA shader cache", "Keeps the shaders games compile, so they aren't compiled again mid-play: fewer repeat stutters and steadier frame times the next times you play.", "Icon.Database", "NVIDIA", SetTweakAsync, "Frame stability",
+            "Recommended: 10 GB when the current limit is smaller, or a larger size for a big game library.", "Doesn't remove every shader stutter or raise the average frame rate.");
+        GamingTweakViewModel coreScheduling = new(GamingTweak.CoreScheduling, "Intelligent CPU core scheduling", "Keeps games on the cores that suit them, such as a Ryzen X3D's 3D V-Cache cores, after checking AMD's own scheduling.", "Icon.Cpu", "Ryzen X3D", SetTweakAsync, "Frame stability",
+            "Recommended: on. A per-game profile is only offered after a test in that game shows a clear gain.",
+            "Chooses cores, never clocks or voltages; nothing is added to games.");
+        Boosts = IsMac
+            ?
+            [
+                // macOS manages most of a game's performance itself; these are the switches it leaves to the user.
+                new(GamingTweak.GameMode, "Game Mode", "macOS gives a full-screen game the first claim on the processor and GPU, and halves the Bluetooth latency of controllers and AirPods.", "Icon.Controller", "macOS 14+", SetTweakAsync, "Performance",
+                    null, "macOS turns it on by itself when a game goes full screen; it can't be forced from an app."),
+                new(GamingTweak.PowerMode, "Full power on the charger", "Turns Low Power Mode off on the charger and, on Macs with High Power Mode, turns that on: the chip keeps its highest clocks through long sessions.", "Icon.Power", null, SetTweakAsync, "Performance",
+                    "Recommended: on for gaming sessions. macOS asks for your password to change it.", "The fans may run faster; it doesn't change the battery's own mode."),
+                new(GamingTweak.KeepAwake, "Keep the Mac awake while playing", "The display doesn't dim or sleep while a library game is running, even when you play with a controller macOS doesn't count as input.", "Icon.Display", null, SetTweakAsync, "Comfort",
+                    null, "Coreloom asks macOS to hold off sleep only while the game runs; nothing is changed in System Settings."),
+                new(GamingTweak.MetalHud, "Metal Performance HUD", "Apple's own overlay in Metal games: frame rate, frame times, GPU time and memory. Games started after you turn it on show it.", "Icon.Pulse", "Apple", SetTweakAsync, "Insight",
+                    null, "Coreloom doesn't measure games' frame rates on a Mac (that would mean adding code to them); Apple's HUD does."),
+            ]
+            :
+            [
+                new(GamingTweak.GpuScheduling, "Hardware-accelerated GPU scheduling", "The graphics card schedules its own work: lower latency and steadier frames. Takes effect after a restart.", "Icon.Gpu", "HAGS", SetTweakAsync, "Latency"),
+                new(GamingTweak.UltimatePower, "Ultimate Performance power plan", "Keeps the processor at full speed with no power-saving delays. Turning it off goes back to your previous plan.", "Icon.Power", null, SetTweakAsync, "Performance"),
+                new(GamingTweak.GameMode, "Game Mode", "Windows gives the game priority and holds back updates and notifications while you play.", "Icon.Controller", null, SetTweakAsync, "Performance"),
+                new(GamingTweak.WindowedOptimizations, "Optimizations for windowed games", "Borderless and windowed games use the faster flip presentation: lower latency, variable refresh and Auto HDR.", "Icon.Window", "Windows 11", SetTweakAsync, "Latency"),
+                new(GamingTweak.NoBackgroundRecording, "No background recording", "Stops Xbox Game Bar from recording the last minutes of play in the background, which costs frames.", "Icon.Camera", null, SetTweakAsync, "Performance"),
+                new(GamingTweak.MaxGpuPerformance, "Maximum graphics card performance", "The driver's \"Prefer maximum performance\" mode: no downclocking between scenes, fewer frame-time spikes.", "Icon.Rocket", "NVIDIA", SetTweakAsync, "Frame stability"),
+                new(GamingTweak.GSync, "G-SYNC & adaptive refresh", "Matches your display's refresh to the frames the graphics card sends, so there's no tearing and less stutter, in fullscreen and windowed games.", "Icon.Pulse", "NVIDIA", SetTweakAsync, "Smoothness",
+                    GSyncSetup.Recommendation(0, 0), "Improves how frames are shown, not the frame rate itself."),
+                shaderCache,
+                coreScheduling,
+            ];
+        ShaderCache = shaderCache;
+        CoreSchedulingBoost = coreScheduling;
         CoreSchedulingBoost.DetailsCommand = CoreScheduling.OpenDetailsCommand;
         CoreScheduling.PropertyChanged += (_, e) =>
         {
@@ -972,8 +987,8 @@ public sealed class GamingViewModel : PageViewModel
     public string ReadinessText => BoostsAvailable == 0 ? "—" : $"{BoostsOn.ToString(CultureInfo.CurrentCulture)}/{BoostsAvailable.ToString(CultureInfo.CurrentCulture)}";
 
     public string HeroTitle => !IsSupported ? "Gaming"
-        : BoostsAvailable == 0 ? "Checking your PC…"
-        : BoostsOn == BoostsAvailable ? "Your PC is tuned for games"
+        : BoostsAvailable == 0 ? $"Checking your {Computer}…"
+        : BoostsOn == BoostsAvailable ? $"Your {Computer} is tuned for games"
         : $"{(BoostsAvailable - BoostsOn).ToString(CultureInfo.CurrentCulture)} {(BoostsAvailable - BoostsOn == 1 ? "boost" : "boosts")} can make your games smoother";
 
     public string HeroDetail => RestartPending
@@ -1569,9 +1584,12 @@ public sealed class GamingViewModel : PageViewModel
         }
 
         CoreScheduling.Refresh();
-        Boosts.First(b => b.Tweak == GamingTweak.UltimatePower).Advice = CoreScheduling.ParkingMatters
-            ? "On this Ryzen X3D, the Balanced plan lets AMD's driver park the frequency cores so games stay on the cache cores; Ultimate Performance stops core parking."
-            : null;
+        if (Boosts.FirstOrDefault(b => b.Tweak == GamingTweak.UltimatePower) is { } ultimate)
+        {
+            ultimate.Advice = CoreScheduling.ParkingMatters
+                ? "On this Ryzen X3D, the Balanced plan lets AMD's driver park the frequency cores so games stay on the cache cores; Ultimate Performance stops core parking."
+                : null;
+        }
 
         if (Settings.Current.Gaming.LastDriverVersion is null && status.DriverVersion is not null)
         {
@@ -1584,8 +1602,10 @@ public sealed class GamingViewModel : PageViewModel
         }
 
         FramePacer.Refresh();
-        var gsync = Boosts.First(b => b.Tweak == GamingTweak.GSync);
-        gsync.Recommendation = GSyncSetup.Recommendation(status.FrameCap, status.RefreshRate);
+        if (Boosts.FirstOrDefault(b => b.Tweak == GamingTweak.GSync) is { } gsync)
+        {
+            gsync.Recommendation = GSyncSetup.Recommendation(status.FrameCap, status.RefreshRate);
+        }
         ApplyShaderCaches();
         OnPropertyChanged(nameof(ShaderCacheLimitText));
         HeroChanged();

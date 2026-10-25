@@ -187,7 +187,7 @@ public sealed class SystemHealthViewModel : ObservableObject
         HealthStatus.Excellent => "Everything looks great",
         HealthStatus.Good => "Running well, with something to keep an eye on",
         HealthStatus.Attention => "Something needs your attention",
-        _ => "Checking your PC…",
+        _ => $"Checking your {Coreloom.Core.HostPlatforms.Computer(_context.Platform)}…",
     };
 
     public void Update(TelemetryFrame frame)

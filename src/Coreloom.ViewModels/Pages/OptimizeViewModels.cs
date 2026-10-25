@@ -467,11 +467,19 @@ public sealed class ProtectionViewModel : ObservableObject
     private string _lastScan = "—";
     private string _engine = "Microsoft Defender";
     private CancellationTokenSource? _cts;
+    private readonly bool _mac;
 
-    public ProtectionViewModel(IOptimizeService service, Func<DateTime> now)
+    public ProtectionViewModel(IOptimizeService service, Func<DateTime> now, bool mac = false)
     {
         _service = service;
         _now = now;
+        _mac = mac;
+        if (mac)
+        {
+            _summary = "Reading macOS's security settings…";
+            _engine = "XProtect";
+        }
+
         RefreshCommand = new AsyncRelayCommand(() => RefreshAsync(CancellationToken.None), () => !IsBusy);
         QuickScanCommand = new AsyncRelayCommand(QuickScanAsync, () => !IsBusy && CanUseDefender);
         UpdateCommand = new AsyncRelayCommand(UpdateAsync, () => !IsBusy && CanUseDefender);
@@ -481,6 +489,11 @@ public sealed class ProtectionViewModel : ObservableObject
     }
 
     public ObservableCollection<ThreatViewModel> Threats { get; } = [];
+
+    /// <summary>macOS: each built-in protection and whether it is on.</summary>
+    public ObservableCollection<SecurityCheck> Checks { get; } = [];
+
+    public bool IsMac => _mac;
 
     public IAsyncRelayCommand RefreshCommand { get; }
 
@@ -669,7 +682,7 @@ public sealed class ProtectionViewModel : ObservableObject
         }
         catch (Exception e) when (e is IOException or InvalidOperationException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
         {
-            return ProtectionStatus.Unavailable($"Windows Security couldn't be read ({e.Message}).");
+            return ProtectionStatus.Unavailable(_mac ? $"macOS's security settings couldn't be read ({e.Message})." : $"Windows Security couldn't be read ({e.Message}).");
         }
     }
 
@@ -687,6 +700,12 @@ public sealed class ProtectionViewModel : ObservableObject
 
     private void Apply(ProtectionStatus status)
     {
+        if (_mac)
+        {
+            ApplyMac(status);
+            return;
+        }
+
         _current = status;
         var now = _now();
         Threats.Clear();
@@ -731,6 +750,61 @@ public sealed class ProtectionViewModel : ObservableObject
             LastScan = ProtectionStatus.Latest(status.LastQuickScan, status.LastFullScan) is { } scanned ? OptimizeText.Ago(scanned, now) : "never";
         }
 
+        OnPropertyChanged(nameof(Current));
+        OnPropertyChanged(nameof(HasThreats));
+        OnPropertyChanged(nameof(CanUseDefender));
+        NotifyCommands();
+    }
+
+    /// <summary>
+    /// macOS protects itself: XProtect scans what's opened and is updated by Apple, Gatekeeper checks apps before they
+    /// run, System Integrity Protection guards the system. The card reports them (and FileVault and the firewall) and
+    /// opens System Settings for changes; there is nothing to scan or update by hand.
+    /// </summary>
+    private void ApplyMac(ProtectionStatus status)
+    {
+        _current = status;
+        var now = _now();
+        Threats.Clear();
+        Checks.Clear();
+        foreach (var check in status.Checks)
+        {
+            Checks.Add(check);
+        }
+
+        Engine = "XProtect";
+        var off = status.Checks.Where(c => !c.IsOn).ToList();
+        var essentialOff = off.Where(c => c.Essential).ToList();
+        if (status.Checks.Count == 0)
+        {
+            Title = "Status unavailable";
+            Summary = status.Problem ?? "macOS's security settings couldn't be read.";
+            ColorKey = ColorKeys.ToneWarm;
+        }
+        else if (essentialOff.Count > 0)
+        {
+            Title = "Not fully protected";
+            Summary = $"{string.Join(" and ", essentialOff.Select(c => c.Name))} {(essentialOff.Count == 1 ? "is" : "are")} off. Turn {(essentialOff.Count == 1 ? "it" : "them")} back on to keep the Mac safe.";
+            ColorKey = ColorKeys.ToneHot;
+        }
+        else if (off.Count > 0)
+        {
+            Title = "Protected";
+            Summary = $"macOS's protections are on. {string.Join(" and ", off.Select(c => c.Name))} {(off.Count == 1 ? "is" : "are")} off: worth turning on in System Settings.";
+            ColorKey = ColorKeys.ToneWarm;
+        }
+        else
+        {
+            Title = "Protected";
+            Summary = "XProtect, Gatekeeper and System Integrity Protection are on, the disk is encrypted and the firewall is up.";
+            ColorKey = ColorKeys.ToneCool;
+        }
+
+        RealTime = status.RealTimeProtection ? "On (built into macOS)" : "Off";
+        Definitions = status.SignatureVersion is { } version
+            ? status.SignaturesUpdated is { } updated ? $"{version} · updated {OptimizeText.Ago(updated, now)}" : version
+            : "Updated by macOS";
+        LastScan = "Automatic (macOS scans apps and downloads as they open)";
         OnPropertyChanged(nameof(Current));
         OnPropertyChanged(nameof(HasThreats));
         OnPropertyChanged(nameof(CanUseDefender));
@@ -1110,11 +1184,16 @@ public sealed class SpeedUpViewModel : ObservableObject
     private readonly IOptimizeService _service;
     private bool _loaded;
 
-    public SpeedUpViewModel(IOptimizeService service)
+    private readonly bool _mac;
+
+    public SpeedUpViewModel(IOptimizeService service, bool mac = false)
     {
         _service = service;
+        _mac = mac;
         FlushDns = new MaintenanceTaskViewModel("Flush DNS cache", "Fixes sites that won't load after a network or DNS change", "Icon.Globe", _service.FlushDnsAsync);
-        OptimizeDrives = new MaintenanceTaskViewModel("Optimize drives", "Trims SSDs and defragments hard drives, as Windows does weekly", "Icon.Storage", _service.OptimizeDrivesAsync);
+        OptimizeDrives = mac
+            ? new MaintenanceTaskViewModel("Check the startup disk", "Disk Utility's First Aid check, read only: confirms the disk's file system is sound", "Icon.Storage", _service.OptimizeDrivesAsync)
+            : new MaintenanceTaskViewModel("Optimize drives", "Trims SSDs and defragments hard drives, as Windows does weekly", "Icon.Storage", _service.OptimizeDrivesAsync);
         RefreshCommand = new RelayCommand(Refresh);
     }
 
@@ -1131,8 +1210,8 @@ public sealed class SpeedUpViewModel : ObservableObject
     public int EnabledCount => StartupApps.Count(a => a.IsEnabled);
 
     /// <summary>"6 of 11 apps start with Windows".</summary>
-    public string StartupSummary => StartupApps.Count == 0 ? "No startup apps found"
-        : $"{EnabledCount} of {OptimizeText.Count(StartupApps.Count, "app", "apps")} start with Windows";
+    public string StartupSummary => StartupApps.Count == 0 ? (_mac ? "No login items found" : "No startup apps found")
+        : $"{EnabledCount} of {OptimizeText.Count(StartupApps.Count, "app", "apps")} {(_mac ? "open at login" : "start with Windows")}";
 
     public bool HasStartupApps => StartupApps.Count > 0;
 
@@ -1205,9 +1284,9 @@ public sealed class OptimizeViewModel : PageViewModel
         _service = context.Tools.Optimizer;
         Func<long, string> bytes = b => Formatter.Bytes(b).ToString();
         Cleanup = new CleanupViewModel(_service, bytes);
-        Protection = new ProtectionViewModel(_service, () => Now());
+        Protection = new ProtectionViewModel(_service, () => Now(), IsMac);
         Memory = new MemoryOptimizeViewModel(_service, bytes, () => Context.OpenLogs?.Invoke("Optimize", "Memory:"));
-        Speed = new SpeedUpViewModel(_service);
+        Speed = new SpeedUpViewModel(_service, IsMac);
         CleanupModule = new("cleanup", "Cleanup", "Icon.Trash");
         ProtectionModule = new("protection", "Protection", "Icon.Shield");
         MemoryModule = new("memory", "Memory", "Icon.Memory");
@@ -1326,7 +1405,9 @@ public sealed class OptimizeViewModel : PageViewModel
         private set => SetProperty(ref _resultText, value);
     }
 
-    public string UnsupportedText => "Smart Optimize works with Windows features (Microsoft Defender, the Recycle Bin, startup apps) that aren't available here.";
+    public string UnsupportedText => IsMac
+        ? "Smart Optimize works with macOS features (the Trash, login items, its security settings) that aren't available here."
+        : "Smart Optimize works with Windows features (Microsoft Defender, the Recycle Bin, startup apps) that aren't available here.";
 
     protected override void OnActivated()
     {

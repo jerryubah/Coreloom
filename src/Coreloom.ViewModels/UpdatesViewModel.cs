@@ -214,7 +214,7 @@ public sealed class UpdatesViewModel : ObservableObject
         UpdatePhase.Ready => _problem ?? (_pending?.InstallFailed == true
             ? "Coreloom couldn't finish installing it automatically. Try again."
             : AutoInstall
-                ? "Install it now, or it installs by itself the next time Coreloom starts or while your PC is idle."
+                ? $"Install it now, or it installs by itself the next time Coreloom starts or while your {Coreloom.Core.HostPlatforms.Current.Computer()} is idle."
                 : "Installing it closes Coreloom for a moment and opens the new version."),
         UpdatePhase.Installing => "Coreloom will close and reopen in a moment.",
         UpdatePhase.Failed => _problem ?? "Something went wrong. Try again later.",
@@ -302,7 +302,7 @@ public sealed class UpdatesViewModel : ObservableObject
     }
 
     public string AutoInstallDescription => CanInstall
-        ? "Download new versions in the background and install them the next time Coreloom starts, or while your PC is idle."
+        ? $"Download new versions in the background and install them the next time Coreloom starts, or while your {Coreloom.Core.HostPlatforms.Current.Computer()} is idle."
         : "This copy can't update itself. It will tell you when a new version is out.";
 
     // ---- Commands ---------------------------------------------------------------------------------
@@ -449,7 +449,7 @@ public sealed class UpdatesViewModel : ObservableObject
             return false;
         }
 
-        Log.Info("Updates", $"Installing the downloaded update to {_pending!.Version} while the PC is idle.");
+        Log.Info("Updates", $"Installing the downloaded update to {_pending!.Version} while the {Coreloom.Core.HostPlatforms.Current.Computer()} is idle.");
         return InstallNow(UpdateInstallOptions.Background);
     }
 

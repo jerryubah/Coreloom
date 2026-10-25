@@ -37,6 +37,15 @@ public enum GamingTweak
     /// not a Windows setting.
     /// </summary>
     CoreScheduling,
+
+    /// <summary>macOS: the display stays awake while a library game runs (a power assertion Coreloom holds; no setting changes).</summary>
+    KeepAwake,
+
+    /// <summary>macOS: Apple's Metal Performance HUD in Metal games (the user default MetalForceHudEnabled).</summary>
+    MetalHud,
+
+    /// <summary>macOS: full power on the charger — Low Power Mode off, and High Power Mode on Macs that have it (pmset).</summary>
+    PowerMode,
 }
 
 /// <summary>Whether a tweak can be used here, whether it is on, and whether a restart is still needed for it.</summary>

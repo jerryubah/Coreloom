@@ -903,7 +903,7 @@ public sealed class BenchmarkingViewModel : PageViewModel
     {
         Cpu.IsRunning = true;
         Cpu.Step = "Starting";
-        Status = "Running the CPU benchmark. Leave the PC alone for the steadiest score.";
+        Status = $"Running the CPU benchmark. Leave the {Computer} alone for the steadiest score.";
         var readings = new ReadingRecorder();
         var watts = new List<double>();
         bool fromPpt = false;
@@ -969,7 +969,7 @@ public sealed class BenchmarkingViewModel : PageViewModel
     {
         Gpu.IsRunning = true;
         Gpu.Step = "Starting";
-        Status = $"Running the GPU benchmark on {Gpu.Device}. Leave the PC alone for the steadiest score.";
+        Status = $"Running the GPU benchmark on {Gpu.Device}. Leave the {Computer} alone for the steadiest score.";
         var card = SelectedCard;
         int slot = GpuSlotFor(card?.Name);
         var readings = new ReadingRecorder();
@@ -1078,7 +1078,7 @@ public sealed class BenchmarkingViewModel : PageViewModel
                 load.Start();
             }
 
-            StressStatus = $"Stress testing the {string.Join(" and the ", loads.Select(l => l.Load.Name.ToLowerInvariant()))}. Leave the PC alone: other work slows the test and counts against its stability.";
+            StressStatus = $"Stress testing the {string.Join(" and the ", loads.Select(l => l.Load.Name.ToLowerInvariant()))}. Leave the {Computer} alone: other work slows the test and counts against its stability.";
             while (reason == StressStopReason.None)
             {
                 try

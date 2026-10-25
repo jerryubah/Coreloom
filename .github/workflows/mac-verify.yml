@@ -1,0 +1,58 @@
+name: Mac verify
+
+# Runs Coreloom for macOS on GitHub's Macs (Apple silicon and Intel virtual machines) and keeps what it saw: the
+# readings every provider gave, the test results, the app's log and screenshots of its window. A developer check; the
+# outputs go to a branch per architecture (mac-verify-arm64, mac-verify-x64) so they can be fetched with git.
+on:
+  push:
+    branches: ['macverify-*']
+  workflow_dispatch:
+
+permissions:
+  contents: write   # to publish the outputs on the mac-verify-* branches
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  verify:
+    name: Verify on macOS (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            arch: arm64
+          - os: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Test the macOS back-end
+        env:
+          CORELOOM_MAC_REPORT: ${{ github.workspace }}/out/readings.md
+        run: |
+          mkdir -p out
+          dotnet test tests/Coreloom.Hardware.Mac.Tests/Coreloom.Hardware.Mac.Tests.csproj -c Release --logger "trx;LogFileName=mac-tests.trx" --results-directory out 2>&1 | tee out/test-output.txt
+
+      - name: Build, launch and photograph the app
+        if: hashFiles('build/mac/verify-app.sh') != ''
+        run: bash build/mac/verify-app.sh ${{ matrix.arch }} out
+
+      - name: Publish the outputs
+        if: always()
+        run: |
+          cd out
+          git init -q -b mac-verify-${{ matrix.arch }}
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Mac verify ${{ matrix.arch }} of ${GITHUB_SHA::7} (${{ github.ref_name }})"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:mac-verify-${{ matrix.arch }}
