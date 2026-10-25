@@ -190,7 +190,7 @@ public sealed class GameEditorViewModel : ObservableObject
         if (_service.PickPicture() is { } picture)
         {
             Picture = CustomGames.IsPicture(picture) ? picture : null;
-            Error = Picture is null ? "Choose a .png, .jpg, .bmp or .ico picture." : null;
+            Error = Picture is null ? (_page.IsMac ? "Choose a .png, .jpg or .bmp picture." : "Choose a .png, .jpg, .bmp or .ico picture.") : null;
         }
     }
 
@@ -236,8 +236,8 @@ public sealed class GameEditorViewModel : ObservableObject
     }
 
     private string? Problem(string exe) =>
-        !CustomGames.IsProgram(exe) ? "Pick the game's program (an .exe file)."
-        : _service.DescribeProgram(exe) is null ? "That program can't be found. Pick it again."
+        !CustomGames.IsProgram(exe) ? (_page.IsMac ? "Pick the game's app (a .app, usually in Applications)." : "Pick the game's program (an .exe file).")
+        : _service.DescribeProgram(exe) is null ? (_page.IsMac ? "That app can't be found. Pick it again." : "That program can't be found. Pick it again.")
         : null;
 
     private string Suggest(string exe)

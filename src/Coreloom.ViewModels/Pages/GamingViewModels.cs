@@ -992,7 +992,11 @@ public sealed class GamingViewModel : PageViewModel
         : BoostsOn == BoostsAvailable ? $"Your {Computer} is tuned for games"
         : $"{(BoostsAvailable - BoostsOn).ToString(CultureInfo.CurrentCulture)} {(BoostsAvailable - BoostsOn == 1 ? "boost" : "boosts")} can make your games smoother";
 
-    public string HeroDetail => RestartPending
+    public string HeroDetail => IsMac
+        ? BoostsOn == BoostsAvailable && BoostsAvailable > 0
+            ? "macOS keeps the chip at full speed and the Mac awake while you play, and Apple's HUD shows the frame rate in Metal games."
+            : "Turn them on one by one below, or all at once. Each switch shows what it changes, and you can turn it off again anytime."
+        : RestartPending
         ? "Restart Windows to finish turning on hardware-accelerated GPU scheduling."
         : BoostsOn == BoostsAvailable && BoostsAvailable > 0
             ? "Windows and your graphics card are set up for the highest, steadiest frame rates."
@@ -1054,12 +1058,24 @@ public sealed class GamingViewModel : PageViewModel
         }
     }
 
+    /// <summary>All the shader caches together ("1.24 GB"), or a dash when there are none yet.</summary>
+    public string ShaderCacheTotalText
+    {
+        get
+        {
+            long total = _status.ShaderCaches.Where(c => c.Files > 0).Sum(c => c.Bytes);
+            return total > 0 ? Formatter.Bytes(total).ToString() : "—";
+        }
+    }
+
     /// <summary>Shown when the driver changed since last time (caches start over).</summary>
     public string? DriverNotice => ShaderCachesDriverNotice();
 
     public bool HasDriverNotice => DriverNotice is not null;
 
-    public string ShaderCacheNote => "Smart Optimize never clears these unless you tick \"Shader caches\" yourself. Coreloom doesn't pre-compile shaders by injecting into games: that's what anti-cheat systems ban for.";
+    public string ShaderCacheNote => IsMac
+        ? "Metal keeps the shaders each game compiles, so they aren't compiled again mid-play; macOS clears them itself when it needs the space. Coreloom doesn't pre-compile shaders by adding code to games: that's what anti-cheat systems ban for."
+        : "Smart Optimize never clears these unless you tick \"Shader caches\" yourself. Coreloom doesn't pre-compile shaders by injecting into games: that's what anti-cheat systems ban for.";
 
     // ---- Library -------------------------------------------------------------------------------------------
 
@@ -1100,7 +1116,9 @@ public sealed class GamingViewModel : PageViewModel
 
     public string EmptyText => _search.Length > 0 && _all.Count > 0
         ? "No games match your search."
-        : "Games installed with Steam, Epic Games, GOG, Xbox, Ubisoft Connect, EA app, Battle.net or Riot show up here.";
+        : IsMac
+            ? "Games installed with Steam or Epic Games, and the games in your Applications folder, show up here."
+            : "Games installed with Steam, Epic Games, GOG, Xbox, Ubisoft Connect, EA app, Battle.net or Riot show up here.";
 
     public string Search
     {
@@ -1254,6 +1272,7 @@ public sealed class GamingViewModel : PageViewModel
 
             OnPropertyChanged(nameof(LibrarySummary));
             OnPropertyChanged(nameof(ShaderCacheSummary));
+            OnPropertyChanged(nameof(ShaderCacheTotalText));
             ApplyShaderCaches();
         }
     }
@@ -1635,9 +1654,12 @@ public sealed class GamingViewModel : PageViewModel
 
         OnPropertyChanged(nameof(HasShaderCaches));
         OnPropertyChanged(nameof(ShaderCacheSummary));
+        OnPropertyChanged(nameof(ShaderCacheTotalText));
     }
 
-    private string? ShaderCachesDriverNotice() => Coreloom.Core.Gaming.ShaderCaches.DriverChangeText(Settings.Current.Gaming.LastDriverVersion, _status.DriverVersion);
+    private string? ShaderCachesDriverNotice() => IsMac
+        ? Coreloom.Core.Gaming.ShaderCaches.SystemChangeText(Settings.Current.Gaming.LastDriverVersion, _status.DriverVersion)
+        : Coreloom.Core.Gaming.ShaderCaches.DriverChangeText(Settings.Current.Gaming.LastDriverVersion, _status.DriverVersion);
 
     private void DismissDriverNotice()
     {

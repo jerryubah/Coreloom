@@ -130,7 +130,7 @@
       <!-- Clock limit reasons, and the in-game overlay switch beside them (the reasons wrap to make room) -->
       <Grid Margin="0,16,0,0" ColumnDefinitions="*,Auto">
         <c:SquircleBorder Theme="{StaticResource Card.Inset}" Margin="0,0,12,0" IsVisible="{Binding ClockReasons, Converter={StaticResource HasValue}}"
-                ToolTip.Tip="Why the GPU is not running at its maximum clocks right now (reported by the NVIDIA driver).">
+                ToolTip.Tip="Why the GPU is not running at its maximum clocks right now (reported by the graphics driver).">
           <Grid ColumnDefinitions="Auto,Auto,*">
             <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Info}" VerticalAlignment="Center" />
             <TextBlock Grid.Column="1" Text="Clock limits:" Theme="{StaticResource Text.Label}" Margin="8,0,6,0" VerticalAlignment="Center" />

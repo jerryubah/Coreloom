@@ -26,7 +26,61 @@ public partial class OverviewPage : UserControl
 
 public partial class GamingPage : UserControl
 {
-    public GamingPage() => InitializeComponent();
+    private GamingViewModel? _page;
+
+    public GamingPage()
+    {
+        InitializeComponent();
+        EditorScrim.PointerPressed += (_, e) =>
+        {
+            if (DataContext is GamingViewModel page)
+            {
+                page.Editor.CancelCommand.Execute(null);
+                e.Handled = true;
+            }
+        };
+        DataContextChanged += (_, _) =>
+        {
+            if (_page is not null)
+            {
+                _page.PropertyChanged -= OnPageChanged;
+            }
+
+            _page = DataContext as GamingViewModel;
+            if (_page is not null)
+            {
+                _page.PropertyChanged += OnPageChanged;
+            }
+
+            ShowView();
+        };
+    }
+
+    private void OnPageChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(GamingViewModel.IsGridView) or null)
+        {
+            ShowView();
+        }
+    }
+
+    /// <summary>
+    /// The library as cards in a list or covers in a grid. The template is set before the panel: a new panel makes every
+    /// item again, with the template now set.
+    /// </summary>
+    private void ShowView()
+    {
+        bool grid = _page?.IsGridView == true;
+        var template = (Avalonia.Controls.Templates.IDataTemplate)Resources[grid ? "GameTile" : "GameCard"]!;
+        var panel = (ITemplate<Panel?>)Resources[grid ? "GridPanel" : "ListPanel"]!;
+        if (ReferenceEquals(Library.ItemTemplate, template) && ReferenceEquals(Library.ItemsPanel, panel))
+        {
+            return;
+        }
+
+        Library.ItemTemplate = template;
+        Library.ItemsPanel = panel;
+    }
 }
 
 public partial class BenchmarkingPage : UserControl
@@ -121,4 +175,15 @@ public partial class OptimizePage : UserControl
 public partial class SettingsPage : UserControl
 {
     public SettingsPage() => InitializeComponent();
+
+    /// <summary>Return in a text box (an alert's threshold, a rule's name, the custom accent) applies what was typed.</summary>
+    private void OnCommitOnEnter(object? sender, KeyEventArgs e)
+    {
+        if (e.Key is Key.Enter or Key.Return && sender is TextBox box)
+        {
+            Avalonia.Data.BindingOperations.GetBindingExpressionBase(box, TextBox.TextProperty)?.UpdateSource();
+            TopLevel.GetTopLevel(this)?.FocusManager?.ClearFocus();
+            e.Handled = true;
+        }
+    }
 }

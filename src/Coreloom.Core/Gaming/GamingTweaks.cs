@@ -351,6 +351,21 @@ public static class ShaderCaches
 
         return $"The graphics driver changed from {previous} to {current}. Games compile their shaders again the first time you play them, so expect brief stutter for the first few minutes.";
     }
+
+    /// <summary>
+    /// macOS: the system was updated since last time ("Metal · macOS 15.1" → "Metal · macOS 15.2"); Metal's shaders are
+    /// compiled again after an update, or null when nothing changed.
+    /// </summary>
+    public static string? SystemChangeText(string? previous, string? current)
+    {
+        if (string.IsNullOrEmpty(previous) || string.IsNullOrEmpty(current) || string.Equals(previous, current, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        static string Short(string version) => version.StartsWith("Metal · ", StringComparison.Ordinal) ? version["Metal · ".Length..] : version;
+        return $"Your Mac was updated from {Short(previous)} to {Short(current)}. Games compile their Metal shaders again the first time you play them, so expect brief stutter for the first few minutes.";
+    }
 }
 
 /// <summary>

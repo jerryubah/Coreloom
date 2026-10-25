@@ -527,6 +527,20 @@ public sealed class SettingsViewModel : PageViewModel
         set => Change("Desktop", s => s.Desktop.CloseToTray = value);
     }
 
+    /// <summary>The live readings in the tray icon's tooltip (Windows) or at the top of the menu bar item's menu (macOS).</summary>
+    public bool ShowTrayReadings
+    {
+        get => Settings.Current.Desktop.ShowTrayTooltipStats;
+        set => Change("Desktop", s => s.Desktop.ShowTrayTooltipStats = value);
+    }
+
+    /// <summary>macOS: while the window is closed and Coreloom runs in the menu bar, its Dock icon is hidden too.</summary>
+    public bool HideDockIconWhenClosed
+    {
+        get => Settings.Current.Desktop.HideDockIconWhenClosed;
+        set => Change("Desktop", s => s.Desktop.HideDockIconWhenClosed = value);
+    }
+
     public string? StartupMessage
     {
         get => _startupMessage;

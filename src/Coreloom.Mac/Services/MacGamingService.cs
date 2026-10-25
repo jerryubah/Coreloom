@@ -615,7 +615,7 @@ public sealed class MacGamingService : IGamingService
         var tweaks = new Dictionary<GamingTweak, TweakStatus>
         {
             [GamingTweak.GameMode] = macOS >= 14
-                ? new TweakStatus(true, true, Note: "macOS turns Game Mode on by itself when a game goes full screen.")
+                ? new TweakStatus(true, true) // the card's caveat says macOS turns it on by itself
                 : TweakStatus.Unsupported("Game Mode comes with macOS Sonoma (14) and later."),
             [GamingTweak.KeepAwake] = new TweakStatus(true, settings.KeepAwake),
             [GamingTweak.MetalHud] = await MetalHudStatusAsync(cancellationToken),
@@ -666,8 +666,7 @@ public sealed class MacGamingService : IGamingService
         }
 
         bool on = (!hasLowPower || lowPower == 0) && (!hasPowerMode || powerMode == 2);
-        string note = hasPowerMode ? "Low Power Mode off and High Power Mode on, while plugged in." : "Low Power Mode off while plugged in.";
-        return new TweakStatus(true, on, Note: note);
+        return new TweakStatus(true, on); // the card's description says what "on" sets, with and without High Power Mode
     }
 
     /// <summary>Metal's shader caches in the user's cache folder (one per app), largest first.</summary>

@@ -425,6 +425,17 @@ public sealed class GamingTweakTests
     }
 
     [Fact]
+    public void A_macOS_update_starts_Metal_shader_caches_over()
+    {
+        Assert.Null(ShaderCaches.SystemChangeText(null, "Metal · macOS 15.1"));
+        Assert.Null(ShaderCaches.SystemChangeText("Metal · macOS 15.1", "Metal · macOS 15.1"));
+        string? text = ShaderCaches.SystemChangeText("Metal · macOS 15.1", "Metal · macOS 15.2");
+        Assert.NotNull(text);
+        Assert.Contains("from macOS 15.1 to macOS 15.2", text);
+        Assert.Contains("Metal shaders", text);
+    }
+
+    [Fact]
     public void Gaming_settings_are_repaired()
     {
         var settings = new AppSettings { Gaming = null! };

@@ -149,3 +149,141 @@ internal sealed class SampleBenchmarks : IHardwareBenchmarkService
 
     public void SaveResults(IReadOnlyList<Coreloom.Core.Benchmarks.BenchmarkResult> results) => _results = [.. results];
 }
+
+/// <summary>
+/// The Gaming page on a Mac: a small library from Steam, Epic Games and the Applications folder (invented games, with
+/// abstract pictures drawn here), one of them running, and the macOS boosts.
+/// </summary>
+internal sealed class SampleGaming : IGamingService
+{
+    private static readonly string Art = Path.Combine(Path.GetTempPath(), "coreloom-macshots-art");
+    private readonly List<Coreloom.Core.Gaming.GameEntry> _games;
+
+    public SampleGaming()
+    {
+        Directory.CreateDirectory(Art);
+        var now = DateTimeOffset.Now;
+        _games =
+        [
+            Game("steam:1", "Ember Road", Coreloom.Core.Gaming.GameStore.Steam, 84L << 30, now.AddMinutes(-20), Picture("ember", "#FF7A45", "#5B1A3A", cover: true), Picture("ember-wide", "#FF7A45", "#5B1A3A", cover: false)),
+            Game("steam:2", "Starfall Tactics", Coreloom.Core.Gaming.GameStore.Steam, 41L << 30, now.AddDays(-2), Picture("starfall", "#5B8CFF", "#141A46", cover: true), Picture("starfall-wide", "#5B8CFF", "#141A46", cover: false)),
+            Game("epic:3", "Hollow Peaks", Coreloom.Core.Gaming.GameStore.Epic, 63L << 30, now.AddDays(-9), Picture("hollow", "#3CCB8F", "#0F3B33", cover: true), Picture("hollow-wide", "#3CCB8F", "#0F3B33", cover: false)),
+            Game("app:4", "Tidecaller", Coreloom.Core.Gaming.GameStore.AppStore, 7L << 30, now.AddDays(-30), null, null),
+            Game("steam:5", "Neon Drift", Coreloom.Core.Gaming.GameStore.Steam, 22L << 30, null, null, null),
+            Game("custom:6", "Quiet Orbit", Coreloom.Core.Gaming.GameStore.Custom, 3L << 30, now.AddDays(-4), null, null) with { Executable = "/Applications/Quiet Orbit.app" },
+        ];
+    }
+
+    public bool IsSupported => true;
+
+    private static Coreloom.Core.Gaming.GameEntry Game(string id, string name, Coreloom.Core.Gaming.GameStore store, long size, DateTimeOffset? played, string? cover, string? banner) =>
+        new(id, name, store)
+        {
+            InstallPath = $"/Applications/{name}.app",
+            SizeBytes = size,
+            LastPlayed = played,
+            Launch = $"/Applications/{name}.app",
+            Artwork = new Coreloom.Core.Gaming.GameArtwork(cover, banner, null),
+        };
+
+    /// <summary>An abstract picture: two colors, a sun and a horizon (no real game's art).</summary>
+    private static string Picture(string name, string light, string dark, bool cover)
+    {
+        string file = Path.Combine(Art, name + ".png");
+        if (File.Exists(file))
+        {
+            return file;
+        }
+
+        var size = cover ? new Avalonia.PixelSize(600, 900) : new Avalonia.PixelSize(920, 430);
+        using var bitmap = new Avalonia.Media.Imaging.RenderTargetBitmap(size);
+        using (var dc = bitmap.CreateDrawingContext())
+        {
+            var a = Avalonia.Media.Color.Parse(light);
+            var b = Avalonia.Media.Color.Parse(dark);
+            var rect = new Avalonia.Rect(0, 0, size.Width, size.Height);
+            dc.FillRectangle(new Avalonia.Media.LinearGradientBrush
+            {
+                StartPoint = new Avalonia.RelativePoint(0, 0, Avalonia.RelativeUnit.Relative),
+                EndPoint = new Avalonia.RelativePoint(0, 1, Avalonia.RelativeUnit.Relative),
+                GradientStops = { new(b, 0), new(a, 0.75), new(b, 1) },
+            }, rect);
+            double sun = size.Width * 0.22;
+            dc.DrawEllipse(new Avalonia.Media.SolidColorBrush(Avalonia.Media.Colors.White, 0.85), null, new Avalonia.Point(size.Width * 0.62, size.Height * 0.48), sun, sun);
+            var hills = new Avalonia.Media.StreamGeometry();
+            using (var g = hills.Open())
+            {
+                g.BeginFigure(new Avalonia.Point(0, size.Height * 0.72), true);
+                g.QuadraticBezierTo(new Avalonia.Point(size.Width * 0.3, size.Height * 0.55), new Avalonia.Point(size.Width * 0.55, size.Height * 0.7));
+                g.QuadraticBezierTo(new Avalonia.Point(size.Width * 0.8, size.Height * 0.82), new Avalonia.Point(size.Width, size.Height * 0.66));
+                g.LineTo(new Avalonia.Point(size.Width, size.Height));
+                g.LineTo(new Avalonia.Point(0, size.Height));
+                g.EndFigure(true);
+            }
+
+            dc.DrawGeometry(new Avalonia.Media.SolidColorBrush(b, 0.92), null, hills);
+        }
+
+        bitmap.Save(file);
+        return file;
+    }
+
+    public Task<IReadOnlyList<Coreloom.Core.Gaming.GameEntry>> ScanLibraryAsync(CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<Coreloom.Core.Gaming.GameEntry>>(_games);
+
+    public Task<Coreloom.Core.Gaming.GamingStatus> StatusAsync(Coreloom.Core.Settings.GamingSettings settings, CancellationToken cancellationToken) =>
+        Task.FromResult(new Coreloom.Core.Gaming.GamingStatus
+        {
+            Tweaks = new Dictionary<Coreloom.Core.Gaming.GamingTweak, Coreloom.Core.Gaming.TweakStatus>
+            {
+                [Coreloom.Core.Gaming.GamingTweak.GameMode] = new(true, true),
+                [Coreloom.Core.Gaming.GamingTweak.PowerMode] = new(true, false),
+                [Coreloom.Core.Gaming.GamingTweak.KeepAwake] = new(true, true),
+                [Coreloom.Core.Gaming.GamingTweak.MetalHud] = new(true, false),
+            },
+            RefreshRate = 120,
+            DriverVersion = "Metal · macOS 15.1",
+            ShaderCaches =
+            [
+                new("Metal: com.valvesoftware.steam", "~/Library/Caches/com.apple.metal/com.valvesoftware.steam", 1_420_000_000, 812),
+                new("Metal: com.epicgames.EpicGamesLauncher", "~/Library/Caches/com.apple.metal/com.epicgames.EpicGamesLauncher", 386_000_000, 240),
+                new("Metal: com.example.tidecaller", "~/Library/Caches/com.apple.metal/com.example.tidecaller", 92_000_000, 61),
+                new("Metal: com.apple.Safari", "~/Library/Caches/com.apple.metal/com.apple.Safari", 18_400_000, 22),
+            ],
+        });
+
+    public Task<Coreloom.Core.Gaming.TweakResult> SetTweakAsync(Coreloom.Core.Gaming.GamingTweak tweak, bool on, Coreloom.Core.Settings.GamingSettings settings, CancellationToken cancellationToken) =>
+        Task.FromResult(new Coreloom.Core.Gaming.TweakResult(true, on ? "Turned on." : "Turned off."));
+
+    public Task<Coreloom.Core.Gaming.TweakResult> SetFrameCapAsync(int fps, CancellationToken cancellationToken) =>
+        Task.FromResult(new Coreloom.Core.Gaming.TweakResult(false, "Not on a Mac."));
+
+    public Task<IReadOnlyList<string>> FindExecutablesAsync(Coreloom.Core.Gaming.GameEntry game, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<string>>([]);
+
+    public Task<Coreloom.Core.Gaming.TweakResult> SetGameFrameCapAsync(string gameName, IReadOnlyList<string> executables, int fps, CancellationToken cancellationToken) =>
+        Task.FromResult(new Coreloom.Core.Gaming.TweakResult(false, "Not on a Mac."));
+
+    public Task<Coreloom.Core.Gaming.RunningGame?> FindRunningAsync(IReadOnlyList<Coreloom.Core.Gaming.GameEntry> games, CancellationToken cancellationToken) =>
+        Task.FromResult<Coreloom.Core.Gaming.RunningGame?>(games.FirstOrDefault(g => g.Id == "steam:1") is { } game ? new Coreloom.Core.Gaming.RunningGame(game, [4242]) : null);
+
+    public void WatchFrameRates(bool on)
+    {
+    }
+
+    public Coreloom.Core.Overlay.FrameRateStats? FrameRate(int processId) => null;
+
+    public bool Launch(Coreloom.Core.Gaming.GameEntry game) => true;
+
+    public void OpenFolder(string path)
+    {
+    }
+
+    public Task<IReadOnlyList<Coreloom.Core.Gaming.GameEntry>> DownloadArtworkAsync(IReadOnlyList<Coreloom.Core.Gaming.GameEntry> games, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<Coreloom.Core.Gaming.GameEntry>>([]);
+
+    public bool FileExists(string path) => true;
+
+    public string? PickProgram(string? startIn = null) => "/Applications/Lantern Keep.app";
+
+    public Coreloom.Core.Gaming.ProgramInfo? DescribeProgram(string path) => new(path, Path.GetFileNameWithoutExtension(path));
+}

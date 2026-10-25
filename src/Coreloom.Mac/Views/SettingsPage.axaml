@@ -1,5 +1,888 @@
 <UserControl x:Class="Coreloom.Mac.Views.SettingsPage"
              xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <TextBlock Text="SettingsPage" Margin="32" />
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:Coreloom.Mac.Controls"
+             xmlns:b="using:Coreloom.Mac.Behaviors"
+             xmlns:pages="using:Coreloom.ViewModels.Pages">
+
+  <!-- Settings on a Mac: the Windows page's sections with macOS's words and switches (Open at login, the menu bar and
+       the Dock, a translucent sidebar), without the Windows-only sensor sources (LibreHardwareMonitor, PawnIO, USB fan
+       controllers). -->
+
+  <UserControl.Resources>
+    <!-- One settings row: bottom hairline, comfortable vertical rhythm. -->
+    <ControlTheme x:Key="Row" TargetType="Border">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Divider}" />
+      <Setter Property="BorderThickness" Value="0,0,0,1" />
+      <Setter Property="Padding" Value="0,13" />
+    </ControlTheme>
+    <ControlTheme x:Key="Row.Last" TargetType="Border" BasedOn="{StaticResource Row}">
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="0,13,0,2" />
+    </ControlTheme>
+    <ControlTheme x:Key="Row.Title" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="13.5" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </ControlTheme>
+    <ControlTheme x:Key="Row.Description" TargetType="TextBlock" BasedOn="{StaticResource Text.Caption}">
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="TextTrimming" Value="None" />
+      <Setter Property="Margin" Value="0,3,0,0" />
+    </ControlTheme>
+    <ControlTheme x:Key="Panel.Header" TargetType="TextBlock" BasedOn="{StaticResource Text.Section}">
+      <Setter Property="Margin" Value="0,0,0,4" />
+    </ControlTheme>
+    <ControlTheme x:Key="Panel.Intro" TargetType="TextBlock" BasedOn="{StaticResource Text.Secondary}">
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="TextTrimming" Value="None" />
+      <Setter Property="Margin" Value="0,0,0,14" />
+    </ControlTheme>
+    <ControlTheme x:Key="Group.Label" TargetType="TextBlock" BasedOn="{StaticResource Text.Label}">
+      <Setter Property="Margin" Value="0,20,0,6" />
+    </ControlTheme>
+    <ControlTheme x:Key="Spinner" TargetType="c:RadialGauge">
+      <Setter Property="Width" Value="16" />
+      <Setter Property="Height" Value="16" />
+      <Setter Property="Thickness" Value="2.4" />
+      <Setter Property="SweepAngle" Value="359" />
+      <Setter Property="Value" Value="0.28" />
+      <Setter Property="TrackBrush" Value="Transparent" />
+      <Setter Property="Fill" Value="{DynamicResource Brush.Accent}" />
+    </ControlTheme>
+    <ControlTheme x:Key="Combo.Setting" TargetType="ComboBox" BasedOn="{StaticResource ComboBox.Default}">
+      <Setter Property="MinWidth" Value="240" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Grid.Column" Value="1" />
+      <Setter Property="Margin" Value="20,0,0,0" />
+    </ControlTheme>
+
+    <!-- An accent swatch: a ring around the chosen one, a little larger on hover. -->
+    <ControlTheme x:Key="Swatch" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Grid Background="Transparent">
+            <Ellipse Name="Ring" StrokeThickness="2" Stroke="{DynamicResource Brush.Text}" IsVisible="{TemplateBinding Tag}" />
+            <Ellipse Name="Fill" Margin="5" Fill="{TemplateBinding Background}" />
+          </Grid>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:pointerover /template/ Ellipse#Fill">
+        <Setter Property="Margin" Value="3" />
+      </Style>
+      <Style Selector="^:focus-visible /template/ Ellipse#Ring">
+        <Setter Property="IsVisible" Value="True" />
+        <Setter Property="Stroke" Value="{DynamicResource Brush.Accent}" />
+      </Style>
+    </ControlTheme>
+
+    <!-- The log viewer: a virtualized list of entries in the page's scroll style. -->
+    <ControlTheme x:Key="LogItem" TargetType="ListBoxItem">
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="Root" Background="Transparent" CornerRadius="8" Padding="10,7" Margin="0,0,10,1">
+            <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:pointerover /template/ Border#Root">
+        <Setter Property="Background" Value="{DynamicResource Brush.CardHover}" />
+      </Style>
+      <Style Selector="^:selected /template/ Border#Root">
+        <Setter Property="Background" Value="{DynamicResource Brush.ControlHover}" />
+      </Style>
+    </ControlTheme>
+    <ControlTheme x:Key="LogList" TargetType="ListBox">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="ItemContainerTheme" Value="{StaticResource LogItem}" />
+      <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+      <Setter Property="ItemsPanel">
+        <ItemsPanelTemplate>
+          <VirtualizingStackPanel />
+        </ItemsPanelTemplate>
+      </Setter>
+      <Setter Property="Template">
+        <ControlTemplate>
+          <ScrollViewer Name="PART_ScrollViewer" Theme="{StaticResource ScrollViewer.Page}" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+            <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" />
+          </ScrollViewer>
+        </ControlTemplate>
+      </Setter>
+    </ControlTheme>
+
+    <DataTemplate x:Key="LogLine" DataType="{x:Type pages:LogLineViewModel}">
+      <Grid ColumnDefinitions="150,72,110,*">
+        <TextBlock Text="{Binding TimeText}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Top" Margin="0,1,0,0" />
+        <Border Grid.Column="1" Theme="{StaticResource Badge}" HorizontalAlignment="Left" VerticalAlignment="Top" Background="{DynamicResource Brush.ControlHover}">
+          <TextBlock Classes="level" Classes.info="{Binding LevelKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Info}"
+                     Classes.warning="{Binding LevelKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Warning}"
+                     Classes.error="{Binding LevelKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Error}"
+                     Text="{Binding LevelText}" FontSize="11" FontWeight="SemiBold" />
+        </Border>
+        <TextBlock Grid.Column="2" Text="{Binding Category}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis"
+                   VerticalAlignment="Top" Margin="0,1,8,0" ToolTip.Tip="{Binding Category}" />
+        <StackPanel Grid.Column="3">
+          <TextBlock Text="{Binding Message}" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding Details}" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Brush.TextTertiary}" TextWrapping="Wrap"
+                     Margin="0,3,0,0" MaxHeight="120" TextTrimming="CharacterEllipsis" IsVisible="{Binding HasDetails}" />
+        </StackPanel>
+      </Grid>
+    </DataTemplate>
+
+    <!-- Body of a "What's new" card (a ReleaseSummaryViewModel): intro, a short list with category chips, "and N more". -->
+    <DataTemplate x:Key="WhatsNewBody">
+      <StackPanel>
+        <TextBlock Text="{Binding Intro}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource Brush.Text}" Margin="0,0,0,12" IsVisible="{Binding HasIntro}" />
+        <ItemsControl ItemsSource="{Binding Items}" Focusable="False" Grid.IsSharedSizeScope="True" IsVisible="{Binding HasItems}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Grid RowDefinitions="Auto,Auto" Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" SharedSizeGroup="WhatsNewChip" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Theme="{StaticResource Badge}" Background="{DynamicResource Brush.AccentSoft}" Padding="7,1" Margin="0,1,10,0"
+                        VerticalAlignment="Top" HorizontalAlignment="Left" IsVisible="{Binding HasCategory}">
+                  <TextBlock Text="{Binding Category}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
+                </Border>
+                <Ellipse Width="5" Height="5" Fill="{DynamicResource Brush.Accent}" Margin="2,7,12,0" VerticalAlignment="Top" HorizontalAlignment="Left"
+                         IsVisible="{Binding !HasCategory}" />
+                <TextBlock Grid.Column="1" Text="{Binding Lead}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource Brush.Text}"
+                           FontWeight="{Binding HasTitle, Converter={StaticResource BoolToValue}, ConverterParameter='SemiBold|Normal'}" />
+                <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding Detail}" TextWrapping="Wrap" FontSize="12.5" Margin="0,2,0,0"
+                           Foreground="{DynamicResource Brush.TextSecondary}" IsVisible="{Binding HasDetail}" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding MoreText}" Margin="0,0,0,2" IsVisible="{Binding MoreText, Converter={StaticResource HasValue}}" />
+        <TextBlock Theme="{StaticResource Text.Secondary}" Text="This release has no summary. Its full notes are on GitHub." TextWrapping="Wrap" IsVisible="{Binding IsEmpty}" />
+      </StackPanel>
+    </DataTemplate>
+  </UserControl.Resources>
+
+  <UserControl.Styles>
+    <!-- A log entry's level: blue for info, orange for warnings, red for errors. -->
+    <Style Selector="TextBlock.level">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+    </Style>
+    <Style Selector="TextBlock.level.info">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Info}" />
+    </Style>
+    <Style Selector="TextBlock.level.warning">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Elevated}" />
+    </Style>
+    <Style Selector="TextBlock.level.error">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Critical}" />
+    </Style>
+
+    <!-- The update status icon, tinted by the update's state. -->
+    <Style Selector="Border.updateCircle">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+    </Style>
+    <Style Selector="Border.updateCircle.accent">
+      <Setter Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
+    </Style>
+    <Style Selector="Path.updateIcon">
+      <Setter Property="Stroke" Value="{DynamicResource Brush.TextSecondary}" />
+    </Style>
+    <Style Selector="Path.updateIcon.success">
+      <Setter Property="Stroke" Value="{DynamicResource Brush.Success}" />
+    </Style>
+    <Style Selector="Path.updateIcon.accent">
+      <Setter Property="Stroke" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+    <Style Selector="Path.updateIcon.critical">
+      <Setter Property="Stroke" Value="{DynamicResource Brush.Critical}" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid Margin="32,14,28,0" ColumnDefinitions="200,*">
+
+    <!-- Section list ("Desktop" reads "General" on a Mac, like macOS's own settings) -->
+    <ListBox Theme="{StaticResource NavList}" ItemsSource="{Binding Sections}" SelectedItem="{Binding SelectedSection}" VerticalAlignment="Top"
+             AutomationProperties.Name="Settings sections">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <Grid Margin="16,0,10,0" VerticalAlignment="Center" ColumnDefinitions="Auto,*">
+            <TextBlock Text="{Binding}" VerticalAlignment="Center" IsVisible="{Binding Converter={StaticResource EqualsToBool}, ConverterParameter=!Desktop}" />
+            <TextBlock Text="General" VerticalAlignment="Center" IsVisible="{Binding Converter={StaticResource EqualsToBool}, ConverterParameter=Desktop}" />
+            <!-- Update badge on the "Updates" section -->
+            <Ellipse Grid.Column="1" Width="7" Height="7" Margin="8,1,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" Fill="{DynamicResource Brush.Accent}">
+              <Ellipse.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                  <Binding Converter="{StaticResource EqualsToBool}" ConverterParameter="Updates" />
+                  <Binding Path="$parent[ListBox].DataContext.Updates.ShowBadge" />
+                </MultiBinding>
+              </Ellipse.IsVisible>
+            </Ellipse>
+          </Grid>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <ScrollViewer Grid.Column="1" Theme="{StaticResource ScrollViewer.Page}" Margin="20,0,0,0">
+      <Grid MaxWidth="860" HorizontalAlignment="Left" Margin="0,0,8,32">
+
+        <!-- ======================================================================= -->
+        <!-- Appearance                                                              -->
+        <!-- ======================================================================= -->
+        <StackPanel b:Motion.Entrance="True" IsVisible="{Binding SelectedSection, Converter={StaticResource EqualsToBool}, ConverterParameter=Appearance}">
+          <TextBlock Theme="{StaticResource Panel.Header}" Text="Appearance" />
+          <TextBlock Theme="{StaticResource Panel.Intro}" Text="Theme, accent color and motion. Changes apply immediately." />
+          <c:SquircleBorder Theme="{StaticResource Card}" Padding="20,4,20,10">
+            <StackPanel>
+              <Border Theme="{StaticResource Row}">
+                <Grid ColumnDefinitions="*,Auto">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Theme" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="Dark is tuned for low-light setups. 'Use macOS setting' follows Appearance in System Settings, including Auto." />
+                  </StackPanel>
+                  <ComboBox Theme="{StaticResource Combo.Setting}" ItemsSource="{Binding ThemeOptions}" DisplayMemberBinding="{Binding Label}"
+                            SelectedValueBinding="{Binding Value}" SelectedValue="{Binding Theme}" AutomationProperties.Name="Theme" />
+                </Grid>
+              </Border>
+
+              <Border Theme="{StaticResource Row}">
+                <StackPanel>
+                  <TextBlock Theme="{StaticResource Row.Title}" Text="Accent color" />
+                  <TextBlock Theme="{StaticResource Row.Description}" Text="Used for selection, focus and the default series color." />
+                  <Grid Margin="0,12,0,0" ColumnDefinitions="*,Auto">
+                    <ItemsControl ItemsSource="{Binding AccentOptions}" Focusable="False">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                          <WrapPanel />
+                        </ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type pages:AccentOption}">
+                          <Button Theme="{StaticResource Swatch}" Width="34" Height="34" Margin="0,0,8,8" ToolTip.Tip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
+                                  Background="{Binding Hex, Converter={StaticResource HexToBrush}}"
+                                  Command="{Binding $parent[UserControl].DataContext.SetAccentCommand}" CommandParameter="{Binding Hex}">
+                            <Button.Tag>
+                              <MultiBinding Converter="{StaticResource MultiEquals}">
+                                <Binding Path="Hex" />
+                                <Binding Path="$parent[UserControl].DataContext.Accent" />
+                              </MultiBinding>
+                            </Button.Tag>
+                          </Button>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="16,0,0,0">
+                      <Border Width="34" Height="34" CornerRadius="17" Background="{DynamicResource Brush.Accent}" />
+                      <TextBox Theme="{StaticResource TextBox.Default}" Width="110" Margin="10,0,0,0" Text="{Binding CustomAccent}"
+                               ToolTip.Tip="Any color as #RRGGBB." AutomationProperties.Name="Custom accent color" KeyDown="OnCommitOnEnter" />
+                    </StackPanel>
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <Border Theme="{StaticResource Row}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding UseMica}" IsEnabled="{Binding IsMicaSupported}">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Translucent sidebar" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="Lets your desktop picture tint the sidebar, like Finder's. Off: a solid sidebar. macOS shows it solid too when Reduce transparency is on in Accessibility settings." />
+                  </StackPanel>
+                </CheckBox>
+              </Border>
+
+              <Border Theme="{StaticResource Row}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding AnimateValues}">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Animate numbers" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="Values glide to each new reading instead of jumping." />
+                  </StackPanel>
+                </CheckBox>
+              </Border>
+
+              <Border Theme="{StaticResource Row}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding SmoothChartScrolling}">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Smooth chart scrolling" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="Charts glide continuously between samples (60-second and 5-minute windows). Off: charts step once per sample, which uses slightly less GPU and battery." />
+                  </StackPanel>
+                </CheckBox>
+              </Border>
+
+              <Border Theme="{StaticResource Row.Last}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding ReducedMotion}">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Reduce motion" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="Turns off entrance animations, number animation, smooth scrolling and the live pulse." />
+                  </StackPanel>
+                </CheckBox>
+              </Border>
+            </StackPanel>
+          </c:SquircleBorder>
+        </StackPanel>
+
+        <!-- ======================================================================= -->
+        <!-- Monitoring                                                              -->
+        <!-- ======================================================================= -->
+        <StackPanel b:Motion.Entrance="True" IsVisible="{Binding SelectedSection, Converter={StaticResource EqualsToBool}, ConverterParameter=Monitoring}">
+          <TextBlock Theme="{StaticResource Panel.Header}" Text="Monitoring" />
+          <TextBlock Theme="{StaticResource Panel.Intro}" Text="How often sensors are read, which units are shown, and which hardware is monitored." />
+          <c:SquircleBorder Theme="{StaticResource Card}" Padding="20,4,20,10">
+            <StackPanel>
+              <Border Theme="{StaticResource Row}">
+                <Grid ColumnDefinitions="*,Auto">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Sensor refresh interval" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="How often all sensors are read. Faster costs a little more CPU and battery; on a MacBook running on battery, 2 s or 5 s keeps Coreloom lightest. Slow sensors are always read less often." />
+                  </StackPanel>
+                  <ComboBox Theme="{StaticResource Combo.Setting}" ItemsSource="{Binding PollingOptions}" DisplayMemberBinding="{Binding Label}"
+                            SelectedValueBinding="{Binding Value}" SelectedValue="{Binding PollingIntervalMs}" AutomationProperties.Name="Sensor refresh interval" />
+                </Grid>
+              </Border>
+              <Border Theme="{StaticResource Row}">
+                <Grid ColumnDefinitions="*,Auto">
+                  <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding LighterWhileGaming}">
+                    <StackPanel>
+                      <TextBlock Theme="{StaticResource Row.Title}" Text="Lighter monitoring while gaming" />
+                      <TextBlock Theme="{StaticResource Row.Description}" Text="While a game is in front (full screen, or one of your games), sensors are read less often and Coreloom's window stops redrawing while the game covers it. With the readings window showing, its readings still update every second." />
+                    </StackPanel>
+                  </CheckBox>
+                  <ComboBox Theme="{StaticResource Combo.Setting}" ItemsSource="{Binding GamingPollingOptions}" DisplayMemberBinding="{Binding Label}"
+                            SelectedValueBinding="{Binding Value}" SelectedValue="{Binding GamingIntervalMs}" IsEnabled="{Binding LighterWhileGaming}"
+                            VerticalAlignment="Top" ToolTip.Tip="How often sensors are read while a game is in front" AutomationProperties.Name="Refresh interval while gaming" />
+                </Grid>
+              </Border>
+              <Border Theme="{StaticResource Row}">
+                <Grid ColumnDefinitions="*,Auto">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Default chart window" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="The time range charts show when Coreloom opens." />
+                  </StackPanel>
+                  <ComboBox Theme="{StaticResource Combo.Setting}" ItemsSource="{Binding WindowOptions}" DisplayMemberBinding="{Binding Label}"
+                            SelectedValueBinding="{Binding Value}" SelectedValue="{Binding DefaultWindow}" AutomationProperties.Name="Default chart window" />
+                </Grid>
+              </Border>
+              <Border Theme="{StaticResource Row}">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Theme="{StaticResource Row.Title}" Text="Temperature" VerticalAlignment="Center" />
+                  <ComboBox Theme="{StaticResource Combo.Setting}" ItemsSource="{Binding TemperatureOptions}" DisplayMemberBinding="{Binding Label}"
+                            SelectedValueBinding="{Binding Value}" SelectedValue="{Binding TemperatureUnit}" AutomationProperties.Name="Temperature unit" />
+                </Grid>
+              </Border>
+              <Border Theme="{StaticResource Row}">
+                <Grid ColumnDefinitions="*,Auto">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Memory and storage sizes" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="Like macOS: storage in decimal units (1 GB = 1000 MB), as Finder shows it, and memory in binary units, as Activity Monitor shows it." />
+                  </StackPanel>
+                  <ComboBox Theme="{StaticResource Combo.Setting}" ItemsSource="{Binding DataUnitOptions}" DisplayMemberBinding="{Binding Label}"
+                            SelectedValueBinding="{Binding Value}" SelectedValue="{Binding DataUnits}" AutomationProperties.Name="Memory and storage sizes" />
+                </Grid>
+              </Border>
+              <Border Theme="{StaticResource Row.Last}">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Theme="{StaticResource Row.Title}" Text="Network speed" VerticalAlignment="Center" />
+                  <ComboBox Theme="{StaticResource Combo.Setting}" ItemsSource="{Binding NetworkUnitOptions}" DisplayMemberBinding="{Binding Label}"
+                            SelectedValueBinding="{Binding Value}" SelectedValue="{Binding NetworkUnits}" AutomationProperties.Name="Network speed unit" />
+                </Grid>
+              </Border>
+            </StackPanel>
+          </c:SquircleBorder>
+
+          <TextBlock Theme="{StaticResource Group.Label}" Text="Monitored hardware" />
+          <c:SquircleBorder Theme="{StaticResource Card}" Padding="20,4,20,10">
+            <StackPanel>
+              <TextBlock Theme="{StaticResource Row.Description}" Margin="0,12,0,0"
+                         Text="A section that is turned off stops reading its sensors entirely and is hidden from the sidebar and Overview." />
+              <Border Theme="{StaticResource Row}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding GpuEnabled}">
+                  <TextBlock Theme="{StaticResource Row.Title}" Text="Graphics (GPU)" />
+                </CheckBox>
+              </Border>
+              <Border Theme="{StaticResource Row}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding CpuEnabled}">
+                  <TextBlock Theme="{StaticResource Row.Title}" Text="Processor (CPU)" />
+                </CheckBox>
+              </Border>
+              <Border Theme="{StaticResource Row}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding MemoryEnabled}">
+                  <TextBlock Theme="{StaticResource Row.Title}" Text="Memory" />
+                </CheckBox>
+              </Border>
+              <Border Theme="{StaticResource Row}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding StorageEnabled}">
+                  <TextBlock Theme="{StaticResource Row.Title}" Text="Storage" />
+                </CheckBox>
+              </Border>
+              <Border Theme="{StaticResource Row.Last}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding NetworkEnabled}">
+                  <TextBlock Theme="{StaticResource Row.Title}" Text="Network" />
+                </CheckBox>
+              </Border>
+            </StackPanel>
+          </c:SquircleBorder>
+        </StackPanel>
+
+        <!-- ======================================================================= -->
+        <!-- General (opening at login, the menu bar and the Dock)                   -->
+        <!-- ======================================================================= -->
+        <StackPanel b:Motion.Entrance="True" IsVisible="{Binding SelectedSection, Converter={StaticResource EqualsToBool}, ConverterParameter=Desktop}">
+          <TextBlock Theme="{StaticResource Panel.Header}" Text="General" />
+          <TextBlock Theme="{StaticResource Panel.Intro}" Text="Opening at login, the menu bar and the Dock." />
+          <c:SquircleBorder Theme="{StaticResource Card}" Padding="20,4,20,10">
+            <StackPanel>
+              <Border Theme="{StaticResource Row}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding StartWithWindows}">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Open at login" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="Opens Coreloom when you log in. It's listed in System Settings › General › Login Items, where it can be turned off too; it runs as you, with no administrator rights." />
+                  </StackPanel>
+                </CheckBox>
+              </Border>
+              <Border Theme="{StaticResource Row}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding LaunchMinimized}" IsEnabled="{Binding StartWithWindows}">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Open in the menu bar at login" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="At login, Coreloom starts in the menu bar without opening its window." />
+                  </StackPanel>
+                </CheckBox>
+              </Border>
+              <Border Theme="{StaticResource Row}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding CloseToTray}">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Keep running in the menu bar" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="Closing the window keeps Coreloom monitoring in the menu bar, with alerts. Quit it with ⌘Q or Quit Coreloom in its menu. Off: closing the window quits Coreloom." />
+                  </StackPanel>
+                </CheckBox>
+              </Border>
+              <Border Theme="{StaticResource Row}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding HideDockIconWhenClosed}" IsEnabled="{Binding CloseToTray}">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Hide the Dock icon while the window is closed" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="Coreloom lives only in the menu bar until you open its window again; the Dock icon comes back with the window." />
+                  </StackPanel>
+                </CheckBox>
+              </Border>
+              <Border Theme="{StaticResource Row.Last}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding ShowTrayReadings}">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Readings in the menu bar menu" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="CPU, GPU and memory at the top of Coreloom's menu bar menu, updated live." />
+                  </StackPanel>
+                </CheckBox>
+              </Border>
+            </StackPanel>
+          </c:SquircleBorder>
+          <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding StartupMessage}" TextWrapping="Wrap" Margin="4,10,0,0"
+                     IsVisible="{Binding StartupMessage, Converter={StaticResource HasValue}}" />
+        </StackPanel>
+
+        <!-- ======================================================================= -->
+        <!-- Alerts                                                                  -->
+        <!-- ======================================================================= -->
+        <StackPanel b:Motion.Entrance="True" IsVisible="{Binding SelectedSection, Converter={StaticResource EqualsToBool}, ConverterParameter=Alerts}">
+          <TextBlock Theme="{StaticResource Panel.Header}" Text="Alerts" />
+          <TextBlock Theme="{StaticResource Panel.Intro}" Text="macOS notifications when a reading stays past a threshold you choose. macOS asks once whether Coreloom may send notifications; they can be changed in System Settings › Notifications." />
+
+          <c:SquircleBorder Theme="{StaticResource Card.Inset}" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal">
+              <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Info}" VerticalAlignment="Top" Margin="0,2,0,0" />
+              <TextBlock Margin="10,0,0,0" FontSize="12.5" TextWrapping="Wrap" MaxWidth="720" Foreground="{DynamicResource Brush.TextSecondary}"
+                         Text="These thresholds are personal reminders, not safety limits. Macs protect themselves by slowing down and speeding up their fans long before any harm; Apple silicon chips commonly run near 100 °C under load." />
+            </StackPanel>
+          </c:SquircleBorder>
+
+          <c:SquircleBorder Theme="{StaticResource Card}" Padding="20,4,20,10">
+            <StackPanel>
+              <Border Theme="{StaticResource Row}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding AlertsEnabled}">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Enable alerts" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="Alerts are checked even while the window is closed and Coreloom runs in the menu bar." />
+                  </StackPanel>
+                </CheckBox>
+              </Border>
+              <Border Theme="{StaticResource Row.Last}">
+                <Grid ColumnDefinitions="*,Auto">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Repeat an alert at most every" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="A rule also has to drop back below its threshold (with a small margin) before it can fire again." />
+                  </StackPanel>
+                  <ComboBox Theme="{StaticResource Combo.Setting}" ItemsSource="{Binding CooldownOptions}" DisplayMemberBinding="{Binding Label}"
+                            SelectedValueBinding="{Binding Value}" SelectedValue="{Binding CooldownMinutes}" MinWidth="160" AutomationProperties.Name="Repeat interval" />
+                </Grid>
+              </Border>
+            </StackPanel>
+          </c:SquircleBorder>
+
+          <TextBlock Theme="{StaticResource Group.Label}" Text="Rules" />
+          <ItemsControl ItemsSource="{Binding Rules}" Focusable="False" IsEnabled="{Binding AlertsEnabled}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="{x:Type pages:AlertRuleViewModel}">
+                <c:SquircleBorder Theme="{StaticResource Card}" Padding="18,14" Margin="0,0,0,10">
+                  <StackPanel>
+                    <Grid ColumnDefinitions="*,Auto,Auto">
+                      <StackPanel>
+                        <TextBox Theme="{StaticResource TextBox.Default}" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" FontWeight="SemiBold" MaxWidth="360" HorizontalAlignment="Left" MinWidth="200"
+                                 AutomationProperties.Name="Rule name" KeyDown="OnCommitOnEnter" />
+                        <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding MetricName}" Margin="2,4,0,0" />
+                      </StackPanel>
+                      <CheckBox Grid.Column="1" Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding Enabled}" VerticalAlignment="Top" Margin="12,6,0,0"
+                                AutomationProperties.Name="Rule enabled" />
+                      <Button Grid.Column="2" Theme="{StaticResource Button.Icon}" Command="{Binding RemoveCommand}" VerticalAlignment="Top" Margin="8,2,0,0"
+                              ToolTip.Tip="Delete rule" AutomationProperties.Name="Delete rule">
+                        <Path Theme="{StaticResource IconPath}" Width="10" Height="10" Data="{StaticResource Icon.Close}" />
+                      </Button>
+                    </Grid>
+                    <WrapPanel Margin="0,12,0,0">
+                      <TextBlock Text="Notify when it" Theme="{StaticResource Text.Secondary}" VerticalAlignment="Center" Margin="0,0,8,6" />
+                      <ComboBox Theme="{StaticResource ComboBox.Default}" MinWidth="130" SelectedIndex="{Binding ComparisonIndex}" Margin="0,0,8,6" AutomationProperties.Name="Direction">
+                        <ComboBoxItem Theme="{StaticResource ComboBoxItem.Default}" Content="rises above" />
+                        <ComboBoxItem Theme="{StaticResource ComboBoxItem.Default}" Content="falls below" />
+                      </ComboBox>
+                      <TextBox Theme="{StaticResource TextBox.Default}" Width="74" Margin="0,0,6,6" Text="{Binding Threshold, StringFormat={}{0:0.#}, UpdateSourceTrigger=LostFocus}"
+                               AutomationProperties.Name="Threshold" KeyDown="OnCommitOnEnter" />
+                      <TextBlock Text="{Binding Unit}" Theme="{StaticResource Text.Secondary}" VerticalAlignment="Center" Margin="0,0,12,6" />
+                      <TextBlock Text="for at least" Theme="{StaticResource Text.Secondary}" VerticalAlignment="Center" Margin="0,0,8,6" />
+                      <TextBox Theme="{StaticResource TextBox.Default}" Width="60" Margin="0,0,6,6" Text="{Binding SustainSeconds, UpdateSourceTrigger=LostFocus}"
+                               AutomationProperties.Name="Sustain seconds" KeyDown="OnCommitOnEnter" />
+                      <TextBlock Text="seconds" Theme="{StaticResource Text.Secondary}" VerticalAlignment="Center" Margin="0,0,0,6" />
+                    </WrapPanel>
+                  </StackPanel>
+                </c:SquircleBorder>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <c:SquircleBorder Theme="{StaticResource Card.Inset}" IsEnabled="{Binding AlertsEnabled}">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <TextBlock Text="New rule for" Theme="{StaticResource Text.Secondary}" VerticalAlignment="Center" />
+              <ComboBox x:Name="NewRuleMetric" Grid.Column="1" Theme="{StaticResource ComboBox.Default}" Margin="10,0" HorizontalAlignment="Stretch"
+                        ItemsSource="{Binding AlertMetricOptions}" DisplayMemberBinding="{Binding Name}" AutomationProperties.Name="Metric for new rule" />
+              <Button Grid.Column="2" Theme="{StaticResource Button.Secondary}" Command="{Binding AddRuleCommand}" CommandParameter="{Binding #NewRuleMetric.SelectedItem}">
+                <StackPanel Orientation="Horizontal">
+                  <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Plus}" />
+                  <TextBlock Text="Add rule" Margin="6,0,0,0" />
+                </StackPanel>
+              </Button>
+            </Grid>
+          </c:SquircleBorder>
+        </StackPanel>
+
+        <!-- ======================================================================= -->
+        <!-- Updates                                                                 -->
+        <!-- ======================================================================= -->
+        <StackPanel b:Motion.Entrance="True" IsVisible="{Binding SelectedSection, Converter={StaticResource EqualsToBool}, ConverterParameter=Updates}">
+          <TextBlock Theme="{StaticResource Panel.Header}" Text="Updates" />
+          <TextBlock Theme="{StaticResource Panel.Intro}" Text="Coreloom updates itself from its GitHub releases. Every download is checked against the release's SHA-256 checksums before it replaces the app. Only GitHub is contacted, and no hardware data is sent." />
+
+          <StackPanel DataContext="{Binding Updates}">
+            <!-- Status: check for updates, download progress (Install update sits in the What's new card below) -->
+            <c:SquircleBorder Theme="{StaticResource Card}">
+              <StackPanel>
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <Border Classes="updateCircle" Classes.accent="{Binding StatusTone, Converter={StaticResource EqualsToBool}, ConverterParameter=Accent}"
+                          Width="40" Height="40" CornerRadius="20" VerticalAlignment="Top">
+                    <Path Classes="updateIcon" Classes.success="{Binding StatusTone, Converter={StaticResource EqualsToBool}, ConverterParameter=Success}"
+                          Classes.accent="{Binding StatusTone, Converter={StaticResource EqualsToBool}, ConverterParameter=Accent}"
+                          Classes.critical="{Binding StatusTone, Converter={StaticResource EqualsToBool}, ConverterParameter=Critical}"
+                          Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{Binding StatusIcon, Converter={StaticResource IconKeyToGeometry}}" />
+                  </Border>
+                  <StackPanel Grid.Column="1" Margin="14,0,16,0" VerticalAlignment="Center">
+                    <TextBlock Theme="{StaticResource Text.CardTitle}" Text="{Binding HeadlineText}" TextWrapping="Wrap" />
+                    <TextBlock Theme="{StaticResource Text.Secondary}" Text="{Binding DetailText}" TextWrapping="Wrap" TextTrimming="None" Margin="0,4,0,0" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Theme="{StaticResource Button.Secondary}" Command="{Binding CheckCommand}" IsVisible="{Binding ShowCheckButton}">
+                      <StackPanel Orientation="Horizontal">
+                        <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Refresh}" />
+                        <TextBlock Text="Check for Updates" Margin="6,0,0,0" />
+                      </StackPanel>
+                    </Button>
+                    <Button Theme="{StaticResource Button.Primary}" Command="{Binding InstallCommand}" IsVisible="{Binding ShowStatusInstallButton}"
+                            ToolTip.Tip="Downloads the update if needed, quits Coreloom, replaces the app and opens it again.">
+                      <StackPanel Orientation="Horizontal">
+                        <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Download}" Stroke="{DynamicResource Brush.OnAccent}" />
+                        <TextBlock Text="Install update" Margin="6,0,0,0" />
+                      </StackPanel>
+                    </Button>
+                    <Button Theme="{StaticResource Button.Secondary}" Content="Cancel" Command="{Binding CancelDownloadCommand}" IsVisible="{Binding ShowCancelButton}" />
+                  </StackPanel>
+                </Grid>
+                <ProgressBar Theme="{StaticResource ProgressBar.Thin}" Margin="54,14,0,0" Maximum="100"
+                             Value="{Binding Progress, Mode=OneWay, Converter={StaticResource FractionToPercent}}" IsVisible="{Binding IsDownloading}" />
+                <ProgressBar Theme="{StaticResource ProgressBar.Thin}" Margin="54,14,0,0" IsIndeterminate="True" IsVisible="{Binding IsChecking}" />
+              </StackPanel>
+            </c:SquircleBorder>
+
+            <!-- What's new in the version that is available / downloading / ready -->
+            <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,12,0,0" IsVisible="{Binding ShowUpdateSummary}">
+              <StackPanel>
+                <Grid Margin="0,0,0,12" ColumnDefinitions="Auto,*">
+                  <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.Accent}" VerticalAlignment="Top" Margin="0,2,0,0" />
+                  <StackPanel Grid.Column="1" Margin="10,0,0,0" DataContext="{Binding UpdateSummary}">
+                    <TextBlock Theme="{StaticResource Text.CardTitle}" Text="{Binding Heading}" />
+                    <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding PublishedText}" Margin="0,2,0,0"
+                               IsVisible="{Binding PublishedText, Converter={StaticResource HasValue}}" />
+                  </StackPanel>
+                </Grid>
+                <ContentControl Content="{Binding UpdateSummary}" ContentTemplate="{StaticResource WhatsNewBody}" Focusable="False" />
+                <WrapPanel Margin="0,14,0,0">
+                  <Button Theme="{StaticResource Button.Primary}" Command="{Binding InstallCommand}" Margin="0,0,8,0" IsVisible="{Binding ShowInstallButton}"
+                          ToolTip.Tip="Downloads the update if needed, quits Coreloom, replaces the app and opens it again.">
+                    <StackPanel Orientation="Horizontal">
+                      <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Download}" Stroke="{DynamicResource Brush.OnAccent}" />
+                      <TextBlock Text="Install update" Margin="6,0,0,0" />
+                    </StackPanel>
+                  </Button>
+                  <Button Theme="{StaticResource Button.Subtle}" Content="Skip this version" Command="{Binding SkipCommand}"
+                          ToolTip.Tip="Don't install this version. You'll hear about the next one." />
+                </WrapPanel>
+              </StackPanel>
+            </c:SquircleBorder>
+
+            <!-- What's new in the running version (after Coreloom updated itself) -->
+            <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,12,0,0" IsVisible="{Binding ShowInstalledSummary}">
+              <StackPanel>
+                <Grid Margin="0,0,0,12" ColumnDefinitions="Auto,*">
+                  <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.Accent}" VerticalAlignment="Top" Margin="0,2,0,0" />
+                  <TextBlock Grid.Column="1" Margin="10,0,0,0" Theme="{StaticResource Text.CardTitle}" Text="{Binding InstalledHeading}" />
+                </Grid>
+                <ContentControl Content="{Binding InstalledSummary}" ContentTemplate="{StaticResource WhatsNewBody}" Focusable="False"
+                                IsVisible="{Binding InstalledSummary, Converter={StaticResource HasValue}}" />
+                <TextBlock Theme="{StaticResource Text.Secondary}" Text="{Binding InstalledSummaryFallback}" TextWrapping="Wrap"
+                           IsVisible="{Binding InstalledSummary, Converter={StaticResource HasValue}, ConverterParameter=Invert}" />
+                <Button Theme="{StaticResource Button.Secondary}" Command="{Binding OpenInstalledReleaseCommand}" Margin="0,10,0,0" HorizontalAlignment="Left">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Release notes on GitHub" />
+                    <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.External}" Margin="6,0,0,0" />
+                  </StackPanel>
+                </Button>
+              </StackPanel>
+            </c:SquircleBorder>
+          </StackPanel>
+
+          <!-- Preferences -->
+          <c:SquircleBorder Theme="{StaticResource Card}" Padding="20,4,20,10" Margin="0,12,0,0">
+            <StackPanel>
+              <Border Theme="{StaticResource Row}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding Updates.AutoInstall}" IsEnabled="{Binding Updates.CanInstall}">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Update automatically" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="{Binding Updates.AutoInstallDescription}" />
+                  </StackPanel>
+                </CheckBox>
+              </Border>
+              <Border Theme="{StaticResource Row}">
+                <Grid ColumnDefinitions="*,Auto">
+                  <StackPanel VerticalAlignment="Center">
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Check for updates" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="How often Coreloom looks for a new version on its own." />
+                  </StackPanel>
+                  <ComboBox Theme="{StaticResource Combo.Setting}" ItemsSource="{Binding UpdateFrequencyOptions}" DisplayMemberBinding="{Binding Label}"
+                            SelectedValueBinding="{Binding Value}" SelectedValue="{Binding UpdateFrequency}" AutomationProperties.Name="Update check frequency" />
+                </Grid>
+              </Border>
+              <Border Theme="{StaticResource Row.Last}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding IncludePrereleases}">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Include pre-release versions" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="Get beta builds before they are marked stable." />
+                  </StackPanel>
+                </CheckBox>
+              </Border>
+            </StackPanel>
+          </c:SquircleBorder>
+        </StackPanel>
+
+        <!-- ======================================================================= -->
+        <!-- Diagnostics                                                             -->
+        <!-- ======================================================================= -->
+        <StackPanel b:Motion.Entrance="True" IsVisible="{Binding SelectedSection, Converter={StaticResource EqualsToBool}, ConverterParameter=Diagnostics}">
+          <TextBlock Theme="{StaticResource Panel.Header}" Text="Diagnostics" />
+          <TextBlock Theme="{StaticResource Panel.Intro}" Text="What Coreloom can read on this Mac, how each sensor source is doing, and what Coreloom itself costs." />
+
+          <c:SquircleBorder Theme="{StaticResource Card}">
+            <Grid ColumnDefinitions="Auto,*">
+              <Path Theme="{StaticResource IconPath}" Data="{StaticResource Icon.Shield}" VerticalAlignment="Top" Margin="0,2,0,0" />
+              <StackPanel Grid.Column="1" Margin="12,0,12,0">
+                <TextBlock Theme="{StaticResource Text.CardTitle}" Text="{Binding PrivilegeText}" TextWrapping="Wrap" />
+                <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding LowLevelExplanation}" TextWrapping="Wrap" TextTrimming="None" Margin="0,8,0,0" />
+              </StackPanel>
+            </Grid>
+          </c:SquircleBorder>
+
+          <TextBlock Theme="{StaticResource Group.Label}" Text="Sensor sources" />
+          <c:SquircleBorder Theme="{StaticResource Card}">
+            <ItemsControl ItemsSource="{Binding Providers}" Focusable="False">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type pages:ProviderStatusItem}">
+                  <Grid Margin="0,6" ColumnDefinitions="Auto,190,*,Auto">
+                    <Ellipse Width="8" Height="8" VerticalAlignment="Top" Margin="0,5,0,0"
+                             Fill="{Binding IsHealthy, Converter={StaticResource BoolToBrush}, ConverterParameter='Brush.Success|Brush.Elevated'}" />
+                    <StackPanel Grid.Column="1" Margin="10,0,12,0">
+                      <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
+                      <TextBlock Text="{Binding State}" Theme="{StaticResource Text.Caption}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="{Binding Message}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="3" Text="{Binding Timing}" Theme="{StaticResource Text.Caption}" FontFamily="{StaticResource MonoFont}" FontSize="11" VerticalAlignment="Center" Margin="12,0,0,0" />
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </c:SquircleBorder>
+
+          <TextBlock Theme="{StaticResource Group.Label}" Text="Coreloom's own overhead" />
+          <c:SquircleBorder Theme="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock Text="{Binding OverheadText}" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
+              <TextBlock Theme="{StaticResource Text.Caption}" Margin="0,4,0,0" TextWrapping="Wrap" TextTrimming="None"
+                         Text="Measured live from Coreloom's own process. CPU is a share of the whole Mac (all cores), the way Activity Monitor's CPU % divided by the number of cores reads." />
+              <StackPanel Margin="0,12,0,0" IsVisible="{Binding HasOverheadParts}">
+                <TextBlock Text="By part, over the last few seconds" Theme="{StaticResource Text.Label}" Margin="0,0,0,4" />
+                <ItemsControl ItemsSource="{Binding OverheadParts}" Focusable="False">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Grid Margin="0,3" ColumnDefinitions="220,*">
+                        <TextBlock Text="{Binding Key}" FontSize="12.5" Foreground="{DynamicResource Brush.TextSecondary}" />
+                        <TextBlock Grid.Column="1" Text="{Binding Value}" FontFamily="{StaticResource MonoFont}" FontSize="12" Foreground="{DynamicResource Brush.Text}" />
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </StackPanel>
+          </c:SquircleBorder>
+
+          <c:SquircleBorder Theme="{StaticResource Card}" Padding="20,4,20,10" Margin="0,12,0,0">
+            <StackPanel>
+              <Border Theme="{StaticResource Row}">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding VerboseLogging}">
+                  <StackPanel>
+                    <TextBlock Theme="{StaticResource Row.Title}" Text="Verbose logging" />
+                    <TextBlock Theme="{StaticResource Row.Description}" Text="Writes more detail to the local log files. Logs never leave this Mac." />
+                  </StackPanel>
+                </CheckBox>
+              </Border>
+              <WrapPanel Margin="0,14,0,4">
+                <Button Theme="{StaticResource Button.Secondary}" Command="{Binding ExportReportCommand}" Margin="0,0,8,8"
+                        ToolTip.Tip="Saves a Markdown report of detected hardware, sensor sources and current readings. Review it before sharing.">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Download}" />
+                    <TextBlock Text="Export diagnostic report" Margin="6,0,0,0" />
+                  </StackPanel>
+                </Button>
+                <Button Theme="{StaticResource Button.Secondary}" Command="{Binding ViewLogsCommand}" Margin="0,0,8,8"
+                        ToolTip.Tip="Opens the log viewer: every entry with its time, searchable and filtered by level and category.">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.List}" />
+                    <TextBlock Text="View logs" Margin="6,0,0,0" />
+                  </StackPanel>
+                </Button>
+                <Button Theme="{StaticResource Button.Secondary}" Command="{Binding OpenLogsCommand}" Margin="0,0,8,8">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Folder}" />
+                    <TextBlock Text="Show logs in Finder" Margin="6,0,0,0" />
+                  </StackPanel>
+                </Button>
+                <Button Theme="{StaticResource Button.Secondary}" Command="{Binding RescanCommand}" Margin="0,0,8,8"
+                        ToolTip.Tip="Re-detects hardware and restarts every sensor source (useful after connecting a display or a drive).">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Refresh}" />
+                    <TextBlock Text="Rescan hardware" Margin="6,0,0,0" />
+                  </StackPanel>
+                </Button>
+              </WrapPanel>
+            </StackPanel>
+          </c:SquircleBorder>
+        </StackPanel>
+
+        <!-- ======================================================================= -->
+        <!-- Logs                                                                    -->
+        <!-- ======================================================================= -->
+        <StackPanel b:Motion.Entrance="True" DataContext="{Binding Logs}"
+                    IsVisible="{Binding $parent[UserControl].DataContext.SelectedSection, Converter={StaticResource EqualsToBool}, ConverterParameter=Logs}">
+          <TextBlock Theme="{StaticResource Panel.Header}" Text="Logs" />
+          <TextBlock Theme="{StaticResource Panel.Intro}" Text="Everything Coreloom has written to its log on this Mac, newest first: what it found, what it changed and anything that went wrong. Logs never leave this Mac." />
+
+          <c:SquircleBorder Theme="{StaticResource Card}" Padding="16,14,6,10">
+            <StackPanel>
+              <WrapPanel Margin="0,0,10,4">
+                <Grid Width="300" Margin="0,0,10,8" VerticalAlignment="Center">
+                  <TextBox Theme="{StaticResource TextBox.Default}" Padding="32,7,10,7" Text="{Binding Search}" Watermark="Search (process name, PID, words…)"
+                           AutomationProperties.Name="Search the log" />
+                  <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Search}" HorizontalAlignment="Left" Margin="12,0,0,0" IsHitTestVisible="False" />
+                </Grid>
+                <ComboBox Theme="{StaticResource ComboBox.Default}" MinWidth="170" Margin="0,0,10,8" VerticalAlignment="Center" ItemsSource="{Binding LevelOptions}"
+                          DisplayMemberBinding="{Binding Label}" SelectedValueBinding="{Binding Value}" SelectedValue="{Binding MinimumLevel}" AutomationProperties.Name="Level" ToolTip.Tip="Level" />
+                <ComboBox Theme="{StaticResource ComboBox.Default}" MinWidth="170" Margin="0,0,10,8" VerticalAlignment="Center" ItemsSource="{Binding Categories}"
+                          SelectedItem="{Binding Category}" AutomationProperties.Name="Category" ToolTip.Tip="Category" />
+                <Button Theme="{StaticResource Button.Subtle}" Margin="0,0,6,8" Command="{Binding ClearFiltersCommand}" Content="Clear filters" VerticalAlignment="Center" />
+              </WrapPanel>
+              <Grid Margin="0,0,10,8" ColumnDefinitions="*,Auto">
+                <TextBlock Text="{Binding Summary}" Theme="{StaticResource Text.Caption}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                  <Button Theme="{StaticResource Button.Subtle}" Command="{Binding CopyCommand}" ToolTip.Tip="Copies the selected entry, or every entry shown when none is selected" Margin="0,0,6,0">
+                    <TextBlock Text="Copy" />
+                  </Button>
+                  <Button Theme="{StaticResource Button.Secondary}" Command="{Binding RefreshCommand}" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                      <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Refresh}" />
+                      <TextBlock Text="Refresh" Margin="6,0,0,0" />
+                    </StackPanel>
+                  </Button>
+                  <Button Theme="{StaticResource Button.Secondary}" Command="{Binding OpenFolderCommand}" ToolTip.Tip="{Binding LogDirectory}">
+                    <StackPanel Orientation="Horizontal">
+                      <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Folder}" />
+                      <TextBlock Text="Show in Finder" Margin="6,0,0,0" />
+                    </StackPanel>
+                  </Button>
+                </StackPanel>
+              </Grid>
+              <Border Theme="{StaticResource Divider}" Margin="0,0,10,4" />
+              <Grid>
+                <ListBox Theme="{StaticResource LogList}" Height="560" ItemsSource="{Binding Lines}" SelectedItem="{Binding Selected}" ItemTemplate="{StaticResource LogLine}"
+                         AutomationProperties.Name="Log entries" />
+                <TextBlock Text="No entries match. Clear the filters to see everything." Theme="{StaticResource Text.Secondary}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,30,0,0"
+                           IsVisible="{Binding IsEmpty}" />
+                <c:RadialGauge Theme="{StaticResource Spinner}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,30,0,0" b:Spin.IsSpinning="{Binding IsLoading}"
+                               IsVisible="{Binding IsLoading}" />
+              </Grid>
+            </StackPanel>
+          </c:SquircleBorder>
+        </StackPanel>
+
+        <!-- ======================================================================= -->
+        <!-- About                                                                   -->
+        <!-- ======================================================================= -->
+        <StackPanel b:Motion.Entrance="True" IsVisible="{Binding SelectedSection, Converter={StaticResource EqualsToBool}, ConverterParameter=About}">
+          <TextBlock Theme="{StaticResource Panel.Header}" Text="About" />
+          <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,10,0,0">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <Image Source="{DynamicResource Image.AppIconLarge}" Width="56" Height="56" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="Coreloom" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
+                  <TextBlock Text="{Binding VersionText}" Theme="{StaticResource Text.Secondary}" Margin="0,2,0,0" />
+                </StackPanel>
+              </StackPanel>
+              <TextBlock Theme="{StaticResource Text.Body}" TextWrapping="Wrap" Margin="0,16,0,0"
+                         Text="A native hardware monitor for the Mac, on Apple silicon and Intel. Coreloom only reads sensors: it never changes clocks, voltages, fan speeds or firmware settings, never installs drivers, helpers or kernel extensions, and never sends your data anywhere." />
+              <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                <Button Theme="{StaticResource Button.Secondary}" Command="{Binding OpenRepositoryCommand}" Margin="0,0,8,0">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding RepositoryText, TargetNullValue='Source code'}" />
+                    <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.External}" Margin="6,0,0,0" />
+                  </StackPanel>
+                </Button>
+                <Button Theme="{StaticResource Button.Subtle}" Content="Third-party notices" Command="{Binding OpenNoticesCommand}" />
+              </StackPanel>
+              <TextBlock Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="0,16,0,0"
+                         Text="Released under the MIT License. Uses Avalonia (MIT), SkiaSharp (MIT) and CommunityToolkit.Mvvm (MIT). Apple, Mac, macOS and Metal are trademarks of Apple Inc., registered in the U.S. and other countries. Coreloom is not affiliated with Apple." />
+            </StackPanel>
+          </c:SquircleBorder>
+        </StackPanel>
+      </Grid>
+    </ScrollViewer>
+  </Grid>
 </UserControl>

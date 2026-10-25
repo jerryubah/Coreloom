@@ -1,5 +1,619 @@
 <UserControl x:Class="Coreloom.Mac.Views.GamingPage"
              xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <TextBlock Text="GamingPage" Margin="32" />
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:Coreloom.Mac.Controls"
+             xmlns:b="using:Coreloom.Mac.Behaviors"
+             xmlns:pages="using:Coreloom.ViewModels.Pages">
+
+  <!-- The Gaming page on a Mac: Game Boost (the macOS switches that matter for games: Game Mode, full power on the
+       charger, keeping the Mac awake, Apple's Metal Performance HUD), Metal's shader caches, and the game library from
+       Steam, Epic Games and the Applications folder. The Windows page's frame limiter, adaptive pacing and CPU core
+       scheduling set the NVIDIA driver and AMD's scheduler, which a Mac doesn't have, so they aren't here. -->
+
+  <UserControl.Resources>
+    <!-- A small spinning arc for "working". -->
+    <ControlTheme x:Key="GameSpinner" TargetType="c:RadialGauge">
+      <Setter Property="Width" Value="15" />
+      <Setter Property="Height" Value="15" />
+      <Setter Property="Thickness" Value="2.3" />
+      <Setter Property="SweepAngle" Value="359" />
+      <Setter Property="Value" Value="0.28" />
+      <Setter Property="TrackBrush" Value="Transparent" />
+      <Setter Property="Fill" Value="{DynamicResource Brush.Accent}" />
+    </ControlTheme>
+
+    <!-- The readiness ring in the banner: the accent as a sweep gradient. -->
+    <ControlTheme x:Key="BoostRing" TargetType="c:RadialGauge">
+      <Setter Property="Thickness" Value="14" />
+      <Setter Property="SweepAngle" Value="359" />
+      <Setter Property="TrackBrush" Value="Transparent" />
+      <Setter Property="Gradient" Value="Accent" />
+      <Setter Property="Value" Value="{Binding Readiness}" />
+    </ControlTheme>
+
+    <!-- A small tile's value in the banner. -->
+    <ControlTheme x:Key="StatValue" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+      <Setter Property="FontSize" Value="20" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Margin" Value="0,6,0,0" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </ControlTheme>
+
+    <!-- A boost: icon, name and what it helps with, what it does, its switch, and what happened. -->
+    <DataTemplate x:Key="BoostCard" DataType="{x:Type pages:GamingTweakViewModel}">
+      <c:SquircleBorder Theme="{StaticResource Card}" Padding="16,14,16,14" ToolTip.Tip="{Binding Advice}"
+                        Opacity="{Binding IsSupported, Converter={StaticResource BoolToDouble}, ConverterParameter='1|0.62'}">
+        <Grid RowDefinitions="Auto,*,Auto">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <Grid Width="36" Height="36" VerticalAlignment="Top">
+              <c:SquircleBorder CornerRadius="10" Background="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" Opacity="0.16" />
+              <Path Classes="glyph" Classes.off="{Binding ColorKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Neutral}"
+                    Theme="{StaticResource IconPath}" Width="17" Height="17" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
+            </Grid>
+            <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
+              <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
+              <WrapPanel Orientation="Horizontal" Margin="0,4,0,0">
+                <Border Classes="pill status" Classes.on="{Binding IsOn}" Classes.restart="{Binding NeedsRestart}" Margin="0,0,6,2">
+                  <TextBlock Text="{Binding StatusText}" FontSize="10.5" FontWeight="SemiBold" />
+                </Border>
+                <!-- what it helps with -->
+                <Border Classes="pill" Margin="0,0,6,2" Background="{DynamicResource Brush.ControlHover}" IsVisible="{Binding HasCategory}">
+                  <TextBlock Text="{Binding Category}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+                </Border>
+                <Border Theme="{StaticResource Badge}" Margin="0,0,6,2" IsVisible="{Binding HasTag}">
+                  <TextBlock Text="{Binding Tag}" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
+                </Border>
+              </WrapPanel>
+            </StackPanel>
+            <Grid Grid.Column="2" VerticalAlignment="Top">
+              <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding IsOn, Mode=TwoWay}" IsEnabled="{Binding CanToggle}"
+                        AutomationProperties.Name="{Binding Title}" IsVisible="{Binding !IsBusy}" />
+              <c:RadialGauge Theme="{StaticResource GameSpinner}" Margin="0,4,10,0" b:Spin.IsSpinning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+            </Grid>
+          </Grid>
+          <StackPanel Grid.Row="1" Margin="0,12,0,0">
+            <TextBlock Text="{Binding Description}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" />
+            <TextBlock Text="{Binding Recommendation}" FontSize="11.5" Foreground="{DynamicResource Brush.TextSecondary}" TextWrapping="Wrap" Margin="0,8,0,0"
+                       IsVisible="{Binding HasRecommendation}" />
+            <TextBlock Text="{Binding Caveat}" FontSize="11.5" Foreground="{DynamicResource Brush.TextTertiary}" TextWrapping="Wrap" Margin="0,4,0,0"
+                       IsVisible="{Binding HasCaveat}" />
+          </StackPanel>
+          <TextBlock Grid.Row="2" Text="{Binding Message}" FontSize="11.5" TextWrapping="Wrap" Margin="0,8,0,0" IsVisible="{Binding HasMessage}"
+                     Foreground="{Binding IsSupported, Converter={StaticResource BoolToBrush}, ConverterParameter='Brush.Elevated|Brush.TextTertiary'}" />
+        </Grid>
+      </c:SquircleBorder>
+    </DataTemplate>
+
+    <!-- A game as a card in the list: its banner, name, store and size, when it was played, Play and its folder. -->
+    <DataTemplate x:Key="GameCard" DataType="{x:Type pages:GameViewModel}">
+      <c:SquircleBorder Classes="gameCard" Classes.running="{Binding IsRunning}" Theme="{StaticResource Card}" Padding="10,10,14,10">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+
+          <!-- The picture, or the game's initials on its color -->
+          <Grid Width="164" Height="77">
+            <Border CornerRadius="9" Background="{Binding PlaceholderColor, Converter={StaticResource HexToBrush}}" Opacity="0.9" />
+            <Border CornerRadius="9" Background="{DynamicResource Brush.Card}" Opacity="0.18" />
+            <TextBlock Text="{Binding Initials}" FontSize="24" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.92" />
+            <Border Width="44" Height="44" HorizontalAlignment="Center" VerticalAlignment="Center" b:AsyncImage.DecodeWidth="88" b:AsyncImage.Path="{Binding Icon}"
+                    IsVisible="{Binding HasIconOnly}" />
+            <Border CornerRadius="9" b:AsyncImage.DecodeWidth="330" b:AsyncImage.Path="{Binding ListPicture}" />
+            <Border CornerRadius="9" BorderThickness="1" BorderBrush="{DynamicResource Brush.CardBorder}" />
+          </Grid>
+
+          <StackPanel Grid.Column="1" Margin="14,0,10,0" VerticalAlignment="Center">
+            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
+            <TextBlock Text="{Binding Detail}" Theme="{StaticResource Text.Secondary}" FontSize="12" Margin="0,3,0,0" />
+            <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+              <Border CornerRadius="6" Padding="7,1" Margin="0,0,8,0" Background="{DynamicResource Brush.SuccessSoft}" IsVisible="{Binding IsRunning}">
+                <StackPanel Orientation="Horizontal">
+                  <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" b:Pulse.IsPulsing="{Binding IsRunning}" />
+                  <TextBlock Text="Playing" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Success}" Margin="5,0,0,0" />
+                </StackPanel>
+              </Border>
+              <TextBlock Text="{Binding LastPlayedText}" Theme="{StaticResource Text.Caption}" VerticalAlignment="Center" />
+            </StackPanel>
+          </StackPanel>
+
+          <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+            <Button Theme="{StaticResource Button.Icon}" Width="32" Height="32" Margin="0,0,2,0" Command="{Binding EditCommand}"
+                    ToolTip.Tip="Change or remove this game" AutomationProperties.Name="Edit game" IsVisible="{Binding IsCustom}">
+              <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Edit}" />
+            </Button>
+            <Button Theme="{StaticResource Button.Icon}" Width="32" Height="32" Margin="0,0,6,0" Command="{Binding OpenFolderCommand}"
+                    ToolTip.Tip="Show the game in Finder" AutomationProperties.Name="Show in Finder" IsVisible="{Binding CanOpenFolder}">
+              <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Folder}" />
+            </Button>
+            <Button Theme="{StaticResource Button.Primary}" Padding="14,7" Command="{Binding PlayCommand}" IsEnabled="{Binding CanPlay}"
+                    AutomationProperties.Name="{Binding Name, StringFormat='Play {0}'}">
+              <StackPanel Orientation="Horizontal">
+                <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
+                <TextBlock Text="Play" Margin="7,0,0,0" />
+              </StackPanel>
+            </Button>
+          </StackPanel>
+        </Grid>
+      </c:SquircleBorder>
+    </DataTemplate>
+
+    <!-- A game as a cover in the grid (2:3 like a box), with its name and store; Play appears over the cover on hover. -->
+    <DataTemplate x:Key="GameTile" DataType="{x:Type pages:GameViewModel}">
+      <Grid Classes="tile" RowDefinitions="Auto,Auto,Auto" Background="Transparent" ToolTip.Tip="{Binding Name}" ToolTip.ShowDelay="900">
+
+        <Grid>
+          <!-- Sets the cover's height to 1.5 × its width. -->
+          <Viewbox Stretch="Uniform" IsHitTestVisible="False">
+            <Rectangle Width="2" Height="3" />
+          </Viewbox>
+          <c:SquircleBorder CornerRadius="14" Background="{Binding PlaceholderColor, Converter={StaticResource HexToBrush}}" Opacity="0.9" />
+          <c:SquircleBorder CornerRadius="14">
+            <c:SquircleBorder.Background>
+              <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0" Color="#00000000" />
+                <GradientStop Offset="1" Color="#55000000" />
+              </LinearGradientBrush>
+            </c:SquircleBorder.Background>
+          </c:SquircleBorder>
+          <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12">
+            <Border Width="64" Height="64" HorizontalAlignment="Center" Margin="0,0,0,10" b:AsyncImage.DecodeWidth="128" b:AsyncImage.Path="{Binding Icon}"
+                    IsVisible="{Binding HasIconOnly}" />
+            <TextBlock Text="{Binding Initials}" FontSize="34" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" Opacity="0.92" />
+          </StackPanel>
+          <c:SquircleBorder CornerRadius="14" b:AsyncImage.DecodeWidth="360" b:AsyncImage.Path="{Binding GridPicture}" />
+
+          <!-- Hover: a shade, Play, Show in Finder and Edit -->
+          <c:SquircleBorder Classes="reveal" CornerRadius="14" IsHitTestVisible="False">
+            <c:SquircleBorder.Background>
+              <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Offset="0.35" Color="#00000000" />
+                <GradientStop Offset="1" Color="#D0000000" />
+              </LinearGradientBrush>
+            </c:SquircleBorder.Background>
+          </c:SquircleBorder>
+          <Button Classes="reveal" Theme="{StaticResource Button.Primary}" Padding="16,7" Margin="0,0,0,14" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                  Command="{Binding PlayCommand}" IsEnabled="{Binding CanPlay}" AutomationProperties.Name="{Binding Name, StringFormat='Play {0}'}">
+            <StackPanel Orientation="Horizontal">
+              <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
+              <TextBlock Text="Play" Margin="7,0,0,0" />
+            </StackPanel>
+          </Button>
+          <Button Classes="reveal" Theme="{StaticResource Button.Icon}" Width="30" Height="30" Margin="0,8,8,0" HorizontalAlignment="Right" VerticalAlignment="Top"
+                  Background="#99000000" Command="{Binding OpenFolderCommand}" ToolTip.Tip="Show the game in Finder"
+                  AutomationProperties.Name="Show in Finder" IsVisible="{Binding CanOpenFolder}">
+            <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Folder}" Stroke="White" />
+          </Button>
+          <Button Classes="reveal" Theme="{StaticResource Button.Icon}" Width="30" Height="30" Margin="0,8,42,0" HorizontalAlignment="Right" VerticalAlignment="Top"
+                  Background="#99000000" Command="{Binding EditCommand}" ToolTip.Tip="Change or remove this game"
+                  AutomationProperties.Name="Edit game" IsVisible="{Binding IsCustom}">
+            <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Edit}" Stroke="White" />
+          </Button>
+
+          <Border CornerRadius="7" Padding="8,3" Margin="8" HorizontalAlignment="Left" VerticalAlignment="Top" Background="#CC0B1A10" IsVisible="{Binding IsRunning}">
+            <StackPanel Orientation="Horizontal">
+              <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" b:Pulse.IsPulsing="{Binding IsRunning}" />
+              <TextBlock Text="Playing" FontSize="11" FontWeight="SemiBold" Foreground="White" Margin="6,0,0,0" />
+            </StackPanel>
+          </Border>
+          <c:SquircleBorder Classes="outline" Classes.running="{Binding IsRunning}" CornerRadius="14" IsHitTestVisible="False" />
+        </Grid>
+
+        <TextBlock Grid.Row="1" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="2,10,2,0" TextTrimming="CharacterEllipsis" />
+        <TextBlock Grid.Row="2" Text="{Binding StoreName}" Theme="{StaticResource Text.Caption}" Margin="2,2,2,0" />
+      </Grid>
+    </DataTemplate>
+
+    <!-- The two ways to lay out the library (switched in code with the List / Grid choice). -->
+    <ItemsPanelTemplate x:Key="ListPanel">
+      <c:AdaptiveGrid MinColumnWidth="440" MaxColumns="3" Spacing="12" UniformRowHeight="True" />
+    </ItemsPanelTemplate>
+    <ItemsPanelTemplate x:Key="GridPanel">
+      <c:AdaptiveGrid MinColumnWidth="150" MaxColumnWidth="196" MaxColumns="12" Spacing="16" RowSpacing="20" />
+    </ItemsPanelTemplate>
+
+    <!-- A shader cache folder and its size. -->
+    <DataTemplate x:Key="ShaderCacheRow" DataType="{x:Type pages:ShaderCacheRow}">
+      <Grid Margin="0,3" Background="Transparent" ToolTip.Tip="{Binding Path}" ColumnDefinitions="*,Auto">
+        <TextBlock Text="{Binding Name}" FontSize="12.5" Foreground="{DynamicResource Brush.TextSecondary}" TextTrimming="CharacterEllipsis" />
+        <TextBlock Grid.Column="1" Text="{Binding SizeText}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="12,0,0,0" />
+      </Grid>
+    </DataTemplate>
+
+    <!-- The List / Grid switch: an icon and a word. -->
+    <DataTemplate x:Key="ViewOption">
+      <StackPanel Orientation="Horizontal">
+        <Grid Width="12" Height="12" VerticalAlignment="Center">
+          <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.List}"
+                Stroke="{Binding $parent[ListBoxItem].Foreground}"
+                IsVisible="{Binding Label, Converter={StaticResource EqualsToBool}, ConverterParameter=List}" />
+          <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Grid}"
+                Stroke="{Binding $parent[ListBoxItem].Foreground}"
+                IsVisible="{Binding Label, Converter={StaticResource EqualsToBool}, ConverterParameter=Grid}" />
+        </Grid>
+        <TextBlock Text="{Binding Label}" Margin="6,0,0,0" />
+      </StackPanel>
+    </DataTemplate>
+  </UserControl.Resources>
+
+  <UserControl.Styles>
+    <!-- A boost's status pill: green when on, orange while it waits for a restart. -->
+    <Style Selector="Border.pill">
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="Padding" Value="7,1" />
+    </Style>
+    <Style Selector="Border.status">
+      <Setter Property="Background" Value="{DynamicResource Brush.ControlHover}" />
+    </Style>
+    <Style Selector="Border.status > TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.TextTertiary}" />
+    </Style>
+    <Style Selector="Border.status.on">
+      <Setter Property="Background" Value="{DynamicResource Brush.SuccessSoft}" />
+    </Style>
+    <Style Selector="Border.status.on > TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
+    </Style>
+    <Style Selector="Border.status.restart">
+      <Setter Property="Background" Value="{DynamicResource Brush.ElevatedSoft}" />
+    </Style>
+    <Style Selector="Border.status.restart > TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Elevated}" />
+    </Style>
+
+    <!-- A boost's icon: in its color while on, grey while off (the neutral series color is too dark for a line). -->
+    <Style Selector="Path.glyph">
+      <Setter Property="Stroke" Value="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+    </Style>
+    <Style Selector="Path.glyph.off">
+      <Setter Property="Stroke" Value="{DynamicResource Brush.TextTertiary}" />
+    </Style>
+
+    <!-- A game that's running: a green edge. -->
+    <Style Selector="c|SquircleBorder.gameCard.running">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Success}" />
+    </Style>
+
+    <!-- A cover in the grid: Play, Show in Finder and Edit appear on hover or keyboard focus; the edge lights up. -->
+    <Style Selector="Grid.tile :is(Control).reveal">
+      <Setter Property="Opacity" Value="0" />
+    </Style>
+    <Style Selector="Grid.tile:pointerover :is(Control).reveal">
+      <Setter Property="Opacity" Value="1" />
+    </Style>
+    <Style Selector="Grid.tile:focus-within :is(Control).reveal">
+      <Setter Property="Opacity" Value="1" />
+    </Style>
+    <Style Selector="Grid.tile c|SquircleBorder.outline">
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.CardBorder}" />
+    </Style>
+    <Style Selector="Grid.tile:pointerover c|SquircleBorder.outline">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.AccentEdge}" />
+    </Style>
+    <Style Selector="Grid.tile c|SquircleBorder.outline.running">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Success}" />
+      <Setter Property="BorderThickness" Value="2" />
+    </Style>
+  </UserControl.Styles>
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Escape" Command="{Binding Editor.CancelCommand}" />
+  </UserControl.KeyBindings>
+
+  <Grid>
+  <ScrollViewer Theme="{StaticResource ScrollViewer.Window}">
+    <StackPanel Margin="32,14,28,32" b:Motion.Entrance="True">
+
+      <!-- Not available -->
+      <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,0,0,16" Background="{DynamicResource Brush.ElevatedSoft}" IsVisible="{Binding !IsSupported}">
+        <StackPanel Orientation="Horizontal">
+          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.Elevated}" />
+          <TextBlock Text="{Binding UnsupportedText}" Margin="10,0,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
+        </StackPanel>
+      </c:SquircleBorder>
+
+      <!-- ============================================================ -->
+      <!-- Game Boost                                                   -->
+      <!-- ============================================================ -->
+      <c:SquircleBorder Theme="{StaticResource Card.Glow}" GlowKey="Accent" GlowStrength="0.9" Sheen="0.8" Padding="0" BorderBrush="{DynamicResource Brush.AccentEdge}">
+        <Grid ClipToBounds="True">
+          <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.AccentWash}" IsHitTestVisible="False" />
+
+          <c:AdaptiveGrid MinColumnWidth="330" MaxColumns="2" Spacing="12" Margin="28,24">
+            <!-- The ring: how many boosts are on -->
+            <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,4,0,8">
+              <Ellipse Width="300" Height="300" Margin="-40" Fill="{DynamicResource Brush.AccentBloom}" IsHitTestVisible="False" />
+              <Grid Width="220" Height="220">
+                <Ellipse Margin="21" Fill="{DynamicResource Brush.Card}" Opacity="0.7" Stroke="{DynamicResource Brush.AccentTrack}" StrokeThickness="1" />
+                <c:RadialGauge Thickness="14" SweepAngle="359" Value="0" TrackBrush="{DynamicResource Brush.AccentTrack}" />
+                <c:RadialGauge Theme="{StaticResource BoostRing}" Opacity="0.75">
+                  <c:RadialGauge.Effect>
+                    <BlurEffect Radius="16" />
+                  </c:RadialGauge.Effect>
+                </c:RadialGauge>
+                <c:RadialGauge Theme="{StaticResource BoostRing}" />
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                  <Path Theme="{StaticResource IconPath}" Width="28" Height="28" Data="{StaticResource Icon.Controller}" Stroke="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" />
+                  <TextBlock Text="{Binding ReadinessText}" FontFamily="{StaticResource MonoFont}" FontSize="30" FontWeight="SemiBold" HorizontalAlignment="Center"
+                             Margin="0,6,0,0" Foreground="{DynamicResource Brush.Text}" />
+                  <TextBlock Text="boosts on" Theme="{StaticResource Text.Label}" HorizontalAlignment="Center" Opacity="0.85" />
+                </StackPanel>
+              </Grid>
+            </Grid>
+
+            <!-- What to do, Boost now, and the Mac at a glance -->
+            <StackPanel VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Game Boost" Theme="{StaticResource Text.Section}" />
+                <Border Theme="{StaticResource Badge}" Margin="10,0,0,0" Background="{DynamicResource Brush.AccentSoft}">
+                  <TextBlock Text="boost · play" FontSize="10.5" Foreground="{DynamicResource Brush.Accent}" />
+                </Border>
+              </StackPanel>
+              <TextBlock Text="{Binding HeroTitle}" FontSize="21" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" Margin="0,8,0,0" />
+              <TextBlock Text="{Binding HeroDetail}" Theme="{StaticResource Text.Secondary}" TextWrapping="Wrap" TextTrimming="None" Margin="0,6,0,0" />
+              <TextBlock Text="{Binding HeroMessage}" FontSize="12.5" Foreground="{DynamicResource Brush.Success}" TextWrapping="Wrap" Margin="0,8,0,0"
+                         b:Pop.Trigger="{Binding HasHeroMessage}" IsVisible="{Binding HasHeroMessage}" />
+
+              <WrapPanel Margin="0,14,0,0">
+                <Button Theme="{StaticResource Button.AccentGradient}" Padding="20,9" Margin="0,0,10,8" Command="{Binding ApplyAllCommand}" IsVisible="{Binding !AllBoostsOn}">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Rocket}" Stroke="{DynamicResource Brush.OnAccent}" />
+                    <TextBlock Text="Boost now" Margin="8,0,0,0" />
+                  </StackPanel>
+                </Button>
+                <Button Theme="{StaticResource Button.Secondary}" Padding="16,9" Margin="0,0,10,8" Command="{Binding RefreshCommand}" ToolTip.Tip="Read the settings again">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Refresh}" />
+                    <TextBlock Text="Check again" Margin="7,0,0,0" />
+                  </StackPanel>
+                </Button>
+              </WrapPanel>
+
+              <!-- The game running now -->
+              <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="12,9" Margin="0,4,0,4" HorizontalAlignment="Left" IsVisible="{Binding IsPlaying}">
+                <StackPanel Orientation="Horizontal">
+                  <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" b:Pulse.IsPulsing="{Binding IsPlaying}" />
+                  <TextBlock Text="Now playing" Theme="{StaticResource Text.Label}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                  <TextBlock Text="{Binding NowPlayingName}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="8,0,0,0" VerticalAlignment="Center" MaxWidth="260" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+              </c:SquircleBorder>
+
+              <c:AdaptiveGrid MinColumnWidth="104" MaxColumns="3" Spacing="10" UniformRowHeight="True" Margin="0,10,0,0">
+                <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="13,11">
+                  <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                      <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
+                      <TextBlock Text="Games" Theme="{StaticResource Text.Label}" Margin="7,0,0,0" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding GameCountText}" Theme="{StaticResource StatValue}" />
+                    <TextBlock Text="installed" Theme="{StaticResource Text.Caption}" />
+                  </StackPanel>
+                </c:SquircleBorder>
+                <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="13,11">
+                  <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                      <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Info}" VerticalAlignment="Center" />
+                      <TextBlock Text="Display" Theme="{StaticResource Text.Label}" Margin="7,0,0,0" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding DisplayText}" Theme="{StaticResource StatValue}" />
+                    <TextBlock Text="refresh rate" Theme="{StaticResource Text.Caption}" />
+                  </StackPanel>
+                </c:SquircleBorder>
+                <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="13,11" ToolTip.Tip="{Binding ShaderCacheSummary}">
+                  <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                      <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" />
+                      <TextBlock Text="Shaders" Theme="{StaticResource Text.Label}" Margin="7,0,0,0" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding ShaderCacheTotalText}" Theme="{StaticResource StatValue}" />
+                    <TextBlock Text="Metal caches" Theme="{StaticResource Text.Caption}" />
+                  </StackPanel>
+                </c:SquircleBorder>
+              </c:AdaptiveGrid>
+            </StackPanel>
+          </c:AdaptiveGrid>
+        </Grid>
+      </c:SquircleBorder>
+
+      <!-- ============================================================ -->
+      <!-- Performance boosts                                           -->
+      <!-- ============================================================ -->
+      <StackPanel Margin="2,28,0,14">
+        <TextBlock Text="Performance boosts" Theme="{StaticResource Text.SectionTitle}" />
+        <TextBlock Text="The macOS settings that matter while you play: full power on the charger, a Mac that stays awake, and Apple's own frame-rate overlay. Each one can be turned off again."
+                   Theme="{StaticResource Text.Secondary}" TextWrapping="Wrap" TextTrimming="None" Margin="0,3,0,0" />
+      </StackPanel>
+      <ItemsControl ItemsSource="{Binding Boosts}" ItemTemplate="{StaticResource BoostCard}" Focusable="False">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <c:AdaptiveGrid MinColumnWidth="320" MaxColumns="2" Spacing="12" RowSpacing="12" FillLastRow="True" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+      </ItemsControl>
+
+      <!-- ============================================================ -->
+      <!-- Metal shader caches                                          -->
+      <!-- ============================================================ -->
+      <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,16,0,0">
+        <StackPanel>
+          <Grid ColumnDefinitions="Auto,*">
+            <c:SquircleBorder Width="36" Height="36" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
+              <Path Theme="{StaticResource IconPath}" Width="17" Height="17" Data="{StaticResource Icon.Layers}" Stroke="{DynamicResource Brush.Accent}" />
+            </c:SquircleBorder>
+            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Theme="{StaticResource Text.CardTitle}" FontSize="14" Text="Shader caches" />
+                <Border Theme="{StaticResource Badge}" Margin="8,0,0,0">
+                  <TextBlock Text="Metal" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
+                </Border>
+                <Border Background="Transparent" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip.Tip="{Binding ShaderCacheNote}">
+                  <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.TextTertiary}" />
+                </Border>
+              </StackPanel>
+              <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding ShaderCacheSummary}" TextWrapping="Wrap" TextTrimming="None" Margin="0,2,0,0" />
+            </StackPanel>
+          </Grid>
+
+          <!-- A macOS update: caches start over -->
+          <c:SquircleBorder CornerRadius="12" Padding="14,12" Margin="0,14,0,0" Background="{DynamicResource Brush.ElevatedSoft}" IsVisible="{Binding HasDriverNotice}">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.Elevated}" VerticalAlignment="Top" Margin="0,1,10,0" />
+              <TextBlock Grid.Column="1" Text="{Binding DriverNotice}" FontSize="12" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
+              <Button Grid.Column="2" Theme="{StaticResource Button.Subtle}" Padding="10,4" Margin="10,-2,0,0" VerticalAlignment="Top" Content="Got it" Command="{Binding DismissDriverNoticeCommand}" />
+            </Grid>
+          </c:SquircleBorder>
+
+          <!-- The caches on this Mac, largest first, in two columns when there's room -->
+          <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="14,8" Margin="0,14,0,0" IsVisible="{Binding HasShaderCaches}">
+            <ItemsControl ItemsSource="{Binding ShaderCaches}" ItemTemplate="{StaticResource ShaderCacheRow}" Focusable="False">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <c:AdaptiveGrid MinColumnWidth="320" MaxColumns="2" Spacing="28" RowSpacing="0" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+            </ItemsControl>
+          </c:SquircleBorder>
+        </StackPanel>
+      </c:SquircleBorder>
+
+      <!-- ============================================================ -->
+      <!-- Your games                                                   -->
+      <!-- ============================================================ -->
+      <StackPanel Margin="2,30,0,12">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="Your games" Theme="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
+          <Border Theme="{StaticResource Badge}" Margin="10,1,0,0">
+            <TextBlock Text="{Binding GameCount}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+          </Border>
+        </StackPanel>
+        <TextBlock Text="{Binding LibrarySummary}" Theme="{StaticResource Text.Secondary}" Margin="0,3,0,0" />
+      </StackPanel>
+
+      <!-- Search, order, list or grid, look again -->
+      <WrapPanel>
+        <c:QuickSearch Width="380" Margin="0,0,12,10" HorizontalAlignment="Left" VerticalAlignment="Center" Placeholder="Search games"
+                       Hint="Start typing a game's name or store" Text="{Binding Search}" Suggestions="{Binding SearchSuggestions}" />
+        <ComboBox Theme="{StaticResource ComboBox.Default}" MinWidth="170" Margin="0,0,10,10" VerticalAlignment="Center" ItemsSource="{Binding SortOptions}"
+                  DisplayMemberBinding="{Binding Label}" SelectedValueBinding="{Binding Value}" SelectedValue="{Binding SelectedSort}" AutomationProperties.Name="Sort games" ToolTip.Tip="Order" />
+        <ListBox Theme="{StaticResource Segmented}" Margin="0,0,10,10" VerticalAlignment="Center" ItemsSource="{Binding ViewOptions}"
+                 SelectedItem="{Binding SelectedViewOption}" ItemTemplate="{StaticResource ViewOption}" AutomationProperties.Name="List or grid" />
+        <Button Theme="{StaticResource Button.Secondary}" Padding="14,8" Margin="0,0,10,10" VerticalAlignment="Center" Command="{Binding AddGameCommand}"
+                ToolTip.Tip="Add a game Coreloom didn't find: pick its app, then name it">
+          <StackPanel Orientation="Horizontal">
+            <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Plus}" />
+            <TextBlock Text="Add game" Margin="7,0,0,0" />
+          </StackPanel>
+        </Button>
+        <Button Theme="{StaticResource Button.Secondary}" Padding="14,8" Margin="0,0,0,10" VerticalAlignment="Center" Command="{Binding RescanCommand}" ToolTip.Tip="Look for games again">
+          <StackPanel Orientation="Horizontal">
+            <Grid Width="13" Height="13">
+              <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Refresh}" IsVisible="{Binding !IsScanning}" />
+              <c:RadialGauge Theme="{StaticResource GameSpinner}" Width="13" Height="13" b:Spin.IsSpinning="{Binding IsScanning}" IsVisible="{Binding IsScanning}" />
+            </Grid>
+            <TextBlock Text="Rescan" Margin="7,0,0,0" />
+          </StackPanel>
+        </Button>
+      </WrapPanel>
+
+      <!-- Pictures for games without one are downloaded automatically after each scan -->
+      <StackPanel Orientation="Horizontal" Margin="2,0,0,12" IsVisible="{Binding IsDownloadingArtwork}">
+        <c:RadialGauge Theme="{StaticResource GameSpinner}" b:Spin.IsSpinning="{Binding IsDownloadingArtwork}" />
+        <TextBlock Text="Finding pictures for your games…" Theme="{StaticResource Text.Secondary}" Margin="8,0,0,0" VerticalAlignment="Center" />
+      </StackPanel>
+
+      <TextBlock Text="Looking for games…" Theme="{StaticResource Text.Secondary}" Margin="2,0,0,8" IsVisible="{Binding !IsLoaded}" />
+
+      <!-- The games: cards in a list, or covers in a grid (the template and panel are set in code) -->
+      <ItemsControl x:Name="Library" ItemsSource="{Binding Games}" Focusable="False"
+                    ItemTemplate="{StaticResource GameCard}" ItemsPanel="{StaticResource ListPanel}" />
+
+      <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="16,14">
+        <c:SquircleBorder.IsVisible>
+          <MultiBinding Converter="{x:Static BoolConverters.And}">
+            <Binding Path="!HasGames" />
+            <Binding Path="IsLoaded" />
+          </MultiBinding>
+        </c:SquircleBorder.IsVisible>
+        <StackPanel Orientation="Horizontal">
+          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Controller}" Stroke="{DynamicResource Brush.TextTertiary}" />
+          <TextBlock Text="{Binding EmptyText}" Theme="{StaticResource Text.Secondary}" Margin="10,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" />
+        </StackPanel>
+      </c:SquircleBorder>
+
+      <TextBlock Theme="{StaticResource Text.Caption}" Margin="2,14,0,0" TextWrapping="Wrap" TextTrimming="None"
+                 Text="Play opens each game through its own launcher, or as an app, as you. Coreloom reads the launchers' library files and never adds anything to games." />
+    </StackPanel>
+  </ScrollViewer>
+
+  <!-- Adding a game by hand, or changing or removing one -->
+  <Grid DataContext="{Binding Editor}" IsVisible="{Binding IsOpen}">
+    <Border x:Name="EditorScrim" Background="{DynamicResource Brush.Scrim}" />
+    <c:SquircleBorder Theme="{StaticResource Card}" Width="520" Margin="32" Padding="22,18,22,18" HorizontalAlignment="Center" VerticalAlignment="Center" Shadow="1"
+                      AutomationProperties.Name="{Binding Title}" b:Pop.Trigger="{Binding IsOpen}">
+      <StackPanel>
+        <Grid>
+          <StackPanel Margin="0,0,40,0">
+            <TextBlock Theme="{StaticResource Text.CardTitle}" Text="{Binding Title}" FontSize="16" />
+            <TextBlock Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,3,0,0"
+                       Text="It joins your games: Play, Now playing and keeping the Mac awake while it runs work with it." />
+          </StackPanel>
+          <Button Theme="{StaticResource Button.Icon}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="32" Height="32"
+                  Command="{Binding CancelCommand}" ToolTip.Tip="Close" AutomationProperties.Name="Close">
+            <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Close}" />
+          </Button>
+        </Grid>
+
+        <Grid Margin="0,18,0,0" ColumnDefinitions="96,*">
+          <!-- The picture: a chosen one, else the app's icon -->
+          <StackPanel>
+            <Grid Width="96" Height="128">
+              <c:SquircleBorder CornerRadius="12" Background="{DynamicResource Brush.AccentSoft}" />
+              <TextBlock Text="{Binding Initials}" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                         IsVisible="{Binding !HasPreview}" />
+              <c:SquircleBorder CornerRadius="12" b:AsyncImage.DecodeWidth="200" b:AsyncImage.Path="{Binding Preview}"
+                                Margin="{Binding HasChosenPicture, Converter={StaticResource BoolToThickness}, ConverterParameter='0;18,34'}" />
+            </Grid>
+            <Button Theme="{StaticResource Button.Subtle}" Margin="0,8,0,0" HorizontalAlignment="Center" Command="{Binding ChoosePictureCommand}" Content="Picture…" />
+            <Button Theme="{StaticResource Button.Subtle}" HorizontalAlignment="Center" Command="{Binding UseProgramIconCommand}" Content="Use icon"
+                    IsVisible="{Binding HasChosenPicture}" />
+          </StackPanel>
+
+          <StackPanel Grid.Column="1" Margin="18,0,0,0">
+            <TextBlock Text="Name" Theme="{StaticResource Text.Label}" />
+            <TextBox Theme="{StaticResource TextBox.Default}" Margin="0,6,0,0" Text="{Binding Name}" AutomationProperties.Name="Game name" />
+
+            <TextBlock Text="App" Theme="{StaticResource Text.Label}" Margin="0,14,0,0" />
+            <Grid Margin="0,6,0,0" ColumnDefinitions="*,Auto">
+              <TextBlock Text="{Binding Executable}" Theme="{StaticResource Text.Secondary}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTip.Tip="{Binding Executable}" />
+              <Button Grid.Column="1" Theme="{StaticResource Button.Secondary}" Margin="8,0,0,0" Command="{Binding ChangeProgramCommand}" Content="Change…" />
+            </Grid>
+
+            <TextBlock Text="Launch options (optional)" Theme="{StaticResource Text.Label}" Margin="0,14,0,0" />
+            <TextBox Theme="{StaticResource TextBox.Default}" Margin="0,6,0,0" Text="{Binding Arguments}" AutomationProperties.Name="Launch options"
+                     ToolTip.Tip="Passed to the app when you press Play, e.g. -windowed" />
+          </StackPanel>
+        </Grid>
+
+        <Border Margin="0,14,0,0" Padding="12,8" CornerRadius="8" Background="{DynamicResource Brush.ElevatedSoft}"
+                IsVisible="{Binding Error, Converter={StaticResource HasValue}}">
+          <TextBlock Text="{Binding Error}" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
+        </Border>
+
+        <Grid Margin="0,18,0,0">
+          <Button Theme="{StaticResource Button.Subtle}" HorizontalAlignment="Left" Command="{Binding RemoveCommand}" IsVisible="{Binding !IsNew}"
+                  ToolTip.Tip="Takes it out of Coreloom's list; the game's files aren't touched">
+            <StackPanel Orientation="Horizontal">
+              <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Trash}" />
+              <TextBlock Text="Remove from my games" Margin="7,0,0,0" />
+            </StackPanel>
+          </Button>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Theme="{StaticResource Button.Secondary}" Margin="0,0,8,0" Command="{Binding CancelCommand}" Content="Cancel" />
+            <Button Theme="{StaticResource Button.Primary}" Padding="18,7" Command="{Binding SaveCommand}" Content="Save" IsDefault="True" />
+          </StackPanel>
+        </Grid>
+      </StackPanel>
+    </c:SquircleBorder>
+  </Grid>
+  </Grid>
 </UserControl>

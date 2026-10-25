@@ -142,6 +142,41 @@ internal static class Program
             shell.Gpu.OverlaySettings.CloseCommand.Execute(null);
         }
 
+        // The game library as covers, and the card for adding a game.
+        if (only is null || only.Split(',').Contains("gaming"))
+        {
+            shell.Navigate(shell.Gaming);
+            window.Height = WindowHeight * Scale;
+            shell.Gaming.IsGridView = true;
+            Settle(window, data, 4);
+            var host = window.FindControl<Coreloom.Mac.Controls.PageHost>("Host")!;
+            var scroller = host.GetVisualDescendants().OfType<ScrollViewer>().First();
+            scroller.Offset = new Vector(0, scroller.Extent.Height);
+            Settle(window, data, 2);
+            Capture(window, Path.Combine(output, "gaming-grid.png"));
+            shell.Gaming.IsGridView = false;
+            scroller.Offset = default;
+            shell.Gaming.Editor.Add();
+            Settle(window, data, 4);
+            Capture(window, Path.Combine(output, "gaming-editor.png"));
+            shell.Gaming.Editor.CancelCommand.Execute(null);
+        }
+
+        // Every section of Settings.
+        if (only is null || only.Split(',').Contains("settings"))
+        {
+            shell.Navigate(shell.Settings);
+            window.Height = WindowHeight * Scale;
+            foreach (string section in shell.Settings.Sections)
+            {
+                shell.Settings.SelectedSection = section;
+                Settle(window, data, 3);
+                Capture(window, Path.Combine(output, $"settings-{section.ToLowerInvariant()}.png"));
+            }
+
+            shell.Settings.SelectedSection = shell.Settings.Sections[0];
+        }
+
         // The light theme, once.
         theme.Apply(new AppearanceSettings { Theme = ThemePreference.Light, ReducedMotion = true, AnimateValues = false, UseMica = false });
         shell.Navigate(shell.Overview);
