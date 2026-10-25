@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:c="using:Coreloom.Mac.Controls"
              xmlns:b="using:Coreloom.Mac.Behaviors"
-             xmlns:pages="using:Coreloom.ViewModels.Pages">
+             xmlns:pages="using:Coreloom.ViewModels.Pages"
+             xmlns:inf="using:Coreloom.ViewModels.Infrastructure">
 
   <UserControl.DataTemplates>
     <!-- Card and panel templates (resolved by type inside the dashboard tiles). Each fills its tile, so a card made
@@ -139,6 +140,15 @@
   </UserControl.DataTemplates>
 
   <UserControl.Resources>
+    <!-- A spec in the header: its name on the left, its value on the right (wrapping when long). Each row sizes itself:
+         the values are right-aligned, so the names don't need a shared column. -->
+    <DataTemplate x:Key="SpecRow" DataType="inf:KeyValueItem">
+      <DockPanel Margin="0,4">
+        <TextBlock DockPanel.Dock="Left" Theme="{StaticResource Text.Secondary}" Text="{Binding Key}" Margin="0,0,24,0" />
+        <TextBlock Text="{Binding Value}" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" TextAlignment="Right" />
+      </DockPanel>
+    </DataTemplate>
+
     <!-- A card on the dashboard grid: the card itself, a grip at the top and a corner to resize it (both show on hover),
          and a right-click menu. The card can be dragged from anywhere that isn't a control. -->
     <DataTemplate x:Key="DashboardTile" DataType="{x:Type pages:DashboardTileViewModel}">
@@ -260,32 +270,36 @@
       <StackPanel Margin="32,14,28,32" b:Motion.Entrance="True">
         <!-- This PC: its picture (or the user's own render of the build), board name, graphics card and key specs.
              It stays put; the cards under it can be moved and resized. -->
-        <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,0,0,16" GlowKey="Accent" GlowStrength="1.3" EdgeGlow="True" Sheen="0.8"
+        <c:SquircleBorder Name="Header" Theme="{StaticResource Card}" Margin="0,0,0,16" GlowKey="Accent" GlowStrength="1.3" EdgeGlow="True" Sheen="0.8"
                           Padding="{Binding ShowPcPicture, Converter={StaticResource BoolToValue}, ConverterParameter='14,14,22,14|24,18,22,16'}">
           <Grid ColumnDefinitions="Auto,*">
             <!-- Shown or not, and its lighting color: see Customize -->
             <c:MacIllustration Width="232" Height="176" Margin="4,0,0,0" VerticalAlignment="Center" IsVisible="{Binding ShowPcPicture}"
                                Model="{Binding Specs.Title}" Glow="{Binding Specs.Glow}" />
 
-            <Grid RowDefinitions="Auto,Auto,Auto" Grid.Column="1" VerticalAlignment="Center" ColumnDefinitions="*,Auto"
-                  Margin="{Binding ShowPcPicture, Converter={StaticResource BoolToValue}, ConverterParameter='22,6,0,6|0'}">
-              <TextBlock Text="{Binding Specs.Title}" ToolTip.Tip="{Binding Specs.Title}" FontSize="22" FontWeight="SemiBold"
-                         Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
-              <TextBlock Grid.Row="1" Text="{Binding Specs.Subtitle}" Theme="{StaticResource Text.Secondary}" FontSize="14" Margin="0,3,0,0"
-                         TextTrimming="CharacterEllipsis" />
-              <Button Grid.Column="1" Grid.RowSpan="2" Theme="{StaticResource Button.Subtle}" VerticalAlignment="Top" Margin="16,0,0,0"
-                      Command="{Binding CustomizeCommand}" Padding="10,5" ToolTip.Tip="The Mac picture, its color and which cards the dashboard shows">
-                <StackPanel Orientation="Horizontal">
-                  <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Edit}" />
-                  <TextBlock Text="Customize" Margin="8,0,0,0" Foreground="{DynamicResource Brush.TextSecondary}" />
-                </StackPanel>
-              </Button>
+            <!-- The name and Customize on top, the specs under them in one or two columns. The specs come in after the
+                 page opens (and Storage once the drives are known), so the card grows with them. -->
+            <DockPanel Name="HeaderText" Grid.Column="1" VerticalAlignment="Center"
+                       Margin="{Binding ShowPcPicture, Converter={StaticResource BoolToValue}, ConverterParameter='22,6,0,6|0'}">
+              <Grid DockPanel.Dock="Top" RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                <TextBlock Text="{Binding Specs.Title}" ToolTip.Tip="{Binding Specs.Title}" FontSize="22" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Row="1" Text="{Binding Specs.Subtitle}" Theme="{StaticResource Text.Secondary}" FontSize="14" Margin="0,3,0,0"
+                           TextTrimming="CharacterEllipsis" />
+                <Button Grid.Column="1" Grid.RowSpan="2" Theme="{StaticResource Button.Subtle}" VerticalAlignment="Top" Margin="16,0,0,0"
+                        Command="{Binding CustomizeCommand}" Padding="10,5" ToolTip.Tip="The Mac picture, its color and which cards the dashboard shows">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Edit}" />
+                    <TextBlock Text="Customize" Margin="8,0,0,0" Foreground="{DynamicResource Brush.TextSecondary}" />
+                  </StackPanel>
+                </Button>
+              </Grid>
 
-              <c:AdaptiveGrid Grid.Row="2" Grid.ColumnSpan="2" Margin="0,16,0,0" MinColumnWidth="250" MaxColumns="2" Spacing="40" RowSpacing="0">
-                <ItemsControl ItemsSource="{Binding Specs.LeftSpecs}" ItemTemplate="{StaticResource KeyValueRow}" Focusable="False" Grid.IsSharedSizeScope="True" />
-                <ItemsControl ItemsSource="{Binding Specs.RightSpecs}" ItemTemplate="{StaticResource KeyValueRow}" Focusable="False" Grid.IsSharedSizeScope="True" />
+              <c:AdaptiveGrid Name="HeaderSpecs" Margin="0,16,0,0" MinColumnWidth="250" MaxColumns="2" Spacing="40" RowSpacing="0">
+                <ItemsControl ItemsSource="{Binding Specs.LeftSpecs}" ItemTemplate="{StaticResource SpecRow}" Focusable="False" />
+                <ItemsControl ItemsSource="{Binding Specs.RightSpecs}" ItemTemplate="{StaticResource SpecRow}" Focusable="False" />
               </c:AdaptiveGrid>
-            </Grid>
+            </DockPanel>
           </Grid>
         </c:SquircleBorder>
 

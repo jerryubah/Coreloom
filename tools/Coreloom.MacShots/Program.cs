@@ -27,6 +27,15 @@ internal static class Program
         string output = Path.GetFullPath(args.FirstOrDefault(a => !a.StartsWith("--", StringComparison.Ordinal)) ?? "macshots");
         bool strict = args.Contains("--strict");
         string? only = args.FirstOrDefault(a => a.StartsWith("--only=", StringComparison.Ordinal))?[7..];
+        if (args.FirstOrDefault(a => a.StartsWith("--width=", StringComparison.Ordinal)) is { } width)
+        {
+            WindowWidth = double.Parse(width[8..], System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        if (args.FirstOrDefault(a => a.StartsWith("--from-width=", StringComparison.Ordinal)) is { } from)
+        {
+            FirstWidth = double.Parse(from[13..], System.Globalization.CultureInfo.InvariantCulture);
+        }
         Directory.CreateDirectory(output);
         Coreloom.Core.Settings.Hotkeys.UseMacNames = true;
         Coreloom.Core.Formatting.UnitFormatter.BinaryMemoryByDefault = true;
@@ -78,7 +87,12 @@ internal static class Program
         return exitCode;
     }
 
-    private const double WindowWidth = 1440;
+    /// <summary>The window's width in points (--width=944 is the window on a 1024 × 768 screen).</summary>
+    private static double WindowWidth = 1440;
+
+    /// <summary>A width to lay the window out at before <see cref="WindowWidth"/> (--from-width=1280), as when a window is
+    /// fitted to a small screen after it opened.</summary>
+    private static double? FirstWidth;
     private const double WindowHeight = 960;
 
     private static void Run(string output, ThemeService theme, string? only)
@@ -86,16 +100,42 @@ internal static class Program
         var data = new SampleData();
         data.Prefill();
         var shell = data.Shell(theme);
+        if (Environment.GetCommandLineArgs().Contains("--collapsed"))
+        {
+            shell.IsSidebarCollapsed = true;
+        }
+
         var window = new MainWindow(shell);
 
         // Retina: the window is drawn at twice its size through a layout transform (headless windows have no scaling).
         var content = (Control)window.Content!;
         window.Content = null;
         window.Content = new LayoutTransformControl { LayoutTransform = new ScaleTransform(Scale, Scale), Child = content };
-        window.Width = WindowWidth * Scale;
+        window.Width = (FirstWidth ?? WindowWidth) * Scale;
         window.Height = WindowHeight * Scale;
         window.Show();
         Settle(window, data, 4);
+        if (FirstWidth is not null)
+        {
+            window.Width = WindowWidth * Scale;
+            Settle(window, data, 4);
+        }
+
+        // The Mac's specs arrive after the page is first laid out, as they do in the app (--late-specs).
+        if (Environment.GetCommandLineArgs().Contains("--late-specs"))
+        {
+            var specs = shell.Overview.Specs;
+            var left = specs.LeftSpecs.ToList();
+            var right = specs.RightSpecs.ToList();
+            specs.LeftSpecs.Clear();
+            specs.RightSpecs.Clear();
+            Settle(window, data, 4);
+            // First without the last row on the left (Storage comes once the drives are known), then all of them.
+            specs.SetSpecs(left.Take(left.Count - 1).ToList(), right);
+            Settle(window, data, 4);
+            specs.SetSpecs(left, right);
+            Settle(window, data, 4);
+        }
 
         foreach (var page in shell.Pages.Append(shell.Settings))
         {

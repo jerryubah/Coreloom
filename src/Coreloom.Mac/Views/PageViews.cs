@@ -1,6 +1,11 @@
+using System.Collections.Specialized;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Coreloom.Mac.Input;
 using Coreloom.ViewModels.Pages;
 
@@ -10,6 +15,9 @@ namespace Coreloom.Mac.Views;
 
 public partial class OverviewPage : UserControl
 {
+    private SystemSummaryViewModel? _specs;
+    private bool _remeasureQueued;
+
     public OverviewPage()
     {
         InitializeComponent();
@@ -21,6 +29,55 @@ public partial class OverviewPage : UserControl
                 e.Handled = true;
             }
         };
+    }
+
+    protected override void OnDataContextChanged(EventArgs e)
+    {
+        base.OnDataContextChanged(e);
+        if (_specs is not null)
+        {
+            _specs.LeftSpecs.CollectionChanged -= OnSpecsChanged;
+            _specs.RightSpecs.CollectionChanged -= OnSpecsChanged;
+        }
+
+        _specs = (DataContext as OverviewViewModel)?.Specs;
+        if (_specs is not null)
+        {
+            _specs.LeftSpecs.CollectionChanged += OnSpecsChanged;
+            _specs.RightSpecs.CollectionChanged += OnSpecsChanged;
+        }
+    }
+
+    private void OnSpecsChanged(object? sender, NotifyCollectionChangedEventArgs e) => QueueRemeasure();
+
+    /// <summary>
+    /// The Mac's specs come in after the page has been laid out (Storage once the drives are known). On macOS the card
+    /// was then measured taller but kept the height it was first placed at, its last specs running under the cards
+    /// below, so once the specs have changed the header and everything it sits in up to the page are laid out again.
+    /// </summary>
+    private void QueueRemeasure()
+    {
+        if (_remeasureQueued)
+        {
+            return;
+        }
+
+        _remeasureQueued = true;
+        Dispatcher.UIThread.Post(() =>
+        {
+            _remeasureQueued = false;
+            foreach (var layoutable in Header.GetVisualDescendants().OfType<Layoutable>())
+            {
+                layoutable.InvalidateMeasure();
+            }
+
+            for (Visual? visual = Header; visual is not null && visual != this; visual = visual.GetVisualParent())
+            {
+                (visual as Layoutable)?.InvalidateMeasure();
+            }
+
+            InvalidateMeasure();
+        }, DispatcherPriority.Background);
     }
 }
 
