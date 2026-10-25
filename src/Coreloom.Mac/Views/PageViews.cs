@@ -1,6 +1,10 @@
+using System.Collections.Specialized;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Coreloom.Mac.Input;
 using Coreloom.ViewModels.Pages;
 
@@ -10,6 +14,9 @@ namespace Coreloom.Mac.Views;
 
 public partial class OverviewPage : UserControl
 {
+    private SystemSummaryViewModel? _specs;
+    private bool _remeasureQueued;
+
     public OverviewPage()
     {
         InitializeComponent();
@@ -21,6 +28,48 @@ public partial class OverviewPage : UserControl
                 e.Handled = true;
             }
         };
+    }
+
+    protected override void OnDataContextChanged(EventArgs e)
+    {
+        base.OnDataContextChanged(e);
+        if (_specs is not null)
+        {
+            _specs.LeftSpecs.CollectionChanged -= OnSpecsChanged;
+            _specs.RightSpecs.CollectionChanged -= OnSpecsChanged;
+        }
+
+        _specs = (DataContext as OverviewViewModel)?.Specs;
+        if (_specs is not null)
+        {
+            _specs.LeftSpecs.CollectionChanged += OnSpecsChanged;
+            _specs.RightSpecs.CollectionChanged += OnSpecsChanged;
+        }
+    }
+
+    private void OnSpecsChanged(object? sender, NotifyCollectionChangedEventArgs e) => QueueRemeasure();
+
+    /// <summary>
+    /// The Mac's specs come in after the page has been laid out (Storage once the drives are known). Once they have,
+    /// the header is measured again from the top, so the card is as tall as its specs at every window width.
+    /// </summary>
+    private void QueueRemeasure()
+    {
+        if (_remeasureQueued)
+        {
+            return;
+        }
+
+        _remeasureQueued = true;
+        Dispatcher.UIThread.Post(() =>
+        {
+            _remeasureQueued = false;
+            Header.InvalidateMeasure();
+            foreach (var layoutable in Header.GetVisualDescendants().OfType<Layoutable>())
+            {
+                layoutable.InvalidateMeasure();
+            }
+        }, DispatcherPriority.Background);
     }
 }
 
