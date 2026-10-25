@@ -42,6 +42,27 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: bash build/mac/update-test.sh ${{ matrix.arch }} out
 
+      # The way people update: the previous release's own Mac app (its updater as shipped) to the latest one.
+      - name: Update the previous Mac release to the latest release
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          previous="$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/${{ github.repository }}/releases?per_page=30" | python3 -c '
+          import json, sys
+          releases = [r for r in json.load(sys.stdin) if not r["draft"] and not r["prerelease"]]
+          suffix = "-macos-${{ matrix.arch }}.zip"
+          for r in releases[1:]:
+              if any(a["name"].endswith(suffix) for a in r["assets"]):
+                  print(r["tag_name"].lstrip("v"))
+                  break
+          ')"
+          if [ -z "$previous" ]; then
+            echo "No earlier release has a Mac app yet."
+            exit 0
+          fi
+          bash build/mac/update-test.sh ${{ matrix.arch }} out/from-$previous release:$previous
+
       - name: Publish the outputs
         if: always()
         run: |

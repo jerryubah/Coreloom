@@ -7,6 +7,23 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-10-25
+
+On a Mac, the Overview's top card now always fits your Mac's specs.
+
+### Highlights
+
+- **The Overview fits on smaller Mac screens.** In a narrower window, the card with your Mac's picture and specs kept the height it had before the specs came in, so the last specs ran under the cards below it. It now grows to fit them, at any window size.
+
+### In detail
+
+- Have 1.6.0? Choose *Check for Updates…* in the Coreloom menu (or let the automatic check find it), then click *Install update* in *Settings › Updates*, or simply quit and reopen Coreloom.
+- Windows: nothing changes in the app.
+
+### Feedback
+
+Something not right on your Mac? [Open an issue](https://github.com/jerryubah/Coreloom/issues) with a screenshot and the report from *Settings › Diagnostics › Export diagnostic report*.
+
 ## [1.6.0] - 2026-10-25
 
 Coreloom now runs on the Mac, on Apple silicon and Intel with macOS 14 Sonoma or later. Every page of the Windows app is made for the Mac: its readings, its menu bar and Dock, its settings and its words. Download it from the README's buttons or the new website, drag it into Applications, and it keeps itself up to date like the Windows app.

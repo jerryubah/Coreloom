@@ -773,7 +773,8 @@ GitHub's Macs check every build of Coreloom for Mac, but they are virtual machin
 2. **Readings.** Overview, Processor and Graphics: on Apple silicon the performance and efficiency cores' clocks,
    CPU, GPU and Neural Engine power, the whole Mac's power, temperatures and (on Macs with fans) fan speeds should
    all have values. Compare utilization with Activity Monitor and memory with its Memory tab (binary units).
-   Run `sudo powermetrics --samplers cpu_power,gpu_power -n 1` to compare the power figures.
+   Run `sudo powermetrics --samplers cpu_power,gpu_power -n 1` to compare the power figures. Make the window
+   narrow and wide: the Overview's top card should always show every spec, in one or two columns (fixed in 1.6.1).
 3. **Menu bar and Dock.** The menu bar item's readings, *Pause*, *Settings…*, *Quit*; closing the window keeps
    Coreloom in the menu bar (and hides its Dock icon if that's on); clicking the Dock icon brings the window back.
 4. **Devices.** *Allow Bluetooth…* should bring up macOS's prompt; after *Allow*, your accessories and (for Apple's

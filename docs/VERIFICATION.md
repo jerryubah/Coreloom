@@ -717,10 +717,43 @@ interfaces but haven't been seen working on a physical Mac:
 4. The Gaming page's switches: the power mode (with macOS's password dialog), Keep awake with a real game, the Metal
    HUD in a real Metal game; the game library with real Steam and Epic installs.
 5. The in-game overlay over a full-screen game, and its global hotkey.
-6. An update from one released Mac version to the next (the first Mac release has nothing to update from; the
-   download, checksum, unpacking and signature checks are unit- and runner-tested, the swap helper's script is
-   not yet run end to end).
+6. Updating on a physical Mac. On the runners it works end to end (below), but a real Mac adds things a fresh
+   virtual machine doesn't have: Gatekeeper's quarantine on a copy that was downloaded with a browser, and an app
+   that isn't in /Applications.
 7. The translucent sidebar's vibrancy, *Open at login*, notifications and *Move to Applications*.
+
+### In-app updates on a Mac, end to end (after 1.6.0)
+
+`build/mac/update-test.sh`, run by `.github/workflows/mac-update-test.yml` on both Macs after a release is
+published (push a branch named `macupdatetest-…`): an older Coreloom is installed in /Applications and opened; it
+finds the latest release, downloads its `-macos-<arch>.zip`, checks it against `SHA256SUMS.txt` and its code
+signature, and installs it when it's opened again; the test then checks the version in /Applications, the update
+helper's log (`update.log`: "updated"), the new copy's signature and that it started with `--updated`. Since 1.6.1
+it also does this with the previous release's own app downloaded from GitHub (so the updater as shipped is the one
+tested), not only with an old version built from the current code.
+
+| Run | Result |
+|---|---|
+| 0.9.0 (built from 1.6.0's code) → the published 1.6.0, run 40194296972 | ✅ Apple silicon: found and verified in 24 s, replaced in under a second after quitting, 1.6.0 running with "Coreloom was updated to 1.6.0". ✅ Intel: the same, in 27 s |
+
+### 1.6.1: the Overview's top card fits its specs on a Mac
+
+The update test's screenshot showed the Overview's top card cut off its last specs on the Apple silicon runner
+(a 1024 × 768 screen, so the window is 942 points wide and the specs fit in one column). It was there in 1.6.0's
+verification shots too and was missed. A temporary probe on a test branch (never merged) logged the header's
+layout 15 s after the page opened: every element reported a valid layout, the card *wanted* 265 points but had
+206, the grid holding the specs wanted 160 and had 0. So the specs, which come in after the page is first laid out
+(Storage last, once the drives are known), were measured but the card was never placed again at its new size.
+The headless MacShots tool couldn't reproduce it (new `--width`, `--from-width`, `--collapsed` and
+`--late-specs` options), so the fix was checked on the runners:
+
+| Try | Result on the Apple silicon runner |
+|---|---|
+| The header as a dock panel (name and Customize on top, the specs under them), rows that size themselves, the header's own elements measured again when the specs change | ❌ still 206 of 265: the parent never placed the card again |
+| As above, plus everything the header sits in, up to the page, laid out again once the specs have changed | ✅ the card 249 points tall (265 with its margin), every element's size matching what it asked for; all specs visible at 942 points, and on Intel at 1,600 |
+
+Both Macs passed the rest of the verification (packages, signatures, every page, clean quit). Windows is
+unchanged.
 
 ## How to re-run the checks that can run anywhere
 
@@ -734,7 +767,8 @@ To see the pages' layout on Windows without a Windows PC, push to a branch named
 workflow draws them with sample data and publishes the PNGs on the `pageshots-output` branch. For the Mac app,
 `dotnet run --project tools/Coreloom.MacShots -- out` draws every Mac page on any system, and pushing a branch named
 `macverify-…` builds, packages, opens and photographs the real app on GitHub's Macs (results on the
-`mac-verify-arm64` and `mac-verify-x64` branches).
+`mac-verify-arm64` and `mac-verify-x64` branches). After a release, pushing a branch named `macupdatetest-…` updates
+an older Coreloom to it on both Macs (results on `mac-update-test-arm64` and `mac-update-test-x64`).
 
 On Windows, `./build/build.ps1` builds everything and runs every test, including the Windows integration
 tests against the real machine.

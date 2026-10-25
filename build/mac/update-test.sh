@@ -4,13 +4,20 @@
 # it again, when it installs the update at startup. Passes when the copy in /Applications is the new version, the
 # update helper logged "updated" and the new version is running. Screenshots and logs go to <out-dir>.
 #
-# Usage: build/mac/update-test.sh <arm64|x64> <out-dir> [old-version] [repository]
+# Usage: build/mac/update-test.sh <arm64|x64> <out-dir> [old-version | release:<version>] [repository]
+# With release:<version> (e.g. release:1.6.0) the old copy is that release's own Mac app, downloaded from GitHub, so
+# the updater that ships in it is the one tested.
 set -uo pipefail
 
 ARCH="${1:?arch}"
 mkdir -p "${2:?out-dir}"
 OUT="$(cd "$2" && pwd)"
 OLD="${3:-0.9.0}"
+FROM_RELEASE=""
+if [[ "$OLD" == release:* ]]; then
+  OLD="${OLD#release:}"
+  FROM_RELEASE=1
+fi
 REPOSITORY="${4:-${GITHUB_REPOSITORY:-jerryubah/Coreloom}}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 APP="/Applications/Coreloom.app"
@@ -27,12 +34,21 @@ echo "# Updating Coreloom $OLD to the latest release ($latest) on macOS $(sw_ver
 echo >> "$OUT/update-test.md"
 
 # ---- The old version ------------------------------------------------------------------------------------------
-bash "$ROOT/build/mac/bundle.sh" --arch "$ARCH" --version "$OLD" --repository "$REPOSITORY" --out "$ROOT/artifacts/mac-old" > "$OUT/bundle.log" 2>&1 \
-  || { tail -40 "$OUT/bundle.log"; fail "building $OLD"; exit 1; }
 pkill -x Coreloom 2> /dev/null || true
 rm -rf "$APP" "$LOGS" "$SUPPORT"
-ditto "$ROOT/artifacts/mac-old/Coreloom-$ARCH.app" "$APP"
-log "Installed $OLD in /Applications."
+if [[ -n "$FROM_RELEASE" ]]; then
+  zip="$(mktemp -d)/old.zip"
+  curl -fsSL -o "$zip" "https://github.com/$REPOSITORY/releases/download/v$OLD/Coreloom-$OLD-macos-$ARCH.zip" \
+    || { fail "downloading the $OLD release"; exit 1; }
+  ditto -x -k "$zip" /Applications/ || { fail "unpacking the $OLD release"; exit 1; }
+  log "Installed the $OLD release's own app in /Applications."
+else
+  bash "$ROOT/build/mac/bundle.sh" --arch "$ARCH" --version "$OLD" --repository "$REPOSITORY" --out "$ROOT/artifacts/mac-old" > "$OUT/bundle.log" 2>&1 \
+    || { tail -40 "$OUT/bundle.log"; fail "building $OLD"; exit 1; }
+  ditto "$ROOT/artifacts/mac-old/Coreloom-$ARCH.app" "$APP"
+  log "Installed $OLD (built from this commit) in /Applications."
+fi
+[[ "$(plutil -extract CFBundleShortVersionString raw "$APP/Contents/Info.plist" 2> /dev/null)" == "$OLD" ]] || fail "the app installed isn't $OLD"
 
 # ---- First run: finds and downloads the update --------------------------------------------------------------------
 open "$APP"

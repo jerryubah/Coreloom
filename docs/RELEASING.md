@@ -120,6 +120,11 @@ Coreloom now keeps itself up to date.
 - Install the previous version (and unzip its portable build), then use *Check for updates* in each. *Install
   update* should download, verify, install and relaunch. The full checklist, including the automatic paths, is in
   [TESTING-ON-YOUR-PC.md](TESTING-ON-YOUR-PC.md#6-automatic-updates-after-publishing-two-releases).
+- Mac: push any commit to a branch named `macupdatetest-…` (or run *Mac update test* from the Actions tab). On
+  GitHub's Apple silicon and Intel Macs it installs an older Coreloom built from that commit, and then the previous
+  release's own Mac app, and lets each update itself to the release you just published (find, download, checksum,
+  signature, replace, reopen). What it saw, with screenshots and logs, lands on the `mac-update-test-arm64` and
+  `mac-update-test-x64` branches (`update-test.md`; the previous release's run is in `from-<version>/`).
 
 ## The website
 
