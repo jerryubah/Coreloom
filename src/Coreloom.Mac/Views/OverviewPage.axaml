@@ -1,5 +1,374 @@
 <UserControl x:Class="Coreloom.Mac.Views.OverviewPage"
              xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <TextBlock Text="OverviewPage" Margin="32" />
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:Coreloom.Mac.Controls"
+             xmlns:b="using:Coreloom.Mac.Behaviors"
+             xmlns:pages="using:Coreloom.ViewModels.Pages">
+
+  <UserControl.DataTemplates>
+    <!-- Card and panel templates (resolved by type inside the dashboard tiles). Each fills its tile, so a card made
+         bigger on the dashboard grows its chart, list or sparkline. -->
+    <DataTemplate DataType="{x:Type pages:SummaryCardViewModel}">
+      <ContentControl Content="{Binding}" ContentTemplate="{StaticResource SummaryCard}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type pages:ChartPanelViewModel}">
+      <ContentControl Content="{Binding Chart}" ContentTemplate="{StaticResource ChartCard}" />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type pages:MemoryPanelViewModel}">
+      <c:SquircleBorder Theme="{StaticResource Card.Glow}" GlowKey="Memory" GlowStrength="0.8" MinHeight="300">
+        <Grid RowDefinitions="Auto,*">
+          <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Memory" />
+          <Grid Grid.Row="1" Margin="0,14,0,0" ColumnDefinitions="Auto,*">
+            <Grid Width="168" Height="168" VerticalAlignment="Center">
+              <c:DonutChart Segments="{Binding Segments}" Thickness="14" />
+              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="{Binding CenterText}" FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Center" FontFeatures="+tnum" />
+                <TextBlock Text="in use" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Center" />
+              </StackPanel>
+            </Grid>
+            <StackPanel Grid.Column="1" Margin="24,0,0,0" VerticalAlignment="Center">
+              <TextBlock Text="{Binding Caption}" Theme="{StaticResource Text.Secondary}" Margin="0,0,0,10" />
+              <ItemsControl ItemsSource="{Binding Segments}" ItemTemplate="{StaticResource DonutLegendRow}" Focusable="False" />
+              <Border Theme="{StaticResource Divider}" Margin="0,10" />
+              <ItemsControl ItemsSource="{Binding Details}" ItemTemplate="{StaticResource KeyValueRow}" Focusable="False" Grid.IsSharedSizeScope="True" />
+            </StackPanel>
+          </Grid>
+        </Grid>
+      </c:SquircleBorder>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type pages:StoragePanelViewModel}">
+      <c:SquircleBorder Theme="{StaticResource Card.Glow}" GlowKey="Storage" GlowStrength="0.8" MinHeight="300">
+        <Grid RowDefinitions="Auto,*">
+          <Grid>
+            <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Storage" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+              <Ellipse Width="7" Height="7" Fill="{DynamicResource Series.Read.Brush}" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding Read.Number}" FontWeight="SemiBold" Margin="6,0,2,0" FontSize="12" />
+              <TextBlock Text="{Binding Read.Unit}" Theme="{StaticResource Text.Caption}" VerticalAlignment="Center" />
+              <Ellipse Width="7" Height="7" Fill="{DynamicResource Series.Write.Brush}" VerticalAlignment="Center" Margin="14,0,0,0" />
+              <TextBlock Text="{Binding Write.Number}" FontWeight="SemiBold" Margin="6,0,2,0" FontSize="12" />
+              <TextBlock Text="{Binding Write.Unit}" Theme="{StaticResource Text.Caption}" VerticalAlignment="Center" />
+            </StackPanel>
+          </Grid>
+          <c:HeightCap Grid.Row="1" Margin="0,10,0,0" Cap="250">
+            <ScrollViewer Theme="{StaticResource ScrollViewer.Page}">
+              <ItemsControl ItemsSource="{Binding Volumes}" ItemTemplate="{StaticResource VolumeRow}" Focusable="False" />
+            </ScrollViewer>
+          </c:HeightCap>
+        </Grid>
+      </c:SquircleBorder>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type pages:NetworkPanelViewModel}">
+      <c:SquircleBorder Theme="{StaticResource Card}" MinHeight="300">
+        <Grid RowDefinitions="Auto,Auto,*">
+          <Grid>
+            <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Network" />
+            <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding AdapterName}" HorizontalAlignment="Right" MaxWidth="220" />
+          </Grid>
+          <Grid Grid.Row="1" Margin="0,14,0,6" ColumnDefinitions="*,*">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="M12,4 L12,20 M6,14 L12,20 18,14" Stroke="{DynamicResource Series.NetworkDown.Brush}" />
+                <TextBlock Text="Download" Theme="{StaticResource Text.Label}" Margin="6,0,0,0" />
+              </StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                <TextBlock Theme="{StaticResource Text.Value}" b:AnimatedText.Formatter="{Binding Download.NumberFormatter}" b:AnimatedText.Value="{Binding Download.Value}" />
+                <TextBlock Theme="{StaticResource Text.Unit}" Text="{Binding Download.Unit}" VerticalAlignment="Bottom" Margin="4,0,0,3" />
+              </StackPanel>
+            </StackPanel>
+            <StackPanel Grid.Column="1">
+              <StackPanel Orientation="Horizontal">
+                <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="M12,20 L12,4 M6,10 L12,4 18,10" Stroke="{DynamicResource Series.NetworkUp.Brush}" />
+                <TextBlock Text="Upload" Theme="{StaticResource Text.Label}" Margin="6,0,0,0" />
+              </StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                <TextBlock Theme="{StaticResource Text.Value}" b:AnimatedText.Formatter="{Binding Upload.NumberFormatter}" b:AnimatedText.Value="{Binding Upload.Value}" />
+                <TextBlock Theme="{StaticResource Text.Unit}" Text="{Binding Upload.Unit}" VerticalAlignment="Bottom" Margin="4,0,0,3" />
+              </StackPanel>
+            </StackPanel>
+          </Grid>
+          <c:LiveLineChart Grid.Row="2" MinHeight="140" Chart="{Binding Chart}"
+                           Timeline="{Binding DataContext.Timeline, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+        </Grid>
+      </c:SquircleBorder>
+    </DataTemplate>
+    <!-- System health: the overall status, then the graphics card, processor, and memory and drives side by side.
+         The parts' content is capped so a narrow window doesn't make every dashboard row taller; drag the card taller to
+         see more. -->
+    <DataTemplate DataType="{x:Type pages:HealthPanelViewModel}">
+      <c:SquircleBorder Theme="{StaticResource Card.Glow}" Padding="18,14,18,12" GlowStrength="0.7"
+                        GlowKey="{Binding Health.OverallKey, Converter={StaticResource StatusToGlowKey}}">
+        <Grid RowDefinitions="Auto,*">
+          <Grid>
+            <StackPanel Orientation="Horizontal">
+              <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Shield}"
+                    Stroke="{Binding Health.OverallKey, Converter={StaticResource StatusToBrush}, ConverterParameter=Brush.TextTertiary}" StrokeThickness="1.8" VerticalAlignment="Center" />
+              <TextBlock Theme="{StaticResource Text.CardTitle}" Text="System health" Margin="9,0,0,0" VerticalAlignment="Center" />
+              <Border x:Name="Pill" CornerRadius="9" Padding="9,2" Margin="10,0,0,0" VerticalAlignment="Center" Background="{DynamicResource Brush.ControlHover}">
+                <TextBlock Text="{Binding Health.OverallText}" FontSize="12" FontWeight="SemiBold" Foreground="{Binding Health.OverallKey, Converter={StaticResource StatusToBrush}}" />
+              </Border>
+            </StackPanel>
+            <TextBlock Text="{Binding Health.OverallSummary}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis" Margin="200,0,0,0" />
+          </Grid>
+          <c:HeightCap Grid.Row="1" Cap="140" Margin="0,12,0,0" ClipToBounds="True">
+            <ItemsControl ItemsSource="{Binding Health.Parts}" Focusable="False">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <c:AdaptiveGrid MinColumnWidth="150" MaxColumns="4" Spacing="24" RowSpacing="12" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type pages:HealthReportViewModel}">
+                  <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                      <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" VerticalAlignment="Center" />
+                      <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                      <TextBlock Text="{Binding StatusText}" FontSize="12.5" FontWeight="SemiBold" Margin="8,0,0,0" VerticalAlignment="Center"
+                                 Foreground="{Binding StatusKey, Converter={StaticResource StatusToBrush}}" />
+                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding Checks}" ItemTemplate="{StaticResource HealthCheckLine}" Focusable="False" />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </c:HeightCap>
+        </Grid>
+      </c:SquircleBorder>
+    </DataTemplate>
+  </UserControl.DataTemplates>
+
+  <UserControl.Resources>
+    <!-- A card on the dashboard grid: the card itself, a grip at the top and a corner to resize it (both show on hover),
+         and a right-click menu. The card can be dragged from anywhere that isn't a control. -->
+    <DataTemplate x:Key="DashboardTile" DataType="{x:Type pages:DashboardTileViewModel}">
+      <Grid Classes="tile" Background="Transparent" AutomationProperties.Name="{Binding Name}">
+        <Grid.ContextMenu>
+          <ContextMenu>
+            <MenuItem Header="Wider" Command="{Binding WiderCommand}" />
+            <MenuItem Header="Narrower" Command="{Binding NarrowerCommand}" />
+            <MenuItem Header="Taller" Command="{Binding TallerCommand}" />
+            <MenuItem Header="Shorter" Command="{Binding ShorterCommand}" />
+            <MenuItem Header="Reset size" Command="{Binding ResetSizeCommand}" />
+            <Separator />
+            <MenuItem Header="Hide card" Command="{Binding HideCommand}" />
+          </ContextMenu>
+        </Grid.ContextMenu>
+
+        <ContentControl Content="{Binding Content}" />
+
+        <Border Classes="handle" c:DashboardGrid.Handle="Move" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,2,0,0"
+                Width="44" Height="13" Background="Transparent" Cursor="SizeAll" Opacity="0" ToolTip.Tip="Drag to move">
+          <UniformGrid Rows="2" Columns="3" Width="15" Height="7" IsHitTestVisible="False">
+            <Ellipse Width="2.6" Height="2.6" Fill="{DynamicResource Brush.TextTertiary}" />
+            <Ellipse Width="2.6" Height="2.6" Fill="{DynamicResource Brush.TextTertiary}" />
+            <Ellipse Width="2.6" Height="2.6" Fill="{DynamicResource Brush.TextTertiary}" />
+            <Ellipse Width="2.6" Height="2.6" Fill="{DynamicResource Brush.TextTertiary}" />
+            <Ellipse Width="2.6" Height="2.6" Fill="{DynamicResource Brush.TextTertiary}" />
+            <Ellipse Width="2.6" Height="2.6" Fill="{DynamicResource Brush.TextTertiary}" />
+          </UniformGrid>
+        </Border>
+
+        <Border Classes="handle" c:DashboardGrid.Handle="Resize" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,3,3"
+                Width="18" Height="18" Background="Transparent" Cursor="BottomRightCorner" Opacity="0" ToolTip.Tip="Drag to resize">
+          <Path Data="M 13,5 L 5,13 M 13,9.5 L 9.5,13" Stroke="{DynamicResource Brush.TextTertiary}" StrokeThickness="1.5"
+                StrokeLineCap="Round" IsHitTestVisible="False" />
+        </Border>
+      </Grid>
+    </DataTemplate>
+    <!-- One lighting color in the Customize card: a swatch with its name underneath. -->
+    <DataTemplate x:Key="GlowSwatch" DataType="{x:Type pages:GlowOptionViewModel}">
+      <Button Classes="glow" Classes.selected="{Binding IsSelected}" Width="62" Margin="0,0,4,0" Cursor="Hand" ToolTip.Tip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
+              Command="{Binding DataContext.Specs.SelectGlowCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+              CommandParameter="{Binding}">
+        <Button.Template>
+          <ControlTemplate>
+            <StackPanel Background="Transparent">
+              <Grid Width="34" Height="34" HorizontalAlignment="Center">
+                <Ellipse StrokeThickness="2" Stroke="{DynamicResource Brush.Text}"
+                         IsVisible="{Binding IsSelected}" />
+                <Grid x:Name="Dot" Margin="6">
+                  <Ellipse Fill="{Binding Hex, Converter={StaticResource HexToBrush}}" />
+                  <Ellipse IsVisible="{Binding IsRainbow}">
+                    <Ellipse.Fill>
+                      <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Offset="0" Color="#FF2933" />
+                        <GradientStop Offset="0.25" Color="#FFC21A" />
+                        <GradientStop Offset="0.5" Color="#1AD96B" />
+                        <GradientStop Offset="0.75" Color="#0D6BFF" />
+                        <GradientStop Offset="1" Color="#9E4DFF" />
+                      </LinearGradientBrush>
+                    </Ellipse.Fill>
+                  </Ellipse>
+                  <Ellipse Fill="{DynamicResource Brush.Accent}" IsVisible="{Binding IsAccent}" />
+                  <Ellipse Stroke="#40FFFFFF" StrokeThickness="1" IsVisible="{Binding IsAccent}" />
+                </Grid>
+              </Grid>
+              <TextBlock x:Name="Label" Text="{Binding Name}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Center"
+                         TextAlignment="Center" TextWrapping="Wrap" Margin="0,4,0,0" />
+            </StackPanel>
+          </ControlTemplate>
+        </Button.Template>
+      </Button>
+    </DataTemplate>
+    <!-- One card or panel in the Customize card: shown or not, and its place in the order. -->
+    <DataTemplate x:Key="DashboardCardRow" DataType="{x:Type pages:DashboardCardSettingViewModel}">
+      <Grid Margin="0,1" ColumnDefinitions="*,Auto,Auto,Auto">
+        <CheckBox Theme="{StaticResource CheckBox.Compact}" IsChecked="{Binding IsVisible}">
+          <TextBlock Text="{Binding Name}" FontSize="13" />
+        </CheckBox>
+        <TextBlock Grid.Column="1" Text="{Binding Kind}" Theme="{StaticResource Text.Caption}" VerticalAlignment="Center" Margin="12,0" />
+        <Button Grid.Column="2" Theme="{StaticResource Button.Icon}" Command="{Binding MoveUpCommand}" ToolTip.Tip="Move up" AutomationProperties.Name="Move up">
+          <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.ChevronUp}" />
+        </Button>
+        <Button Grid.Column="3" Theme="{StaticResource Button.Icon}" Command="{Binding MoveDownCommand}" ToolTip.Tip="Move down" AutomationProperties.Name="Move down">
+          <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.ChevronDown}" />
+        </Button>
+      </Grid>
+    </DataTemplate>
+  </UserControl.Resources>
+
+  <UserControl.Styles>
+    <Style Selector="ItemsControl.dashboard > ContentPresenter">
+      <Setter Property="c:DashboardGrid.Order" Value="{Binding Order}" />
+      <Setter Property="c:DashboardGrid.ColumnSpan" Value="{Binding ColumnSpan}" />
+      <Setter Property="c:DashboardGrid.RowSpan" Value="{Binding RowSpan}" />
+      <Setter Property="c:DashboardGrid.MinColumns" Value="{Binding MinColumns}" />
+      <Setter Property="c:DashboardGrid.MinRows" Value="{Binding MinRows}" />
+    </Style>
+    <!-- A card's move grip and resize corner show while the pointer is over it. -->
+    <Style Selector="Grid.tile:pointerover > Border.handle">
+      <Setter Property="Opacity" Value="1" />
+    </Style>
+    <Style Selector="Button.glow:pointerover /template/ Grid#Dot, Button.glow:focus-visible /template/ Grid#Dot">
+      <Setter Property="Margin" Value="5" />
+    </Style>
+    <Style Selector="Button.glow:pointerover /template/ TextBlock#Label, Button.glow.selected /template/ TextBlock#Label">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    </Style>
+    <Style Selector="StackPanel.dimmable:disabled">
+      <Setter Property="Opacity" Value="0.45" />
+    </Style>
+  </UserControl.Styles>
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Escape" Command="{Binding Customize.CloseCommand}" />
+  </UserControl.KeyBindings>
+
+  <Grid>
+    <ScrollViewer Theme="{StaticResource ScrollViewer.Window}">
+      <StackPanel Margin="32,14,28,32" b:Motion.Entrance="True">
+        <!-- This PC: its picture (or the user's own render of the build), board name, graphics card and key specs.
+             It stays put; the cards under it can be moved and resized. -->
+        <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,0,0,16" GlowKey="Accent" GlowStrength="1.3" EdgeGlow="True" Sheen="0.8"
+                          Padding="{Binding ShowPcPicture, Converter={StaticResource BoolToValue}, ConverterParameter='14,14,22,14|24,18,22,16'}">
+          <Grid ColumnDefinitions="Auto,*">
+            <!-- Shown or not, and its lighting color: see Customize -->
+            <c:MacIllustration Width="232" Height="176" Margin="4,0,0,0" VerticalAlignment="Center" IsVisible="{Binding ShowPcPicture}"
+                               Model="{Binding Specs.Title}" Glow="{Binding Specs.Glow}" />
+
+            <Grid RowDefinitions="Auto,Auto,Auto" Grid.Column="1" VerticalAlignment="Center" ColumnDefinitions="*,Auto"
+                  Margin="{Binding ShowPcPicture, Converter={StaticResource BoolToValue}, ConverterParameter='22,6,0,6|0'}">
+              <TextBlock Text="{Binding Specs.Title}" ToolTip.Tip="{Binding Specs.Title}" FontSize="22" FontWeight="SemiBold"
+                         Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Grid.Row="1" Text="{Binding Specs.Subtitle}" Theme="{StaticResource Text.Secondary}" FontSize="14" Margin="0,3,0,0"
+                         TextTrimming="CharacterEllipsis" />
+              <Button Grid.Column="1" Grid.RowSpan="2" Theme="{StaticResource Button.Subtle}" VerticalAlignment="Top" Margin="16,0,0,0"
+                      Command="{Binding CustomizeCommand}" Padding="10,5" ToolTip.Tip="The Mac picture, its color and which cards the dashboard shows">
+                <StackPanel Orientation="Horizontal">
+                  <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Edit}" />
+                  <TextBlock Text="Customize" Margin="8,0,0,0" Foreground="{DynamicResource Brush.TextSecondary}" />
+                </StackPanel>
+              </Button>
+
+              <c:AdaptiveGrid Grid.Row="2" Grid.ColumnSpan="2" Margin="0,16,0,0" MinColumnWidth="250" MaxColumns="2" Spacing="40" RowSpacing="0">
+                <ItemsControl ItemsSource="{Binding Specs.LeftSpecs}" ItemTemplate="{StaticResource KeyValueRow}" Focusable="False" Grid.IsSharedSizeScope="True" />
+                <ItemsControl ItemsSource="{Binding Specs.RightSpecs}" ItemTemplate="{StaticResource KeyValueRow}" Focusable="False" Grid.IsSharedSizeScope="True" />
+              </c:AdaptiveGrid>
+            </Grid>
+          </Grid>
+        </c:SquircleBorder>
+
+        <!-- The dashboard: cards and panels on one grid. Drag a card to move it, drag its corner to resize it. -->
+        <ItemsControl Classes="dashboard" ItemsSource="{Binding Tiles}" ItemTemplate="{StaticResource DashboardTile}" Focusable="False">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <c:DashboardGrid MinColumnWidth="232" Spacing="16"
+                               MoveCommand="{Binding MoveTileCommand}" ResizeCommand="{Binding ResizeTileCommand}" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+        </ItemsControl>
+      </StackPanel>
+    </ScrollViewer>
+
+    <!-- Customize: a card over the dashboard; every change applies right away, so the dashboard updates behind it -->
+    <Grid IsVisible="{Binding Customize.IsOpen}">
+
+      <!-- Clicking outside the card closes it -->
+      <Border x:Name="Scrim" Background="{DynamicResource Brush.Scrim}" />
+
+      <c:SquircleBorder Theme="{StaticResource Card}" Width="540" Margin="32" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center" Shadow="1"
+              AutomationProperties.Name="Customize dashboard" b:Pop.Trigger="{Binding Customize.IsOpen}">
+        <Grid RowDefinitions="Auto,*,Auto">
+
+          <Grid Margin="22,18,14,6">
+            <StackPanel Margin="0,0,40,0">
+              <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Customize dashboard" FontSize="16" />
+              <TextBlock Theme="{StaticResource Text.Caption}" Text="Changes apply right away." Margin="0,3,0,0" />
+            </StackPanel>
+            <Button Theme="{StaticResource Button.Icon}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="32" Height="32"
+                    Command="{Binding Customize.CloseCommand}" ToolTip.Tip="Close" AutomationProperties.Name="Close">
+              <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Close}" />
+            </Button>
+          </Grid>
+
+          <ScrollViewer Grid.Row="1" Theme="{StaticResource ScrollViewer.Page}">
+            <StackPanel Margin="22,10,22,6">
+              <TextBlock Theme="{StaticResource Text.Label}" Text="Mac picture" />
+              <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding Customize.ShowPcPicture}" Margin="0,10,0,0">
+                <StackPanel>
+                  <TextBlock Text="Show a picture of your Mac" FontSize="13.5" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
+                  <TextBlock Theme="{StaticResource Text.Caption}" Text="On the left of the header, its screen or light in the color you pick."
+                             TextWrapping="Wrap" Margin="0,3,0,0" />
+                </StackPanel>
+              </CheckBox>
+
+              <StackPanel Classes="dimmable" Margin="0,14,0,0" IsEnabled="{Binding Customize.ShowPcPicture}">
+                <TextBlock Theme="{StaticResource Text.Caption}" Text="Lighting color." TextWrapping="Wrap" Margin="0,0,0,10" />
+                <ItemsControl ItemsSource="{Binding Specs.GlowOptions}" ItemTemplate="{StaticResource GlowSwatch}" Focusable="False">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <WrapPanel />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                </ItemsControl>
+              </StackPanel>
+
+              <Border Theme="{StaticResource Divider}" Margin="0,18,0,16" />
+
+              <TextBlock Theme="{StaticResource Text.Label}" Text="Cards" />
+              <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding Customize.ShowStatistics}" Margin="0,10,0,10">
+                <StackPanel>
+                  <TextBlock Text="Show minimum, maximum and average on cards" FontSize="13.5" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
+                  <TextBlock Theme="{StaticResource Text.Caption}" Text="Calculated over the selected chart window." TextWrapping="Wrap" Margin="0,3,0,0" />
+                </StackPanel>
+              </CheckBox>
+              <TextBlock Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,4,0,8"
+                         Text="Show, hide and reorder what the Overview shows. On the dashboard you can also drag a card to move it, drag its bottom-right corner to resize it, or right-click it for sizes." />
+              <ItemsControl ItemsSource="{Binding Customize.Cards}" ItemTemplate="{StaticResource DashboardCardRow}" Focusable="False" />
+            </StackPanel>
+          </ScrollViewer>
+
+          <Border Grid.Row="2" BorderBrush="{DynamicResource Brush.Divider}" BorderThickness="0,1,0,0" Padding="22,12">
+            <Grid>
+              <Button Theme="{StaticResource Button.Secondary}" Content="Reset layout" HorizontalAlignment="Left"
+                      Command="{Binding Customize.ResetLayoutCommand}" ToolTip.Tip="Show every card and panel in the default order and size" />
+              <Button Theme="{StaticResource Button.Primary}" Content="Done" HorizontalAlignment="Right" MinWidth="80"
+                      Command="{Binding Customize.CloseCommand}" />
+            </Grid>
+          </Border>
+        </Grid>
+      </c:SquircleBorder>
+    </Grid>
+  </Grid>
 </UserControl>

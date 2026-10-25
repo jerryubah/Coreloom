@@ -174,7 +174,7 @@ public static partial class SystemDescriptions
             return "—";
         }
 
-        string size = formatter.Bytes(total, 0).ToString();
+        string size = formatter.MemoryBytes(total, 0).ToString();
         if (populated.Length == 0)
         {
             return size;

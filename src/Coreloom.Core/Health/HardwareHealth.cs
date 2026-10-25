@@ -105,6 +105,12 @@ public sealed class HealthMonitor
     /// <summary>Frames seen (capped at the window).</summary>
     public int Samples => _frames;
 
+    /// <summary>
+    /// A volume's name for its key ("DISK3S5" → "Data"), where volumes have names rather than drive letters (a Mac); null
+    /// keeps "C:".
+    /// </summary>
+    public Func<string, string?>? VolumeName { get; set; }
+
     /// <summary>Records the readings of one frame. <paramref name="cpuFanRpm"/> is the processor fan, when known.</summary>
     public void Record(TelemetryFrame frame, int gpuSlot, double? cpuFanRpm = null)
     {
@@ -118,6 +124,7 @@ public sealed class HealthMonitor
         Add("cpu.temp", frame.GetValue(MetricIds.CpuTemperature));
         Add("cpu.fan", cpuFanRpm);
         Add("mem.load", frame.GetValue(MetricIds.MemoryLoad));
+        Add("mem.pressure", frame.GetValue(MetricIds.MemoryPressure));
         Add("mem.commit", frame.TryGetValue(MetricIds.MemoryCommitUsed, out double committed)
             && frame.TryGetValue(MetricIds.MemoryCommitLimit, out double limit) && limit > 0 ? committed * 100 / limit : null);
 
@@ -295,7 +302,16 @@ public sealed class HealthMonitor
         }
 
         var checks = new List<HealthCheck>();
-        if (Average("mem.load") is double memory)
+
+        // macOS: memory pressure (the kernel's own judgement) says whether memory is short; how full it is doesn't, as macOS
+        // keeps memory in use on purpose and compresses it before it swaps.
+        double? pressure = Latest("mem.pressure");
+        double? average = Average("mem.load");
+        if (average is double used && pressure is not null)
+        {
+            checks.Add(new HealthCheck("memory", CheckState.Ok, "Memory in use", $"{f.Percent(used)} on average"));
+        }
+        else if (average is double memory)
         {
             string detail = $"{f.Percent(memory)} in use on average";
             checks.Add(memory >= 95
@@ -303,6 +319,15 @@ public sealed class HealthMonitor
                 : memory >= 90
                     ? new HealthCheck("memory", CheckState.Notice, "Memory almost full", detail)
                     : new HealthCheck("memory", CheckState.Ok, "Memory use normal", detail));
+        }
+
+        if (pressure is double level)
+        {
+            checks.Add(level >= 4
+                ? new HealthCheck("pressure", CheckState.Problem, "Memory pressure critical", "macOS is short of memory: quit apps you aren't using")
+                : level >= 2
+                    ? new HealthCheck("pressure", CheckState.Notice, "Memory pressure high", "macOS is compressing memory and using swap")
+                    : new HealthCheck("pressure", CheckState.Ok, "Memory pressure normal", "Enough memory for what's running"));
         }
 
         if (Latest("mem.commit") is double commit)
@@ -337,7 +362,7 @@ public sealed class HealthMonitor
         var checks = new List<HealthCheck>();
         if (Latest("vol.fullest") is double fullest)
         {
-            string drive = _fullestVolume is { } letter ? $"{letter}:" : "A drive";
+            string drive = _fullestVolume is not { } letter ? "A drive" : VolumeName?.Invoke(letter) is { Length: > 0 } name ? name : $"{letter}:";
             string detail = $"{drive} {f.Percent(fullest)} full";
             checks.Add(fullest >= 98
                 ? new HealthCheck("space", CheckState.Problem, $"{drive} is full", detail)

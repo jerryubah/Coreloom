@@ -1,5 +1,483 @@
 <UserControl x:Class="Coreloom.Mac.Views.GpuPage"
              xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <TextBlock Text="GpuPage" Margin="32" />
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:Coreloom.Mac.Controls"
+             xmlns:b="using:Coreloom.Mac.Behaviors"
+             xmlns:overlay="using:Coreloom.ViewModels.Overlay"
+             xmlns:pages="using:Coreloom.ViewModels.Pages">
+
+  <UserControl.Resources>
+    <!-- A color dot in the overlay settings (text or background). -->
+    <DataTemplate x:Key="OverlaySwatch" DataType="{x:Type overlay:OverlayColorOption}">
+      <Button Classes="swatch" Width="28" Height="28" Margin="0,0,6,6" Cursor="Hand" ToolTip.Tip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
+              Command="{Binding SelectCommand}">
+        <Button.Template>
+          <ControlTemplate>
+            <Grid Background="Transparent">
+              <Ellipse StrokeThickness="2" Stroke="{DynamicResource Brush.Text}" IsVisible="{Binding IsSelected}" />
+              <Ellipse x:Name="Swatch" Margin="4" Fill="{Binding Hex, Converter={StaticResource HexToBrush}}" Stroke="#33FFFFFF" StrokeThickness="1" />
+            </Grid>
+          </ControlTemplate>
+        </Button.Template>
+      </Button>
+    </DataTemplate>
+
+    <!-- A cell of the position picker. -->
+    <DataTemplate x:Key="OverlayPositionCell" DataType="{x:Type overlay:OverlayPositionOptionViewModel}">
+      <Button Classes="cell" Classes.selected="{Binding IsSelected}" Command="{Binding SelectCommand}" ToolTip.Tip="{Binding Name}"
+              AutomationProperties.Name="{Binding Name}" Cursor="Hand" Margin="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Button.Template>
+          <ControlTemplate>
+            <Border x:Name="Cell" CornerRadius="4" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.InputBorder}" BorderThickness="1">
+              <Border x:Name="Dot" Width="12" Height="6" CornerRadius="2" Background="{DynamicResource Brush.TextTertiary}" />
+            </Border>
+          </ControlTemplate>
+        </Button.Template>
+      </Button>
+    </DataTemplate>
+
+    <ControlTheme x:Key="OverlaySection" TargetType="TextBlock" BasedOn="{StaticResource Text.Label}">
+      <Setter Property="Margin" Value="0,0,0,10" />
+    </ControlTheme>
+
+    <!-- A reading to show, as a chip: a tick and the accent when it's on -->
+    <ControlTheme x:Key="OverlayChip" TargetType="CheckBox">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Margin" Value="0,0,6,6" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border x:Name="Chip" CornerRadius="8" Padding="9,4" Background="{DynamicResource Brush.ControlHover}" BorderBrush="Transparent" BorderThickness="1">
+            <StackPanel Orientation="Horizontal">
+              <Path x:Name="Tick" Theme="{StaticResource IconPath}" Width="10" Height="10" Data="{StaticResource Icon.Check}" Stroke="{DynamicResource Brush.Accent}"
+                    Margin="0,0,5,0" IsVisible="False" />
+              <ContentPresenter Content="{TemplateBinding Content}" VerticalAlignment="Center" />
+            </StackPanel>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:checked">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}" />
+        <Style Selector="^ /template/ Border#Chip">
+          <Setter Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
+        </Style>
+        <Style Selector="^ /template/ Path#Tick">
+          <Setter Property="IsVisible" Value="True" />
+        </Style>
+      </Style>
+      <Style Selector="^:pointerover /template/ Border#Chip">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.InputBorder}" />
+      </Style>
+    </ControlTheme>
+  </UserControl.Resources>
+
+  <UserControl.Styles>
+    <Style Selector="Button.swatch:pointerover /template/ Ellipse#Swatch">
+      <Setter Property="Margin" Value="3" />
+    </Style>
+    <Style Selector="Button.cell:pointerover /template/ Border#Cell">
+      <Setter Property="Background" Value="{DynamicResource Brush.InputHover}" />
+    </Style>
+    <Style Selector="Button.cell.selected /template/ Border#Cell">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+      <Setter Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
+    </Style>
+    <Style Selector="Button.cell.selected /template/ Border#Dot">
+      <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+    <Style Selector="ItemsControl.positions > ContentPresenter">
+      <Setter Property="Grid.Row" Value="{Binding Row}" />
+      <Setter Property="Grid.Column" Value="{Binding Column}" />
+    </Style>
+    <Style Selector="Button.hotkey.capturing">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+  </UserControl.Styles>
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Escape" Command="{Binding OverlaySettings.CloseCommand}" />
+  </UserControl.KeyBindings>
+
+  <Grid>
+  <ScrollViewer Theme="{StaticResource ScrollViewer.Window}">
+    <StackPanel Margin="32,14,28,32" b:Motion.Entrance="True">
+
+      <!-- Device header: vendor mark, GPU name, GPU picker -->
+      <Grid Margin="0,0,0,16" ColumnDefinitions="*,Auto">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <c:BrandMark Vendor="{Binding VendorKey}" Margin="0,0,12,0" />
+          <Path Theme="{StaticResource IconPath}" Data="{StaticResource Icon.Gpu}" Stroke="{DynamicResource Series.Gpu.Brush}" Margin="0,0,10,0" VerticalAlignment="Center"
+                IsVisible="{Binding VendorKey, Converter={StaticResource HasValue}, ConverterParameter=Invert}" />
+          <TextBlock Text="{Binding GpuName}" Theme="{StaticResource Text.Section}" VerticalAlignment="Center" />
+        </StackPanel>
+        <ComboBox Grid.Column="1" Theme="{StaticResource ComboBox.Default}" MinWidth="260" Margin="12,0,0,0" VerticalAlignment="Center"
+                  ItemsSource="{Binding Gpus}" SelectedItem="{Binding SelectedGpu}" DisplayMemberBinding="{Binding Display}"
+                  IsVisible="{Binding HasMultipleGpus}" ToolTip.Tip="GPU shown on this page and the Overview" />
+      </Grid>
+
+      <!-- Gauges -->
+      <c:AdaptiveGrid MinColumnWidth="250" MaxColumns="4" Spacing="16">
+        <ContentControl Content="{Binding Load}" ContentTemplate="{StaticResource GaugeCard}" />
+        <ContentControl Content="{Binding Temperature}" ContentTemplate="{StaticResource GaugeCard}" />
+        <ContentControl Content="{Binding Power}" ContentTemplate="{StaticResource GaugeCard}" />
+        <ContentControl Content="{Binding MemoryLoad}" ContentTemplate="{StaticResource GaugeCard}" />
+      </c:AdaptiveGrid>
+
+      <!-- Health of the card -->
+      <ContentControl Content="{Binding Health}" ContentTemplate="{StaticResource HealthCard}" Margin="0,16,0,0" />
+
+      <!-- Clock limit reasons, and the in-game overlay switch beside them (the reasons wrap to make room) -->
+      <Grid Margin="0,16,0,0" ColumnDefinitions="*,Auto">
+        <c:SquircleBorder Theme="{StaticResource Card.Inset}" Margin="0,0,12,0" IsVisible="{Binding ClockReasons, Converter={StaticResource HasValue}}"
+                ToolTip.Tip="Why the GPU is not running at its maximum clocks right now (reported by the NVIDIA driver).">
+          <Grid ColumnDefinitions="Auto,Auto,*">
+            <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Info}" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" Text="Clock limits:" Theme="{StaticResource Text.Label}" Margin="8,0,6,0" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="2" Text="{Binding ClockReasons}" FontSize="12.5" VerticalAlignment="Center" TextWrapping="Wrap" />
+          </Grid>
+        </c:SquircleBorder>
+
+        <c:SquircleBorder Grid.Column="1" Theme="{StaticResource Card.Inset}" Padding="14,4,6,4" VerticalAlignment="Stretch"
+                ToolTip.Tip="{Binding OverlaySettings.HotkeyHint}">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding OverlaySettings.Enabled}" AutomationProperties.Name="In-game overlay">
+              <TextBlock Text="In-game overlay" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" />
+            </CheckBox>
+            <Border Theme="{StaticResource Badge}" Margin="10,0,0,0" Padding="7,2" BorderBrush="{DynamicResource Brush.InputBorder}" BorderThickness="1"
+                    IsVisible="{Binding OverlaySettings.HasHotkey}">
+              <TextBlock Text="{Binding OverlaySettings.HotkeyText}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+            </Border>
+            <Button Theme="{StaticResource Button.Subtle}" Margin="6,0,0,0" Padding="9,5" Command="{Binding OverlaySettings.OpenCommand}"
+                    ToolTip.Tip="What the overlay shows, where, and how it looks" AutomationProperties.Name="Customize the overlay">
+              <StackPanel Orientation="Horizontal">
+                <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Edit}" />
+                <TextBlock Text="Customize" Margin="7,0,0,0" FontSize="12.5" Foreground="{DynamicResource Brush.TextSecondary}" />
+              </StackPanel>
+            </Button>
+          </StackPanel>
+        </c:SquircleBorder>
+      </Grid>
+
+      <!-- Secondary metrics -->
+      <ItemsControl ItemsSource="{Binding Details}" ItemTemplate="{StaticResource MetricTile}" Margin="0,16,0,0" Focusable="False">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <c:AdaptiveGrid MinColumnWidth="168" MaxColumns="6" Spacing="12" UniformRowHeight="True" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+      </ItemsControl>
+
+      <!-- Charts, with Specifications in the last slot (same height as the charts; its list scrolls) -->
+      <c:AdaptiveGrid MinColumnWidth="460" MaxColumns="2" Spacing="16" Margin="0,16,0,0">
+        <ContentControl Content="{Binding UsageChart}" ContentTemplate="{StaticResource ChartCard}" Height="280" />
+        <ContentControl Content="{Binding TemperatureChart}" ContentTemplate="{StaticResource ChartCard}" Height="280" />
+        <ContentControl Content="{Binding PowerChart}" ContentTemplate="{StaticResource ChartCard}" Height="280" />
+        <ContentControl Content="{Binding ClockChart}" ContentTemplate="{StaticResource ChartCard}" Height="280" />
+        <ContentControl Content="{Binding MemoryChart}" ContentTemplate="{StaticResource ChartCard}" Height="280" />
+        <c:SquircleBorder Theme="{StaticResource Card}" Height="280" Padding="18,14,8,10">
+          <Grid RowDefinitions="Auto,*">
+            <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Specifications" Margin="0,0,10,8" />
+            <ScrollViewer Grid.Row="1" Theme="{StaticResource ScrollViewer.Page}">
+              <ItemsControl ItemsSource="{Binding Specifications}" ItemTemplate="{StaticResource KeyValueRow}" Focusable="False"
+                            Grid.IsSharedSizeScope="True" Margin="0,0,10,0" />
+            </ScrollViewer>
+          </Grid>
+        </c:SquircleBorder>
+      </c:AdaptiveGrid>
+
+      <!-- All sensors, split into two cards that sit side by side -->
+      <Grid Margin="0,24,0,10">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Theme="{StaticResource Text.Section}" Text="All sensors" VerticalAlignment="Center" />
+          <TextBlock Theme="{StaticResource Text.Caption}" Margin="10,2,0,0" VerticalAlignment="Center">
+            <Run Text="{Binding Sensors.Count, Mode=OneWay}" /><Run Text=" readings" />
+          </TextBlock>
+        </StackPanel>
+        <CheckBox Theme="{StaticResource ToggleSwitch}" HorizontalAlignment="Right" IsChecked="{Binding Sensors.ShowRaw}">
+          <TextBlock Text="Raw sensors" Theme="{StaticResource Text.Secondary}" />
+        </CheckBox>
+      </Grid>
+      <ContentControl Content="{Binding Sensors}" ContentTemplate="{StaticResource SensorColumns}" />
+    </StackPanel>
+  </ScrollViewer>
+
+    <!-- In-game overlay settings: a card over the page; every change applies right away (preview and overlay) -->
+    <Grid IsVisible="{Binding OverlaySettings.IsOpen}">
+      <Border x:Name="Scrim" Background="{DynamicResource Brush.Scrim}" />
+
+      <c:SquircleBorder Theme="{StaticResource Card}" Width="660" Margin="32" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center" Shadow="1"
+              AutomationProperties.Name="In-game overlay settings" DataContext="{Binding OverlaySettings}" b:Pop.Trigger="{Binding IsOpen}">
+        <Grid RowDefinitions="Auto,*,Auto">
+
+          <Grid Margin="22,18,14,6">
+            <StackPanel Margin="0,0,40,0">
+              <TextBlock Theme="{StaticResource Text.CardTitle}" Text="In-game overlay" FontSize="16" />
+              <TextBlock Theme="{StaticResource Text.Caption}" Text="Your Mac's readings on top of games and apps, full-screen ones too. Changes apply right away." TextWrapping="Wrap" Margin="0,3,0,0" />
+            </StackPanel>
+            <Button Theme="{StaticResource Button.Icon}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="32" Height="32"
+                    Command="{Binding CloseCommand}" ToolTip.Tip="Close" AutomationProperties.Name="Close">
+              <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Close}" />
+            </Button>
+          </Grid>
+
+          <ScrollViewer Grid.Row="1" Theme="{StaticResource ScrollViewer.Page}">
+            <StackPanel Margin="22,10,22,8">
+
+              <!-- On/off and hotkey -->
+              <Grid ColumnDefinitions="*,Auto">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding Enabled}" HorizontalAlignment="Left">
+                  <TextBlock Text="Show the overlay" FontSize="13.5" Foreground="{DynamicResource Brush.Text}" />
+                </CheckBox>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                  <TextBlock Text="Hotkey" Theme="{StaticResource Text.Label}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                  <Button x:Name="HotkeyButton" Theme="{StaticResource Button.Secondary}" Classes="hotkey" Classes.capturing="{Binding IsCapturingHotkey}"
+                          MinWidth="120" Padding="12,6" Command="{Binding ChangeHotkeyCommand}"
+                          ToolTip.Tip="Click, then press the key combination to use" AutomationProperties.Name="Hotkey">
+                    <Panel>
+                      <TextBlock Text="{Binding HotkeyText}" IsVisible="{Binding !IsCapturingHotkey}" HorizontalAlignment="Center" />
+                      <TextBlock Text="Press keys…" IsVisible="{Binding IsCapturingHotkey}" HorizontalAlignment="Center" />
+                    </Panel>
+                  </Button>
+                  <Button Theme="{StaticResource Button.Subtle}" Content="{Binding DefaultHotkeyText}" Margin="6,0,0,0" Padding="9,6" Command="{Binding ResetHotkeyCommand}"
+                          ToolTip.Tip="Use Option-Command-O (the default)" />
+                  <Button Theme="{StaticResource Button.Subtle}" Content="None" Padding="9,6" Command="{Binding ClearHotkeyCommand}"
+                          ToolTip.Tip="No hotkey" />
+                </StackPanel>
+              </Grid>
+              <TextBlock Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,8,0,0"
+                         Text="macOS gives the hotkey to Coreloom alone while it's set, so a key on its own stops reaching games and other apps. A combination with ⌘ or ⌥, like ⌥⌘O, stays out of the way."
+                         IsVisible="{Binding HotkeyIsSingleKey}" />
+
+              <!-- Live preview -->
+              <c:SquircleBorder CornerRadius="12" Height="190" Margin="0,16,0,0" ClipContent="True">
+                <c:SquircleBorder.Background>
+                  <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Offset="0" Color="#2B3A52" />
+                    <GradientStop Offset="0.55" Color="#16202E" />
+                    <GradientStop Offset="1" Color="#0B0E14" />
+                  </LinearGradientBrush>
+                </c:SquircleBorder.Background>
+                <Grid>
+                  <TextBlock Text="Preview" FontSize="11" Foreground="#80FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  <ContentControl Content="{Binding Preview}" ContentTemplate="{StaticResource OverlayContent}" Margin="12"
+                                  HorizontalAlignment="{Binding Position, Converter={StaticResource PositionToAlignment}, ConverterParameter=H}"
+                                  VerticalAlignment="{Binding Position, Converter={StaticResource PositionToAlignment}, ConverterParameter=V}" />
+                </Grid>
+              </c:SquircleBorder>
+              <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding FrameRateNote}" TextWrapping="Wrap" Margin="0,6,0,0"
+                         Foreground="{DynamicResource Brush.Elevated}" IsVisible="{Binding FrameRateNote, Converter={StaticResource HasValue}}" />
+
+              <Border Theme="{StaticResource Divider}" Margin="0,18,0,16" />
+
+              <!-- What it shows: a row per line, its readings as chips and its size (S, M, L) -->
+              <TextBlock Theme="{StaticResource OverlaySection}" Text="Show" />
+              <ItemsControl ItemsSource="{Binding ItemGroups}" Focusable="False">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="{x:Type overlay:OverlayItemGroupViewModel}">
+                    <Grid Margin="0,0,0,4" ColumnDefinitions="104,*,Auto">
+                      <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="0,4,8,0" VerticalAlignment="Top" />
+                      <ItemsControl Grid.Column="1" ItemsSource="{Binding Items}" Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <WrapPanel />
+                          </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate DataType="{x:Type overlay:OverlayItemOptionViewModel}">
+                            <CheckBox Theme="{StaticResource OverlayChip}" IsChecked="{Binding IsShown}" Content="{Binding Name}" AutomationProperties.Name="{Binding Name}" />
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                      <ListBox Grid.Column="2" Theme="{StaticResource Segmented}" VerticalAlignment="Top" Margin="8,0,0,0" ItemsSource="{Binding SizeOptions}"
+                               SelectedItem="{Binding SelectedSize}" DisplayMemberBinding="{Binding Label}" ToolTip.Tip="This line's size: small, medium or large"
+                               AutomationProperties.Name="{Binding Name, StringFormat='{}{0} size'}" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,4,0,0"
+                         Text="Readings your Mac doesn't report are left out. For a game's frame rate, turn on Metal Performance HUD on the Gaming page." />
+
+              <Border Theme="{StaticResource Divider}" Margin="0,18,0,16" />
+
+              <!-- Where: nine places, fine-tuning, dragging it on screen, a place per game -->
+              <TextBlock Theme="{StaticResource OverlaySection}" Text="Position" />
+              <Grid ColumnDefinitions="Auto,*">
+                <StackPanel>
+                  <ItemsControl Classes="positions" ItemsSource="{Binding Positions}" ItemTemplate="{StaticResource OverlayPositionCell}" Width="132" Height="84" Focusable="False">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <!-- Three by three: corners, edges and the middle -->
+                        <Grid RowDefinitions="*,*,*" ColumnDefinitions="*,*,*">
+                        </Grid>
+                      </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                  </ItemsControl>
+                  <Button Theme="{StaticResource Button.Secondary}" Margin="0,10,0,0" Padding="10,6" HorizontalAlignment="Stretch" Command="{Binding MoveOnScreenCommand}"
+                          ToolTip.Tip="{Binding MoveHint}">
+                    <StackPanel Orientation="Horizontal">
+                      <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Window}" />
+                      <TextBlock Text="Move on screen" Margin="7,0,0,0" />
+                    </StackPanel>
+                  </Button>
+                  <Button Theme="{StaticResource Button.Subtle}" Margin="0,4,0,0" Padding="8,4" HorizontalAlignment="Stretch" Content="Reset fine-tuning"
+                          Command="{Binding ResetOffsetCommand}" ToolTip.Tip="Back to the chosen place, without the X and Y offset" />
+                </StackPanel>
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto" Grid.Column="1" Margin="24,0,0,0" ColumnDefinitions="110,*,54">
+                  <TextBlock Text="Layout" Theme="{StaticResource Text.Label}" VerticalAlignment="Center" />
+                  <ListBox Grid.Column="1" Grid.ColumnSpan="2" Theme="{StaticResource Segmented}" HorizontalAlignment="Right" ItemsSource="{Binding LayoutOptions}" SelectedItem="{Binding SelectedLayout}"
+                           DisplayMemberBinding="{Binding Label}" AutomationProperties.Name="Layout" />
+
+                  <TextBlock Grid.Row="1" Text="From the edge" Theme="{StaticResource Text.Label}" VerticalAlignment="Center" Margin="0,10,0,0" />
+                  <Slider Grid.Row="1" Grid.Column="1" Theme="{StaticResource Slider.Default}" Minimum="0" Maximum="160" TickFrequency="4" Margin="0,10,0,0"
+                          Value="{Binding EdgeMargin, Converter={StaticResource IntToDouble}}" AutomationProperties.Name="Distance from edge" />
+                  <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding EdgeMargin, StringFormat='{}{0} px'}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,10,0,0" />
+
+                  <TextBlock Grid.Row="2" Text="Fine-tune X" Theme="{StaticResource Text.Label}" VerticalAlignment="Center" Margin="0,8,0,0" />
+                  <Slider Grid.Row="2" Grid.Column="1" Theme="{StaticResource Slider.Default}" Minimum="-400" Maximum="400" TickFrequency="2" Margin="0,8,0,0"
+                          Value="{Binding OffsetX, Converter={StaticResource IntToDouble}}" AutomationProperties.Name="Fine-tune left and right" />
+                  <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding OffsetX, StringFormat='{}{0} px'}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,8,0,0" />
+
+                  <TextBlock Grid.Row="3" Text="Fine-tune Y" Theme="{StaticResource Text.Label}" VerticalAlignment="Center" Margin="0,8,0,0" />
+                  <Slider Grid.Row="3" Grid.Column="1" Theme="{StaticResource Slider.Default}" Minimum="-400" Maximum="400" TickFrequency="2" Margin="0,8,0,0"
+                          Value="{Binding OffsetY, Converter={StaticResource IntToDouble}}" AutomationProperties.Name="Fine-tune up and down" />
+                  <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding OffsetY, StringFormat='{}{0} px'}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,8,0,0" />
+                </Grid>
+              </Grid>
+              <Grid Margin="0,14,0,0" ColumnDefinitions="Auto,*">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding PerGamePosition}" VerticalAlignment="Top"
+                          ToolTip.Tip="Moving the overlay while a game is in front saves the place for that game; other games keep the place for all">
+                  <TextBlock Text="A place for each game" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" />
+                </CheckBox>
+                <ItemsControl Grid.Column="1" ItemsSource="{Binding GamePlacements}" Margin="16,0,0,0" Focusable="False" VerticalAlignment="Center"
+                              IsVisible="{Binding HasGamePlacements}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <WrapPanel />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type overlay:OverlayGamePlacementChip}">
+                      <c:SquircleBorder CornerRadius="8" Background="{DynamicResource Brush.ControlHover}" Padding="8,2,2,2" Margin="0,0,6,4">
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="{Binding PlaceText}" FontSize="11.5" VerticalAlignment="Center" />
+                          <Button Theme="{StaticResource Button.Icon}" Width="20" Height="20" Margin="4,0,0,0" Command="{Binding RemoveCommand}"
+                                  ToolTip.Tip="Forget this game's place" AutomationProperties.Name="{Binding Program, StringFormat='Forget the place for {0}'}">
+                            <Path Theme="{StaticResource IconPath}" Width="8" Height="8" Data="{StaticResource Icon.Close}" />
+                          </Button>
+                        </StackPanel>
+                      </c:SquircleBorder>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </Grid>
+              <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding ShowLabels}" Margin="0,10,0,0" HorizontalAlignment="Left">
+                <TextBlock Text="Labels (GPU, CPU, RAM)" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" />
+              </CheckBox>
+
+              <Border Theme="{StaticResource Divider}" Margin="0,18,0,16" />
+
+              <!-- Size: presets or its own scale, and following the screen -->
+              <TextBlock Theme="{StaticResource OverlaySection}" Text="Size" />
+              <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="130,*,54">
+                <TextBlock Text="Overlay" Theme="{StaticResource Text.Label}" VerticalAlignment="Center" />
+                <ListBox Grid.Column="1" Grid.ColumnSpan="2" Theme="{StaticResource Segmented}" HorizontalAlignment="Left" ItemsSource="{Binding SizeOptions}"
+                         SelectedItem="{Binding SelectedSize}" DisplayMemberBinding="{Binding Label}" AutomationProperties.Name="Overlay size"
+                         ToolTip.Tip="Text, graph and spacing all follow. Custom is the size you drag its corner to." />
+                <TextBlock Grid.Row="1" Text="Scale" Theme="{StaticResource Text.Label}" VerticalAlignment="Center" Margin="0,10,0,0" />
+                <Slider Grid.Row="1" Grid.Column="1" Theme="{StaticResource Slider.Default}" Minimum="50" Maximum="250" TickFrequency="5" Margin="0,10,0,0"
+                        Value="{Binding Scale, Converter={StaticResource IntToDouble}}" AutomationProperties.Name="Overlay scale" />
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Scale, StringFormat='{}{0} %'}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,10,0,0" />
+                <CheckBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding AutoScale}" Margin="0,10,0,0" HorizontalAlignment="Left"
+                          ToolTip.Tip="Bigger on big displays, smaller on a laptop's built-in display, judged by the screen's height in points">
+                  <TextBlock FontSize="12.5" Foreground="{DynamicResource Brush.Text}">
+                    <Run Text="Follow the screen" /><Run Text="{Binding ScreenScaleText, Mode=OneWay, StringFormat=' · {0}'}" Foreground="{DynamicResource Brush.TextSecondary}" FontSize="11.5" />
+                  </TextBlock>
+                </CheckBox>
+              </Grid>
+
+              <Border Theme="{StaticResource Divider}" Margin="0,18,0,16" />
+
+              <!-- Text -->
+              <TextBlock Theme="{StaticResource OverlaySection}" Text="Text" />
+              <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="130,*,54">
+                <TextBlock Text="Text size" Theme="{StaticResource Text.Label}" VerticalAlignment="Center" />
+                <Slider Grid.Column="1" Theme="{StaticResource Slider.Default}" Minimum="10" Maximum="32" Value="{Binding FontSize}" AutomationProperties.Name="Text size" />
+                <TextBlock Grid.Column="2" Text="{Binding FontSize, StringFormat='{}{0:0} px'}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+
+                <TextBlock Grid.Row="1" Text="Thickness" Theme="{StaticResource Text.Label}" VerticalAlignment="Center" Margin="0,12,0,0" />
+                <ListBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Theme="{StaticResource Segmented}" HorizontalAlignment="Left" Margin="0,12,0,0"
+                         ItemsSource="{Binding WeightOptions}" SelectedItem="{Binding SelectedWeight}" DisplayMemberBinding="{Binding Label}" AutomationProperties.Name="Text thickness" />
+
+                <TextBlock Grid.Row="2" Text="Color" Theme="{StaticResource Text.Label}" VerticalAlignment="Top" Margin="0,18,0,0" />
+                <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,12,0,0">
+                  <ItemsControl ItemsSource="{Binding TextColors}" ItemTemplate="{StaticResource OverlaySwatch}" Focusable="False" VerticalAlignment="Center">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <WrapPanel />
+                      </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                  </ItemsControl>
+                  <TextBox Theme="{StaticResource TextBox.Default}" Width="96" Margin="6,0,0,6" VerticalAlignment="Center" Text="{Binding TextColor}"
+                           ToolTip.Tip="Any color as #RRGGBB. Press Enter or Tab to apply." AutomationProperties.Name="Text color" />
+                </StackPanel>
+
+                <TextBlock Grid.Row="3" Text="Opacity" Theme="{StaticResource Text.Label}" VerticalAlignment="Center" Margin="0,6,0,0" />
+                <Slider Grid.Row="3" Grid.Column="1" Theme="{StaticResource Slider.Default}" Minimum="20" Maximum="100" TickFrequency="5" Margin="0,6,0,0"
+                        Value="{Binding TextOpacity, Converter={StaticResource IntToDouble}}" AutomationProperties.Name="Text opacity" />
+                <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding TextOpacity, StringFormat='{}{0} %'}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,6,0,0" />
+              </Grid>
+              <StackPanel Orientation="Horizontal" Margin="130,10,0,0">
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding ColorWarnings}" ToolTip.Tip="Temperatures and load turn amber, then red, at their warning levels">
+                  <TextBlock Text="Warning colors" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" />
+                </CheckBox>
+                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding TextShadow}" Margin="24,0,0,0" ToolTip.Tip="Keeps the text readable on bright scenes">
+                  <TextBlock Text="Shadow" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" />
+                </CheckBox>
+              </StackPanel>
+
+              <Border Theme="{StaticResource Divider}" Margin="0,18,0,16" />
+
+              <!-- Background -->
+              <TextBlock Theme="{StaticResource OverlaySection}" Text="Background" />
+              <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="130,*,54">
+                <TextBlock Text="Color" Theme="{StaticResource Text.Label}" VerticalAlignment="Top" Margin="0,6,0,0" />
+                <StackPanel Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal">
+                <ItemsControl ItemsSource="{Binding BackgroundColors}" ItemTemplate="{StaticResource OverlaySwatch}" Focusable="False" VerticalAlignment="Center">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <WrapPanel />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                </ItemsControl>
+                <TextBox Theme="{StaticResource TextBox.Default}" Width="96" Margin="6,0,0,6" VerticalAlignment="Center" Text="{Binding BackgroundColor}"
+                         ToolTip.Tip="Any color as #RRGGBB. Press Enter or Tab to apply." AutomationProperties.Name="Background color" />
+                </StackPanel>
+
+                <TextBlock Grid.Row="1" Text="Opacity" Theme="{StaticResource Text.Label}" VerticalAlignment="Center" Margin="0,6,0,0" />
+                <Slider Grid.Row="1" Grid.Column="1" Theme="{StaticResource Slider.Default}" Minimum="0" Maximum="100" TickFrequency="5" Margin="0,6,0,0"
+                        Value="{Binding BackgroundOpacity, Converter={StaticResource IntToDouble}}" AutomationProperties.Name="Background opacity" />
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding BackgroundOpacity, StringFormat='{}{0} %'}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,6,0,0" />
+
+                <TextBlock Grid.Row="2" Text="Corner radius" Theme="{StaticResource Text.Label}" VerticalAlignment="Center" Margin="0,12,0,0" />
+                <Slider Grid.Row="2" Grid.Column="1" Theme="{StaticResource Slider.Default}" Minimum="0" Maximum="24" Margin="0,12,0,0"
+                        Value="{Binding CornerRadius, Converter={StaticResource IntToDouble}}" AutomationProperties.Name="Corner radius" />
+                <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding CornerRadius, StringFormat='{}{0} px'}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,12,0,0" />
+              </Grid>
+            </StackPanel>
+          </ScrollViewer>
+
+          <Border Grid.Row="2" BorderBrush="{DynamicResource Brush.Divider}" BorderThickness="0,1,0,0" Padding="22,12">
+            <Grid>
+              <Button Theme="{StaticResource Button.Secondary}" Content="Reset look" HorizontalAlignment="Left"
+                      Command="{Binding ResetCommand}" ToolTip.Tip="Default readings, position and look (keeps the switch and the hotkey)" />
+              <Button Theme="{StaticResource Button.Primary}" Content="Done" HorizontalAlignment="Right" MinWidth="80"
+                      Command="{Binding CloseCommand}" />
+            </Grid>
+          </Border>
+        </Grid>
+      </c:SquircleBorder>
+    </Grid>
+  </Grid>
 </UserControl>

@@ -15,6 +15,9 @@ public enum ValueStyle
     Volts,
     Millivolts,
     Bytes,
+
+    /// <summary>A memory size (binary units on a Mac, see <see cref="Coreloom.Core.Formatting.UnitFormatter.BinaryMemory"/>).</summary>
+    MemoryBytes,
     DiskRate,
     NetworkRate,
     Fan,
@@ -91,6 +94,7 @@ public static class ValueStyles
         ValueStyle.Volts => f.Voltage(value),
         ValueStyle.Millivolts => f.Millivolts(value),
         ValueStyle.Bytes => f.Bytes(value),
+        ValueStyle.MemoryBytes => f.MemoryBytes(value),
         ValueStyle.DiskRate => f.DiskRate(value),
         ValueStyle.NetworkRate => f.NetworkRate(value),
         ValueStyle.Fan => f.Fan(value),

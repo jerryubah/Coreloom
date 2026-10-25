@@ -19,7 +19,22 @@ public sealed class MacSettingsTests
         Assert.Equal(gpu, settings.Alerts.Rules.Single(r => r.MetricId == MetricIds.GpuTemperature(0)).Threshold);
         Assert.DoesNotContain(settings.Overlay.Items, OverlayCatalog.IsFrameRate);
         Assert.Contains(OverlayCatalog.GpuLoad, settings.Overlay.Items);
+        Assert.All(settings.Overlay.Items, id => Assert.True(OverlayCatalog.OnMac(id), id));
+        Assert.DoesNotContain(OverlayCatalog.GpuFan, settings.Overlay.Items);
         Assert.Equal("⌥⌘O", Hotkeys.Describe(settings.Overlay.Hotkey.Key, settings.Overlay.Hotkey.Modifiers, mac: true));
+    }
+
+    [Fact]
+    public void Units_StorageLikeFinderMemoryLikeAboutThisMac()
+    {
+        var f = new UnitFormatter(dataUnits: DataUnitStyle.Decimal, culture: System.Globalization.CultureInfo.InvariantCulture) { BinaryMemory = true };
+        Assert.Equal("64 GB", f.MemoryBytes(64L << 30, 0).ToString());
+        Assert.Equal("2 TB", f.Bytes(2_000_000_000_000, 0).ToString());
+        Assert.Equal(3, f.MemoryUnitIndex(64L << 30));
+        Assert.Equal("16.0", f.MemoryBytesAs(16L << 30, 3).Number);
+
+        var windows = new UnitFormatter(dataUnits: DataUnitStyle.Decimal, culture: System.Globalization.CultureInfo.InvariantCulture) { BinaryMemory = false };
+        Assert.Equal("69 GB", windows.MemoryBytes(64L << 30, 0).ToString()); // decimal everywhere, as asked
     }
 
     [Theory]

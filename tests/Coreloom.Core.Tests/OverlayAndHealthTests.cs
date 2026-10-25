@@ -365,6 +365,28 @@ public class HealthMonitorTests
     }
 
     [Fact]
+    public void Memory_OnAMacGoesByPressure()
+    {
+        var calm = new HealthMonitor();
+        Feed(calm, Frame((MetricIds.MemoryLoad, 93), (MetricIds.MemoryPressure, 1)), 5);
+        var calmReport = calm.EvaluateMemory(F);
+        Assert.Equal(HealthStatus.Excellent, calmReport.Status); // a full Mac with normal pressure is fine
+        Assert.Contains(calmReport.Checks, c => c is { Id: "memory", Title: "Memory in use", State: CheckState.Ok });
+        Assert.Contains(calmReport.Checks, c => c is { Id: "pressure", Title: "Memory pressure normal" });
+        Assert.DoesNotContain(calmReport.Checks, c => c.Id == "commit");
+
+        var squeezed = new HealthMonitor();
+        Feed(squeezed, Frame((MetricIds.MemoryLoad, 70), (MetricIds.MemoryPressure, 2)), 5);
+        Assert.Contains(squeezed.EvaluateMemory(F).Checks, c => c is { Id: "pressure", State: CheckState.Notice });
+
+        var critical = new HealthMonitor();
+        Feed(critical, Frame((MetricIds.MemoryLoad, 98), (MetricIds.MemoryPressure, 4)), 5);
+        var criticalReport = critical.EvaluateMemory(F);
+        Assert.Equal(HealthStatus.Attention, criticalReport.Status);
+        Assert.Equal("pressure", criticalReport.Checks.First(c => c.State == CheckState.Problem).Id);
+    }
+
+    [Fact]
     public void Storage_ChecksSpaceWearAndTemperature()
     {
         long tb = 1_000_000_000_000;

@@ -113,7 +113,9 @@ public sealed class SensorRowViewModel : ObservableObject
             HasValue = true;
             Value = Descriptor.Kind == MetricKind.Voltage && sample.Value < 2.5 && Descriptor.Category == MetricCategory.Gpu
                 ? formatter.Millivolts(sample.Value).ToString()
-                : formatter.Format(Descriptor.Kind, sample.Value).ToString();
+                : Descriptor.Kind == MetricKind.Data && Descriptor.Category is MetricCategory.Memory or MetricCategory.Gpu
+                    ? formatter.MemoryBytes(sample.Value).ToString()
+                    : formatter.Format(Descriptor.Kind, sample.Value).ToString();
             Source = sample.Source.Provider;
             IsDerived = sample.Source.Provenance == Provenance.Derived;
             ToolTip = $"{Descriptor.Id}\n{sample.Source.Provider} · {sample.Source.Provenance}{(sample.Source.Note is { Length: > 0 } note ? "\n" + note : string.Empty)}";
@@ -360,12 +362,12 @@ public sealed class ProcessListViewModel : ObservableObject
             if (_sort == ProcessSort.Cpu)
             {
                 row.Primary = formatter.Percent(p.CpuPercent, 1).ToString();
-                row.Secondary = formatter.Bytes(p.WorkingSetBytes).ToString();
+                row.Secondary = formatter.MemoryBytes(p.WorkingSetBytes).ToString();
                 row.Fraction = Math.Clamp(p.CpuPercent / 100.0, 0, 1);
             }
             else
             {
-                row.Primary = formatter.Bytes(p.WorkingSetBytes).ToString();
+                row.Primary = formatter.MemoryBytes(p.WorkingSetBytes).ToString();
                 row.Secondary = formatter.Percent(p.CpuPercent, 1).ToString() + " CPU";
                 row.Fraction = totalMemoryBytes > 0 ? Math.Clamp(p.WorkingSetBytes / totalMemoryBytes, 0, 1) : 0;
             }

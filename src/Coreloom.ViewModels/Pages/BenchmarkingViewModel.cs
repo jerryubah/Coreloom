@@ -313,8 +313,8 @@ public sealed class BenchmarkDetailsViewModel
         Add("Cores", r.System.Cores > 0 ? $"{r.System.Cores} cores, {r.System.Threads} threads" : null);
         Add("Graphics card", r.System.GraphicsCard);
         Add("Graphics driver", r.System.GraphicsDriver);
-        Add("Graphics memory", r.System.GraphicsMemory > 0 ? f.Bytes(r.System.GraphicsMemory, 0).ToString() : null);
-        Add("Memory", r.System.Memory > 0 ? $"{f.Bytes(r.System.Memory, 0)}{(string.IsNullOrEmpty(r.System.MemorySpeed) ? string.Empty : " · " + r.System.MemorySpeed)}" : null);
+        Add("Graphics memory", r.System.GraphicsMemory > 0 ? f.MemoryBytes(r.System.GraphicsMemory, 0).ToString() : null);
+        Add("Memory", r.System.Memory > 0 ? $"{f.MemoryBytes(r.System.Memory, 0)}{(string.IsNullOrEmpty(r.System.MemorySpeed) ? string.Empty : " · " + r.System.MemorySpeed)}" : null);
         bool mac = r.System.OperatingSystem.StartsWith("macOS", StringComparison.Ordinal);
         Add(mac ? "Model" : "Motherboard", r.System.Motherboard);
         Add(mac ? "Firmware" : "BIOS", r.System.Bios);

@@ -299,3 +299,50 @@ public sealed class TextShadowConverter : IValueConverter
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => BindingOperations.DoNothing;
 }
+
+/// <summary>
+/// An overlay position ("TopRight") to its alignment in the preview: parameter "H" for the horizontal alignment, "V" for
+/// the vertical one.
+/// </summary>
+public sealed class PositionToAlignmentConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        string position = value?.ToString() ?? string.Empty;
+        if (string.Equals(parameter as string, "V", StringComparison.OrdinalIgnoreCase))
+        {
+            return position.StartsWith("Top", StringComparison.Ordinal) ? Avalonia.Layout.VerticalAlignment.Top
+                : position.StartsWith("Bottom", StringComparison.Ordinal) ? Avalonia.Layout.VerticalAlignment.Bottom
+                : Avalonia.Layout.VerticalAlignment.Center;
+        }
+
+        return position.EndsWith("Left", StringComparison.Ordinal) ? Avalonia.Layout.HorizontalAlignment.Left
+            : position.EndsWith("Right", StringComparison.Ordinal) ? Avalonia.Layout.HorizontalAlignment.Right
+            : Avalonia.Layout.HorizontalAlignment.Center;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => BindingOperations.DoNothing;
+}
+
+/// <summary>
+/// View-model values the XAML can't take as they are: "12,8" → a Thickness, 16 → a uniform CornerRadius (WPF converted
+/// these by itself; Avalonia bindings don't).
+/// </summary>
+public sealed class ToValueConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var type = Nullable.GetUnderlyingType(targetType) ?? targetType;
+        return value switch
+        {
+            null => null,
+            double d when type == typeof(CornerRadius) => new CornerRadius(d),
+            double d when type == typeof(Thickness) => new Thickness(d),
+            int i when type == typeof(CornerRadius) => new CornerRadius(i),
+            string s => BoolToValueConverter.Parse(s, targetType),
+            _ => value,
+        };
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => BindingOperations.DoNothing;
+}

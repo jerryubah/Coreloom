@@ -36,8 +36,8 @@ public sealed class GpuViewModel : PageViewModel
         MemoryJunction = new MetricViewModel(MetricIds.GpuMemoryJunctionTemperature(0), "Memory junction", ValueStyle.Temperature, ColorKeys.Temperature, new Thresholds(90, 100, 60));
         CoreClock = new MetricViewModel(MetricIds.GpuCoreClock(0), "Core clock", ValueStyle.ClockMegahertz, ColorKeys.Gpu);
         MemoryClock = new MetricViewModel(MetricIds.GpuMemoryClock(0), "Memory clock", ValueStyle.ClockMegahertz, ColorKeys.Memory);
-        MemoryUsed = new MetricViewModel(MetricIds.GpuMemoryUsed(0), "VRAM used", ValueStyle.Bytes, ColorKeys.Memory);
-        MemoryTotal = new MetricViewModel(MetricIds.GpuMemoryTotal(0), "VRAM total", ValueStyle.Bytes, ColorKeys.Memory);
+        MemoryUsed = new MetricViewModel(MetricIds.GpuMemoryUsed(0), "VRAM used", ValueStyle.MemoryBytes, ColorKeys.Memory);
+        MemoryTotal = new MetricViewModel(MetricIds.GpuMemoryTotal(0), "VRAM total", ValueStyle.MemoryBytes, ColorKeys.Memory);
         PowerLimit = new MetricViewModel(MetricIds.GpuPowerLimit(0), "Power limit", ValueStyle.Power, ColorKeys.Power);
         FanRpm = new MetricViewModel(MetricIds.GpuFanRpm(0, 1), "Fan", ValueStyle.Fan, ColorKeys.Fan);
         FanPercent = new MetricViewModel(MetricIds.GpuFanPercent(0, 1), "Fan duty", ValueStyle.Percent, ColorKeys.Fan);
@@ -49,37 +49,51 @@ public sealed class GpuViewModel : PageViewModel
         PcieGeneration = new MetricViewModel(MetricIds.GpuPcieGeneration(0), "PCIe generation", ValueStyle.Count);
         PcieWidth = new MetricViewModel(MetricIds.GpuPcieWidth(0), "PCIe width", ValueStyle.Count);
 
-        Details =
-        [
-            CoreClock, MemoryClock, HotSpot, MemoryJunction, FanRpm, FanPercent, Voltage, MemoryController,
-            PerformanceState, PowerLimit, Encoder, Decoder,
-        ];
+        Tiler = new MetricViewModel("gpu/0/load/tiler", "Tiler", ValueStyle.Percent, ColorKeys.Gpu, Thresholds.Load);
+
+        // A Mac's GPU reports its utilization (renderer and tiler), clock, power, temperature and memory in use, nothing more.
+        Details = IsMac
+            ? [CoreClock, Tiler, MemoryUsed]
+            :
+            [
+                CoreClock, MemoryClock, HotSpot, MemoryJunction, FanRpm, FanPercent, Voltage, MemoryController,
+                PerformanceState, PowerLimit, Encoder, Decoder,
+            ];
 
         UsageChart = new ChartViewModel("Utilization", ChartScale.Percent,
             new ChartSeriesViewModel(MetricIds.GpuLoad(0), "GPU", ColorKeys.Gpu, ValueStyle.Percent),
             new ChartSeriesViewModel(MetricIds.GpuMemoryControllerLoad(0), "Memory controller", ColorKeys.Memory, ValueStyle.Percent, fill: false));
-        TemperatureChart = new ChartViewModel("Temperature", ChartScale.Temperature,
-            new ChartSeriesViewModel(MetricIds.GpuTemperature(0), "Core", ColorKeys.Gpu, ValueStyle.Temperature, fill: false),
-            new ChartSeriesViewModel(MetricIds.GpuHotSpotTemperature(0), "Hot spot", ColorKeys.Temperature, ValueStyle.Temperature, fill: false),
-            new ChartSeriesViewModel(MetricIds.GpuMemoryJunctionTemperature(0), "Memory junction", ColorKeys.Memory, ValueStyle.Temperature, fill: false))
-        {
-            ReferenceMetricId = MetricIds.GpuSlowdownTemperature(0),
-            ReferenceLabel = "Slowdown",
-        };
-        PowerChart = new ChartViewModel("Power draw", ChartScale.Auto,
-            new ChartSeriesViewModel(MetricIds.GpuPower(0), "Board power", ColorKeys.Power, ValueStyle.Power))
-        {
-            ReferenceMetricId = MetricIds.GpuPowerLimit(0),
-            ReferenceLabel = "Power limit",
-        };
-        ClockChart = new ChartViewModel("Clocks", ChartScale.Auto,
-            new ChartSeriesViewModel(MetricIds.GpuCoreClock(0), "Core", ColorKeys.Gpu, ValueStyle.ClockMegahertz, fill: false),
-            new ChartSeriesViewModel(MetricIds.GpuMemoryClock(0), "Memory", ColorKeys.Memory, ValueStyle.ClockMegahertz, fill: false));
+        TemperatureChart = IsMac
+            ? new ChartViewModel("Temperature", ChartScale.Temperature,
+                new ChartSeriesViewModel(MetricIds.GpuTemperature(0), "GPU", ColorKeys.Gpu, ValueStyle.Temperature, fill: false))
+            : new ChartViewModel("Temperature", ChartScale.Temperature,
+                new ChartSeriesViewModel(MetricIds.GpuTemperature(0), "Core", ColorKeys.Gpu, ValueStyle.Temperature, fill: false),
+                new ChartSeriesViewModel(MetricIds.GpuHotSpotTemperature(0), "Hot spot", ColorKeys.Temperature, ValueStyle.Temperature, fill: false),
+                new ChartSeriesViewModel(MetricIds.GpuMemoryJunctionTemperature(0), "Memory junction", ColorKeys.Memory, ValueStyle.Temperature, fill: false))
+            {
+                ReferenceMetricId = MetricIds.GpuSlowdownTemperature(0),
+                ReferenceLabel = "Slowdown",
+            };
+        PowerChart = IsMac
+            ? new ChartViewModel("GPU power", ChartScale.Auto,
+                new ChartSeriesViewModel(MetricIds.GpuPower(0), "GPU", ColorKeys.Power, ValueStyle.Power))
+            : new ChartViewModel("Power draw", ChartScale.Auto,
+                new ChartSeriesViewModel(MetricIds.GpuPower(0), "Board power", ColorKeys.Power, ValueStyle.Power))
+            {
+                ReferenceMetricId = MetricIds.GpuPowerLimit(0),
+                ReferenceLabel = "Power limit",
+            };
+        ClockChart = IsMac
+            ? new ChartViewModel("Clock", ChartScale.Auto,
+                new ChartSeriesViewModel(MetricIds.GpuCoreClock(0), "GPU", ColorKeys.Gpu, ValueStyle.ClockMegahertz, fill: false))
+            : new ChartViewModel("Clocks", ChartScale.Auto,
+                new ChartSeriesViewModel(MetricIds.GpuCoreClock(0), "Core", ColorKeys.Gpu, ValueStyle.ClockMegahertz, fill: false),
+                new ChartSeriesViewModel(MetricIds.GpuMemoryClock(0), "Memory", ColorKeys.Memory, ValueStyle.ClockMegahertz, fill: false));
         MemoryChart = new ChartViewModel("VRAM usage", ChartScale.Auto,
-            new ChartSeriesViewModel(MetricIds.GpuMemoryUsed(0), "Used", ColorKeys.Memory, ValueStyle.Bytes));
+            new ChartSeriesViewModel(MetricIds.GpuMemoryUsed(0), "Used", ColorKeys.Memory, ValueStyle.MemoryBytes));
 
         Sensors = new SensorTableViewModel(d => d.Category == MetricCategory.Gpu && d.DeviceId == MetricIds.GpuDeviceId(_slot < 0 ? 0 : _slot));
-        OverlaySettings = new OverlaySettingsViewModel(Settings, context.Overlay);
+        OverlaySettings = new OverlaySettingsViewModel(Settings, context.Overlay, IsMac);
     }
 
     /// <summary>The graphics card's health card.</summary>
@@ -164,6 +178,9 @@ public sealed class GpuViewModel : PageViewModel
 
     public MetricViewModel Decoder { get; }
 
+    /// <summary>Apple silicon's tiler utilization (the GPU stage that sorts geometry into tiles).</summary>
+    public MetricViewModel Tiler { get; }
+
     public MetricViewModel PcieGeneration { get; }
 
     public MetricViewModel PcieWidth { get; }
@@ -215,6 +232,10 @@ public sealed class GpuViewModel : PageViewModel
         }
 
         UpdateMetrics(frame, true, Load, Temperature, Power, MemoryLoad);
+        if (IsMac)
+        {
+            UpdateMetrics(frame, false, Tiler);
+        }
         UpdateMetrics(frame, false, HotSpot, MemoryJunction, CoreClock, MemoryClock, MemoryUsed, MemoryTotal, PowerLimit,
             FanRpm, FanPercent, Voltage, MemoryController, PerformanceState, Encoder, Decoder, PcieGeneration, PcieWidth);
 
@@ -226,7 +247,7 @@ public sealed class GpuViewModel : PageViewModel
         }
 
         MemoryLoad.Detail = MemoryUsed.HasValue && MemoryTotal.HasValue
-            ? $"{Formatter.BytesAs(MemoryUsed.Value, Formatter.ByteUnitIndex(MemoryTotal.Value), 1).Number} of {Formatter.Bytes(MemoryTotal.Value, 0)}"
+            ? $"{Formatter.MemoryBytesAs(MemoryUsed.Value, Formatter.MemoryUnitIndex(MemoryTotal.Value), 1).Number} of {Formatter.MemoryBytes(MemoryTotal.Value, 0)}"
             : null;
         Temperature.Detail = HotSpot.HasValue ? $"Hot spot {HotSpot.Number}{HotSpot.Unit}" : null;
         Load.Detail = PerformanceState.HasValue ? $"State {PerformanceState.Number}" : null;
@@ -265,14 +286,19 @@ public sealed class GpuViewModel : PageViewModel
 
         UsageChart.Series[0].MetricId = MetricIds.GpuLoad(slot);
         UsageChart.Series[1].MetricId = MetricIds.GpuMemoryControllerLoad(slot);
+        Tiler.Retarget($"gpu/{slot.ToString(System.Globalization.CultureInfo.InvariantCulture)}/load/tiler");
         TemperatureChart.Series[0].MetricId = MetricIds.GpuTemperature(slot);
-        TemperatureChart.Series[1].MetricId = MetricIds.GpuHotSpotTemperature(slot);
-        TemperatureChart.Series[2].MetricId = MetricIds.GpuMemoryJunctionTemperature(slot);
-        TemperatureChart.ReferenceMetricId = MetricIds.GpuSlowdownTemperature(slot);
         PowerChart.Series[0].MetricId = MetricIds.GpuPower(slot);
-        PowerChart.ReferenceMetricId = MetricIds.GpuPowerLimit(slot);
         ClockChart.Series[0].MetricId = MetricIds.GpuCoreClock(slot);
-        ClockChart.Series[1].MetricId = MetricIds.GpuMemoryClock(slot);
+        if (!IsMac)
+        {
+            TemperatureChart.Series[1].MetricId = MetricIds.GpuHotSpotTemperature(slot);
+            TemperatureChart.Series[2].MetricId = MetricIds.GpuMemoryJunctionTemperature(slot);
+            TemperatureChart.ReferenceMetricId = MetricIds.GpuSlowdownTemperature(slot);
+            PowerChart.ReferenceMetricId = MetricIds.GpuPowerLimit(slot);
+            ClockChart.Series[1].MetricId = MetricIds.GpuMemoryClock(slot);
+        }
+
         MemoryChart.Series[0].MetricId = MetricIds.GpuMemoryUsed(slot);
         if (_unified)
         {

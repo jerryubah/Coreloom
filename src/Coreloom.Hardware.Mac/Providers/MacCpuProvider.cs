@@ -69,7 +69,7 @@ public sealed class MacCpuProvider : ITelemetryProvider
         _threads = new MetricHandle[threads];
         for (int i = 0; i < threads; i++)
         {
-            string label = _efficiencyThreads > 0 ? (i < _efficiencyThreads ? $"E-core {i}" : $"P-core {i - _efficiencyThreads}") : $"Thread {i}";
+            string label = _efficiencyThreads > 0 ? (i < _efficiencyThreads ? $"E-core {i + 1}" : $"P-core {i - _efficiencyThreads + 1}") : $"Thread {i + 1}";
             _threads[i] = context.Register(Describe(MetricIds.CpuThreadLoad(i), label, MetricKind.Load, "Threads", i), Provenance.Measured, Priority);
         }
 

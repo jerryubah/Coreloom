@@ -28,6 +28,8 @@ internal static class Program
         bool strict = args.Contains("--strict");
         string? only = args.FirstOrDefault(a => a.StartsWith("--only=", StringComparison.Ordinal))?[7..];
         Directory.CreateDirectory(output);
+        Coreloom.Core.Settings.Hotkeys.UseMacNames = true;
+        Coreloom.Core.Formatting.UnitFormatter.BinaryMemoryByDefault = true;
         var sink = new BindingErrorSink();
         Logger.Sink = sink;
 
@@ -122,6 +124,22 @@ internal static class Program
                 Settle(window, data, 2);
                 Capture(window, Path.Combine(output, $"{name}-full.png"));
             }
+        }
+
+        // Dialogs over their pages.
+        if (only is null || only.Split(',').Contains("gpu"))
+        {
+            shell.Navigate(shell.Gpu);
+            window.Height = WindowHeight * Scale;
+            shell.Gpu.OverlaySettings.OpenCommand.Execute(null);
+            Settle(window, data, 4);
+            foreach (var sv in window.GetVisualDescendants().OfType<ScrollViewer>())
+            {
+                Console.WriteLine($"scroll {sv.Name} offset {sv.Offset} extent {sv.Extent} viewport {sv.Viewport} visible {sv.IsEffectivelyVisible}");
+            }
+
+            Capture(window, Path.Combine(output, "gpu-overlay.png"));
+            shell.Gpu.OverlaySettings.CloseCommand.Execute(null);
         }
 
         // The light theme, once.

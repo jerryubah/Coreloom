@@ -231,7 +231,7 @@ public sealed class SettingsViewModel : PageViewModel
         WindowOptions = Enum.GetValues<HistoryWindow>().Select(w => new Option<HistoryWindow>(w, w.ToLongLabel())).ToArray();
         TemperatureOptions = [new(TemperatureUnit.Celsius, "Celsius (°C)"), new(TemperatureUnit.Fahrenheit, "Fahrenheit (°F)")];
         DataUnitOptions = IsMac
-            ? [new(DataUnitStyle.Decimal, "Decimal — 1 GB = 1000 MB (macOS)"), new(DataUnitStyle.Binary, "Binary — 1 GB = 1024 MB")]
+            ? [new(DataUnitStyle.Decimal, "Like macOS — storage in decimal units, memory in binary units"), new(DataUnitStyle.Binary, "Binary — 1 GB = 1024 MB everywhere")]
             : [new(DataUnitStyle.Binary, "Binary — 1 GB = 1024 MB (Windows)"), new(DataUnitStyle.Decimal, "Decimal — 1 GB = 1000 MB")];
         NetworkUnitOptions = [new(NetworkUnitStyle.BitsPerSecond, "Bits per second (Mbps)"), new(NetworkUnitStyle.BytesPerSecond, "Bytes per second (MB/s)")];
         UpdateFrequencyOptions = [new(UpdateCheckFrequency.OnStartup, "Every launch"), new(UpdateCheckFrequency.Daily, "Daily"), new(UpdateCheckFrequency.Weekly, "Weekly"), new(UpdateCheckFrequency.Never, "Never (manual only)")];
@@ -826,8 +826,8 @@ public sealed class SettingsViewModel : PageViewModel
 
         var f = Formatter;
         string cpu = frame.TryGetValue(MetricIds.AppCpu, out double c) ? f.Percent(c, 2).ToString() : "—";
-        string mem = frame.TryGetValue(MetricIds.AppWorkingSet, out double m) ? f.Bytes(m).ToString() : "—";
-        string heap = frame.TryGetValue(MetricIds.AppManagedBytes, out double h) ? f.Bytes(h).ToString() : "—";
+        string mem = frame.TryGetValue(MetricIds.AppWorkingSet, out double m) ? f.MemoryBytes(m).ToString() : "—";
+        string heap = frame.TryGetValue(MetricIds.AppManagedBytes, out double h) ? f.MemoryBytes(h).ToString() : "—";
         string handles = frame.TryGetValue(MetricIds.AppHandles, out double hc) ? hc.ToString("0", CultureInfo.CurrentCulture) : "—";
         var interval = Monitor.Engine.EffectiveInterval;
         string reading = interval > Monitor.Engine.Interval

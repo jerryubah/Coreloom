@@ -140,10 +140,14 @@ public sealed class OverlaySettingsViewModel : ObservableObject
     private string? _textColorText;
     private string? _backgroundColorText;
 
-    public OverlaySettingsViewModel(SettingsService settings, OverlayViewModel preview)
+    /// <param name="mac">
+    /// On a Mac: no frame-rate readings (macOS doesn't let one app measure another's frames) and ⌥⌘O as the default hotkey.
+    /// </param>
+    public OverlaySettingsViewModel(SettingsService settings, OverlayViewModel preview, bool mac = false)
     {
         _settings = settings;
         Preview = preview;
+        IsMac = mac;
         OpenCommand = new RelayCommand(() => IsOpen = true);
         CloseCommand = new RelayCommand(() =>
         {
@@ -159,7 +163,7 @@ public sealed class OverlaySettingsViewModel : ObservableObject
         ResetHotkeyCommand = new RelayCommand(() =>
         {
             IsCapturingHotkey = false;
-            Save(s => s.Hotkey = OverlayHotkey.Default);
+            Save(s => s.Hotkey = DefaultHotkey);
         });
         SetTextColorCommand = new RelayCommand<string>(hex => TextColor = hex ?? OverlaySettings.DefaultTextColor);
         SetBackgroundColorCommand = new RelayCommand<string>(hex => BackgroundColor = hex ?? OverlaySettings.DefaultBackgroundColor);
@@ -178,9 +182,10 @@ public sealed class OverlaySettingsViewModel : ObservableObject
         });
 
         ItemGroups = Enum.GetValues<OverlayGroup>()
+            .Where(g => !mac || g != OverlayGroup.FrameRate)
             .Select(g => new OverlayItemGroupViewModel(this, g, GroupName(g), OverlayCatalog.All
-                .Where(i => i.Group == g)
-                .Select(i => new OverlayItemOptionViewModel(this, i.Id, i.Name))
+                .Where(i => i.Group == g && (!mac || OverlayCatalog.OnMac(i.Id)))
+                .Select(i => new OverlayItemOptionViewModel(this, i.Id, mac ? MacName(i.Id, i.Name) : i.Name))
                 .ToArray()))
             .ToArray();
         TextColors =
@@ -233,6 +238,21 @@ public sealed class OverlaySettingsViewModel : ObservableObject
     }
 
     private OverlaySettings Options => _settings.Current.Overlay;
+
+    public bool IsMac { get; }
+
+    /// <summary>The hotkey "Reset" puts back: End on Windows, ⌥⌘O on a Mac (a Mac keyboard has no End key).</summary>
+    public OverlayHotkey DefaultHotkey => IsMac ? MacDefaults.OverlayHotkey : OverlayHotkey.Default;
+
+    public string DefaultHotkeyText => DefaultHotkey.ToString();
+
+    /// <summary>A Mac's GPU shares the Mac's memory: no "VRAM".</summary>
+    private static string MacName(string id, string name) => id switch
+    {
+        OverlayCatalog.GpuMemory => "Memory in use",
+        OverlayCatalog.Ram => "Memory used",
+        _ => name,
+    };
 
     /// <summary>The overlay itself, shown in the card as a live preview.</summary>
     public OverlayViewModel Preview { get; }
@@ -317,7 +337,7 @@ public sealed class OverlaySettingsViewModel : ObservableObject
     public IRelayCommand MoveOnScreenCommand { get; }
 
     /// <summary>"Shift + End moves it in games."</summary>
-    public string MoveHint => HasHotkey ? $"In a game, Shift + {HotkeyText} does the same." : "Set a hotkey to move it from inside games too.";
+    public string MoveHint => HasHotkey ? IsMac ? $"In a game, ⇧ with {HotkeyText} does the same." : $"In a game, Shift + {HotkeyText} does the same." : "Set a hotkey to move it from inside games too.";
 
     /// <summary>Keep a place for each game: moving the overlay while a game is in front saves it for that game.</summary>
     public bool PerGamePosition
@@ -578,7 +598,7 @@ public sealed class OverlaySettingsViewModel : ObservableObject
         _backgroundColorText = null;
         Save(s =>
         {
-            s.Items = defaults.Items;
+            s.Items = IsMac ? defaults.Items.Where(OverlayCatalog.OnMac).ToList() : defaults.Items;
             s.Position = defaults.Position;
             s.Layout = defaults.Layout;
             s.FontSize = defaults.FontSize;

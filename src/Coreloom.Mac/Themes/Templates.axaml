@@ -259,8 +259,9 @@
     <Grid Margin="0,6" ColumnDefinitions="Auto,*">
       <Panel Width="54" Height="54">
         <c:DonutChart Segments="{Binding Segments}" Thickness="6" GapDegrees="4" />
-        <TextBlock Text="{Binding Letter}" FontWeight="SemiBold" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"
-                   Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" MaxWidth="40" />
+        <!-- A Mac's volumes have names, not letters: a disk in the middle of the ring -->
+        <Path Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Storage}" HorizontalAlignment="Center" VerticalAlignment="Center"
+              Stroke="{DynamicResource Brush.TextSecondary}" />
       </Panel>
       <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
         <Grid>
@@ -333,20 +334,20 @@
   <!-- Readings window (the overlay on macOS, and its preview in the settings card)       -->
   <!-- ================================================================================= -->
   <DataTemplate x:Key="OverlayValue" DataType="overlay:OverlayValueViewModel">
-    <TextBlock Margin="{Binding Group.ValueSpacing}" Foreground="{Binding Color, Converter={StaticResource HexToBrush}}" VerticalAlignment="Bottom">
+    <TextBlock Margin="{Binding Group.ValueSpacing, Converter={StaticResource ToValue}}" Foreground="{Binding Color, Converter={StaticResource HexToBrush}}" VerticalAlignment="Bottom">
       <Run Text="{Binding Number, Mode=OneWay}" /><Run Text="{Binding Unit, Mode=OneWay, StringFormat='&#x2009;{0}'}" FontSize="{Binding Group.SmallFontSize, Mode=OneWay}" FontWeight="Medium" />
     </TextBlock>
   </DataTemplate>
 
   <!-- A line: "GPU  97 %  72 °C  12 W". Labels line up in a column when stacked. -->
   <DataTemplate x:Key="OverlayGroup" DataType="overlay:OverlayGroupViewModel">
-    <Grid Margin="{Binding Overlay.GroupSpacing}" TextElement.FontSize="{Binding FontSize}">
+    <Grid Margin="{Binding Overlay.GroupSpacing, Converter={StaticResource ToValue}}" TextElement.FontSize="{Binding FontSize}">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto" SharedSizeGroup="OverlayLabel" />
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
-      <TextBlock Text="{Binding Label}" Opacity="0.55" Margin="{Binding LabelSpacing}" VerticalAlignment="Bottom"
+      <TextBlock Text="{Binding Label}" Opacity="0.55" Margin="{Binding LabelSpacing, Converter={StaticResource ToValue}}" VerticalAlignment="Bottom"
                  FontSize="{Binding SmallFontSize}" FontWeight="SemiBold" IsVisible="{Binding Overlay.ShowLabels}"
                  Effect="{Binding Overlay.TextShadow, Converter={StaticResource TextShadow}}" />
       <ItemsControl Grid.Column="1" ItemsSource="{Binding Values}" ItemTemplate="{StaticResource OverlayValue}" Focusable="False" VerticalAlignment="Bottom"
@@ -359,13 +360,7 @@
       </ItemsControl>
       <!-- while the window is being moved: this line's size (S, M, L), click to change -->
       <Button Grid.Column="2" Margin="8,0,0,0" Padding="6,0" MinWidth="22" VerticalAlignment="Center"
-              Command="{Binding CycleSizeCommand}" ToolTip.Tip="{Binding SizeToolTip}" Focusable="False" Cursor="Hand">
-        <Button.IsVisible>
-          <MultiBinding Converter="{x:Static BoolConverters.And}">
-            <Binding Path="Overlay.IsMoving" />
-            <Binding Path="(c:OverlayHost.IsLive)" RelativeSource="{RelativeSource Self}" />
-          </MultiBinding>
-        </Button.IsVisible>
+              Command="{Binding CycleSizeCommand}" ToolTip.Tip="{Binding SizeToolTip}" Focusable="False" Cursor="Hand" IsVisible="{Binding Overlay.IsMoving}">
         <Button.Template>
           <ControlTemplate>
             <Border Background="#CC2D6BFF" CornerRadius="5" Padding="{TemplateBinding Padding}">
@@ -384,8 +379,8 @@
            TextElement.FontWeight="{Binding FontWeight}" TextElement.Foreground="{Binding TextColor, Converter={StaticResource HexToBrush}}"
            TextElement.FontFeatures="+tnum" IsVisible="{Binding HasContent}">
       <Panel Opacity="{Binding BackgroundOpacity}">
-        <c:SquircleBorder CornerRadius="{Binding CornerRadius}" Background="{Binding BackgroundColor, Converter={StaticResource HexToBrush}}" />
-        <c:SquircleBorder CornerRadius="{Binding CornerRadius}">
+        <c:SquircleBorder CornerRadius="{Binding CornerRadius, Converter={StaticResource ToValue}}" Background="{Binding BackgroundColor, Converter={StaticResource HexToBrush}}" />
+        <c:SquircleBorder CornerRadius="{Binding CornerRadius, Converter={StaticResource ToValue}}">
           <c:SquircleBorder.Background>
             <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
               <GradientStop Color="#10FFFFFF" Offset="0" />
@@ -394,7 +389,7 @@
           </c:SquircleBorder.Background>
         </c:SquircleBorder>
       </Panel>
-      <ItemsControl ItemsSource="{Binding Groups}" ItemTemplate="{StaticResource OverlayGroup}" Margin="{Binding Padding}"
+      <ItemsControl ItemsSource="{Binding Groups}" ItemTemplate="{StaticResource OverlayGroup}" Margin="{Binding Padding, Converter={StaticResource ToValue}}"
                     Opacity="{Binding TextOpacity}" Grid.IsSharedSizeScope="True" Focusable="False">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>

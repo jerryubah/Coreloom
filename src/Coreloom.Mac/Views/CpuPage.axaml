@@ -1,5 +1,129 @@
 <UserControl x:Class="Coreloom.Mac.Views.CpuPage"
              xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <TextBlock Text="CpuPage" Margin="32" />
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:Coreloom.Mac.Controls"
+             xmlns:b="using:Coreloom.Mac.Behaviors"
+             xmlns:pages="using:Coreloom.ViewModels.Pages">
+
+  <ScrollViewer Theme="{StaticResource ScrollViewer.Window}">
+    <StackPanel Margin="32,14,28,32" b:Motion.Entrance="True">
+
+      <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+        <c:BrandMark Vendor="{Binding VendorKey}" Margin="0,0,12,0" />
+        <Path Theme="{StaticResource IconPath}" Data="{StaticResource Icon.Cpu}" Stroke="{DynamicResource Series.Cpu.Brush}" Margin="0,0,10,0" VerticalAlignment="Center"
+              IsVisible="{Binding VendorKey, Converter={StaticResource HasValue}, ConverterParameter=Invert}" />
+        <TextBlock Text="{Binding CpuName}" Theme="{StaticResource Text.Section}" VerticalAlignment="Center" />
+      </StackPanel>
+
+      <!-- Why temperature/power may be missing (a virtual Mac has no sensors) -->
+      <c:SquircleBorder Theme="{StaticResource Card.Inset}" Margin="0,0,0,16" IsVisible="{Binding LowLevelUnavailable}">
+        <StackPanel Orientation="Horizontal">
+          <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Info}" />
+          <TextBlock Text="{Binding LowLevelMessage}" Margin="10,0,0,0" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource Brush.TextSecondary}" />
+        </StackPanel>
+      </c:SquircleBorder>
+
+      <!-- Gauges -->
+      <c:AdaptiveGrid MinColumnWidth="250" MaxColumns="4" Spacing="16">
+        <ContentControl Content="{Binding Load}" ContentTemplate="{StaticResource GaugeCard}" />
+        <ContentControl Content="{Binding Temperature}" ContentTemplate="{StaticResource GaugeCard}" />
+        <ContentControl Content="{Binding Power}" ContentTemplate="{StaticResource GaugeCard}" />
+        <ContentControl Content="{Binding Clock}" ContentTemplate="{StaticResource GaugeCard}" />
+      </c:AdaptiveGrid>
+
+      <!-- Health of the processor -->
+      <ContentControl Content="{Binding Health}" ContentTemplate="{StaticResource HealthCard}" Margin="0,16,0,0" />
+
+      <!-- Performance and efficiency cores, the busiest core and the Neural Engine -->
+      <ItemsControl ItemsSource="{Binding Details}" ItemTemplate="{StaticResource MetricTile}" Margin="0,16,0,0" Focusable="False">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <c:AdaptiveGrid MinColumnWidth="168" MaxColumns="6" Spacing="12" UniformRowHeight="True" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+      </ItemsControl>
+
+      <!-- Charts -->
+      <c:AdaptiveGrid MinColumnWidth="460" MaxColumns="2" Spacing="16" Margin="0,16,0,0">
+        <ContentControl Content="{Binding LoadChart}" ContentTemplate="{StaticResource ChartCard}" Height="280" />
+        <ContentControl Content="{Binding TemperatureChart}" ContentTemplate="{StaticResource ChartCard}" Height="280" />
+        <ContentControl Content="{Binding PowerChart}" ContentTemplate="{StaticResource ChartCard}" Height="280" />
+        <ContentControl Content="{Binding ClockChart}" ContentTemplate="{StaticResource ChartCard}" Height="280" />
+      </c:AdaptiveGrid>
+
+      <!-- Each core (efficiency cores first, as macOS numbers them) -->
+      <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,16,0,0">
+        <StackPanel>
+          <Grid Margin="0,0,0,12">
+            <StackPanel>
+              <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Cores" />
+              <TextBlock Theme="{StaticResource Text.Caption}" Text="Utilization of each core over the last 60 seconds" Margin="0,2,0,0" />
+            </StackPanel>
+            <CheckBox Theme="{StaticResource ToggleSwitch}" HorizontalAlignment="Right" IsChecked="{Binding ShowThreads}">
+              <TextBlock Text="Show graphs" Theme="{StaticResource Text.Secondary}" />
+            </CheckBox>
+          </Grid>
+          <ItemsControl ItemsSource="{Binding Threads}" Focusable="False" IsVisible="{Binding ShowThreads}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <c:AdaptiveGrid MinColumnWidth="118" MaxColumns="16" Spacing="8" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="{x:Type pages:ThreadTileViewModel}">
+                <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="10,8,10,6">
+                  <StackPanel>
+                    <Grid>
+                      <TextBlock Text="{Binding Label}" Theme="{StaticResource Text.Caption}" />
+                      <TextBlock Text="{Binding ValueText}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                    </Grid>
+                    <c:Sparkline Height="30" Margin="0,6,0,0" MetricId="{Binding MetricId}" ColorKey="Cpu" Maximum="100" FillOpacity="0.22" StrokeThickness="1.2"
+                                 Timeline="{Binding DataContext.Timeline, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                  </StackPanel>
+                </c:SquircleBorder>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </c:SquircleBorder>
+
+      <!-- Processes + specs, ending on one line: when the specifications are longer, the process list shows more apps -->
+      <c:AdaptiveGrid MinColumnWidth="460" MaxColumns="2" Spacing="16" Margin="0,16,0,0">
+        <c:SquircleBorder Theme="{StaticResource Card}">
+          <Grid RowDefinitions="Auto,Auto,*">
+            <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Top apps by CPU" />
+            <TextBlock Grid.Row="1" Theme="{StaticResource Text.Caption}" Text="Processes grouped by app · refreshed every 2 seconds" Margin="0,2,0,10" />
+            <ContentControl Grid.Row="2" Content="{Binding Processes}" ContentTemplate="{StaticResource ProcessList}" />
+          </Grid>
+        </c:SquircleBorder>
+        <c:SquircleBorder Theme="{StaticResource Card}">
+          <StackPanel>
+            <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Specifications" Margin="0,0,0,10" />
+            <ItemsControl ItemsSource="{Binding Specifications}" ItemTemplate="{StaticResource KeyValueRow}" Focusable="False" Grid.IsSharedSizeScope="True" />
+          </StackPanel>
+        </c:SquircleBorder>
+      </c:AdaptiveGrid>
+
+      <!-- Fans and temperatures around the Mac -->
+      <StackPanel Orientation="Horizontal" Margin="0,24,0,10">
+        <TextBlock Theme="{StaticResource Text.Section}" Text="Fans &amp; temperatures" VerticalAlignment="Center" />
+        <TextBlock Theme="{StaticResource Text.Caption}" Text="The Mac's own thermal sensors and fans" Margin="10,2,0,0" VerticalAlignment="Center" />
+      </StackPanel>
+      <ContentControl Content="{Binding BoardSensors}" ContentTemplate="{StaticResource SensorColumns}" />
+
+      <!-- All processor sensors, two cards side by side -->
+      <Grid Margin="0,24,0,10">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Theme="{StaticResource Text.Section}" Text="All processor sensors" VerticalAlignment="Center" />
+          <TextBlock Theme="{StaticResource Text.Caption}" Margin="10,2,0,0" VerticalAlignment="Center">
+            <Run Text="{Binding Sensors.Count, Mode=OneWay}" /><Run Text=" readings" />
+          </TextBlock>
+        </StackPanel>
+        <CheckBox Theme="{StaticResource ToggleSwitch}" HorizontalAlignment="Right" IsChecked="{Binding Sensors.ShowRaw}">
+          <TextBlock Text="Raw sensors" Theme="{StaticResource Text.Secondary}" />
+        </CheckBox>
+      </Grid>
+      <ContentControl Content="{Binding Sensors}" ContentTemplate="{StaticResource SensorColumns}" />
+    </StackPanel>
+  </ScrollViewer>
 </UserControl>

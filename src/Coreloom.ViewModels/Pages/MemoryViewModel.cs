@@ -20,21 +20,21 @@ public sealed class MemoryViewModel : PageViewModel
         : base("memory", "Memory", "Icon.Memory", context, MonitoringSection.Memory)
     {
         Load = new MetricViewModel(MetricIds.MemoryLoad, "Utilization", ValueStyle.Percent, ColorKeys.Memory, Thresholds.Memory);
-        Used = new MetricViewModel(MetricIds.MemoryUsed, IsMac ? "Memory used" : "In use", ValueStyle.Bytes, ColorKeys.Memory);
-        Available = new MetricViewModel(MetricIds.MemoryAvailable, "Available", ValueStyle.Bytes, ColorKeys.Neutral);
-        Total = new MetricViewModel(MetricIds.MemoryTotal, IsMac ? "Physical memory" : "Usable", ValueStyle.Bytes, ColorKeys.Neutral);
+        Used = new MetricViewModel(MetricIds.MemoryUsed, IsMac ? "Memory used" : "In use", ValueStyle.MemoryBytes, ColorKeys.Memory);
+        Available = new MetricViewModel(MetricIds.MemoryAvailable, "Available", ValueStyle.MemoryBytes, ColorKeys.Neutral);
+        Total = new MetricViewModel(MetricIds.MemoryTotal, IsMac ? "Physical memory" : "Usable", ValueStyle.MemoryBytes, ColorKeys.Neutral);
 
         // macOS has no commit charge: its counterpart is swap, and "Memory used" splits into app, wired and compressed memory.
         Committed = IsMac
-            ? new MetricViewModel(MetricIds.MemorySwapUsed, "Swap used", ValueStyle.Bytes, ColorKeys.Memory)
-            : new MetricViewModel(MetricIds.MemoryCommitUsed, "Committed", ValueStyle.Bytes, ColorKeys.Memory);
+            ? new MetricViewModel(MetricIds.MemorySwapUsed, "Swap used", ValueStyle.MemoryBytes, ColorKeys.Memory)
+            : new MetricViewModel(MetricIds.MemoryCommitUsed, "Committed", ValueStyle.MemoryBytes, ColorKeys.Memory);
         CommitLimit = IsMac
-            ? new MetricViewModel(MetricIds.MemorySwapTotal, "Swap size", ValueStyle.Bytes, ColorKeys.Neutral)
-            : new MetricViewModel(MetricIds.MemoryCommitLimit, "Commit limit", ValueStyle.Bytes, ColorKeys.Neutral);
-        Cache = new MetricViewModel(MetricIds.MemoryCache, IsMac ? "Cached files" : "Cached", ValueStyle.Bytes, ColorKeys.Neutral);
-        App = new MetricViewModel(MetricIds.MemoryApp, "App memory", ValueStyle.Bytes, ColorKeys.Memory);
-        Wired = new MetricViewModel(MetricIds.MemoryWired, "Wired memory", ValueStyle.Bytes, ColorKeys.Cpu);
-        Compressed = new MetricViewModel(MetricIds.MemoryCompressed, "Compressed", ValueStyle.Bytes, ColorKeys.Storage);
+            ? new MetricViewModel(MetricIds.MemorySwapTotal, "Swap size", ValueStyle.MemoryBytes, ColorKeys.Neutral)
+            : new MetricViewModel(MetricIds.MemoryCommitLimit, "Commit limit", ValueStyle.MemoryBytes, ColorKeys.Neutral);
+        Cache = new MetricViewModel(MetricIds.MemoryCache, IsMac ? "Cached files" : "Cached", ValueStyle.MemoryBytes, ColorKeys.Neutral);
+        App = new MetricViewModel(MetricIds.MemoryApp, "App memory", ValueStyle.MemoryBytes, ColorKeys.Memory);
+        Wired = new MetricViewModel(MetricIds.MemoryWired, "Wired memory", ValueStyle.MemoryBytes, ColorKeys.Cpu);
+        Compressed = new MetricViewModel(MetricIds.MemoryCompressed, "Compressed", ValueStyle.MemoryBytes, ColorKeys.Storage);
         Details = IsMac ? [Used, App, Wired, Compressed, Cache, Committed] : [Used, Available, Committed, Cache];
 
         InUseSegment = new DonutSegmentViewModel("In use", ColorKeys.Memory);
@@ -45,13 +45,13 @@ public sealed class MemoryViewModel : PageViewModel
             new ChartSeriesViewModel(MetricIds.MemoryLoad, "In use", ColorKeys.Memory, ValueStyle.Percent));
         CommitChart = IsMac
             ? new ChartViewModel("Memory used", ChartScale.Auto,
-                new ChartSeriesViewModel(MetricIds.MemoryApp, "App memory", ColorKeys.Memory, ValueStyle.Bytes, fill: false),
-                new ChartSeriesViewModel(MetricIds.MemoryWired, "Wired", ColorKeys.Cpu, ValueStyle.Bytes, fill: false),
-                new ChartSeriesViewModel(MetricIds.MemoryCompressed, "Compressed", ColorKeys.Storage, ValueStyle.Bytes, fill: false),
-                new ChartSeriesViewModel(MetricIds.MemorySwapUsed, "Swap", ColorKeys.NetworkDown, ValueStyle.Bytes, fill: false))
+                new ChartSeriesViewModel(MetricIds.MemoryApp, "App memory", ColorKeys.Memory, ValueStyle.MemoryBytes, fill: false),
+                new ChartSeriesViewModel(MetricIds.MemoryWired, "Wired", ColorKeys.Cpu, ValueStyle.MemoryBytes, fill: false),
+                new ChartSeriesViewModel(MetricIds.MemoryCompressed, "Compressed", ColorKeys.Storage, ValueStyle.MemoryBytes, fill: false),
+                new ChartSeriesViewModel(MetricIds.MemorySwapUsed, "Swap", ColorKeys.NetworkDown, ValueStyle.MemoryBytes, fill: false))
             : new ChartViewModel("Committed memory", ChartScale.Auto,
-                new ChartSeriesViewModel(MetricIds.MemoryCommitUsed, "Committed", ColorKeys.Memory, ValueStyle.Bytes, fill: false),
-                new ChartSeriesViewModel(MetricIds.MemoryUsed, "In use", ColorKeys.Cpu, ValueStyle.Bytes, fill: false));
+                new ChartSeriesViewModel(MetricIds.MemoryCommitUsed, "Committed", ColorKeys.Memory, ValueStyle.MemoryBytes, fill: false),
+                new ChartSeriesViewModel(MetricIds.MemoryUsed, "In use", ColorKeys.Cpu, ValueStyle.MemoryBytes, fill: false));
 
         Processes = new ProcessListViewModel(Monitor.Processes, ProcessSort.Memory, 6, 16);
         ModuleSensors = new SensorTableViewModel(d => d.Category == MetricCategory.Memory && d.IsRaw && d.Kind is MetricKind.Temperature or MetricKind.Voltage);
@@ -63,7 +63,7 @@ public sealed class MemoryViewModel : PageViewModel
             var m = modules[i];
             Modules.Add(new MemoryModuleItem(
                 labels[i],
-                Formatter.Bytes(m.SizeBytes, 0).ToString(),
+                Formatter.MemoryBytes(m.SizeBytes, 0).ToString(),
                 m.MemoryType,
                 (m.ConfiguredSpeedMtps > 0 ? m.ConfiguredSpeedMtps : m.SpeedMtps) is int s and > 0 ? $"{s} MT/s" : "—",
                 m.PartNumber ?? m.Manufacturer ?? "—"));
@@ -204,11 +204,11 @@ public sealed class MemoryViewModel : PageViewModel
             InUseSegment.ValueText = Used.FormatWithUnit(Used.Value);
             AvailableSegment.ValueText = Available.FormatWithUnit(Available.Value);
             CenterText = Load.HasValue ? $"{Load.Number}%" : "—";
-            CenterCaption = Total.HasValue ? $"of {f.Bytes(Total.Value, 1)}" : string.Empty;
+            CenterCaption = Total.HasValue ? $"of {f.MemoryBytes(Total.Value, 1)}" : string.Empty;
         }
 
         Committed.Detail = CommitLimit.HasValue ? $"of {CommitLimit.Number} {CommitLimit.Unit}" : null;
-        Load.Detail = Used.HasValue && Total.HasValue ? $"{f.BytesAs(Used.Value, f.ByteUnitIndex(Total.Value), 1).Number} of {f.Bytes(Total.Value, 1)}" : null;
+        Load.Detail = Used.HasValue && Total.HasValue ? $"{f.MemoryBytesAs(Used.Value, f.MemoryUnitIndex(Total.Value), 1).Number} of {f.MemoryBytes(Total.Value, 1)}" : null;
 
         UpdateCharts(frame, UsageChart, CommitChart);
         Processes.Update(f, Total.HasValue ? Total.Value : 0);

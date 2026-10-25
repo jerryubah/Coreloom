@@ -1,4 +1,8 @@
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Coreloom.Mac.Input;
+using Coreloom.ViewModels.Pages;
 
 namespace Coreloom.Mac.Views;
 
@@ -6,7 +10,18 @@ namespace Coreloom.Mac.Views;
 
 public partial class OverviewPage : UserControl
 {
-    public OverviewPage() => InitializeComponent();
+    public OverviewPage()
+    {
+        InitializeComponent();
+        Scrim.PointerPressed += (_, e) =>
+        {
+            if (DataContext is OverviewViewModel page)
+            {
+                page.Customize.CloseCommand.Execute(null);
+                e.Handled = true;
+            }
+        };
+    }
 }
 
 public partial class GamingPage : UserControl
@@ -21,7 +36,40 @@ public partial class BenchmarkingPage : UserControl
 
 public partial class GpuPage : UserControl
 {
-    public GpuPage() => InitializeComponent();
+    public GpuPage()
+    {
+        InitializeComponent();
+        HotkeyButton.AddHandler(KeyDownEvent, OnHotkeyKeyDown, RoutingStrategies.Tunnel);
+        HotkeyButton.LostFocus += OnHotkeyLostFocus;
+        Scrim.PointerPressed += (_, e) =>
+        {
+            if (DataContext is GpuViewModel page)
+            {
+                page.OverlaySettings.CloseCommand.Execute(null);
+                e.Handled = true;
+            }
+        };
+    }
+
+    /// <summary>While the overlay's hotkey button waits, the next key press (with any modifiers) becomes the hotkey.</summary>
+    private void OnHotkeyKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (DataContext is not GpuViewModel { OverlaySettings: { IsCapturingHotkey: true } settings })
+        {
+            return;
+        }
+
+        settings.CaptureHotkey(KeyCodes.VirtualKey(e.Key), KeyCodes.Modifiers(e.KeyModifiers));
+        e.Handled = true; // nothing else reacts to keys typed as a hotkey (Space or Return would click the button again)
+    }
+
+    private void OnHotkeyLostFocus(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is GpuViewModel { OverlaySettings: { IsCapturingHotkey: true } settings })
+        {
+            settings.CaptureHotkey(0x1B, Coreloom.Core.Settings.HotkeyModifiers.None); // clicking elsewhere cancels, like Esc
+        }
+    }
 }
 
 public partial class CpuPage : UserControl

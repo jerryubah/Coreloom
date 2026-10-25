@@ -638,7 +638,7 @@ public sealed class OverlayViewModel : ObservableObject
             OverlayCatalog.GpuPower => new(MetricIds.GpuPower(slot), "GPU power", ValueStyle.Power),
             OverlayCatalog.GpuClock => new(MetricIds.GpuCoreClock(slot), "GPU clock", ValueStyle.ClockMegahertz),
             OverlayCatalog.GpuMemoryClock => new(MetricIds.GpuMemoryClock(slot), "Memory clock", ValueStyle.ClockMegahertz),
-            OverlayCatalog.GpuMemory => new(MetricIds.GpuMemoryUsed(slot), "VRAM", ValueStyle.Bytes),
+            OverlayCatalog.GpuMemory => new(MetricIds.GpuMemoryUsed(slot), "VRAM", ValueStyle.MemoryBytes),
             OverlayCatalog.GpuFan => frame is null || frame.Contains(MetricIds.GpuFanRpm(slot, 1))
                 ? new(MetricIds.GpuFanRpm(slot, 1), "GPU fan", ValueStyle.Fan)
                 : new(MetricIds.GpuFanPercent(slot, 1), "GPU fan", ValueStyle.Percent),
@@ -650,7 +650,7 @@ public sealed class OverlayViewModel : ObservableObject
             OverlayCatalog.CpuClock => frame is null || frame.Contains(MetricIds.CpuClockEffectiveAverage)
                 ? new(MetricIds.CpuClockEffectiveAverage, "CPU clock", ValueStyle.ClockGigahertz)
                 : new(MetricIds.CpuClockDerived, "CPU clock", ValueStyle.ClockGigahertz),
-            OverlayCatalog.Ram => new(MetricIds.MemoryUsed, "RAM", ValueStyle.Bytes),
+            OverlayCatalog.Ram => new(MetricIds.MemoryUsed, "RAM", ValueStyle.MemoryBytes),
             _ => null,
         };
     }

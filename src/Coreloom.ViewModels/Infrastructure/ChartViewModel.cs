@@ -156,6 +156,41 @@ public sealed class ChartViewModel : ObservableObject
     /// <summary>Formats an axis tick using the first series' style.</summary>
     public string FormatAxis(double value) => Series.Count > 0 ? Series[0].FormatAxis(value) : value.ToString("0", _formatter.Culture);
 
+    /// <summary>
+    /// The size of the unit a byte axis counts in for this top value (1 GB, or 1 GiB for memory on a Mac), so its ticks fall
+    /// on round numbers of that unit; 1 for every other axis.
+    /// </summary>
+    public double AxisFactor(double max)
+    {
+        if (Series.Count == 0 || !double.IsFinite(max) || max <= 0)
+        {
+            return 1;
+        }
+
+        return Series[0].Style switch
+        {
+            ValueStyle.Bytes => Math.Pow(_formatter.ByteBase, _formatter.ByteUnitIndex(max)),
+            ValueStyle.MemoryBytes => Math.Pow(_formatter.MemoryByteBase, _formatter.MemoryUnitIndex(max)),
+            _ => 1,
+        };
+    }
+
+    /// <summary>An axis tick: byte axes count every tick in the unit of the top one ("0, 2, 4, 6" GB), the rest as <see cref="FormatAxis(double)"/>.</summary>
+    public string FormatAxis(double value, double max)
+    {
+        if (Series.Count == 0 || Series[0].Style is not (ValueStyle.Bytes or ValueStyle.MemoryBytes) || !double.IsFinite(max) || max <= 0)
+        {
+            return FormatAxis(value);
+        }
+
+        double factor = AxisFactor(max);
+        double units = value / factor;
+        int decimals = Math.Abs(units - Math.Round(units)) < 1e-6 ? 0 : 1;
+        return Series[0].Style == ValueStyle.MemoryBytes
+            ? _formatter.MemoryBytesAs(value, _formatter.MemoryUnitIndex(max), decimals).Number
+            : _formatter.BytesAs(value, _formatter.ByteUnitIndex(max), decimals).Number;
+    }
+
     /// <summary>Unit shown on the axis (e.g. "%", "°C", "W").</summary>
     public string AxisUnit => Series.Count > 0 ? ValueStyles.Format(Series[0].Style, 1, _formatter).Unit : string.Empty;
 

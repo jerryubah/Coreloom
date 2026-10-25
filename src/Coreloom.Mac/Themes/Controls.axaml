@@ -25,6 +25,8 @@
   <conv:BoolToThicknessConverter x:Key="BoolToThickness" />
   <conv:BoolToValueConverter x:Key="BoolToValue" />
   <conv:TextShadowConverter x:Key="TextShadow" />
+  <conv:PositionToAlignmentConverter x:Key="PositionToAlignment" />
+  <conv:ToValueConverter x:Key="ToValue" />
 
   <!-- ================================================================================= -->
   <!-- Typography                                                                          -->
@@ -832,6 +834,8 @@
   </ControlTheme>
 
   <ControlTheme x:Key="Segmented" TargetType="ListBox">
+    <!-- A choice in a row of options: selecting one must never scroll the page to it. -->
+    <Setter Property="AutoScrollToSelectedItem" Value="False" />
     <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="ItemContainerTheme" Value="{StaticResource SegmentItem}" />

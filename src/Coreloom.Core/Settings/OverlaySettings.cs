@@ -319,6 +319,12 @@ public static class OverlayCatalog
     public static List<string> Defaults() =>
         [Fps, FrameTime, FrameGraph, GpuLoad, GpuTemperature, GpuPower, GpuFan, CpuLoad, CpuTemperature, Ram];
 
+    /// <summary>
+    /// Readings a Mac has: the GPU's and processor's utilization, temperature, power and clock, and memory. (No frame rates:
+    /// macOS doesn't let one app measure another's frames; no hot spot, memory clock, voltage or GPU and CPU fans.)
+    /// </summary>
+    public static bool OnMac(string id) => id is GpuLoad or GpuTemperature or GpuPower or GpuClock or GpuMemory or CpuLoad or CpuTemperature or CpuPower or CpuClock or Ram;
+
     /// <summary>Readings that need frame rates measured (the FPS numbers and the graph).</summary>
     public static bool IsFrameRate(string id) => id is Fps or FrameTime or LowFps or FrameGraph;
 

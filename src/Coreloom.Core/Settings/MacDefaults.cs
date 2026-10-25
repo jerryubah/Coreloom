@@ -32,7 +32,7 @@ public static class MacDefaults
 
         // The readings window: macOS doesn't let another app measure a game's frame rate (Apple's Metal HUD shows it), and
         // a Mac keyboard has no End key, so ⌥⌘O shows and hides it.
-        settings.Overlay.Items = settings.Overlay.Items.Where(id => !OverlayCatalog.IsFrameRate(id)).ToList();
+        settings.Overlay.Items = settings.Overlay.Items.Where(OverlayCatalog.OnMac).ToList();
         settings.Overlay.Hotkey = OverlayHotkey;
         foreach (var rule in settings.Alerts.Rules)
         {

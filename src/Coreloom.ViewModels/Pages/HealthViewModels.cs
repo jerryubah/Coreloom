@@ -150,6 +150,12 @@ public sealed class SystemHealthViewModel : ObservableObject
     public SystemHealthViewModel(PageContext context)
     {
         _context = context;
+        if (context.IsMac)
+        {
+            // A Mac's volumes have names, not drive letters: "Macintosh HD 55 % full".
+            _monitor.VolumeName = key => context.Monitor.Engine.Devices.GetByCategory(MetricCategory.Storage)
+                .FirstOrDefault(d => d.Kind == "Volume" && string.Equals(d.Id, "vol/" + key, StringComparison.OrdinalIgnoreCase))?.Name;
+        }
     }
 
     public HealthReportViewModel Gpu { get; } = new("Graphics card", "Icon.Gpu");

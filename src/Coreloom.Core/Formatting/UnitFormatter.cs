@@ -56,6 +56,16 @@ public sealed class UnitFormatter
 
     public static UnitFormatter Default { get; } = new();
 
+    /// <summary>
+    /// Memory is counted in binary units even when sizes are decimal: macOS shows storage in decimal units (Finder) but
+    /// memory in binary ones (About This Mac, Activity Monitor), so a 64 GB Mac shows 64 GB of memory and a 2 TB disk.
+    /// On by default on a Mac.
+    /// </summary>
+    public static bool BinaryMemoryByDefault { get; set; } = OperatingSystem.IsMacOS();
+
+    /// <summary>Memory sizes use binary units whatever <see cref="DataUnits"/> says (see <see cref="BinaryMemoryByDefault"/>).</summary>
+    public bool BinaryMemory { get; init; } = BinaryMemoryByDefault;
+
     public TemperatureUnit TemperatureUnit { get; }
 
     public DataUnitStyle DataUnits { get; }
@@ -67,6 +77,14 @@ public sealed class UnitFormatter
     public string TemperatureSymbol => TemperatureUnit == TemperatureUnit.Fahrenheit ? "°F" : "°C";
 
     private double DataBase => DataUnits == DataUnitStyle.Binary ? 1024.0 : 1000.0;
+
+    private double MemoryBase => BinaryMemory ? 1024.0 : DataBase;
+
+    /// <summary>1024 or 1000: the step between byte units for sizes.</summary>
+    public double ByteBase => DataBase;
+
+    /// <summary>1024 or 1000: the step between byte units for memory sizes.</summary>
+    public double MemoryByteBase => MemoryBase;
 
     /// <summary>Formats a value according to its metric kind (base units: °C, MHz, W, V, bytes, B/s...).</summary>
     public FormattedValue Format(MetricKind kind, double value)
@@ -224,6 +242,44 @@ public sealed class UnitFormatter
         while (value >= DataBase && index < ByteUnits.Length - 1)
         {
             value /= DataBase;
+            index++;
+        }
+
+        return index;
+    }
+
+    /// <summary>A memory size: like <see cref="Bytes"/>, but in binary units when <see cref="BinaryMemory"/> is on.</summary>
+    public FormattedValue MemoryBytes(double bytes, int? decimals = null)
+    {
+        if (!double.IsFinite(bytes))
+        {
+            return FormattedValue.Unavailable;
+        }
+
+        var (scaled, unit) = Scale(bytes, MemoryBase, ByteUnits);
+        return new FormattedValue(Number(scaled, decimals ?? AdaptiveDecimals(scaled)), unit);
+    }
+
+    /// <summary>A memory size in a fixed unit (see <see cref="BytesAs"/>).</summary>
+    public FormattedValue MemoryBytesAs(double bytes, int unitIndex, int decimals = 1)
+    {
+        if (!double.IsFinite(bytes))
+        {
+            return FormattedValue.Unavailable;
+        }
+
+        unitIndex = Math.Clamp(unitIndex, 0, ByteUnits.Length - 1);
+        return new FormattedValue(Number(bytes / Math.Pow(MemoryBase, unitIndex), decimals), ByteUnits[unitIndex]);
+    }
+
+    /// <summary>The unit index <see cref="MemoryBytes"/> would choose for this value.</summary>
+    public int MemoryUnitIndex(double bytes)
+    {
+        int index = 0;
+        double value = Math.Abs(bytes);
+        while (value >= MemoryBase && index < ByteUnits.Length - 1)
+        {
+            value /= MemoryBase;
             index++;
         }
 

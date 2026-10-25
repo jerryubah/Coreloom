@@ -261,9 +261,9 @@ public sealed class OverviewViewModel : PageViewModel
         AddCard(DashboardCatalog.GpuPower, "GPU power", "Icon.Power", new MetricViewModel(MetricIds.GpuPower(0), "GPU power draw", ValueStyle.Power, ColorKeys.Power, gaugeMaximum: 600));
 
         _hotSpot = new MetricViewModel(MetricIds.GpuHotSpotTemperature(0), "Hot spot", ValueStyle.Temperature);
-        _maxThread = new MetricViewModel(MetricIds.CpuLoadMaxThread, "Busiest thread", ValueStyle.Percent);
-        _memoryUsed = new MetricViewModel(MetricIds.MemoryUsed, "In use", ValueStyle.Bytes);
-        _memoryTotal = new MetricViewModel(MetricIds.MemoryTotal, "Usable", ValueStyle.Bytes);
+        _maxThread = new MetricViewModel(MetricIds.CpuLoadMaxThread, IsMac ? "Busiest core" : "Busiest thread", ValueStyle.Percent);
+        _memoryUsed = new MetricViewModel(MetricIds.MemoryUsed, "In use", ValueStyle.MemoryBytes);
+        _memoryTotal = new MetricViewModel(MetricIds.MemoryTotal, "Usable", ValueStyle.MemoryBytes);
         _powerLimit = new MetricViewModel(MetricIds.GpuPowerLimit(0), "Power limit", ValueStyle.Power);
         _ccd1 = new MetricViewModel(MetricIds.CpuCcdTemperature(1), "CCD1", ValueStyle.Temperature);
         _ccd2 = new MetricViewModel(MetricIds.CpuCcdTemperature(2), "CCD2", ValueStyle.Temperature);
@@ -271,13 +271,22 @@ public sealed class OverviewViewModel : PageViewModel
         _loadChart = new ChartViewModel("Processor & graphics load", ChartScale.Percent,
             new ChartSeriesViewModel(MetricIds.CpuLoad, "CPU", ColorKeys.Cpu, ValueStyle.Percent),
             new ChartSeriesViewModel(MetricIds.GpuLoad(0), "GPU", ColorKeys.Gpu, ValueStyle.Percent));
-        _temperatureChart = new ChartViewModel("Temperatures", ChartScale.Temperature,
-            new ChartSeriesViewModel(MetricIds.CpuTemperature, "CPU", ColorKeys.Cpu, ValueStyle.Temperature, fill: false),
-            new ChartSeriesViewModel(MetricIds.GpuTemperature(0), "GPU", ColorKeys.Gpu, ValueStyle.Temperature, fill: false),
-            new ChartSeriesViewModel(MetricIds.GpuHotSpotTemperature(0), "GPU hot spot", ColorKeys.Temperature, ValueStyle.Temperature, fill: false));
-        _powerChart = new ChartViewModel("Power", ChartScale.Auto,
-            new ChartSeriesViewModel(MetricIds.GpuPower(0), "GPU board", ColorKeys.Gpu, ValueStyle.Power),
-            new ChartSeriesViewModel(MetricIds.CpuPower, "CPU package", ColorKeys.Cpu, ValueStyle.Power));
+        _temperatureChart = IsMac
+            ? new ChartViewModel("Temperatures", ChartScale.Temperature,
+                new ChartSeriesViewModel(MetricIds.CpuTemperature, "CPU", ColorKeys.Cpu, ValueStyle.Temperature, fill: false),
+                new ChartSeriesViewModel(MetricIds.GpuTemperature(0), "GPU", ColorKeys.Gpu, ValueStyle.Temperature, fill: false))
+            : new ChartViewModel("Temperatures", ChartScale.Temperature,
+                new ChartSeriesViewModel(MetricIds.CpuTemperature, "CPU", ColorKeys.Cpu, ValueStyle.Temperature, fill: false),
+                new ChartSeriesViewModel(MetricIds.GpuTemperature(0), "GPU", ColorKeys.Gpu, ValueStyle.Temperature, fill: false),
+                new ChartSeriesViewModel(MetricIds.GpuHotSpotTemperature(0), "GPU hot spot", ColorKeys.Temperature, ValueStyle.Temperature, fill: false));
+        _powerChart = IsMac
+            ? new ChartViewModel("Power", ChartScale.Auto,
+                new ChartSeriesViewModel(MetricIds.CpuPower, "CPU", ColorKeys.Cpu, ValueStyle.Power),
+                new ChartSeriesViewModel(MetricIds.GpuPower(0), "GPU", ColorKeys.Gpu, ValueStyle.Power),
+                new ChartSeriesViewModel(MetricIds.SystemPower, "Whole Mac", ColorKeys.Power, ValueStyle.Power, fill: false))
+            : new ChartViewModel("Power", ChartScale.Auto,
+                new ChartSeriesViewModel(MetricIds.GpuPower(0), "GPU board", ColorKeys.Gpu, ValueStyle.Power),
+                new ChartSeriesViewModel(MetricIds.CpuPower, "CPU package", ColorKeys.Cpu, ValueStyle.Power));
 
         _panels[DashboardCatalog.LoadChart] = new ChartPanelViewModel(DashboardCatalog.LoadChart, _loadChart);
         _panels[DashboardCatalog.TemperatureChart] = new ChartPanelViewModel(DashboardCatalog.TemperatureChart, _temperatureChart);
@@ -498,6 +507,12 @@ public sealed class OverviewViewModel : PageViewModel
         _powerLimit.Retarget(MetricIds.GpuPowerLimit(slot));
         _loadChart.Series[1].MetricId = MetricIds.GpuLoad(slot);
         _temperatureChart.Series[1].MetricId = MetricIds.GpuTemperature(slot);
+        if (IsMac)
+        {
+            _powerChart.Series[1].MetricId = MetricIds.GpuPower(slot);
+            return;
+        }
+
         _temperatureChart.Series[2].MetricId = MetricIds.GpuHotSpotTemperature(slot);
         _powerChart.Series[0].MetricId = MetricIds.GpuPower(slot);
     }
@@ -532,13 +547,13 @@ public sealed class OverviewViewModel : PageViewModel
 
         // Secondary lines.
         _cards[DashboardCatalog.GpuTemperature].Metric.Detail = _hotSpot.HasValue ? $"Hot spot {_hotSpot.Number}{_hotSpot.Unit}" : null;
-        _cards[DashboardCatalog.CpuLoad].Metric.Detail = _maxThread.HasValue ? $"Busiest thread {_maxThread.Number}{_maxThread.Unit}" : null;
+        _cards[DashboardCatalog.CpuLoad].Metric.Detail = _maxThread.HasValue ? $"{_maxThread.Label} {_maxThread.Number}{_maxThread.Unit}" : null;
         var cpuTempCard = _cards[DashboardCatalog.CpuTemperature].Metric;
         cpuTempCard.Detail = cpuTempCard.HasValue
             ? (_ccd1.HasValue ? $"CCD1 {_ccd1.Number}° · CCD2 {(_ccd2.HasValue ? _ccd2.Number + "°" : "—")}" : null)
             : IsMac ? "Not reported by this Mac" : "Needs administrator + PawnIO";
         _cards[DashboardCatalog.Memory].Metric.Detail = _memoryUsed.HasValue && _memoryTotal.HasValue
-            ? $"{f.BytesAs(_memoryUsed.Value, f.ByteUnitIndex(_memoryTotal.Value), 1).Number} of {f.Bytes(_memoryTotal.Value, 1)}"
+            ? $"{f.MemoryBytesAs(_memoryUsed.Value, f.MemoryUnitIndex(_memoryTotal.Value), 1).Number} of {f.MemoryBytes(_memoryTotal.Value, 1)}"
             : null;
         var power = _cards[DashboardCatalog.GpuPower].Metric;
         if (_powerLimit.HasValue && _powerLimit.Value > 0)
@@ -583,24 +598,44 @@ public sealed class OverviewViewModel : PageViewModel
             memory.InUse.Value = used;
             memory.InUse.ColorKey = ColorKeys.ForLevel(Thresholds.Memory.Evaluate(total > 0 ? used * 100 / total : double.NaN));
             memory.Available.Value = available;
-            memory.InUse.ValueText = f.Bytes(used).ToString();
-            memory.Available.ValueText = f.Bytes(available).ToString();
+            memory.InUse.ValueText = f.MemoryBytes(used).ToString();
+            memory.Available.ValueText = f.MemoryBytes(available).ToString();
             memory.CenterText = total > 0 ? f.Percent(used * 100 / total).ToString() : "—";
-            memory.Caption = $"{f.Bytes(used, 1)} of {f.Bytes(total, 1)}";
+            memory.Caption = $"{f.MemoryBytes(used, 1)} of {f.MemoryBytes(total, 1)}";
 
-            var details = new List<KeyValueItem>
+            var details = new List<KeyValueItem>();
+            if (frame.TryGetValue(MetricIds.MemoryApp, out double app))
             {
-                new("In use", f.Bytes(used).ToString()),
-                new("Available", f.Bytes(available).ToString()),
-            };
+                // A Mac: what "in use" is made of, and swap.
+                details.Add(new("App memory", f.MemoryBytes(app).ToString()));
+                if (frame.TryGetValue(MetricIds.MemoryWired, out double wired))
+                {
+                    details.Add(new("Wired", f.MemoryBytes(wired).ToString()));
+                }
+
+                if (frame.TryGetValue(MetricIds.MemoryCompressed, out double compressed))
+                {
+                    details.Add(new("Compressed", f.MemoryBytes(compressed).ToString()));
+                }
+
+                if (frame.TryGetValue(MetricIds.MemorySwapUsed, out double swap))
+                {
+                    details.Add(new("Swap used", f.MemoryBytes(swap).ToString()));
+                }
+            }
+            else
+            {
+                details.Add(new("In use", f.MemoryBytes(used).ToString()));
+                details.Add(new("Available", f.MemoryBytes(available).ToString()));
+            }
             if (frame.TryGetValue(MetricIds.MemoryCommitUsed, out double commit) && frame.TryGetValue(MetricIds.MemoryCommitLimit, out double limit))
             {
-                details.Add(new("Committed", $"{f.Bytes(commit).Number} / {f.Bytes(limit)}"));
+                details.Add(new("Committed", $"{f.MemoryBytes(commit).Number} / {f.MemoryBytes(limit)}"));
             }
 
             if (frame.TryGetValue(MetricIds.MemoryCache, out double cache))
             {
-                details.Add(new("Cached", f.Bytes(cache).ToString()));
+                details.Add(new("Cached", f.MemoryBytes(cache).ToString()));
             }
 
             if (!memory.Details.SequenceEqual(details))
@@ -690,9 +725,12 @@ public sealed class OverviewViewModel : PageViewModel
     private void UpdateSpecs(TelemetryFrame frame, UnitFormatter f)
     {
         double total = 0;
+        var disks = new HashSet<string>(StringComparer.Ordinal);
         foreach (var volume in _storage.Volumes)
         {
-            if (frame.TryGetValue(MetricIds.VolumeTotal(volume.Letter), out double size) && size > 0)
+            // A Mac's volumes share their disk's space (one APFS container): count each disk once.
+            string disk = IsMac ? Devices.Get($"vol/{volume.Letter}")?.GetProperty("Disk number") ?? volume.Letter : volume.Letter;
+            if (disks.Add(disk) && frame.TryGetValue(MetricIds.VolumeTotal(volume.Letter), out double size) && size > 0)
             {
                 total += size;
             }

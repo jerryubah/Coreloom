@@ -49,8 +49,21 @@ internal sealed class SampleData
             Engine.Devices.Upsert(new DeviceInfo($"vol/{key}", MetricCategory.Storage, name) { Kind = "Volume", Properties = [new("Disk number", "0")] });
         }
 
+        Engine.Devices.Upsert(new DeviceInfo(MetricIds.MemoryDeviceId, MetricCategory.Memory, "Unified memory")
+        {
+            Kind = "Unified memory",
+            Vendor = "Apple",
+            Properties = [new("Installed", "64 GB"), new("Architecture", "Unified memory (shared by the processor, GPU and Neural Engine)"), new("Page size", "16 KB"), new("Swap", "Dynamic, encrypted")],
+        });
+        Engine.Devices.Upsert(new DeviceInfo(MetricIds.BatteryDeviceId, MetricCategory.System, "Battery")
+        {
+            Kind = "Battery",
+            Properties = [new("Design capacity", "8579 mAh"), new("Full-charge capacity", "8322 mAh")],
+        });
+
         Engine.PollOnce();
-        Settings = new SettingsService(new SettingsStore(Path.Combine(Path.GetTempPath(), "coreloom-macshots-" + Guid.NewGuid().ToString("N"), "settings.json")), new AppSettings().Normalize());
+        Settings = new SettingsService(new SettingsStore(Path.Combine(Path.GetTempPath(), "coreloom-macshots-" + Guid.NewGuid().ToString("N"), "settings.json")), MacDefaults.Apply(new AppSettings().Normalize(), appleSilicon: true));
+        Settings.Current.Appearance.Theme = ThemePreference.Dark; // the screenshots are dark; one is taken in the light theme
         Monitor = new MonitorContext
         {
             Engine = Engine,
@@ -187,29 +200,47 @@ internal sealed class SampleProvider : ITelemetryProvider
 
     public SampleProvider()
     {
-        Add(MetricIds.CpuLoad, MetricCategory.Cpu, MetricKind.Load, 18, "CPU load");
+        Add(MetricIds.CpuLoad, MetricCategory.Cpu, MetricKind.Load, 18, "CPU utilization");
         Add(MetricIds.CpuTemperature, MetricCategory.Cpu, MetricKind.Temperature, 52, "CPU temperature");
         Add(MetricIds.CpuPower, MetricCategory.Cpu, MetricKind.Power, 9.4, "CPU power");
         Add(MetricIds.CpuClockAverage, MetricCategory.Cpu, MetricKind.Clock, 3720, "Average clock");
-        Add("cpu/cluster/p/clock", MetricCategory.Cpu, MetricKind.Clock, 3912, "Performance cores");
-        Add("cpu/cluster/e/clock", MetricCategory.Cpu, MetricKind.Clock, 2184, "Efficiency cores");
+        Add(MetricIds.CpuClockPerformanceCores, MetricCategory.Cpu, MetricKind.Clock, 3912, "Performance cores clock");
+        Add(MetricIds.CpuClockEfficiencyCores, MetricCategory.Cpu, MetricKind.Clock, 2184, "Efficiency cores clock");
+        Add(MetricIds.CpuLoadPerformanceCores, MetricCategory.Cpu, MetricKind.Load, 14, "Performance cores");
+        Add(MetricIds.CpuLoadEfficiencyCores, MetricCategory.Cpu, MetricKind.Load, 38, "Efficiency cores");
+        Add(MetricIds.CpuLoadMaxThread, MetricCategory.Cpu, MetricKind.Load, 61, "Busiest core");
+        Add(MetricIds.NeuralEnginePower, MetricCategory.Cpu, MetricKind.Power, 0.4, "Neural Engine power");
         for (int i = 0; i < 16; i++)
         {
-            Add(MetricIds.CpuThreadLoad(i), MetricCategory.Cpu, MetricKind.Load, i < 4 ? 22 + (i * 7) : 6 + (i * 5 % 31), $"Core {i + 1}");
+            // macOS numbers the efficiency cores first.
+            Add(MetricIds.CpuThreadLoad(i), MetricCategory.Cpu, MetricKind.Load, i < 4 ? 22 + (i * 7) : 6 + (i * 5 % 31), i < 4 ? $"E-core {i + 1}" : $"P-core {i - 3}");
         }
 
-        Add(MetricIds.GpuLoad(0), MetricCategory.Gpu, MetricKind.Load, 34, "GPU load");
+        Add(MetricIds.GpuLoad(0), MetricCategory.Gpu, MetricKind.Load, 34, "GPU utilization");
+        Add("gpu/0/load/renderer", MetricCategory.Gpu, MetricKind.Load, 31, "Renderer");
+        Add("gpu/0/load/tiler", MetricCategory.Gpu, MetricKind.Load, 12, "Tiler");
         Add(MetricIds.GpuTemperature(0), MetricCategory.Gpu, MetricKind.Temperature, 48, "GPU temperature");
         Add(MetricIds.GpuPower(0), MetricCategory.Gpu, MetricKind.Power, 6.1, "GPU power");
         Add(MetricIds.GpuCoreClock(0), MetricCategory.Gpu, MetricKind.Clock, 1088, "GPU clock");
-        Add(MetricIds.GpuMemoryUsed(0), MetricCategory.Gpu, MetricKind.Data, 5.4 * (1L << 30), "GPU memory in use");
+        Add(MetricIds.GpuMemoryUsed(0), MetricCategory.Gpu, MetricKind.Data, 5.4 * (1L << 30), "Memory in use (unified)");
         Add(MetricIds.MemoryUsed, MetricCategory.Memory, MetricKind.Data, 31d * (1L << 30), "Memory used");
-        Add(MetricIds.MemoryAvailable, MetricCategory.Memory, MetricKind.Data, 33d * (1L << 30), "Memory available");
-        Add(MetricIds.MemoryTotal, MetricCategory.Memory, MetricKind.Data, 64d * (1L << 30), "Memory total");
-        Add(MetricIds.MemoryLoad, MetricCategory.Memory, MetricKind.Load, 48.4, "Memory load");
-        Add(MetricIds.MemoryCommitUsed, MetricCategory.Memory, MetricKind.Data, 2.1 * (1L << 30), "Swap used");
-        Add(MetricIds.MemoryCommitLimit, MetricCategory.Memory, MetricKind.Data, 4d * (1L << 30), "Swap total");
+        Add(MetricIds.MemoryAvailable, MetricCategory.Memory, MetricKind.Data, 33d * (1L << 30), "Available");
+        Add(MetricIds.MemoryTotal, MetricCategory.Memory, MetricKind.Data, 64d * (1L << 30), "Physical memory");
+        Add(MetricIds.MemoryLoad, MetricCategory.Memory, MetricKind.Load, 48.4, "Memory utilization");
+        Add(MetricIds.MemoryApp, MetricCategory.Memory, MetricKind.Data, 21.3 * (1L << 30), "App memory");
+        Add(MetricIds.MemoryWired, MetricCategory.Memory, MetricKind.Data, 4.1 * (1L << 30), "Wired memory");
+        Add(MetricIds.MemoryCompressed, MetricCategory.Memory, MetricKind.Data, 5.6 * (1L << 30), "Compressed");
         Add(MetricIds.MemoryCache, MetricCategory.Memory, MetricKind.Data, 14d * (1L << 30), "Cached files");
+        Add(MetricIds.MemorySwapUsed, MetricCategory.Memory, MetricKind.Data, 0.9 * (1L << 30), "Swap used");
+        Add(MetricIds.MemorySwapTotal, MetricCategory.Memory, MetricKind.Data, 2d * (1L << 30), "Swap size");
+        Add(MetricIds.MemoryPressure, MetricCategory.Memory, MetricKind.State, 1, "Memory pressure");
+        Add(MetricIds.MemoryPower, MetricCategory.Memory, MetricKind.Power, 0.9, "Memory power");
+        Add(MetricIds.SystemPower, MetricCategory.System, MetricKind.Power, 24.5, "System power");
+        Add(MetricIds.BatteryCharge, MetricCategory.System, MetricKind.Level, 86, "Battery charge");
+        Add(MetricIds.BatteryHealth, MetricCategory.System, MetricKind.Level, 97, "Battery health");
+        Add(MetricIds.BatteryCycles, MetricCategory.System, MetricKind.Count, 112, "Charge cycles");
+        Add(MetricIds.BatteryTemperature, MetricCategory.System, MetricKind.Temperature, 31, "Battery temperature");
+        Add(MetricIds.BatteryPower, MetricCategory.System, MetricKind.Power, 14.2, "Battery power");
         Add(MetricIds.DiskRead(0), MetricCategory.Storage, MetricKind.Throughput, 24_000_000, "Read");
         Add(MetricIds.DiskWrite(0), MetricCategory.Storage, MetricKind.Throughput, 6_000_000, "Write");
         Add(MetricIds.DiskTotalRead, MetricCategory.Storage, MetricKind.Throughput, 24_000_000, "Read");
@@ -225,8 +256,13 @@ internal sealed class SampleProvider : ITelemetryProvider
 
         Add(MetricIds.NetworkActiveDown, MetricCategory.Network, MetricKind.Throughput, 4_200_000, "Download");
         Add(MetricIds.NetworkActiveUp, MetricCategory.Network, MetricKind.Throughput, 640_000, "Upload");
-        Add("board/fan/left", MetricCategory.Motherboard, MetricKind.Fan, 1630, "Left fan");
-        Add("board/fan/right", MetricCategory.Motherboard, MetricKind.Fan, 1750, "Right fan");
+        Add("board/fan/left-fan", MetricCategory.Motherboard, MetricKind.Fan, 1630, "Left fan");
+        Add("board/fan/right-fan", MetricCategory.Motherboard, MetricKind.Fan, 1750, "Right fan");
+        Add("board/temp/performance-cores", MetricCategory.Motherboard, MetricKind.Temperature, 58, "Performance cores");
+        Add("board/temp/efficiency-cores", MetricCategory.Motherboard, MetricKind.Temperature, 47, "Efficiency cores");
+        Add("board/temp/graphics", MetricCategory.Motherboard, MetricKind.Temperature, 49, "Graphics");
+        Add("board/temp/ssd", MetricCategory.Motherboard, MetricKind.Temperature, 39, "SSD");
+        Add("board/temp/battery", MetricCategory.Motherboard, MetricKind.Temperature, 31, "Battery");
     }
 
     public string Name => "Sample";
@@ -245,6 +281,8 @@ internal sealed class SampleProvider : ITelemetryProvider
                 : id.StartsWith("gpu/0", StringComparison.Ordinal) ? MetricIds.GpuDeviceId(0)
                 : id.StartsWith("disk/0", StringComparison.Ordinal) ? MetricIds.DiskDeviceId(0)
                 : id.StartsWith("vol/", StringComparison.Ordinal) ? id[..id.LastIndexOf('/')]
+                : id.StartsWith("mem/", StringComparison.Ordinal) ? MetricIds.MemoryDeviceId
+                : id.StartsWith("battery/", StringComparison.Ordinal) ? MetricIds.BatteryDeviceId
                 : null;
             _handles[id] = context.Register(new MetricDescriptor(id, name, category, kind) { DeviceId = device }, Provenance.Measured, 10, "sample");
         }

@@ -378,7 +378,8 @@ public sealed class LiveLineChart : Control
 
         _gridOps.Clear();
         var gridPen = ChartColors.Pen(gridColor, 1, round: false);
-        double step = AxisScale.NiceStep(_yMax - _yMin, axes ? 4 : 2);
+        double factor = chart.AxisFactor(_yMax);
+        double step = AxisScale.NiceStep((_yMax - _yMin) / factor, axes ? 4 : 2) * factor;
         var plot = _plotRect;
         for (double v = _yMin; v <= _yMax + (step * 0.001); v += step)
         {
@@ -386,7 +387,7 @@ public sealed class LiveLineChart : Control
             _gridOps.Add(dc => dc.DrawLine(gridPen, new Point(plot.Left, y), new Point(plot.Right, y)));
             if (axes)
             {
-                var text = Text(chart.FormatAxis(v), typeface, axisBrush);
+                var text = Text(chart.FormatAxis(v, _yMax), typeface, axisBrush);
                 _gridOps.Add(dc => dc.DrawText(text, new Point(plot.Left - 8 - text.Width, y - (text.Height / 2))));
             }
         }
@@ -517,7 +518,8 @@ public sealed class LiveLineChart : Control
             default:
                 _yMin = 0;
                 double target = Math.Max(dataMax, chart.ReferenceValue is double reference && double.IsFinite(reference) ? reference : 0) * 1.12;
-                double nice = target <= 0 ? 1 : AxisScale.NiceRange(0, target, 4).Max;
+                double factor = chart.AxisFactor(target);
+                double nice = target <= 0 ? 1 : AxisScale.NiceRange(0, target / factor, 4).Max * factor;
                 // Hysteresis: grow immediately, shrink only when the data fits in less than half the axis.
                 if (double.IsNaN(_smoothedAutoMax) || nice > _smoothedAutoMax || nice < _smoothedAutoMax * 0.5)
                 {
