@@ -1,0 +1,54 @@
+name: Mac update test
+
+# An in-app update from end to end on GitHub's Macs, against the real latest release: an older Coreloom is built and
+# installed, finds and downloads the newest release, and installs it when opened again (build/mac/update-test.sh).
+# Run it after publishing a release ("Run workflow", or push a branch named macupdatetest-*). What it saw goes to the
+# mac-update-test-arm64 and mac-update-test-x64 branches.
+on:
+  push:
+    branches: ['macupdatetest-*']
+  workflow_dispatch:
+
+permissions:
+  contents: write   # to publish the outputs
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  AVALONIA_TELEMETRY_OPTOUT: 1
+
+jobs:
+  update:
+    name: Update on macOS (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            arch: arm64
+          - os: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Update an older Coreloom to the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash build/mac/update-test.sh ${{ matrix.arch }} out
+
+      - name: Publish the outputs
+        if: always()
+        run: |
+          cd out
+          git init -q -b mac-update-test-${{ matrix.arch }}
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Mac update test ${{ matrix.arch }} of ${GITHUB_SHA::7} (${{ github.ref_name }})"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:mac-update-test-${{ matrix.arch }}
