@@ -1,3 +1,4 @@
+using Coreloom.Core;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -293,7 +294,9 @@ public sealed class DevicesViewModel : PageViewModel
 
     public bool IsSupported => _service.IsSupported;
 
-    public string UnsupportedText => "Device information comes from Windows' Bluetooth and Plug and Play services, which aren't available here.";
+    public string UnsupportedText => IsMac
+        ? "Device information comes from macOS's Bluetooth and I/O services, which aren't available here."
+        : "Device information comes from Windows' Bluetooth and Plug and Play services, which aren't available here.";
 
     /// <summary>The paired Bluetooth devices that match the search, connected first.</summary>
     public ObservableCollection<BluetoothDeviceViewModel> BluetoothDevices { get; } = [];
@@ -360,12 +363,13 @@ public sealed class DevicesViewModel : PageViewModel
     public int WiredCount => _wired.Count;
 
     /// <summary>"2 connected · 6 paired".</summary>
-    public string BluetoothSummary => !_radio.IsPresent && _bluetooth.Count == 0 ? "This PC has no Bluetooth adapter, or it's turned off in Device Manager."
+    public string BluetoothSummary => !_radio.IsPresent && _bluetooth.Count == 0
+            ? IsMac ? "This Mac has no Bluetooth, or macOS isn't sharing it with Coreloom (System Settings › Privacy & Security › Bluetooth)." : "This PC has no Bluetooth adapter, or it's turned off in Device Manager."
         : !_radio.IsOn && _radio.IsPresent ? "Turn Bluetooth on to connect your devices."
         : _bluetooth.Count == 0 ? "No Bluetooth devices are paired yet."
         : $"{ConnectedCount.ToString(CultureInfo.CurrentCulture)} connected · {PairedCount.ToString(CultureInfo.CurrentCulture)} paired";
 
-    public string WiredSummary => _wired.Count == 0 ? "Nothing plugged in by USB or display cable."
+    public string WiredSummary => _wired.Count == 0 ? (IsMac ? "Nothing plugged in by USB, Thunderbolt or display cable." : "Nothing plugged in by USB or display cable.")
         : _wired.Count == 1 ? "1 device plugged in" : $"{_wired.Count.ToString(CultureInfo.CurrentCulture)} devices plugged in";
 
     /// <summary>"Galaxy Buds2 Pro: 12% battery left", when a connected device runs low.</summary>
@@ -665,7 +669,7 @@ public sealed class DevicesViewModel : PageViewModel
         }
         catch (Exception e) when (IsExpected(e))
         {
-            device.ShowMessage($"Windows reported a problem: {e.Message}", true);
+            device.ShowMessage($"{Platform.Name()} reported a problem: {e.Message}", true);
         }
         finally
         {
@@ -683,7 +687,7 @@ public sealed class DevicesViewModel : PageViewModel
         {
             if (!await _service.SetRadioAsync(on, CancellationToken.None))
             {
-                RadioMessage = $"Windows didn't let Coreloom turn Bluetooth {(on ? "on" : "off")}. Use the switch in Bluetooth settings instead.";
+                RadioMessage = $"{Platform.Name()} didn't let Coreloom turn Bluetooth {(on ? "on" : "off")}. Use the switch in Bluetooth settings instead.";
             }
         }
         catch (Exception e) when (IsExpected(e))
@@ -709,7 +713,7 @@ public sealed class DevicesViewModel : PageViewModel
         }
         catch (Exception e) when (IsExpected(e))
         {
-            device.ShowMessage($"Windows reported a problem: {e.Message}", true);
+            device.ShowMessage($"{Platform.Name()} reported a problem: {e.Message}", true);
         }
         finally
         {

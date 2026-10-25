@@ -238,6 +238,12 @@ public sealed class DesktopSettings
 
     /// <summary>The one-time "Coreloom is still running in the tray" notification was shown.</summary>
     public bool TrayHintShown { get; set; }
+
+    /// <summary>macOS: the user said "Not now" to moving Coreloom into the Applications folder (asked once).</summary>
+    public bool MoveToApplicationsDeclined { get; set; }
+
+    /// <summary>macOS: while the window is closed and Coreloom runs in the menu bar, its Dock icon is hidden too.</summary>
+    public bool HideDockIconWhenClosed { get; set; } = true;
 }
 
 public sealed class AlertSettings

@@ -17,6 +17,12 @@ public enum StartupScope
 
     /// <summary>The Startup folder for all users.</summary>
     CommonFolder,
+
+    /// <summary>macOS: a launch agent in ~/Library/LaunchAgents (this user).</summary>
+    MacUserAgent,
+
+    /// <summary>macOS: a launch agent in /Library/LaunchAgents (every user; switched off per user).</summary>
+    MacSystemAgent,
 }
 
 /// <summary>An app that starts when you sign in.</summary>
@@ -34,6 +40,8 @@ public sealed record StartupApp(string Name, string ValueName, string Command, S
         StartupScope.User => "This user",
         StartupScope.UserFolder => "Startup folder",
         StartupScope.CommonFolder => "Startup folder, all users",
+        StartupScope.MacUserAgent => "Background item",
+        StartupScope.MacSystemAgent => "Background item, all users",
         _ => "All users",
     };
 }

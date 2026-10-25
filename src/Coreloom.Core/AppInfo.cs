@@ -51,14 +51,16 @@ public sealed class AppPaths
     public const string PreviousProductName = "Vigil"; // legacy-name
 
     private readonly string? _previousSettingsFile;
+    private readonly string? _logDirectory;
 
-    private AppPaths(bool isPortable, string baseDirectory, string settingsDirectory, string localDirectory, string? previousSettingsFile = null)
+    private AppPaths(bool isPortable, string baseDirectory, string settingsDirectory, string localDirectory, string? previousSettingsFile = null, string? logDirectory = null)
     {
         IsPortable = isPortable;
         BaseDirectory = baseDirectory;
         SettingsDirectory = settingsDirectory;
         LocalDirectory = localDirectory;
         _previousSettingsFile = previousSettingsFile;
+        _logDirectory = logDirectory;
     }
 
     public bool IsPortable { get; }
@@ -77,7 +79,7 @@ public sealed class AppPaths
     /// <summary>Optional folder where the user can place vendor logo files (nvidia.png, amd.png, intel.png).</summary>
     public string VendorLogoDirectory => Path.Combine(SettingsDirectory, "Vendors");
 
-    public string LogDirectory => Path.Combine(LocalDirectory, "Logs");
+    public string LogDirectory => _logDirectory ?? Path.Combine(LocalDirectory, "Logs");
 
     public string DownloadDirectory => Path.Combine(LocalDirectory, "Updates");
 
@@ -101,6 +103,19 @@ public sealed class AppPaths
             Path.Combine(roaming, AppVersionInfo.ProductName),
             Path.Combine(local, AppVersionInfo.ProductName),
             Path.Combine(roaming, PreviousProductName, "settings.json"));
+    }
+
+    /// <summary>
+    /// The Mac's locations, as macOS apps keep them: settings, downloads and the like in
+    /// <c>~/Library/Application Support/Coreloom</c>, logs in <c>~/Library/Logs/Coreloom</c> (where Console finds them).
+    /// <paramref name="baseDirectory"/> is the app bundle's <c>Contents/MacOS</c> folder.
+    /// </summary>
+    public static AppPaths ForMac(string baseDirectory, string? home = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(baseDirectory);
+        home ??= Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        string support = Path.Combine(home, "Library", "Application Support", AppVersionInfo.ProductName);
+        return new AppPaths(false, baseDirectory, support, support, logDirectory: Path.Combine(home, "Library", "Logs", AppVersionInfo.ProductName));
     }
 
     /// <summary>

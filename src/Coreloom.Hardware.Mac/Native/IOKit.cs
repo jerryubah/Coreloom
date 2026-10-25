@@ -62,6 +62,36 @@ internal static partial class IOKit
     [LibraryImport(Libraries.IOKit)]
     public static unsafe partial int IOConnectCallStructMethod(uint connection, uint selector, void* input, nint inputSize, void* output, nint* outputSize);
 
+    [LibraryImport(Libraries.IOKit)]
+    private static partial int IOPMAssertionCreateWithName(nint type, uint level, nint name, out uint id);
+
+    [LibraryImport(Libraries.IOKit)]
+    private static partial int IOPMAssertionRelease(uint id);
+
+    /// <summary>Keeps the display awake (and the Mac from idle sleep) until released; 0 when it couldn't be taken.</summary>
+    public static uint PreventDisplaySleep(string reason)
+    {
+        nint type = CF.String("PreventUserIdleDisplaySleep");
+        nint name = CF.String(reason);
+        try
+        {
+            return IOPMAssertionCreateWithName(type, 255, name, out uint id) == Success ? id : 0;
+        }
+        finally
+        {
+            CF.CFRelease(type);
+            CF.CFRelease(name);
+        }
+    }
+
+    public static void ReleaseAssertion(uint id)
+    {
+        if (id != 0)
+        {
+            IOPMAssertionRelease(id);
+        }
+    }
+
     private static uint _taskSelf;
 
     /// <summary>The task port of this process (libSystem's mach_task_self_ variable; mach_task_self() is only a C macro).</summary>

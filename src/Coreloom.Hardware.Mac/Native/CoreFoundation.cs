@@ -114,6 +114,12 @@ internal static partial class CF
     private static partial nint CFDataGetLength(nint data);
 
     [LibraryImport(Libraries.CoreFoundation)]
+    private static unsafe partial nint CFDataCreate(nint allocator, byte* bytes, nint length);
+
+    [LibraryImport(Libraries.CoreFoundation)]
+    private static partial nint CFPropertyListCreateWithData(nint allocator, nint data, nint options, nint format, nint error);
+
+    [LibraryImport(Libraries.CoreFoundation)]
     private static partial nint CFDataGetBytePtr(nint data);
 
     /// <summary>kCFTypeDictionaryKeyCallBacks and kCFTypeDictionaryValueCallBacks (exported data symbols).</summary>
@@ -323,6 +329,59 @@ internal static partial class CF
         }
 
         return null;
+    }
+
+    /// <summary>A property list (XML or binary, such as an app's Info.plist) converted to .NET, or null.</summary>
+    public static unsafe object? ReadPropertyList(string path)
+    {
+        byte[] bytes;
+        try
+        {
+            var info = new FileInfo(path);
+            if (!info.Exists || info.Length > 16 << 20)
+            {
+                return null;
+            }
+
+            bytes = File.ReadAllBytes(path);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+
+        nint data;
+        fixed (byte* p = bytes)
+        {
+            data = CFDataCreate(0, p, bytes.Length);
+        }
+
+        if (data == 0)
+        {
+            return null;
+        }
+
+        try
+        {
+            nint list = CFPropertyListCreateWithData(0, data, 0, 0, 0);
+            if (list == 0)
+            {
+                return null;
+            }
+
+            try
+            {
+                return ToObject(list);
+            }
+            finally
+            {
+                CFRelease(list);
+            }
+        }
+        finally
+        {
+            CFRelease(data);
+        }
     }
 
     /// <summary>Reads a number out of a converted dictionary (long or double), or null.</summary>

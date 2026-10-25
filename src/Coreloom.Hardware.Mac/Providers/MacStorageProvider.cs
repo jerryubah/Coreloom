@@ -139,7 +139,8 @@ public sealed class MacStorageProvider : ITelemetryProvider
 
         bool isInternal = string.Equals(CF.Text(protocol, "Physical Interconnect Location"), "Internal", StringComparison.OrdinalIgnoreCase);
         string? medium = CF.Text(characteristics, "Medium Type");
-        string model = CF.Text(characteristics, "Product Name") ?? CF.Text(media, "IOMediaContent") ?? $"disk{unit}";
+        string model = CF.Text(characteristics, "Product Name") is { Length: > 0 } product ? product
+            : isInternal ? "Internal disk" : $"External disk {unit}";
         string vendor = CF.Text(characteristics, "Vendor Name") ?? string.Empty;
         if (vendor.Length > 0 && !model.StartsWith(vendor, StringComparison.OrdinalIgnoreCase))
         {

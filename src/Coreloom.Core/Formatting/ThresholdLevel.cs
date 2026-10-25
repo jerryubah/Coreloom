@@ -21,9 +21,13 @@ public readonly record struct Thresholds(double Elevated, double Critical, doubl
 
     public static Thresholds Load { get; } = new(85, 97, 30);
 
-    public static Thresholds GpuTemperature { get; } = new(75, 83, 50);
+    /// <summary>
+    /// Graphics temperatures. Macs run their chips hotter by design (Apple silicon and Intel Macs alike sit near 100 °C under
+    /// sustained load, and macOS manages that itself), so on a Mac the colours turn later.
+    /// </summary>
+    public static Thresholds GpuTemperature { get; } = OperatingSystem.IsMacOS() ? new(90, 100, 50) : new(75, 83, 50);
 
-    public static Thresholds CpuTemperature { get; } = new(80, 90, 55);
+    public static Thresholds CpuTemperature { get; } = OperatingSystem.IsMacOS() ? new(92, 102, 55) : new(80, 90, 55);
 
     public static Thresholds Memory { get; } = new(80, 92, 40);
 

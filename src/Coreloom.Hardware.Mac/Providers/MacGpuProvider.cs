@@ -74,12 +74,17 @@ public sealed class MacGpuProvider : ITelemetryProvider
             var pci = IOKit.FindAncestor(service, entry => IOKit.ClassName(entry) is "IOPCIDevice" or "AppleARMIODevice" || IOKit.Property(entry, "model") is not null, maxDepth: 6);
             string? model = CF.Text(properties, "model") ?? CF.Text(pci, "model");
             var vendor = VendorOf(className, model);
-            string name = Clean(model) ?? (vendor == HardwareVendor.Apple ? "Apple GPU" : className);
+            bool virtualGpu = className.Contains("Paravirt", StringComparison.OrdinalIgnoreCase);
+            string name = Clean(model)
+                ?? (virtualGpu ? "Apple Paravirtual GPU"
+                    : vendor == HardwareVendor.Apple ? $"{MacSystemInfo.CpuName()} GPU"
+                    : className);
             var gpu = new Gpu(service, name, vendor, vendor is HardwareVendor.Apple or HardwareVendor.Intel)
             {
                 Cores = CF.Number(properties, "gpu-core-count") is double cores && cores > 0 ? (int)cores : null,
                 VramBytes = VramOf(pci),
                 ClassName = className,
+                IsVirtual = virtualGpu,
             };
             result.Add(gpu);
         }
@@ -160,7 +165,9 @@ public sealed class MacGpuProvider : ITelemetryProvider
             gpu.Tiler = Reg($"gpu/{gpu.Slot.ToString(CultureInfo.InvariantCulture)}/load/tiler", "Tiler", MetricKind.Load, "Load", driverNote);
         }
 
-        bool unified = gpu.Vendor == HardwareVendor.Apple;
+        // Apple silicon's GPU shares the Mac's memory and reports through IOReport; a virtual Mac's GPU (on either
+        // architecture) only has the driver's statistics.
+        bool unified = gpu.Vendor == HardwareVendor.Apple && MacSystemInfo.IsAppleSilicon;
         if (Find(stats, "In use system memory", "vramUsedBytes", "inUseVidMemoryBytes") is not null)
         {
             gpu.MemoryUsed = Reg(MetricIds.GpuMemoryUsed(gpu.Slot), unified ? "Memory in use (unified)" : "VRAM used", MetricKind.Data, "Memory", driverNote);
@@ -175,7 +182,7 @@ public sealed class MacGpuProvider : ITelemetryProvider
             }
         }
 
-        bool apple = gpu.Vendor == HardwareVendor.Apple;
+        bool apple = unified;
         if (Find(stats, "Temperature(C)") is not null)
         {
             gpu.DriverTemperature = Reg(MetricIds.GpuTemperature(gpu.Slot), "GPU temperature", MetricKind.Temperature, "Temperatures", driverNote);
@@ -251,7 +258,7 @@ public sealed class MacGpuProvider : ITelemetryProvider
         context.UpsertDevice(new DeviceInfo(deviceId, MetricCategory.Gpu, gpu.Name)
         {
             Vendor = HardwareVendors.DisplayName(gpu.Vendor),
-            Kind = gpu.IsIntegrated ? (unified ? "Integrated GPU (Apple silicon)" : "Integrated GPU") : "Discrete GPU",
+            Kind = gpu.IsVirtual ? "Virtual GPU" : gpu.IsIntegrated ? (unified ? "Integrated GPU (Apple silicon)" : "Integrated GPU") : "Discrete GPU",
             IsIntegrated = gpu.IsIntegrated,
             Order = gpu.Slot,
             Source = "macOS",
@@ -354,6 +361,8 @@ public sealed class MacGpuProvider : ITelemetryProvider
         public long? VramBytes { get; init; }
 
         public string ClassName { get; init; } = string.Empty;
+
+        public bool IsVirtual { get; init; }
 
         public MetricHandle? Load { get; set; }
 

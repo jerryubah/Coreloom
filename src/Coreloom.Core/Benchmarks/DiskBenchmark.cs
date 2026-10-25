@@ -41,7 +41,7 @@ public sealed record DiskBenchmarkOptions(string Directory, long FileSize)
     /// <summary>Sequential tests stop after this many passes over the file, even with time left (limits wear).</summary>
     public int MaxPasses { get; init; } = 2;
 
-    /// <summary>Bypass the Windows file cache, so the drive itself is measured (Windows only).</summary>
+    /// <summary>Bypass the file cache (Windows' unbuffered I/O, macOS's F_NOCACHE), so the drive itself is measured.</summary>
     public bool Unbuffered { get; init; } = true;
 
     /// <summary>Kept free on the drive besides the test file.</summary>
@@ -102,9 +102,11 @@ public static class DiskBenchmark
                     continue;
                 }
 
-                if (!OperatingSystem.IsWindows() && drive.Name != tempRoot)
+                bool macVolume = OperatingSystem.IsMacOS() && drive.Name.StartsWith("/Volumes/", StringComparison.Ordinal)
+                    && drive.DriveFormat is not ("udf" or "cd9660" or "afpfs" or "smbfs" or "nfs" or "webdav");
+                if (!OperatingSystem.IsWindows() && drive.Name != tempRoot && !macVolume)
                 {
-                    continue; // elsewhere only the temp folder's file system is useful
+                    continue; // elsewhere the temp folder's file system (and on a Mac the volumes in /Volumes) are what's useful
                 }
 
                 string root = drive.RootDirectory.FullName;
@@ -112,7 +114,10 @@ public static class DiskBenchmark
                     ? Path.Combine(temp, FolderName)
                     : Path.Combine(root, FolderName);
                 string name = OperatingSystem.IsWindows() ? root.TrimEnd('\\') : root;
-                drives.Add(new BenchmarkDrive(name, string.IsNullOrWhiteSpace(drive.VolumeLabel) ? string.Empty : drive.VolumeLabel, folder, drive.AvailableFreeSpace, drive.TotalSize));
+                string label = OperatingSystem.IsMacOS()
+                    ? macVolume ? Path.GetFileName(root.TrimEnd('/')) : "Macintosh HD"
+                    : string.IsNullOrWhiteSpace(drive.VolumeLabel) ? string.Empty : drive.VolumeLabel;
+                drives.Add(new BenchmarkDrive(name, label, folder, drive.AvailableFreeSpace, drive.TotalSize));
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException)
             {
@@ -144,6 +149,11 @@ public static class DiskBenchmark
             }
 
             using var handle = File.OpenHandle(path, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, fileOptions, fileSize);
+            if (options.Unbuffered && OperatingSystem.IsMacOS())
+            {
+                MacNoCache(handle); // macOS's equivalent of unbuffered I/O: the unified buffer cache is bypassed
+            }
+
             int maxQueue = tests.Max(t => t.QueueDepth);
             int maxBlock = tests.Max(t => t.BlockSize);
             var source = AlignedBuffer.Create(maxBlock);
@@ -168,7 +178,9 @@ public static class DiskBenchmark
         }
         catch (UnauthorizedAccessException e)
         {
-            throw new DiskBenchmarkException("Coreloom can't write a test file on this drive. Pick another drive, or run Coreloom as administrator.", e);
+            throw new DiskBenchmarkException(OperatingSystem.IsMacOS()
+                ? "Coreloom can't write a test file on this volume. Pick another one, or allow Coreloom to use it in System Settings › Privacy & Security."
+                : "Coreloom can't write a test file on this drive. Pick another drive, or run Coreloom as administrator.", e);
         }
         catch (IOException e) when ((e.HResult & 0xFFFF) is 0x70 or 0x27) // ERROR_DISK_FULL, ERROR_HANDLE_DISK_FULL
         {
@@ -294,7 +306,7 @@ public static class DiskBenchmark
         }
 
         await workers.ConfigureAwait(false); // rethrows the first failure or the cancellation
-        if (test.Write && !(options.Unbuffered && OperatingSystem.IsWindows()))
+        if (test.Write && !(options.Unbuffered && (OperatingSystem.IsWindows() || OperatingSystem.IsMacOS())))
         {
             RandomAccess.FlushToDisk(handle); // cached writes only count once they're on the drive
         }
@@ -303,6 +315,23 @@ public static class DiskBenchmark
         long ops = Interlocked.Read(ref operations);
         double latencyMs = ops > 0 ? Interlocked.Read(ref latencyTicks) * 1000.0 / Stopwatch.Frequency / ops : 0;
         return new DiskTestResult(test, bytes / elapsed, ops / elapsed, latencyMs);
+    }
+
+    [System.Runtime.InteropServices.DllImport("libc", EntryPoint = "fcntl", SetLastError = true)]
+    private static extern int Fcntl(int fd, int command, int argument);
+
+    /// <summary>fcntl(F_NOCACHE): reads and writes on this file skip macOS's file cache, so the drive itself is measured.</summary>
+    private static void MacNoCache(SafeFileHandle handle)
+    {
+        const int FNoCache = 48;
+        try
+        {
+            _ = Fcntl((int)handle.DangerousGetHandle(), FNoCache, 1);
+        }
+        catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException)
+        {
+            // cached figures are better than none
+        }
     }
 
     private static void TryDelete(string path)

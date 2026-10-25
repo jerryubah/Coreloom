@@ -54,6 +54,12 @@ public sealed class GamingSettings
     /// <summary>Games kept on chosen cores (each after an A/B test showed a gain and the user kept it).</summary>
     public List<CoreProfile> CoreProfiles { get; set; } = [];
 
+    /// <summary>macOS (since 1.6.0): keep the display awake while a library game runs. Off until turned on.</summary>
+    public bool KeepAwake { get; set; }
+
+    /// <summary>macOS: the charger's power mode before "Full power on the charger" was turned on (restored when it's turned off).</summary>
+    public int? PreviousPowerMode { get; set; }
+
     /// <summary>What adaptive pacing knows about a game, or null.</summary>
     public AdaptivePacingGame? PacingFor(string gameId) =>
         AdaptivePacingGames.FirstOrDefault(g => string.Equals(g.GameId, gameId, StringComparison.OrdinalIgnoreCase));

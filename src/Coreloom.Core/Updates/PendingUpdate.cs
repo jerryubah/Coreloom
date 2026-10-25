@@ -346,13 +346,17 @@ public sealed class VerifiedPackage : IDisposable
 {
     private FileStream? _stream;
 
-    private VerifiedPackage(string path, FileStream stream)
+    private VerifiedPackage(string path, FileStream stream, string sha256)
     {
         Path = path;
         _stream = stream;
+        Sha256 = sha256;
     }
 
     public string Path { get; }
+
+    /// <summary>The SHA-256 the file was checked against (lower-case hex), for a copy to be checked again.</summary>
+    public string Sha256 { get; }
 
     /// <summary>Opens and hashes <paramref name="path"/>. Returns null (and closes the file) when it is missing or the hash differs.</summary>
     public static VerifiedPackage? Open(string path, string expectedSha256)
@@ -381,7 +385,7 @@ public sealed class VerifiedPackage : IDisposable
                 return null;
             }
 
-            var verified = new VerifiedPackage(path, stream);
+            var verified = new VerifiedPackage(path, stream, actual);
             stream = null;
             return verified;
         }

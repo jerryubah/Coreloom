@@ -17,6 +17,9 @@ public enum GameStore
     /// <summary>Added by hand (since 1.4.6).</summary>
     Custom,
     Other,
+
+    /// <summary>macOS: a game from the App Store (Apple Arcade included).</summary>
+    AppStore,
 }
 
 /// <summary>How the Gaming page shows the library.</summary>
@@ -108,6 +111,7 @@ public static class GameLibrary
         GameStore.BattleNet => "Battle.net",
         GameStore.Riot => "Riot Games",
         GameStore.Custom => "Added by you",
+        GameStore.AppStore => "App Store",
         _ => "Other",
     };
 
@@ -207,6 +211,8 @@ public static class GameLibrary
                 continue;
             }
 
+            // Folders are compared in one form ("/Applications/Foo.app/…" as "\Applications\Foo.app\…" on a Mac).
+            string comparable = path.Replace('/', '\\');
             var exact = programs.FirstOrDefault(g => string.Equals(g.Executable, path, StringComparison.OrdinalIgnoreCase));
             if (exact is not null)
             {
@@ -221,7 +227,7 @@ public static class GameLibrary
 
             foreach (var (game, folder) in folders)
             {
-                if (path.StartsWith(folder!, StringComparison.OrdinalIgnoreCase))
+                if (comparable.StartsWith(folder!, StringComparison.OrdinalIgnoreCase))
                 {
                     if (found is null || ReferenceEquals(found, game))
                     {

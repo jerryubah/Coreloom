@@ -153,6 +153,42 @@ public sealed class MacHardwareTests
     }
 
     [Fact]
+    public async Task MetalBenchmark_RunsEveryTestAndScoresIt()
+    {
+        Assert.SkipUnless(OperatingSystem.IsMacOS(), MacOnly);
+        var adapters = Coreloom.Hardware.Mac.Gpu.MetalBenchmark.Adapters();
+        Assert.NotEmpty(adapters);
+        var scores = await Coreloom.Hardware.Mac.Gpu.MetalBenchmark.RunAsync(new Coreloom.Core.Benchmarks.GpuBenchmarkOptions(Seconds: 0.4, Small: true), adapters[0], null, CancellationToken.None);
+        Assert.Equal(5, scores.Tests.Count);
+        foreach (var test in scores.Tests)
+        {
+            Assert.True(test.Rate > 0 && double.IsFinite(test.Rate), $"{test.Name}: {test.Rate}");
+            Assert.True(test.Score > 0, $"{test.Name} score {test.Score}");
+        }
+
+        Assert.True(scores.Score > 0);
+        string? report = Environment.GetEnvironmentVariable("CORELOOM_MAC_REPORT");
+        if (!string.IsNullOrWhiteSpace(report))
+        {
+            File.AppendAllText(Path.ChangeExtension(report, ".gpu.md"), $"{scores.Adapter.Name}: score {scores.Score:0} (graphics {scores.Graphics:0}, compute {scores.Compute:0})\n"
+                + string.Join("\n", scores.Tests.Select(t => $"- {t.Name}: {t.Rate:0.###} {t.Unit} → {t.Score:0}")) + "\n");
+        }
+    }
+
+    [Fact]
+    public void MetalStress_RunsWithoutErrors()
+    {
+        Assert.SkipUnless(OperatingSystem.IsMacOS(), MacOnly);
+        using var load = new Coreloom.Hardware.Mac.Gpu.MetalStressLoad(null, small: true) { VerifySeconds = 0.5 };
+        load.Start();
+        Thread.Sleep(2500);
+        load.Stop();
+        Assert.Null(load.Failure);
+        Assert.Equal(0, load.Errors);
+        Assert.True(load.Work > 0);
+    }
+
+    [Fact]
     public void Smc_ReadsTheIntelRunnersKeys()
     {
         Assert.SkipUnless(OperatingSystem.IsMacOS() && RuntimeInformation.ProcessArchitecture == Architecture.X64, "Intel Macs only.");

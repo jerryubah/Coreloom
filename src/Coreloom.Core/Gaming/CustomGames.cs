@@ -12,7 +12,7 @@ public sealed class CustomGame
 
     public string Name { get; set; } = string.Empty;
 
-    /// <summary>The game's program (full path to the .exe).</summary>
+    /// <summary>The game's program (full path to the .exe; on a Mac, the game's .app bundle).</summary>
     public string Executable { get; set; } = string.Empty;
 
     /// <summary>Launch options passed to the program (optional).</summary>
@@ -42,7 +42,9 @@ public static class CustomGames
     public static GameEntry ToEntry(CustomGame game)
     {
         string exe = game.Executable.Trim();
-        string? folder = DirectoryOf(exe);
+
+        // A Mac app is a folder: its programs run from inside it, so the bundle itself is the game's folder.
+        string? folder = IsAppBundle(exe) ? exe.TrimEnd('/') : DirectoryOf(exe);
         string? args = string.IsNullOrWhiteSpace(game.Arguments) ? null : game.Arguments.Trim();
         return new GameEntry(game.Id, game.Name.Trim(), GameStore.Custom)
         {
@@ -63,9 +65,14 @@ public static class CustomGames
 
     public static bool IsCustomId(string? id) => id is not null && id.StartsWith(IdPrefix, StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>A program that can be added: a full path to an .exe (whether it exists is checked by the caller).</summary>
+    /// <summary>A program that can be added: a full path to an .exe, or to a Mac .app (whether it exists is checked by the caller).</summary>
     public static bool IsProgram(string? path) =>
-        !string.IsNullOrWhiteSpace(path) && IsFullyQualified(path.Trim()) && string.Equals(ExtensionOf(path.Trim()), ".exe", StringComparison.OrdinalIgnoreCase);
+        !string.IsNullOrWhiteSpace(path)
+        && (IsFullyQualified(path.Trim()) && string.Equals(ExtensionOf(path.Trim()), ".exe", StringComparison.OrdinalIgnoreCase) || IsAppBundle(path.Trim()));
+
+    /// <summary>"/Applications/Celeste.app": a Mac app bundle (an absolute Unix path ending in .app).</summary>
+    public static bool IsAppBundle(string? path) =>
+        !string.IsNullOrWhiteSpace(path) && path.StartsWith('/') && path.TrimEnd('/').EndsWith(".app", StringComparison.OrdinalIgnoreCase) && path.TrimEnd('/').Length > 5;
 
     public static bool IsPicture(string? path) =>
         !string.IsNullOrWhiteSpace(path) && PictureExtensions.Contains(ExtensionOf(path.Trim()).ToLowerInvariant());
@@ -117,7 +124,7 @@ public static class CustomGames
             }
         }
 
-        string stem = StemOf(executable.Trim());
+        string stem = StemOf(executable.Trim().TrimEnd('/'));
         foreach (string suffix in new[] { "-Win64-Shipping", "-WinGDK-Shipping", "_x64", "x64", "_dx12", "_dx11", "-Win64", "64" })
         {
             if (stem.Length > suffix.Length + 2 && stem.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
@@ -172,7 +179,8 @@ public static class CustomGames
         }
 
         string last = FileNameOf(normalized.TrimEnd('\\'));
-        return last.Equals("Desktop", StringComparison.OrdinalIgnoreCase)
+        return last.Equals("Applications", StringComparison.OrdinalIgnoreCase)
+            || last.Equals("Desktop", StringComparison.OrdinalIgnoreCase)
             || last.Equals("Downloads", StringComparison.OrdinalIgnoreCase)
             || last.Equals("Documents", StringComparison.OrdinalIgnoreCase)
             || last.Equals("Program Files", StringComparison.OrdinalIgnoreCase)

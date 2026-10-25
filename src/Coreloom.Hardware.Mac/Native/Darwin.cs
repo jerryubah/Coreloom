@@ -158,6 +158,18 @@ internal static partial class Darwin
     [LibraryImport(Libraries.System)]
     public static unsafe partial int proc_pid_rusage(int pid, int flavor, void* buffer);
 
+    [LibraryImport(Libraries.System)]
+    private static unsafe partial nuint confstr(int name, byte* buffer, nuint length);
+
+    /// <summary>The user's cache folder (getconf DARWIN_USER_CACHE_DIR: /var/folders/…/C/), or null.</summary>
+    public static unsafe string? UserCacheDirectory()
+    {
+        const int DarwinUserCacheDir = 65538;
+        byte* buffer = stackalloc byte[1024];
+        nuint length = confstr(DarwinUserCacheDir, buffer, 1024);
+        return length is > 1 and < 1024 ? Encoding.UTF8.GetString(buffer, (int)length - 1) : null;
+    }
+
     /// <summary>A sysctl as a string ("machdep.cpu.brand_string", "hw.model"), or null.</summary>
     public static unsafe string? SysctlString(string name)
     {

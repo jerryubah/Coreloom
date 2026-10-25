@@ -1,3 +1,4 @@
+using Coreloom.Core;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -1691,7 +1692,7 @@ public sealed class GamingViewModel : PageViewModel
         }
         catch (Exception e) when (IsExpected(e))
         {
-            result = new TweakResult(false, "Windows didn't accept the change.");
+            result = new TweakResult(false, $"{Platform.Name()} didn't accept the change.");
         }
         finally
         {
