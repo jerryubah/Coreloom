@@ -1285,7 +1285,7 @@ public sealed class OptimizeViewModel : PageViewModel
         Func<long, string> bytes = b => Formatter.Bytes(b).ToString();
         Cleanup = new CleanupViewModel(_service, bytes);
         Protection = new ProtectionViewModel(_service, () => Now(), IsMac);
-        Memory = new MemoryOptimizeViewModel(_service, bytes, () => Context.OpenLogs?.Invoke("Optimize", "Memory:"));
+        Memory = new MemoryOptimizeViewModel(_service, b => Formatter.MemoryBytes(b).ToString(), () => Context.OpenLogs?.Invoke("Optimize", "Memory:"));
         Speed = new SpeedUpViewModel(_service, IsMac);
         CleanupModule = new("cleanup", "Cleanup", "Icon.Trash");
         ProtectionModule = new("protection", "Protection", "Icon.Shield");
@@ -1593,12 +1593,12 @@ public sealed class OptimizeViewModel : PageViewModel
                 freedMemory = memory?.Freed ?? 0;
                 MemoryModule.IsWorking = false;
                 MemoryModule.IsDone = true;
-                MemoryModule.Status = freedMemory > 0 ? $"Freed {Formatter.Bytes(freedMemory)}" : "Already in good shape";
+                MemoryModule.Status = freedMemory > 0 ? $"Freed {Formatter.MemoryBytes(freedMemory)}" : "Already in good shape";
                 MemoryModule.Detail = Memory.LastResult;
                 MemoryModule.ColorKey = ColorKeys.ToneCool;
                 if (freedMemory > 0)
                 {
-                    lines.Add($"Freed {Formatter.Bytes(freedMemory)} of memory");
+                    lines.Add($"Freed {Formatter.MemoryBytes(freedMemory)} of memory");
                 }
             }
 

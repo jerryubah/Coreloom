@@ -1,5 +1,486 @@
 <UserControl x:Class="Coreloom.Mac.Views.OptimizePage"
              xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <TextBlock Text="OptimizePage" Margin="32" />
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:Coreloom.Mac.Controls"
+             xmlns:b="using:Coreloom.Mac.Behaviors"
+             xmlns:pages="using:Coreloom.ViewModels.Pages">
+
+  <UserControl.Resources>
+    <!-- A small spinning arc for "working". -->
+    <!-- The banner ring: the accent as a sweep gradient while ready or working; the result's color (green, orange or
+         red, a shade lighter at the start) once a scan or a clean-up is done. Full while nothing has run yet. -->
+    <ControlTheme x:Key="HeroRing" TargetType="c:RadialGauge">
+      <Setter Property="Thickness" Value="14" />
+      <Setter Property="SweepAngle" Value="359" />
+      <Setter Property="TrackBrush" Value="Transparent" />
+      <Setter Property="Gradient" Value="Accent" />
+      <Setter Property="Tone" Value="{Binding RingTone}" />
+    </ControlTheme>
+
+    <ControlTheme x:Key="Spinner" TargetType="c:RadialGauge">
+      <Setter Property="Width" Value="16" />
+      <Setter Property="Height" Value="16" />
+      <Setter Property="Thickness" Value="2.4" />
+      <Setter Property="SweepAngle" Value="359" />
+      <Setter Property="Value" Value="0.28" />
+      <Setter Property="TrackBrush" Value="Transparent" />
+      <Setter Property="Fill" Value="{DynamicResource Brush.Accent}" />
+    </ControlTheme>
+
+    <!-- Smart Scan's four summary tiles. -->
+    <DataTemplate x:Key="ModuleTile" DataType="{x:Type pages:OptimizeModuleViewModel}">
+      <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="14,12" MinHeight="92">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <Grid Width="36" Height="36" VerticalAlignment="Top">
+            <Ellipse Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" Opacity="0.16" />
+            <Path Theme="{StaticResource IconPath}" Width="17" Height="17" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
+                  Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+          </Grid>
+          <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
+            <TextBlock Text="{Binding Title}" Theme="{StaticResource Text.Label}" />
+            <TextBlock Text="{Binding Status}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="0,2,0,0"
+                       TextTrimming="CharacterEllipsis" />
+            <TextBlock Text="{Binding Detail}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,2,0,0"
+                       IsVisible="{Binding Detail, Converter={StaticResource HasValue}}" />
+          </StackPanel>
+          <Grid Grid.Column="2" VerticalAlignment="Top">
+            <c:RadialGauge Theme="{StaticResource Spinner}" b:Spin.IsSpinning="{Binding IsWorking}"
+                           IsVisible="{Binding IsWorking}" />
+            <Path Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Check}" Stroke="{DynamicResource Brush.Success}"
+                  b:Pop.Trigger="{Binding IsDone}" IsVisible="{Binding IsDone}" />
+            <CheckBox Theme="{StaticResource CheckBox.Compact}" IsChecked="{Binding IsIncluded}"
+                      Margin="0,-4,-6,0" ToolTip.Tip="Include in the clean-up" AutomationProperties.Name="{Binding Title}">
+              <CheckBox.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                  <Binding Path="CanInclude" />
+                  <Binding Path="DataContext.IsReady" RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                </MultiBinding>
+              </CheckBox.IsVisible>
+            </CheckBox>
+          </Grid>
+        </Grid>
+      </c:SquircleBorder>
+    </DataTemplate>
+
+    <!-- A junk category: check box, icon, name and description (and why to think twice), size and result. -->
+    <DataTemplate x:Key="JunkRow" DataType="{x:Type pages:JunkCategoryViewModel}">
+      <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="8,8,14,8" Margin="0,0,0,6">
+        <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+          <CheckBox Theme="{StaticResource CheckBox.Compact}" IsChecked="{Binding IsSelected}" VerticalAlignment="Center"
+                    IsEnabled="{Binding !DataContext.Cleanup.IsBusy, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    AutomationProperties.Name="{Binding Name}" />
+          <Path Grid.Column="1" Theme="{StaticResource IconPath}" Width="16" Height="16" Margin="2,0,10,0" VerticalAlignment="Center"
+                Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
+          <StackPanel Grid.Column="2" VerticalAlignment="Center">
+            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
+            <TextBlock Text="{Binding Description}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,1,0,0" />
+            <TextBlock Text="{Binding Caution}" FontSize="11.5" Foreground="{DynamicResource Brush.Elevated}" TextWrapping="Wrap" Margin="0,2,0,0"
+                       IsVisible="{Binding Caution, Converter={StaticResource HasValue}}" />
+            <TextBlock Text="{Binding Result}" FontSize="11.5" Foreground="{DynamicResource Brush.Success}" Margin="0,2,0,0"
+                       IsVisible="{Binding Result, Converter={StaticResource HasValue}}" />
+          </StackPanel>
+          <Grid Grid.Column="3" Margin="12,0,0,0" VerticalAlignment="Center">
+            <TextBlock Text="{Binding SizeText}" FontFamily="{StaticResource MonoFont}" FontSize="12"
+                       FontWeight="{Binding HasJunk, Converter={StaticResource BoolToValue}, ConverterParameter=SemiBold|Normal}"
+                       Foreground="{Binding HasJunk, Converter={StaticResource BoolToBrush}, ConverterParameter='Brush.Text|Brush.TextTertiary'}" HorizontalAlignment="Right"
+                       IsVisible="{Binding !IsWorking}" />
+            <c:RadialGauge Theme="{StaticResource Spinner}" HorizontalAlignment="Right" b:Spin.IsSpinning="{Binding IsWorking}"
+                           IsVisible="{Binding IsWorking}" />
+          </Grid>
+        </Grid>
+      </c:SquircleBorder>
+    </DataTemplate>
+
+    <!-- A threat found (Windows only; macOS removes malware by itself). -->
+    <DataTemplate x:Key="ThreatRow" DataType="{x:Type pages:ThreatViewModel}">
+      <Border Background="{DynamicResource Brush.CriticalSoft}" CornerRadius="8" Padding="12,8" Margin="0,0,0,6">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Warning}" VerticalAlignment="Top" Margin="0,1,10,0"
+                Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+          <StackPanel Grid.Column="1">
+            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
+            <TextBlock Text="{Binding Resource}" Theme="{StaticResource Text.Caption}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Resource}"
+                       IsVisible="{Binding Resource, Converter={StaticResource HasValue}}" />
+          </StackPanel>
+          <Border Grid.Column="2" Theme="{StaticResource Badge}" Margin="10,0,0,0" VerticalAlignment="Top">
+            <TextBlock Text="{Binding Severity}" FontSize="10.5" FontWeight="SemiBold" Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+          </Border>
+        </Grid>
+      </Border>
+    </DataTemplate>
+
+    <!-- A startup app with its switch. -->
+    <DataTemplate x:Key="StartupRow" DataType="{x:Type pages:StartupAppViewModel}">
+      <Grid Margin="0,0,0,2" Background="Transparent" ToolTip.Tip="{Binding Command}" ColumnDefinitions="*,Auto">
+        <StackPanel VerticalAlignment="Center" Margin="0,6,12,6">
+          <TextBlock Text="{Binding Name}" FontSize="13" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding Publisher}" Theme="{StaticResource Text.Caption}" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding Problem}" FontSize="11.5" Foreground="{DynamicResource Brush.Critical}"
+                     IsVisible="{Binding Problem, Converter={StaticResource HasValue}}" />
+        </StackPanel>
+        <CheckBox Grid.Column="1" Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding IsEnabled}" AutomationProperties.Name="{Binding Name}" />
+      </Grid>
+    </DataTemplate>
+
+    <!-- A maintenance task: what it does, a run button and how it went. -->
+    <DataTemplate x:Key="TaskRow" DataType="{x:Type pages:MaintenanceTaskViewModel}">
+      <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="12,10" Margin="0,0,0,6">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Margin="0,0,12,0" VerticalAlignment="Center"
+                Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
+          <StackPanel Grid.Column="1" VerticalAlignment="Center">
+            <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
+            <TextBlock Text="{Binding Description}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding Message}" FontSize="11.5" Margin="0,2,0,0" TextWrapping="Wrap"
+                       Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}"
+                       IsVisible="{Binding Message, Converter={StaticResource HasValue}}" />
+          </StackPanel>
+          <Grid Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center">
+            <Button Theme="{StaticResource Button.Secondary}" Padding="14,6" Content="Run" Command="{Binding RunCommand}"
+                    IsVisible="{Binding !IsBusy}" />
+            <c:RadialGauge Theme="{StaticResource Spinner}" b:Spin.IsSpinning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}" />
+          </Grid>
+        </Grid>
+      </c:SquircleBorder>
+    </DataTemplate>
+  </UserControl.Resources>
+
+  <ScrollViewer Theme="{StaticResource ScrollViewer.Window}">
+    <StackPanel Margin="32,14,28,32" b:Motion.Entrance="True">
+
+      <!-- Not available (not Windows, or no access) -->
+      <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,0,0,16" Background="{DynamicResource Brush.ElevatedSoft}"
+              IsVisible="{Binding !IsSupported}">
+        <StackPanel Orientation="Horizontal">
+          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.Elevated}" />
+          <TextBlock Text="{Binding UnsupportedText}" Margin="10,0,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
+        </StackPanel>
+      </c:SquircleBorder>
+
+      <!-- ============================================================ -->
+      <!-- Smart Scan                                                   -->
+      <!-- ============================================================ -->
+      <c:SquircleBorder Theme="{StaticResource Card.Glow}" GlowKey="Accent" GlowStrength="0.9" Sheen="0.8" Padding="0" BorderBrush="{DynamicResource Brush.AccentEdge}">
+        <Grid ClipToBounds="True">
+          <!-- The accent washing in from the top left and turning toward its warmer neighbour as it fades -->
+          <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.AccentWash}" IsHitTestVisible="False" />
+
+          <c:AdaptiveGrid MinColumnWidth="330" MaxColumns="2" Spacing="12" Margin="28,26">
+            <!-- The ring -->
+            <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,4,0,8">
+              <!-- a bloom of the accent behind it (wider than the ring; negative margins keep the layout the ring's size) -->
+              <Ellipse Width="320" Height="320" Margin="-42" Fill="{DynamicResource Brush.AccentBloom}" IsHitTestVisible="False" />
+              <Grid Width="236" Height="236">
+                <!-- the face: a darker disc so the text stays easy to read on the bloom -->
+                <Ellipse Margin="22" Fill="{DynamicResource Brush.Card}" Opacity="0.7" Stroke="{DynamicResource Brush.AccentTrack}" StrokeThickness="1" />
+                <!-- the track, tinted with the accent so the ring reads even when empty -->
+                <c:RadialGauge Thickness="14" SweepAngle="359" Value="0" TrackBrush="{DynamicResource Brush.AccentTrack}" />
+                <!-- a soft glow under the arc; full before the first scan, the result's colors once there is one -->
+                <c:RadialGauge Theme="{StaticResource HeroRing}" Opacity="0.75" Value="1" IsVisible="{Binding StageKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Idle}">
+                  <c:RadialGauge.Effect>
+                    <BlurEffect Radius="16" />
+                  </c:RadialGauge.Effect>
+                </c:RadialGauge>
+                <c:RadialGauge Theme="{StaticResource HeroRing}" Opacity="0.75" Value="{Binding RingProgress}"
+                               IsVisible="{Binding StageKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Scanning|Running}">
+                  <c:RadialGauge.Effect>
+                    <BlurEffect Radius="16" />
+                  </c:RadialGauge.Effect>
+                </c:RadialGauge>
+                <c:RadialGauge Theme="{StaticResource HeroRing}" Opacity="0.75" Value="{Binding RingProgress}" Gradient="Shade" ToneScale="True"
+                               IsVisible="{Binding StageKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Ready|Done}">
+                  <c:RadialGauge.Effect>
+                    <BlurEffect Radius="16" />
+                  </c:RadialGauge.Effect>
+                </c:RadialGauge>
+                <c:RadialGauge Theme="{StaticResource HeroRing}" Value="1" IsVisible="{Binding StageKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Idle}" />
+                <c:RadialGauge Theme="{StaticResource HeroRing}" Value="{Binding RingProgress}"
+                               IsVisible="{Binding StageKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Scanning|Running}" />
+                <c:RadialGauge Theme="{StaticResource HeroRing}" Value="{Binding RingProgress}" Gradient="Shade" ToneScale="True"
+                               IsVisible="{Binding StageKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Ready|Done}" />
+                <!-- a bright comet that circles while scanning or cleaning -->
+                <c:RadialGauge Thickness="14" SweepAngle="359" Value="0.2" TrackBrush="Transparent" Fill="{DynamicResource Brush.Text}" FadeTail="True" Opacity="0.6"
+                               b:Spin.IsSpinning="{Binding IsWorking}" IsVisible="{Binding IsWorking}" />
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="170">
+                  <Grid HorizontalAlignment="Center" Width="30" Height="30">
+                    <Path Theme="{StaticResource IconPath}" Width="26" Height="26" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.Accent}"
+                          IsVisible="{Binding !IsDone}" b:Pulse.IsPulsing="{Binding IsWorking}" />
+                    <Path Theme="{StaticResource IconPath}" Width="28" Height="28" Data="{StaticResource Icon.Check}" Stroke="{DynamicResource Brush.Success}"
+                          IsVisible="{Binding IsDone}" b:Pop.Trigger="{Binding IsDone}" />
+                  </Grid>
+                  <TextBlock Text="{Binding Headline}" FontSize="23" FontWeight="SemiBold" HorizontalAlignment="Center" TextAlignment="Center"
+                             TextWrapping="Wrap" Margin="0,8,0,0" Foreground="{DynamicResource Brush.Text}" />
+                  <TextBlock Text="{Binding StageText}" Theme="{StaticResource Text.Label}" HorizontalAlignment="Center" Margin="0,4,0,0" Opacity="0.8"
+                             IsVisible="{Binding StageText, Converter={StaticResource HasValue}}" />
+                </StackPanel>
+              </Grid>
+            </Grid>
+
+            <!-- What it found, the buttons and the four parts -->
+            <StackPanel VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Smart Scan" Theme="{StaticResource Text.Section}" />
+                <Border Theme="{StaticResource Badge}" Margin="10,0,0,0" Background="{DynamicResource Brush.AccentSoft}">
+                  <TextBlock Text="clean · protect · speed up" FontSize="10.5" Foreground="{DynamicResource Brush.Accent}" />
+                </Border>
+              </StackPanel>
+              <TextBlock Text="{Binding Caption}" Theme="{StaticResource Text.Secondary}" TextWrapping="Wrap" Margin="0,6,0,0" />
+              <TextBlock Text="{Binding ResultText}" FontSize="12.5" Foreground="{DynamicResource Brush.Success}" TextWrapping="Wrap" Margin="0,8,0,0"
+                         b:Pop.Trigger="{Binding IsDone}" IsVisible="{Binding ResultText, Converter={StaticResource HasValue}}" />
+
+              <WrapPanel Margin="0,14,0,0">
+                <Button Theme="{StaticResource Button.AccentGradient}" Padding="20,9" Margin="0,0,10,8" Command="{Binding RunCommand}"
+                        IsVisible="{Binding IsReady}">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Optimize}" Stroke="{DynamicResource Brush.OnAccent}" />
+                    <TextBlock Text="Clean up and optimize" Margin="8,0,0,0" />
+                  </StackPanel>
+                </Button>
+                <!-- the main button, except next to "Clean up and optimize", where it steps back -->
+                <Button Theme="{StaticResource Button.AccentGradient}" Padding="20,9" Margin="0,0,10,8" Command="{Binding ScanCommand}">
+                  <Button.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                      <Binding Path="!IsWorking" />
+                      <Binding Path="!IsReady" />
+                    </MultiBinding>
+                  </Button.IsVisible>
+                  <StackPanel Orientation="Horizontal">
+                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
+                    <TextBlock Text="{Binding ScanText}" Margin="8,0,0,0" />
+                  </StackPanel>
+                </Button>
+                <Button Theme="{StaticResource Button.Secondary}" Padding="20,9" Margin="0,0,10,8" Command="{Binding ScanCommand}">
+                  <Button.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                      <Binding Path="!IsWorking" />
+                      <Binding Path="IsReady" />
+                    </MultiBinding>
+                  </Button.IsVisible>
+                  <StackPanel Orientation="Horizontal">
+                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" />
+                    <TextBlock Text="{Binding ScanText}" Margin="8,0,0,0" />
+                  </StackPanel>
+                </Button>
+                <Button Theme="{StaticResource Button.Secondary}" Padding="20,9" Margin="0,0,10,8" Content="Stop" Command="{Binding CancelCommand}"
+                        IsVisible="{Binding IsWorking}" />
+              </WrapPanel>
+
+              <ItemsControl ItemsSource="{Binding Modules}" ItemTemplate="{StaticResource ModuleTile}" Focusable="False" Margin="0,6,0,0">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <c:AdaptiveGrid MinColumnWidth="210" MaxColumns="2" Spacing="10" UniformRowHeight="True" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+              </ItemsControl>
+            </StackPanel>
+          </c:AdaptiveGrid>
+        </Grid>
+      </c:SquircleBorder>
+
+      <!-- Two columns that stack: Cleanup over Free up memory, Protection over Speed up, both columns ending on one line.
+           The lower card of the shorter column takes up the difference: Speed up's startup list shows more apps, or Free
+           up memory's gauge and button stay centred in the taller card. One column when the window is narrow. -->
+      <c:StackedColumns MinColumnWidth="460" MaxColumns="2" Spacing="16" RowSpacing="16" InOrder="True" FillColumns="True" Margin="0,16,0,0">
+
+        <!-- ============================================================ -->
+        <!-- Cleanup                                                      -->
+        <!-- ============================================================ -->
+        <c:SquircleBorder Theme="{StaticResource Card}" DataContext="{Binding Cleanup}">
+          <StackPanel>
+            <Grid ColumnDefinitions="Auto,*">
+              <c:SquircleBorder Width="34" Height="34" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
+                <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Trash}" Stroke="{DynamicResource Brush.Accent}" />
+              </c:SquircleBorder>
+              <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Cleanup" />
+                <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding SelectedText}" Margin="0,2,0,0" />
+              </StackPanel>
+            </Grid>
+            <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Status}" TextWrapping="Wrap" Margin="0,10,0,0" />
+            <ProgressBar Theme="{StaticResource ProgressBar.Thin}" Maximum="1" Margin="0,8,0,0" b:Smooth.Value="{Binding Progress}"
+                         IsVisible="{Binding IsBusy}" />
+            <ItemsControl ItemsSource="{Binding Categories}" ItemTemplate="{StaticResource JunkRow}" Focusable="False" Margin="0,12,0,0" />
+            <WrapPanel Margin="0,6,0,0">
+              <Button Theme="{StaticResource Button.Primary}" Padding="16,7" Margin="0,0,8,0" Command="{Binding CleanCommand}">
+                <StackPanel Orientation="Horizontal">
+                  <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Trash}" Stroke="{DynamicResource Brush.OnAccent}" />
+                  <TextBlock Text="Clean selected" Margin="7,0,0,0" />
+                </StackPanel>
+              </Button>
+              <Button Theme="{StaticResource Button.Secondary}" Padding="16,7" Margin="0,0,8,0" Content="Scan" Command="{Binding ScanCommand}"
+                      IsVisible="{Binding !IsBusy}" />
+              <Button Theme="{StaticResource Button.Secondary}" Padding="16,7" Content="Stop" Command="{Binding CancelCommand}"
+                      IsVisible="{Binding IsBusy}" />
+            </WrapPanel>
+            <TextBlock Theme="{StaticResource Text.Caption}" Margin="0,10,0,0" TextWrapping="Wrap"
+                       Text="Only caches, logs and temporary files that apps and macOS rebuild on their own are touched, and only ones no app has written to for a few days. Documents, photos, mail and settings never are." />
+          </StackPanel>
+        </c:SquircleBorder>
+
+        <!-- ============================================================ -->
+        <!-- Protection                                                   -->
+        <!-- ============================================================ -->
+        <c:SquircleBorder Theme="{StaticResource Card}" DataContext="{Binding Protection}">
+          <StackPanel>
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <Grid Width="34" Height="34">
+                <Ellipse Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" Opacity="0.16" />
+                <Path Theme="{StaticResource IconPath}" Width="17" Height="17" Data="{StaticResource Icon.Shield}"
+                      Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+              </Grid>
+              <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Protection" />
+                <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Engine}" Margin="0,2,0,0" />
+              </StackPanel>
+              <Button Grid.Column="2" Theme="{StaticResource Button.Icon}" Command="{Binding RefreshCommand}" ToolTip.Tip="Check again" AutomationProperties.Name="Check protection again">
+                <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Refresh}" />
+              </Button>
+            </Grid>
+
+            <c:SquircleBorder CornerRadius="12" Padding="14,12" Margin="0,12,0,0" Background="{DynamicResource Brush.Surface}">
+              <StackPanel>
+                <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="SemiBold" Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+                <TextBlock Text="{Binding Summary}" Theme="{StaticResource Text.Secondary}" TextWrapping="Wrap" Margin="0,2,0,0" />
+              </StackPanel>
+            </c:SquircleBorder>
+
+            <!-- macOS's built-in protections, each on or off -->
+            <ItemsControl ItemsSource="{Binding Checks}" Focusable="False" Margin="0,12,0,0">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid Margin="2,0,0,8" ColumnDefinitions="Auto,*,Auto" ToolTip.Tip="{Binding Detail}">
+                    <Path Theme="{StaticResource IconPath}" Width="15" Height="15" VerticalAlignment="Top" Margin="0,1,10,0"
+                          Data="{Binding IsOn, Converter={StaticResource BoolToValue}, ConverterParameter='M5,12 L10,17 L19,7|M12,8 L12,13 M12,16.5 L12,16.6 M10.3,3.8 L2.4,18 C1.9,18.9 2.6,20 3.6,20 L20.4,20 C21.4,20 22.1,18.9 21.6,18 L13.7,3.8 C13.2,2.9 10.8,2.9 10.3,3.8 Z'}"
+                          Stroke="{Binding IsOn, Converter={StaticResource BoolToBrush}, ConverterParameter='Brush.Success|Brush.Elevated'}" />
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
+                      <TextBlock Text="{Binding Detail}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,1,0,0" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="{Binding IsOn, Converter={StaticResource BoolToValue}, ConverterParameter=On|Off}" FontSize="12" FontWeight="SemiBold"
+                               Margin="12,0,0,0" Foreground="{Binding IsOn, Converter={StaticResource BoolToBrush}, ConverterParameter='Brush.Success|Brush.Elevated'}" />
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Text="{Binding Message}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,4,0,0"
+                       IsVisible="{Binding Message, Converter={StaticResource HasValue}}" />
+
+            <WrapPanel Margin="0,8,0,0">
+              <Button Theme="{StaticResource Button.Secondary}" Padding="14,7" Margin="0,0,8,8" Command="{Binding OpenSecurityCommand}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="Privacy &amp; Security settings" />
+                  <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.External}" Margin="6,0,0,0" />
+                </StackPanel>
+              </Button>
+            </WrapPanel>
+            <TextBlock Theme="{StaticResource Text.Caption}" TextWrapping="Wrap"
+                       Text="XProtect, macOS's built-in malware protection, checks apps when they open and removes known malware by itself; Apple keeps it up to date." />
+          </StackPanel>
+        </c:SquircleBorder>
+
+        <!-- ============================================================ -->
+        <!-- Memory                                                       -->
+        <!-- ============================================================ -->
+        <c:SquircleBorder Theme="{StaticResource Card}" DataContext="{Binding Memory}" c:StackedColumns.CanFill="True">
+          <Grid RowDefinitions="Auto,*,Auto">
+            <Grid ColumnDefinitions="Auto,*">
+              <c:SquircleBorder Width="34" Height="34" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
+                <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Memory}" Stroke="{DynamicResource Brush.Accent}" />
+              </c:SquircleBorder>
+              <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Free up memory" />
+                <TextBlock Theme="{StaticResource Text.Caption}" Text="Clears macOS's disk cache, so the app you're in has more room" TextWrapping="Wrap" Margin="0,2,0,0" />
+              </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="1" Margin="0,16,0,0" ColumnDefinitions="Auto,*">
+              <Grid Width="150" Height="150">
+                <c:RadialGauge Thickness="14" Orb="True" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True" CoolAt="0.4" WarmAt="0.8" HotAt="0.92"
+                               Value="{Binding Fraction}" />
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock FontFamily="{StaticResource UiFont}" FontSize="31" FontWeight="Bold" Foreground="{DynamicResource Brush.Text}" FontFeatures="+tnum"
+                               b:AnimatedText.Formatter="{Binding PercentFormatter}" b:AnimatedText.Value="{Binding Load}" />
+                    <TextBlock Text="%" Theme="{StaticResource Text.Unit}" VerticalAlignment="Bottom" Margin="2,0,0,5" />
+                  </StackPanel>
+                  <TextBlock Text="in use" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Center" />
+                </StackPanel>
+              </Grid>
+              <StackPanel Grid.Column="1" Margin="22,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="{Binding UsedText}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding AvailableText}" Theme="{StaticResource Text.Secondary}" Margin="0,2,0,0" />
+                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                  <Button Theme="{StaticResource Button.Primary}" Padding="16,7" Command="{Binding FreeUpCommand}">
+                    <StackPanel Orientation="Horizontal">
+                      <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
+                      <TextBlock Text="Free up memory" Margin="7,0,0,0" />
+                    </StackPanel>
+                  </Button>
+                  <c:RadialGauge Theme="{StaticResource Spinner}" Margin="12,0,0,0" b:Spin.IsSpinning="{Binding IsBusy}"
+                                 IsVisible="{Binding IsBusy}" />
+                </StackPanel>
+                <TextBlock Text="{Binding LastResult}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,8,0,0"
+                           IsVisible="{Binding LastResult, Converter={StaticResource HasValue}}" />
+                <TextBlock Text="{Binding TotalsText}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,3,0,0"
+                           IsVisible="{Binding TotalsText, Converter={StaticResource HasValue}}" />
+                <WrapPanel Margin="0,8,0,0" IsVisible="False">
+                  <Button Theme="{StaticResource Button.Subtle}" Command="{Binding ToggleDetailsCommand}" Margin="0,0,6,0" ToolTip.Tip="Every process: its memory before and after, and what happened">
+                    <StackPanel Orientation="Horizontal">
+                      <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.List}" />
+                      <TextBlock Text="Process details" Margin="6,0,0,0" />
+                    </StackPanel>
+                  </Button>
+                  <Button Theme="{StaticResource Button.Subtle}" Command="{Binding OpenLogsCommand}" ToolTip.Tip="Opens the log viewer at this clean-up's lines">
+                    <StackPanel Orientation="Horizontal">
+                      <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Folder}" />
+                      <TextBlock Text="Open logs" Margin="6,0,0,0" />
+                    </StackPanel>
+                  </Button>
+                </WrapPanel>
+              </StackPanel>
+            </Grid>
+
+            <TextBlock Grid.Row="2" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,14,0,0"
+                       Text="macOS keeps memory busy on purpose and frees it as apps need it, so this is rarely needed: watch Memory pressure on the Memory page. macOS asks for your password first." />
+          </Grid>
+        </c:SquircleBorder>
+
+        <!-- ============================================================ -->
+        <!-- Speed                                                        -->
+        <!-- ============================================================ -->
+        <c:SquircleBorder Theme="{StaticResource Card}" DataContext="{Binding Speed}" c:StackedColumns.CanFill="True">
+          <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <c:SquircleBorder Width="34" Height="34" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
+                <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Rocket}" Stroke="{DynamicResource Brush.Accent}" />
+              </c:SquircleBorder>
+              <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Speed up" />
+                <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding StartupSummary}" Margin="0,2,0,0" />
+              </StackPanel>
+              <Button Grid.Column="2" Theme="{StaticResource Button.Icon}" Command="{Binding RefreshCommand}" ToolTip.Tip="Refresh" AutomationProperties.Name="Refresh startup apps">
+                <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Refresh}" />
+              </Button>
+            </Grid>
+
+            <TextBlock Grid.Row="1" Text="Login and background items" Theme="{StaticResource Text.Label}" Margin="0,14,0,4" />
+            <TextBlock Grid.Row="2" Text="Fewer apps opening at login means a faster login and more memory for you. Turning one off doesn't uninstall it; macOS may ask for your password for items it starts for every user." Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" />
+            <!-- starts at up to 300 px and shows more apps when the card is taller -->
+            <c:HeightCap Grid.Row="3" Cap="300" Margin="0,8,0,0">
+              <ScrollViewer Theme="{StaticResource ScrollViewer.Page}">
+                <ItemsControl ItemsSource="{Binding StartupApps}" ItemTemplate="{StaticResource StartupRow}" Focusable="False" Margin="0,0,10,0" />
+              </ScrollViewer>
+            </c:HeightCap>
+            <TextBlock Grid.Row="4" Text="No login items found." Theme="{StaticResource Text.Secondary}" Margin="0,4,0,0"
+                       IsVisible="{Binding !HasStartupApps}" />
+
+            <TextBlock Grid.Row="5" Text="Maintenance" Theme="{StaticResource Text.Label}" Margin="0,16,0,8" />
+            <ItemsControl Grid.Row="6" ItemsSource="{Binding Tasks}" ItemTemplate="{StaticResource TaskRow}" Focusable="False" />
+          </Grid>
+        </c:SquircleBorder>
+      </c:StackedColumns>
+    </StackPanel>
+  </ScrollViewer>
 </UserControl>

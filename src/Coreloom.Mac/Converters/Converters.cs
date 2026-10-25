@@ -284,6 +284,11 @@ public sealed class BoolToValueConverter : IValueConverter
             return GridLength.Parse(text);
         }
 
+        if (type == typeof(Geometry))
+        {
+            return Geometry.Parse(text);
+        }
+
         return DefaultValueConverter.Instance.Convert(text, targetType, null, CultureInfo.InvariantCulture);
     }
 

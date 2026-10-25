@@ -31,7 +31,18 @@ public partial class GamingPage : UserControl
 
 public partial class BenchmarkingPage : UserControl
 {
-    public BenchmarkingPage() => InitializeComponent();
+    public BenchmarkingPage()
+    {
+        InitializeComponent();
+        Scrim.PointerPressed += (_, e) =>
+        {
+            if (DataContext is BenchmarkingViewModel page)
+            {
+                page.CloseDetailsCommand.Execute(null);
+                e.Handled = true;
+            }
+        };
+    }
 }
 
 public partial class GpuPage : UserControl
