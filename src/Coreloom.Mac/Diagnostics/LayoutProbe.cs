@@ -29,6 +29,13 @@ internal static class LayoutProbe
         }
 
         var lines = new List<string>();
+        lines.Add("Ancestors:");
+        for (var v = header.GetVisualParent(); v is not null; v = v.GetVisualParent())
+        {
+            string layout = v is Layoutable l ? $" desired={l.DesiredSize} measureValid={l.IsMeasureValid} arrangeValid={l.IsArrangeValid}" : string.Empty;
+            lines.Add($"  {v.GetType().Name} bounds={v.Bounds}{layout}");
+        }
+
         Walk(header, 0, lines);
         Coreloom.Core.Diagnostics.Log.Info("Probe", "Overview header layout:\n" + string.Join("\n", lines));
     }
