@@ -1,0 +1,12 @@
+  Determining projects to restore...
+  Restored /Users/runner/work/Coreloom/Coreloom/src/Coreloom.Core/Coreloom.Core.csproj (in 121 ms).
+  Restored /Users/runner/work/Coreloom/Coreloom/src/Coreloom.Hardware.Mac/Coreloom.Hardware.Mac.csproj (in 135 ms).
+  Restored /Users/runner/work/Coreloom/Coreloom/tests/Coreloom.Hardware.Mac.Tests/Coreloom.Hardware.Mac.Tests.csproj (in 2.96 sec).
+  Coreloom.Core -> /Users/runner/work/Coreloom/Coreloom/src/Coreloom.Core/bin/Release/net10.0/Coreloom.Core.dll
+  Coreloom.Hardware.Mac -> /Users/runner/work/Coreloom/Coreloom/src/Coreloom.Hardware.Mac/bin/Release/net10.0/Coreloom.Hardware.Mac.dll
+  Coreloom.Hardware.Mac.Tests -> /Users/runner/work/Coreloom/Coreloom/tests/Coreloom.Hardware.Mac.Tests/bin/Release/net10.0/Coreloom.Hardware.Mac.Tests.dll
+Test run for /Users/runner/work/Coreloom/Coreloom/tests/Coreloom.Hardware.Mac.Tests/bin/Release/net10.0/Coreloom.Hardware.Mac.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+Results File: /Users/runner/work/Coreloom/Coreloom/out/mac-tests.trx
+
+Passed!  - Failed:     0, Passed:   144, Skipped:     0, Total:   144, Duration: 26 s - Coreloom.Hardware.Mac.Tests.dll (net10.0)
