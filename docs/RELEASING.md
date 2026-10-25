@@ -33,13 +33,25 @@ Releases are built entirely by GitHub Actions from a version tag. Nothing is upl
    Users only see it when they enabled *Include pre-release versions*.
 3. The **Release** workflow:
    - works out the version (from the new changelog heading or the pushed tag);
+   - builds the **Mac apps** on two of GitHub's Macs, one Apple silicon (`macos-15`) and one Intel
+     (`macos-15-intel`): `build/mac/verify-app.sh` runs the macOS back-end's tests, then `build/mac/bundle.sh`
+     publishes the app self-contained as a single file, lays out `Coreloom.app`, signs it, makes the update zip
+     and the disk image, and checks them the way macOS and the updater will (signature, the zip unpacked with
+     `ditto`, the disk image mounted). It then installs the app in `/Applications`, opens every page,
+     photographs it and quits it. The release isn't published unless both Macs pass; what they saw is kept as
+     the `mac-verify-<arch>-<version>` artifact of the run;
    - installs Inno Setup;
    - runs `build/build.ps1 -Package`, which restores, builds, tests, publishes self-contained `win-x64`
      (`Coreloom.exe` + `CoreloomDiag.exe`), builds the installer, zips the portable build and writes
      `SHA256SUMS.txt`;
-   - creates the GitHub release with these assets:
-     - `Coreloom-<version>-win-x64-Setup.exe`
-     - `Coreloom-<version>-win-x64-Portable.zip`
+   - adds the Mac packages, copies three files under stable names for the download buttons and the website,
+     and writes `SHA256SUMS.txt` for everything;
+   - creates the GitHub release, marked *Latest* (a pre-release isn't), with these assets:
+     - `Coreloom-<version>-win-x64-Setup.exe` and `Coreloom-<version>-win-x64-Portable.zip`
+     - `Coreloom-<version>-macos-arm64.dmg` and `.zip`, `Coreloom-<version>-macos-x64.dmg` and `.zip`
+     - `Coreloom-Windows-Setup.exe`, `Coreloom-macOS-Apple-Silicon.dmg` and `Coreloom-macOS-Intel.dmg`: the same
+       files under names that never change, so `https://github.com/<you>/Coreloom/releases/latest/download/<name>`
+       (the README's buttons, the website) always downloads the newest version
      - `SHA256SUMS.txt`
 4. The build embeds `GITHUB_REPOSITORY` as the update source. Copies of earlier versions find the
    new release at their next check (20 seconds after they start, then as often as *Settings → Updates* says;
@@ -48,13 +60,19 @@ Releases are built entirely by GitHub Actions from a version tag. Nothing is upl
    Coreloom starts, while the PC is idle, or when the user clicks *Install update*. Installed copies update with
    `-Setup.exe`, portable copies with `-Portable.zip`, so every release needs both (plus `SHA256SUMS.txt`). Copies
    of 1.1.0 or earlier that are portable still link to the release page: they predate in-place updates.
+   Mac copies (1.6.0 and later) update with `-macos-arm64.zip` or `-macos-x64.zip`, whichever matches the Mac:
+   the download is checked against `SHA256SUMS.txt`, unpacked with `ditto`, its bundle identifier and code
+   signature are checked, and a small helper swaps it in once Coreloom has quit (putting the old copy back if
+   anything fails) and opens it again.
 
 If you create the release yourself on GitHub's website (for example to write its text there), the workflow adds
 the files to that release and keeps your title and text; it only fills in the text when you left it empty. If a
 release ever ends up without its files, open *Actions → Release → Run workflow* and enter the tag: it builds that
 tag again and uploads the files.
 
-Keep the asset names unchanged: the updater looks for `*-win-x64-Setup.exe` and `SHA256SUMS.txt`. Never replace
+Keep the asset names unchanged: the updaters look for `*-win-x64-Setup.exe` (with `x64` in the name, so the
+stable `Coreloom-Windows-Setup.exe` copy is never picked by mistake), `*-win-x64-Portable.zip`,
+`*-macos-arm64.zip`, `*-macos-x64.zip` and `SHA256SUMS.txt`. Never replace
 the assets of a published release: copies that already downloaded it would see a different checksum. Publish
 a new version instead.
 
@@ -103,7 +121,39 @@ Coreloom now keeps itself up to date.
   update* should download, verify, install and relaunch. The full checklist, including the automatic paths, is in
   [TESTING-ON-YOUR-PC.md](TESTING-ON-YOUR-PC.md#6-automatic-updates-after-publishing-two-releases).
 
-## Code signing (recommended before wide distribution)
+## The website
+
+`site/` is the download page. The **Website** workflow publishes it to the `gh-pages` branch whenever it changes
+on `main`, and GitHub Pages serves it at `https://<you>.github.io/Coreloom/` (*Settings → Pages*: deploy from the
+`gh-pages` branch, root folder; GitHub turns this on by itself the first time the branch is pushed). The page asks
+GitHub's API for the latest release when it opens (its version, date and file sizes) and its buttons use the
+stable names, so a new release needs no change to the site.
+
+## Mac: signing and notarization
+
+Without an Apple Developer account, the Mac app is signed **ad hoc**: its code is sealed and checked (the updater
+refuses a bundle whose signature doesn't check out), but it isn't tied to a developer identity, so the first
+time someone opens a downloaded copy macOS says it could not verify Coreloom and they confirm it once in *System
+Settings → Privacy & Security → Open Anyway*. The disk image's window, the README and the website say so.
+Updates installed from inside Coreloom aren't downloaded through a browser, so they open without asking.
+
+With an Apple Developer Program membership, add these repository secrets and the next release is signed with your
+Developer ID, with the hardened runtime (`src/Coreloom.Mac/Coreloom.entitlements`), notarized by Apple and stapled
+(the app and the disk image), so it opens with no warning at all. Nothing else changes.
+
+| Secret | What |
+|---|---|
+| `MAC_CERT_P12` | Your *Developer ID Application* certificate and key, exported as .p12 and base64-encoded (`base64 -i cert.p12`) |
+| `MAC_CERT_PASSWORD` | The .p12's password |
+| `MAC_SIGN_IDENTITY` | The identity's name, e.g. `Developer ID Application: Jerry Ubah (TEAMID1234)` |
+| `MAC_NOTARY_APPLE_ID` | The Apple ID of the developer account |
+| `MAC_NOTARY_TEAM_ID` | The team ID |
+| `MAC_NOTARY_PASSWORD` | An app-specific password for that Apple ID (appleid.apple.com → Sign-In and Security) |
+
+Copies signed ad hoc update to Developer ID-signed versions normally (the updater checks that the new bundle's
+signature is valid and that it is Coreloom, not who signed it).
+
+## Code signing on Windows (recommended before wide distribution)
 
 Releases aren't code-signed yet, so Windows SmartScreen will warn on first run until the download builds
 reputation. To sign:
@@ -124,3 +174,13 @@ reputation. To sign:
 
 The output goes to `artifacts/release/`. Without Inno Setup, only the portable zip and checksums are
 produced.
+
+On a Mac (`pip install dmgbuild` lays out the disk image's window; without it the image is plainer):
+
+```bash
+bash build/mac/bundle.sh --arch arm64 --version 1.6.0-local --repository <you>/Coreloom   # or --arch x64
+```
+
+The app, the update zip and the disk image go to `artifacts/mac/`. To check a build on a Mac the way the release
+does, `bash build/mac/verify-app.sh arm64 artifacts/mac-verify`; pushing a branch named `macverify-*` runs the same
+check on GitHub's Macs and publishes what they saw to the `mac-verify-arm64` and `mac-verify-x64` branches.

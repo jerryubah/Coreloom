@@ -25,6 +25,53 @@ layer calls Windows sensor APIs, so most of the logic is testable on any OS.
 
 `Coreloom.Diagnostics` (CoreloomDiag.exe) reuses Core and Hardware without any UI.
 
+On a Mac the top and bottom layers are swapped for their macOS counterparts and everything in between is shared:
+
+```
+┌──────────────────── Coreloom.Mac (Avalonia 11 on Avalonia.Native: AppKit + Metal, net10.0) ─────┐
+│ Views (AXAML) · chart controls · ThemeService · menu bar item · app menus · in-game overlay  │
+│ single instance · login item · notifications · updater (MacUpdateInstaller) · App.axaml.cs    │
+└───────────────▲──────────────────────────────────────────────────────────────────────────────┘
+                │ the same Coreloom.ViewModels and Coreloom.Core as on Windows
+┌───────────────┴────────────── Coreloom.Hardware.Mac (net10.0, P/Invoke to macOS) ──────────────┐
+│ host_processor_info (CPU) · IOReport (clusters, GPU, ANE, power) · SMC + HID sensors          │
+│ host_statistics64 (memory) · IOKit storage + statfs · interface counters · IOAccelerator      │
+│ Metal device, benchmark and stress test · process sampler                                    │
+└──────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## The Mac app (1.6.0)
+
+- **One set of view models.** Every page's view model is shared. `PageContext.Platform` (`HostPlatform.MacOS`)
+  switches what has to differ: labels and texts ("Mac", "menu bar", "Open at login"), which metrics a page shows
+  (performance and efficiency cores, the Neural Engine, the tiler, memory pressure), Gaming's boosts, Smart
+  Optimize's categories and protections, binary memory units (`UnitFormatter.BinaryMemoryByDefault`) and the
+  first-launch defaults (`MacDefaults`). Platform services (`IGamingService`, `IOptimizeService`, `IDeviceService`,
+  `IHardwareBenchmarkService`, `IUpdateInstaller`, startup, notifications) have Mac implementations in
+  `src/Coreloom.Mac/Services`.
+- **Views.** Each WPF page was converted to Avalonia (`Views/*.axaml`): styles became `ControlTheme`s and
+  `UserControl.Styles` selectors, triggers became classes bound to view-model flags or converters, and pieces
+  that only make sense on Windows (the AMD processor card, the NVIDIA frame limiter, CPU core scheduling) are left
+  out of the Mac pages rather than hidden at run time. `tools/Coreloom.MacShots` draws every page headlessly with
+  sample Apple silicon readings and fails on any binding error.
+- **App shell.** `Program.Main` takes the single-instance lock (a `flock` and a Unix socket in Application Support)
+  before the interface starts: a second launch hands over its request (`--page <key>`) and quits. `App.axaml.cs`
+  is the composition root: telemetry host, settings, updates, the menu bar item (`MenuBarService`), the app menus
+  (`AppMenus`), the in-game overlay (`MacOverlayService`, an `NSWindow` at the status level that ignores the mouse,
+  with a Carbon global hotkey), wake detection, the game watcher and quitting on log-out (SIGTERM).
+- **Permissions.** Coreloom asks macOS for nothing at launch. Bluetooth is requested from the Devices page when the
+  person clicks *Allow Bluetooth* (through CoreBluetooth, which doesn't block); the power mode, `purge` and the DNS
+  cache use `osascript`'s administrator prompt, on a click.
+- **Packaging.** `build/mac/bundle.sh` publishes a self-contained single file for `osx-arm64` or `osx-x64`, lays out
+  `Coreloom.app` (only Mach-O code in Contents/MacOS; Info.plist, the icon, licenses and notices in Resources),
+  signs it inside out (ad hoc, or Developer ID with the hardened runtime and notarization when the release has the
+  secrets), and writes the update zip (`ditto`) and the disk image (`dmgbuild`, or plain `hdiutil`).
+- **Updates.** The same `UpdatesViewModel` and verified, resumable downloads as on Windows; the package is
+  `-macos-arm64.zip` or `-macos-x64.zip`. `MacUpdateInstaller` copies the verified zip to a private folder, checks
+  its hash again, unpacks it with `ditto`, checks the bundle identifier and `codesign --verify --deep --strict`,
+  and a small shell helper swaps the bundles after Coreloom quits (keeping the old one until the new one is in
+  place) and reopens it with `--updated` or `--update-failed`.
+
 ## Telemetry pipeline
 
 1. **Providers** implement `ITelemetryProvider`.

@@ -7,6 +7,36 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-25
+
+Coreloom now runs on the Mac, on Apple silicon and Intel with macOS 14 Sonoma or later. Every page of the Windows app is made for the Mac: its readings, its menu bar and Dock, its settings and its words. Download it from the README's buttons or the new website, drag it into Applications, and it keeps itself up to date like the Windows app.
+
+### Highlights
+
+- **A native Mac app.** The same pages and dashboard as on Windows, on macOS's own AppKit and Metal: a window with the traffic lights in its sidebar, a full app menu (⌘, for Settings, ⌘1–⌘9 for the pages, ⌃⌘S for the sidebar, Hide, Minimize, Zoom and Full Screen), a menu bar item with live readings, an icon on Apple's icon grid, and light, dark or the Mac's own appearance.
+- **The Mac's own readings.** Apple silicon's performance and efficiency cores and their clocks, the GPU's load, renderer and tiler, the power of the CPU, GPU, Neural Engine and the whole Mac (IOReport), temperatures and fans (the SMC and the temperature sensors), memory pressure with app, wired and compressed memory and swap, batteries, drives and network. On Intel Macs, the SMC's temperatures, fans and power. Memory reads in binary units, as Activity Monitor shows it; storage in decimal units, as Finder does.
+- **A picture of your Mac.** The Overview's header shows a MacBook, iMac, Mac mini, Mac Studio or Mac Pro, whichever yours is, lit in the color you pick (no Apple logo is drawn).
+- **Gaming on a Mac.** Your Steam, Epic Games and Applications-folder games as cards or covers with Play, games added by hand (pick the app), and Game Boost with the switches that matter on a Mac: Game Mode, full power on the charger (Low Power Mode off, High Power Mode on where your Mac has it), keeping the Mac awake while a game runs, and Apple's Metal Performance HUD. Metal's shader caches are listed, and a macOS update that makes games compile them again is pointed out.
+- **The in-game overlay on a Mac** shows Coreloom's readings over full-screen apps and games (⌥⌘O, or from the Graphics page), with what it shows, where and how big, as on Windows. Nothing is added to games, so it shows readings rather than a frame rate; Apple's Metal HUD shows that.
+- **Benchmarks on Metal.** The CPU benchmark, the GPU benchmark's graphics and compute tests on Metal, and the stress test, with every result saved.
+- **Smart Optimize for macOS.** App caches, logs, temporary files, Xcode's build files, shader caches, old installers in Downloads and the Trash; XProtect, Gatekeeper, System Integrity Protection, FileVault and the firewall; freeing inactive memory; login items; and refreshing the DNS cache.
+- **Devices.** Bluetooth accessories with their batteries, connect, disconnect and the Bluetooth switch, and what's plugged in by USB, Thunderbolt or display cable, with Eject for drives. macOS asks once whether Coreloom may use Bluetooth, when you click *Allow Bluetooth*.
+- **Updates on a Mac.** *Check for Updates…* in the Coreloom menu and the menu bar item. Updates download in the background, are checked against the release's SHA-256 checksums and their code signature, and replace the app after Coreloom quits; the old copy is put back if anything fails.
+- **Download buttons and a website.** The README has a button for each Mac and for Windows, and [jerryubah.github.io/Coreloom](https://jerryubah.github.io/Coreloom/) picks the right download for your computer. Both always get the newest version.
+
+### In detail
+
+- Settings on a Mac: *Open at login* (a standard login item), *Open in the menu bar at login*, *Keep running in the menu bar*, *Hide the Dock icon while the window is closed*, readings in the menu bar menu, a translucent sidebar, and units like macOS's.
+- Mac defaults on the first launch: the Mac's appearance, units like macOS's, CPU and GPU temperature alerts suited to Apple silicon (105 °C and 100 °C) or Intel (97 °C and 100 °C), and the readings that make sense on a Mac in the in-game overlay.
+- Coreloom for Mac runs as you, with no helper, kernel extension or driver. Freeing memory, the DNS cache and the power mode ask for your password through macOS's own dialog, only when you click them.
+- Coreloom for Mac isn't signed with a paid Apple developer certificate yet, so the first time you open it macOS asks you to confirm it in *System Settings › Privacy & Security* (*Open Anyway*). Updates installed from inside Coreloom don't ask again.
+- Every release's Mac apps are built, signed, packaged, installed, opened on every page and photographed on GitHub's Apple silicon and Intel Macs before it's published. Those Macs are virtual machines without temperature, power or fan sensors, so real Mac hardware is the part least tried so far: reports are very welcome.
+- Windows: nothing changes in the app. The release now also carries `Coreloom-Windows-Setup.exe`, the same installer under a name that always points at the newest version.
+
+### Feedback
+
+Something not right on your Mac? [Open an issue](https://github.com/jerryubah/Coreloom/issues) with a screenshot and the report from *Settings › Diagnostics › Export diagnostic report*.
+
 ## [1.5.1] - 2026-10-22
 
 The Benchmarking page's cards show your latest run, and GPU scores move to a bigger scale.

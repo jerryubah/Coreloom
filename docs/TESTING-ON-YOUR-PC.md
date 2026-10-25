@@ -761,3 +761,29 @@ Send the following:
 - The checklist above, with failures marked.
 - Screenshots of anything that looks wrong.
 - The log folder: *Settings → Diagnostics → Open log folder*.
+
+## 8. On a Mac
+
+GitHub's Macs check every build of Coreloom for Mac, but they are virtual machines without sensors. On a real Mac
+(Apple silicon or Intel, macOS 14 or later), these are worth trying, in this order:
+
+1. **Install.** Download the disk image for your Mac from the README's buttons, drag Coreloom into Applications and
+   open it. macOS should say it could not verify Coreloom; *System Settings › Privacy & Security › Open Anyway*
+   opens it, and it opens without asking from then on.
+2. **Readings.** Overview, Processor and Graphics: on Apple silicon the performance and efficiency cores' clocks,
+   CPU, GPU and Neural Engine power, the whole Mac's power, temperatures and (on Macs with fans) fan speeds should
+   all have values. Compare utilization with Activity Monitor and memory with its Memory tab (binary units).
+   Run `sudo powermetrics --samplers cpu_power,gpu_power -n 1` to compare the power figures.
+3. **Menu bar and Dock.** The menu bar item's readings, *Pause*, *Settings…*, *Quit*; closing the window keeps
+   Coreloom in the menu bar (and hides its Dock icon if that's on); clicking the Dock icon brings the window back.
+4. **Devices.** *Allow Bluetooth…* should bring up macOS's prompt; after *Allow*, your accessories and (for Apple's
+   own) their batteries appear. Connect and disconnect one.
+5. **Gaming.** Your Steam and Epic games appear with pictures; *Play* starts one through its launcher. Turn on the
+   Metal HUD and start a Metal game: Apple's overlay shows. *Full power on the charger* asks for your password.
+6. **The in-game overlay.** ⌥⌘O over a full-screen app or game; Customize on the Graphics page.
+7. **Benchmarks.** Run the CPU and GPU benchmarks and a 1-minute stress test.
+8. **Updates.** Once a newer version is out, *Coreloom › Check for Updates…* downloads it; *Install update* quits
+   Coreloom, replaces it and opens the new version (`~/Library/Logs/Coreloom/update.log` says what happened).
+
+Send back screenshots of anything that reads wrong, with the report from *Settings › Diagnostics › Export
+diagnostic report*.

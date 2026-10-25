@@ -78,7 +78,17 @@ public partial class MainWindow : Window
             }
         };
         AddHandler(KeyDownEvent, OnWindowKeyDown, RoutingStrategies.Tunnel);
+
+        // The translucent sidebar: macOS's vibrancy (a blur of what's behind the window) under the sidebar column.
+        if (Themes.ThemeService.Instance is { } theme)
+        {
+            ApplyTranslucency(theme);
+            theme.ThemeChanged += (_, _) => ApplyTranslucency(theme);
+        }
     }
+
+    private void ApplyTranslucency(Themes.ThemeService theme) =>
+        TransparencyLevelHint = theme.IsTranslucent ? [WindowTransparencyLevel.AcrylicBlur, WindowTransparencyLevel.None] : [WindowTransparencyLevel.None];
 
     public bool IsCompactSidebar
     {

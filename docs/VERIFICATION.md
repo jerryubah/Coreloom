@@ -687,6 +687,41 @@ These are the places most likely to need fixes on the first Windows build, in ro
 7. **Inno Setup script.** Preprocessor expressions, the `/UPDATE=1` relaunch with `--updated`/`--minimized`, and
    the new `[Code]` that restarts the old version after a failed update.
 
+## Coreloom for Mac (1.6.0)
+
+The Mac app was developed in the same Linux container (no Mac, no nuget.org: Avalonia's packages were restored from
+a local copy fetched by a GitHub Actions job). Everything that needs macOS was checked on **GitHub's macOS runners**:
+`macos-15` (Apple silicon, an Apple M1 virtual machine) and `macos-15-intel` (an Intel Core i7-8700B Mac mini, also
+virtualized), both on macOS 15.7.
+
+| What | How | Result |
+|---|---|---|
+| The macOS back-end (`Coreloom.Hardware.Mac`): CPU, memory, storage, network, GPU memory and load, Metal device, Metal benchmark and stress test, SMC on Intel, process sampling, command-line and decoding helpers | `dotnet test tests/Coreloom.Hardware.Mac.Tests` on both Macs (`mac-verify.yml`, and the CI and release workflows) | ✅ 143 passed on Apple silicon (1 Intel-only test skipped), 144 on Intel |
+| The app bundle | `build/mac/bundle.sh`: self-contained single-file publish, Contents/MacOS holds only Mach-O code, Info.plist passes `plutil -lint`, `lipo` shows the right architecture | ✅ both |
+| Code signature | `codesign --verify --deep --strict` on the built app, on the app inside the mounted disk image and on the app unpacked from the update zip with `ditto` (what the updater runs) | ✅ all three, both Macs. Gatekeeper (`spctl`) rejects the ad hoc signature, as expected: people confirm the first opening once |
+| Disk image | Mounted read-only: Coreloom.app, a link to Applications, the window layout and background | ✅ |
+| The app runs | Installed in /Applications and opened: telemetry starts (7 providers), every page opened through a second launch (`--page`, handed to the running copy) and photographed, no warnings or errors in the log, no crash report, quits cleanly on SIGTERM | ✅ both Macs (about 350 MB resident on Apple silicon, 240 MB on Intel, after visiting every page) |
+| Layout of every page and dialog | `tools/Coreloom.MacShots` (headless Avalonia, sample Apple silicon readings) with zero binding errors; the screenshots from the runners above | ✅ |
+| Shared code | Core 693 and view-model 178 tests (the Windows app's tests too) on Linux | ✅ |
+
+**Not verified on real Mac hardware yet.** The runners are virtual machines: they have no temperature, power,
+fan or battery sensors on Apple silicon (the Intel VM passes some SMC readings through), no Bluetooth, no
+displays beyond a virtual one, and no games. So these parts are written to Apple's documented and observed
+interfaces but haven't been seen working on a physical Mac:
+
+1. IOReport readings on Apple silicon: the performance and efficiency clusters' clocks, CPU, GPU and Neural Engine
+   power, and the whole Mac's power.
+2. The HID temperature sensors and the SMC on Apple silicon (fans, temperatures), and the battery.
+3. Bluetooth: the permission request, listing, connecting and disconnecting accessories, battery levels, the
+   switch.
+4. The Gaming page's switches: the power mode (with macOS's password dialog), Keep awake with a real game, the Metal
+   HUD in a real Metal game; the game library with real Steam and Epic installs.
+5. The in-game overlay over a full-screen game, and its global hotkey.
+6. An update from one released Mac version to the next (the first Mac release has nothing to update from; the
+   download, checksum, unpacking and signature checks are unit- and runner-tested, the swap helper's script is
+   not yet run end to end).
+7. The translucent sidebar's vibrancy, *Open at login*, notifications and *Move to Applications*.
+
 ## How to re-run the checks that can run anywhere
 
 ```bash
@@ -696,7 +731,10 @@ python3 build/check-xaml.py
 ```
 
 To see the pages' layout on Windows without a Windows PC, push to a branch named `shots-…`: the *Page shots*
-workflow draws them with sample data and publishes the PNGs on the `pageshots-output` branch.
+workflow draws them with sample data and publishes the PNGs on the `pageshots-output` branch. For the Mac app,
+`dotnet run --project tools/Coreloom.MacShots -- out` draws every Mac page on any system, and pushing a branch named
+`macverify-…` builds, packages, opens and photographs the real app on GitHub's Macs (results on the
+`mac-verify-arm64` and `mac-verify-x64` branches).
 
 On Windows, `./build/build.ps1` builds everything and runs every test, including the Windows integration
 tests against the real machine.

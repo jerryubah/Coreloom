@@ -1,0 +1,39 @@
+name: Website
+
+# Publishes the download page (site/) to the gh-pages branch, which GitHub Pages serves at
+# https://<owner>.github.io/<repo>/. The page reads the latest release from GitHub when it opens, so a new release
+# needs no rebuild here; only changes to the page itself do.
+on:
+  push:
+    branches: [main]
+    paths: ['site/**', 'assets/readme/coreloom-film.avif', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write   # push the gh-pages branch
+
+concurrency:
+  group: website
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Publish site/ to gh-pages
+        run: |
+          out="$RUNNER_TEMP/site"
+          mkdir -p "$out"
+          cp -R site/. "$out/"
+          cp assets/readme/coreloom-film.avif "$out/assets/"
+          touch "$out/.nojekyll"
+          cd "$out"
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Website from ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:gh-pages

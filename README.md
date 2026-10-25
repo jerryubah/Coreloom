@@ -4,18 +4,39 @@
   <img src="assets/readme/coreloom-film.avif" width="100%" alt="Coreloom 1.4.5 product film: the PC lighting up, the Overview dashboard, live gauges, Make it yours, Game Boost, the frame limiter, the game library, the in-game overlay, honest numbers, Smart Optimize, devices and speed tests, and what Coreloom never does">
 </p>
 
-A native Windows 11 hardware monitor with a calm, modern dashboard: live GPU, CPU, memory, storage and
-network telemetry, animated charts with up to an hour of history, threshold alerts, a tray icon and
-verified in-app updates.
+A native hardware monitor for **Windows 11 and macOS** with a calm, modern dashboard: live GPU, CPU, memory,
+storage and network telemetry, animated charts with up to an hour of history, a gaming hub, benchmarks, smart
+clean-up, threshold alerts, a tray or menu bar icon and verified in-app updates.
 
 Coreloom only **reads** sensors. It never changes clocks, voltages, fan curves or firmware settings, never
 installs drivers or services, and never sends your data anywhere.
 
-> **Project status:** 1.0.0 is the first release. Every build is compiled and tested by GitHub Actions, and
-> the app is run on Windows 11 with an NVIDIA GeForce RTX 5090 and an AMD Ryzen 9 9950X3D. It hasn't been
-> tried on a wide range of other hardware yet, so if a sensor reads wrong, please
-> [open an issue](../../issues) with a [CoreloomDiag report](#diagnostics-coreloomdiag) attached.
-> [docs/VERIFICATION.md](docs/VERIFICATION.md) lists what has and hasn't been verified.
+## Download
+
+<p align="center">
+  <a href="https://github.com/jerryubah/Coreloom/releases/latest/download/Coreloom-macOS-Apple-Silicon.dmg"><img src="assets/readme/download-mac-apple-silicon.svg" width="340" alt="Download for Mac: Apple silicon (M1 and later), macOS 14 or later"></a>
+  <a href="https://github.com/jerryubah/Coreloom/releases/latest/download/Coreloom-macOS-Intel.dmg"><img src="assets/readme/download-mac-intel.svg" width="340" alt="Download for Mac: Intel processor, macOS 14 or later"></a>
+  <a href="https://github.com/jerryubah/Coreloom/releases/latest/download/Coreloom-Windows-Setup.exe"><img src="assets/readme/download-windows.svg" width="340" alt="Download for Windows: Windows 11, 64-bit installer"></a>
+</p>
+
+<p align="center">
+  <a href="https://jerryubah.github.io/Coreloom/"><b>Website</b></a> ·
+  <a href="../../releases/latest">All files and checksums</a> ·
+  <a href="#install">How to install</a> ·
+  <a href="CHANGELOG.md">What's new</a>
+</p>
+
+Each button downloads the newest version. Once installed, Coreloom keeps itself up to date: *Check for updates*
+(the Coreloom menu on a Mac, *Settings › Updates* on Windows) installs a new version in place.
+
+> **Project status:** Coreloom for Windows has been released since 1.0.0 and runs every day on Windows 11 with
+> an NVIDIA GeForce RTX 5090 and an AMD Ryzen 9 9950X3D. **Coreloom for Mac** is new in 1.6.0: every build is
+> built, packaged, opened page by page and photographed on GitHub's Apple silicon and Intel Macs, which are
+> virtual machines without temperature, power or fan sensors, so readings from real Mac hardware are the part
+> least tried so far. If a sensor reads wrong, please [open an issue](../../issues) with a diagnostic report
+> attached (*Settings › Diagnostics › Export diagnostic report*, or [CoreloomDiag](#diagnostics-coreloomdiag) on
+> Windows). [docs/VERIFICATION.md](docs/VERIFICATION.md) lists
+> what has and hasn't been verified.
 
 ---
 
@@ -134,6 +155,44 @@ installs drivers or services, and never sends your data anywhere.
 - **Logs.** *Settings › Logs* (or *Open logs* on the memory card) shows Coreloom's log with timestamps, search, a
   level and category filter, and copy and open-folder buttons.
 
+## Coreloom for Mac
+
+Coreloom for Mac is the same app as on Windows, built for macOS 14 Sonoma and later on Apple silicon and Intel:
+a native Mac window (an Avalonia interface on macOS's own AppKit and Metal), the same view models and engine, and
+macOS's own sources for every reading. What changes on a Mac:
+
+- **Readings.** Apple silicon's performance and efficiency cores and their clocks, the GPU's load, renderer and
+  tiler, the Neural Engine's and the whole Mac's power (IOReport), temperatures and fans (the SMC and the HID
+  temperature sensors), memory pressure with app, wired and compressed memory and swap, batteries, drives and
+  network. Memory is shown in binary units like Activity Monitor, storage in decimal units like Finder.
+- **A picture of your Mac** in the Overview header (MacBook, iMac, Mac mini, Mac Studio or Mac Pro), lit in the
+  color you choose. No Apple logo is drawn.
+- **Menu bar and Dock.** A menu bar item with live readings, Pause, Settings and Quit; closing the window keeps
+  Coreloom in the menu bar (and, if you like, out of the Dock); *Open at login* is a standard login item. A full
+  app menu with the usual shortcuts (⌘, for Settings, ⌘1–⌘9 for the pages, ⌃⌘S for the sidebar) and a native
+  About panel.
+- **Gaming.** Your Steam, Epic Games and Applications-folder games with Play, plus the switches that matter on a
+  Mac: Game Mode (macOS turns it on for full-screen games), full power on the charger (Low Power Mode off, High
+  Power Mode on where the Mac has it), keeping the Mac awake while a game runs, and Apple's Metal Performance HUD.
+  Metal's shader caches are listed, and a macOS update that resets them is pointed out.
+- **The in-game overlay** shows Coreloom's readings over full-screen apps and games (⌥⌘O by default; set it up on
+  the Graphics page). Nothing is added to games, so it shows Coreloom's readings rather than a frame rate: Apple's
+  Metal HUD shows that.
+- **Benchmarks** on Metal: the same CPU benchmark, the GPU benchmark's graphics and compute tests on Metal, and
+  the stress test.
+- **Smart Optimize** for macOS: app caches, logs, temporary files, Xcode's build files, shader caches, old
+  installers in Downloads and the Trash; XProtect, Gatekeeper, System Integrity Protection, FileVault and the
+  firewall; freeing inactive memory (macOS's `purge`); login items (launch agents); and refreshing the DNS cache.
+- **Devices.** Bluetooth accessories with their batteries (Apple's own report them), connect and disconnect, the
+  Bluetooth switch, and USB, Thunderbolt and display devices with *Eject* for drives. macOS asks once whether
+  Coreloom may use Bluetooth, when you click *Allow Bluetooth*.
+- **Updates.** The same verified updates: the new version is downloaded, checked against the release's
+  SHA-256 checksums and its code signature, and swapped in after Coreloom quits (the old copy is put back if
+  anything fails).
+- **No administrator rights.** Coreloom for Mac runs as you, with no helper, kernel extension or driver. The few
+  changes that need your password (freeing memory, the DNS cache, the power mode) ask through macOS's own
+  dialog, and only when you click them.
+
 ## What Coreloom reads, and from where
 
 | Area | Source | Administrator needed? |
@@ -155,6 +214,21 @@ installs drivers or services, and never sends your data anywhere.
 | GPU scheduling, power plan, Game Mode, windowed-game and Game Bar settings | Windows: the graphics kernel (D3DKMT), the registry values Windows Settings uses, `powercfg` | Changing GPU scheduling: **yes** |
 | NVIDIA frame limit, shader cache size, power management mode, G-SYNC, driver version | **NVAPI** driver settings (the store the NVIDIA Control Panel uses) and display info | Changing them: **yes** |
 
+On a Mac:
+
+| Area | Source | Administrator needed? |
+|---|---|---|
+| CPU load per core | The kernel's per-processor tick counters (`host_processor_info`, as Activity Monitor) | No |
+| Clocks and power of the CPU clusters, GPU and Neural Engine; system power (Apple silicon) | **IOReport** (the counters `powermetrics` reads) | No |
+| Temperatures, fans, battery and adapter power | The **SMC** (System Management Controller) and the HID temperature sensors | No |
+| GPU memory, renderer and tiler load, Metal device and its cores | The I/O registry (`IOAccelerator`) and **Metal** | No |
+| Memory pressure, app, wired and compressed memory, swap | Mach `host_statistics64`, `vm.swapusage`, the memory-pressure level | No |
+| Drives, volumes and activity | IOKit (`IOBlockStorageDriver` statistics), `statfs` and the volumes' own properties | No (macOS doesn't share an SSD's wear with apps) |
+| Network throughput | The kernel's 64-bit interface counters, named as System Settings names them | No |
+| Bluetooth devices and batteries; USB, Thunderbolt and displays | IOBluetooth, the I/O registry and System Information (`system_profiler`) | No (macOS asks once for Bluetooth) |
+| Installed games and their pictures | Steam's and Epic's library files, apps in the Applications folder's Games category, and (for games without a picture) Steam's public store | No |
+| Game Mode, Low/High Power Mode, Metal HUD | macOS's own settings (`pmset`, `defaults`) | Changing the power mode: **your password**, asked by macOS |
+
 **About PawnIO.** Reading CPU temperature and motherboard sensors on modern Windows needs a kernel driver.
 LibreHardwareMonitor uses [PawnIO](https://pawnio.eu), a signed, open-source driver. Coreloom **never installs
 it**. If you want those sensors:
@@ -166,13 +240,40 @@ Without it, everything else still works and the affected cards explain what's mi
 
 ## Requirements
 
-- Windows 11 x64, version 23H2 or later (the versions .NET 10 supports). Windows 10 may work, but it isn't a
-  supported or tested target. Mica needs Windows 11 22H2 or later.
-- Nothing else for the installer or portable build: they are self-contained and include the .NET runtime.
+- **Windows:** Windows 11 x64, version 23H2 or later (the versions .NET 10 supports). Windows 10 may work, but it
+  isn't a supported or tested target. Mica needs Windows 11 22H2 or later.
+- **Mac:** macOS 14 Sonoma or later (the versions .NET 10 supports: 14 Sonoma, 15 Sequoia and 26 Tahoe), on Apple
+  silicon (M1 and later) or an Intel processor. There is a download for each.
+- Nothing else: every download is self-contained and includes the .NET runtime.
 - To build from source: the [.NET 10 SDK](https://dotnet.microsoft.com/download). Inno Setup 6 is
-  optional and only needed to build the installer.
+  optional and only needed to build the Windows installer.
 
 ## Install
+
+### Mac
+
+1. Download the disk image for your Mac: [Apple silicon](https://github.com/jerryubah/Coreloom/releases/latest/download/Coreloom-macOS-Apple-Silicon.dmg)
+   (M1 and later) or [Intel](https://github.com/jerryubah/Coreloom/releases/latest/download/Coreloom-macOS-Intel.dmg).
+   Not sure which? *Apple menu › About This Mac* says *Chip: Apple M…* on Apple silicon and *Processor: … Intel* on Intel.
+2. Open it and drag **Coreloom** onto **Applications**.
+3. Open Coreloom from Applications. Coreloom is open source and isn't sold through the App Store or signed with a
+   paid Apple developer certificate, so the first time macOS says it *could not verify* Coreloom: click *Done*,
+   open **System Settings › Privacy & Security**, scroll down and click **Open Anyway** (then *Open*). macOS
+   remembers it; you won't be asked again, and updates installed from inside Coreloom don't ask either.
+   (If you prefer the Terminal: `xattr -dr com.apple.quarantine /Applications/Coreloom.app` does the same.)
+
+Coreloom then sits in the menu bar and the Dock. *Coreloom › Check for Updates…* (or the menu bar item) installs a
+new version right away; otherwise updates download in the background and install the next time Coreloom starts
+or while the Mac is idle.
+
+To verify a download, compare `shasum -a 256 Coreloom-*.dmg` with `SHA256SUMS.txt` from the same release.
+
+**Uninstall.** Quit Coreloom (⌘Q) and move it from Applications to the Trash. Turning off *Open at login* first
+removes its login item; otherwise remove it in *System Settings › General › Login Items*. Your settings are in
+`~/Library/Application Support/Coreloom` and the logs in `~/Library/Logs/Coreloom`; delete them too for a clean
+removal.
+
+### Windows
 
 Download from the [Releases](../../releases) page:
 
@@ -208,6 +309,8 @@ Coreloom still only reads sensors and never writes to hardware.
 
 ## Build from source
 
+On Windows:
+
 ```powershell
 git clone https://github.com/jerryubah/Coreloom.git
 cd Coreloom
@@ -228,6 +331,19 @@ the .NET 10 SDK) or a current JetBrains Rider, then run **Coreloom.App**.
 
 To enable update checks in your own builds, pass `-Repository owner/name` (CI does this automatically from
 the GitHub repository). Without it, update checks are disabled.
+
+On a Mac (Apple silicon or Intel, with the .NET 10 SDK):
+
+```bash
+dotnet run --project src/Coreloom.Mac                                  # start the Mac app from source
+dotnet test tests/Coreloom.Hardware.Mac.Tests                         # the macOS back-end's tests (reads this Mac)
+bash build/mac/bundle.sh --arch arm64 --version 1.6.0                 # Coreloom.app, the update zip and the disk image in artifacts/mac
+bash build/mac/verify-app.sh arm64 artifacts/mac-verify               # package, check, install, open every page and photograph it
+```
+
+`Coreloom.Mac.sln` holds the Mac app, its back-end and the shared projects. `--repository owner/name` (bundle.sh)
+turns on update checks, like `-Repository` on Windows. `tools/Coreloom.MacShots` draws every Mac page with sample
+data on any system (`dotnet run --project tools/Coreloom.MacShots -- out`).
 
 ## Diagnostics: CoreloomDiag
 
@@ -277,8 +393,15 @@ LibreHardwareMonitor's own report. See [docs/TESTING-ON-YOUR-PC.md](docs/TESTING
   `store.steampowered.com` with the game's name, the game's pictures from `api.steampowered.com`, and the picture
   servers `shared.akamai.steamstatic.com` and `cdn.cloudflare.steamstatic.com`). Pictures are kept on your PC; a game
   nothing is found for is looked up again after a week. No hardware data is included.
-- **Always elevated.** Coreloom runs as administrator so the sensor driver can be read and Smart Optimize can clean
-  system folders, but it never installs drivers or services and has no remote access of any kind.
+- **Always elevated on Windows, never on a Mac.** On Windows Coreloom runs as administrator so the sensor driver can
+  be read and Smart Optimize can clean system folders, but it never installs drivers or services and has no remote
+  access of any kind. On a Mac it runs as you; the few changes that need your password ask for it through macOS's
+  own dialog when you click them.
+- **On a Mac, the same rules.** The Gaming page's switches set macOS's own settings (`pmset`, `defaults`) and turn
+  off again; Smart Optimize deletes only inside your own Library's caches and logs (and what you tick) and empties
+  the Trash through Finder; login items are switched with `launchctl`, as System Settings does. Network requests
+  are the same as on Windows: GitHub for updates, Cloudflare for a speed test you start, and Steam's and Epic's
+  picture servers for games without a picture.
 - **Alert thresholds are reminders, not safety limits.** Check your hardware vendor's specifications;
   modern CPUs and GPUs protect themselves by throttling.
 
@@ -288,12 +411,16 @@ LibreHardwareMonitor's own report. See [docs/TESTING-ON-YOUR-PC.md](docs/TESTING
 src/
   Coreloom.Core/          platform-neutral engine: metrics, history, downsampling, alerts, settings, formatting, updater
   Coreloom.Hardware/      Windows providers: NVML, PDH, storage, network, SMBIOS, processes, LibreHardwareMonitor adapter
-  Coreloom.ViewModels/    MVVM presentation layer (no WPF types; unit-tested)
-  Coreloom.App/           WPF app: theme, chart controls, pages, tray, startup, single instance
+  Coreloom.Hardware.Mac/  macOS providers: IOReport, SMC, HID sensors, Mach statistics, IOKit storage, Metal benchmark
+  Coreloom.ViewModels/    MVVM presentation layer shared by both apps (no UI types; unit-tested)
+  Coreloom.App/           Windows app (WPF): theme, chart controls, pages, tray, startup, single instance
+  Coreloom.Mac/           Mac app (Avalonia): the same pages, menu bar item, menus, in-game overlay, updater
   Coreloom.Diagnostics/   CoreloomDiag command-line diagnostic tool
-tests/                 xUnit v3 tests for Core, Hardware (mapping + Windows integration) and ViewModels
+tests/                 xUnit v3 tests for Core, Hardware (Windows and Mac) and ViewModels
+tools/                 PageShots (Windows) and MacShots (Mac): every page drawn with sample data
 installer/Coreloom.iss    Inno Setup script
-build/                 build.ps1, release-notes.ps1, check-xaml.py
+build/                 build.ps1 (Windows), mac/bundle.sh and mac/verify-app.sh (Mac), release notes, checks
+site/                  the download page (GitHub Pages)
 docs/                  architecture, testing, releasing, troubleshooting, verification report
 ```
 
@@ -309,5 +436,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports with a CoreloomDiag report a
 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 NVIDIA, GeForce and RTX are trademarks of NVIDIA Corporation. AMD, Ryzen and Radeon are trademarks of
-Advanced Micro Devices, Inc. Intel is a trademark of Intel Corporation. Coreloom is not affiliated with or
-endorsed by these companies, and it does not bundle their logos.
+Advanced Micro Devices, Inc. Intel is a trademark of Intel Corporation. Apple, Mac, macOS, Metal and Apple
+silicon are trademarks of Apple Inc. Windows is a trademark of Microsoft Corporation. Coreloom is not affiliated
+with or endorsed by these companies, and it does not bundle their logos.
