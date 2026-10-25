@@ -735,6 +735,8 @@ tested), not only with an old version built from the current code.
 | Run | Result |
 |---|---|
 | 0.9.0 (built from 1.6.0's code) → the published 1.6.0, run 40194296972 | ✅ Apple silicon: found and verified in 24 s, replaced in under a second after quitting, 1.6.0 running with "Coreloom was updated to 1.6.0". ✅ Intel: the same, in 27 s |
+| The published 1.6.0 app (downloaded from its release) → the published 1.6.1, run 40197580106 | ✅ Apple silicon: found and verified in 23 s, 1.6.1 running after reopening with "Coreloom was updated to 1.6.1" and the Overview's card showing all its specs. ✅ Intel: the same |
+| 0.9.0 (built from 1.6.1's code) → the published 1.6.1, same run | ✅ both Macs |
 
 ### 1.6.1: the Overview's top card fits its specs on a Mac
 
