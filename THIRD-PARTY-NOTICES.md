@@ -59,6 +59,22 @@ The self-contained builds include the .NET runtime, WPF and Windows Forms.
   - https://github.com/dotnet/winforms
 - The runtime's own third-party notices are published in those repositories (`THIRD-PARTY-NOTICES.TXT`).
 
+## The macOS app: Avalonia, SkiaSharp and HarfBuzzSharp
+
+Coreloom for macOS draws its window with Avalonia, which renders through SkiaSharp and shapes text with
+HarfBuzzSharp. Their native libraries (`libAvaloniaNative.dylib`, `libSkiaSharp.dylib`, `libHarfBuzzSharp.dylib`)
+are inside `Coreloom.app/Contents/MacOS`, unmodified.
+
+| Package | License | Source |
+|---|---|---|
+| Avalonia, Avalonia.Native, Avalonia.Skia, Avalonia.Themes.Fluent, Avalonia.Remote.Protocol | MIT (© The Avalonia Project) | https://github.com/AvaloniaUI/Avalonia |
+| MicroCom.Runtime | MIT (© Nikita Tsukanov) | https://github.com/kekekeks/MicroCom |
+| SkiaSharp | MIT (© Microsoft Corporation); Skia itself: BSD-3-Clause (© Google LLC) | https://github.com/mono/SkiaSharp |
+| HarfBuzzSharp | MIT (© Microsoft Corporation); HarfBuzz itself: "Old MIT" license | https://github.com/mono/SkiaSharp, https://github.com/harfbuzz/harfbuzz |
+
+The Mac app also includes the .NET runtime (MIT, https://github.com/dotnet/runtime). It uses only macOS's own
+frameworks to read the Mac's sensors (IOKit, IOReport, Metal, IOBluetooth); none of them is redistributed.
+
 ## NVIDIA Management Library (NVML)
 
 Coreloom does **not** redistribute NVML. At runtime it loads `nvml.dll` from the NVIDIA display driver already
@@ -81,5 +97,6 @@ company's usage rules.
 ---
 
 NVIDIA, GeForce and RTX are trademarks of NVIDIA Corporation. AMD, Ryzen and Radeon are trademarks of Advanced
-Micro Devices, Inc. Intel is a trademark of Intel Corporation. Windows is a trademark of Microsoft Corporation.
+Micro Devices, Inc. Intel is a trademark of Intel Corporation. Windows is a trademark of Microsoft Corporation. Apple, Mac, macOS,
+Metal and Apple silicon are trademarks of Apple Inc., registered in the U.S. and other countries.
 Coreloom is an independent project, and it is not affiliated with or endorsed by these companies.

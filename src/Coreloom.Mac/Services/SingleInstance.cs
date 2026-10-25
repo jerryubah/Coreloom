@@ -52,14 +52,14 @@ public sealed class SingleInstance : IDisposable
         }
     }
 
-    /// <summary>Asks the running copy to show its window.</summary>
-    public void SignalPrimary()
+    /// <summary>Asks the running copy to show its window (on <paramref name="page"/>, when given: "gaming", "settings").</summary>
+    public void SignalPrimary(string? page = null)
     {
         try
         {
             using var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
             socket.Connect(new UnixDomainSocketEndPoint(_socketPath));
-            socket.Send(Encoding.ASCII.GetBytes(ShowMessage));
+            socket.Send(Encoding.ASCII.GetBytes(IsPageKey(page) ? $"{ShowMessage}:{page}" : ShowMessage));
         }
         catch (SocketException e)
         {
@@ -67,8 +67,14 @@ public sealed class SingleInstance : IDisposable
         }
     }
 
-    /// <summary>Calls <paramref name="show"/> (from a pool thread) whenever another launch asks for the window.</summary>
-    public void ListenForActivation(Action show)
+    /// <summary>A page's key: a short lowercase word ("overview", "gaming", "settings").</summary>
+    public static bool IsPageKey(string? page) => page is { Length: > 0 and <= 24 } && page.All(c => c is >= 'a' and <= 'z');
+
+    /// <summary>
+    /// Calls <paramref name="show"/> (from a pool thread) whenever another launch asks for the window, with the page it
+    /// asked for (or null).
+    /// </summary>
+    public void ListenForActivation(Action<string?> show)
     {
         try
         {
@@ -81,16 +87,21 @@ public sealed class SingleInstance : IDisposable
             var token = _listening.Token;
             _ = Task.Run(async () =>
             {
-                var buffer = new byte[16];
+                var buffer = new byte[64];
                 while (!token.IsCancellationRequested)
                 {
                     try
                     {
                         using var client = await _listener.AcceptAsync(token).ConfigureAwait(false);
                         int read = await client.ReceiveAsync(buffer, SocketFlags.None, token).ConfigureAwait(false);
-                        if (Encoding.ASCII.GetString(buffer, 0, read) == ShowMessage)
+                        string message = Encoding.ASCII.GetString(buffer, 0, read);
+                        if (message == ShowMessage)
                         {
-                            show();
+                            show(null);
+                        }
+                        else if (message.StartsWith(ShowMessage + ":", StringComparison.Ordinal) && IsPageKey(message[(ShowMessage.Length + 1)..]))
+                        {
+                            show(message[(ShowMessage.Length + 1)..]);
                         }
                     }
                     catch (OperationCanceledException)

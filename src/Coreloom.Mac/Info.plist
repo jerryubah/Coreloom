@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Coreloom.app's Info.plist. build/mac/bundle.sh fills in the version (__VERSION__, __BUILD__) and the
+     minimum macOS (__MIN_MACOS__: what .NET 10 supports). -->
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleDisplayName</key>
+  <string>Coreloom</string>
+  <key>CFBundleName</key>
+  <string>Coreloom</string>
+  <key>CFBundleExecutable</key>
+  <string>Coreloom</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.jerryubah.coreloom</string>
+  <key>CFBundleIconFile</key>
+  <string>AppIcon</string>
+  <key>CFBundleIconName</key>
+  <string>AppIcon</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleSignature</key>
+  <string>????</string>
+  <key>CFBundleShortVersionString</key>
+  <string>__VERSION__</string>
+  <key>CFBundleVersion</key>
+  <string>__BUILD__</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>__MIN_MACOS__</string>
+  <key>LSApplicationCategoryType</key>
+  <string>public.app-category.utilities</string>
+  <key>NSHumanReadableCopyright</key>
+  <string>Copyright © 2026 Jerry Ubah. MIT License.</string>
+  <key>NSPrincipalClass</key>
+  <string>NSApplication</string>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+  <!-- Dual-GPU Intel MacBook Pros: Coreloom's window runs on the integrated GPU (the benchmark picks its own). -->
+  <key>NSSupportsAutomaticGraphicsSwitching</key>
+  <true/>
+  <key>NSRequiresAquaSystemAppearance</key>
+  <false/>
+  <!-- Monitoring keeps running while the window is hidden or covered: no App Nap. -->
+  <key>NSAppSleepDisabled</key>
+  <true/>
+  <!-- One Coreloom at a time (it also checks itself). -->
+  <key>LSMultipleInstancesProhibited</key>
+  <true/>
+  <!-- Shown by macOS when the Devices page first lists Bluetooth accessories. -->
+  <key>NSBluetoothAlwaysUsageDescription</key>
+  <string>Coreloom lists your Bluetooth accessories and their battery levels on the Devices page, and connects or disconnects them when you ask.</string>
+</dict>
+</plist>

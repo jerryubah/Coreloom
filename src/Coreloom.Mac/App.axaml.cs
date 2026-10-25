@@ -115,7 +115,7 @@ public partial class App : Application
         _instance = new SingleInstance(paths.SettingsDirectory);
         if (!_instance.TryAcquire())
         {
-            _instance.SignalPrimary();
+            _instance.SignalPrimary(args.Page);
             _instance.Dispose();
             _instance = null;
             _desktop?.Shutdown(0);
@@ -332,7 +332,11 @@ public partial class App : Application
         alerts.AlertRaised += OnAlertRaised;
         host.Engine.FrameProduced += OnFrameProduced;
 
-        _instance.ListenForActivation(() => Dispatcher.UIThread.Post(ShowMainWindow));
+        _instance.ListenForActivation(page => Dispatcher.UIThread.Post(() =>
+        {
+            ShowMainWindow();
+            NavigateTo(page);
+        }));
         if (TryGetFeature(typeof(IActivatableLifetime)) is IActivatableLifetime activatable)
         {
             // Clicking the Dock icon, or opening Coreloom again from Finder, Spotlight or Launchpad.
@@ -385,6 +389,7 @@ public partial class App : Application
         {
             window.Show();
             AppKit.Activate();
+            NavigateTo(args.Page);
             Dispatcher.UIThread.Post(OfferMoveToApplications, DispatcherPriority.ApplicationIdle);
         }
 
@@ -479,6 +484,21 @@ public partial class App : Application
     // ------------------------------------------------------------------------------------------------
     // Window, Dock and menu bar
     // ------------------------------------------------------------------------------------------------
+
+    /// <summary>Opens a page by its key ("gaming", "settings"); nothing for an unknown key or none.</summary>
+    private void NavigateTo(string? key)
+    {
+        if (key is null || _shell is not { } shell)
+        {
+            return;
+        }
+
+        var page = shell.Pages.Append(shell.Settings).FirstOrDefault(p => string.Equals(p.Key, key, StringComparison.OrdinalIgnoreCase));
+        if (page is not null)
+        {
+            shell.Navigate(page);
+        }
+    }
 
     private void ShowMainWindow()
     {
@@ -766,9 +786,10 @@ public partial class App : Application
 
 /// <summary>
 /// Command-line options: --minimized and --startup (the login launch agent); --wait-for &lt;pid&gt; (after Move to
-/// Applications); --updated and --update-failed (from the update helper).
+/// Applications); --updated and --update-failed (from the update helper); --page &lt;key&gt; opens a page ("gaming",
+/// "settings"), also in a copy that's already running.
 /// </summary>
-internal sealed record MacCommandLine(bool Minimized, bool FromStartup, int? WaitForProcessId, bool Updated, bool UpdateFailed)
+internal sealed record MacCommandLine(bool Minimized, bool FromStartup, int? WaitForProcessId, bool Updated, bool UpdateFailed, string? Page = null)
 {
     public static MacCommandLine Parse(IReadOnlyList<string> args)
     {
@@ -777,6 +798,7 @@ internal sealed record MacCommandLine(bool Minimized, bool FromStartup, int? Wai
         bool updated = false;
         bool updateFailed = false;
         int? waitFor = null;
+        string? page = null;
         for (int i = 0; i < args.Count; i++)
         {
             switch (args[i].ToLowerInvariant())
@@ -797,9 +819,13 @@ internal sealed record MacCommandLine(bool Minimized, bool FromStartup, int? Wai
                     waitFor = pid;
                     i++;
                     break;
+                case "--page" when i + 1 < args.Count && SingleInstance.IsPageKey(args[i + 1].ToLowerInvariant()):
+                    page = args[i + 1].ToLowerInvariant();
+                    i++;
+                    break;
             }
         }
 
-        return new MacCommandLine(minimized, startup, waitFor, updated, updateFailed);
+        return new MacCommandLine(minimized, startup, waitFor, updated, updateFailed, page);
     }
 }

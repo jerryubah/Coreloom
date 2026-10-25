@@ -256,7 +256,7 @@ public sealed class SettingsViewModel : PageViewModel
         RestartCommand = new RelayCommand(() => _deps.Lifetime.Restart());
         OpenRepositoryCommand = new RelayCommand(() => _deps.Shell.OpenUrl(_deps.Updates.RepositoryUrl ?? "https://github.com"), () => _deps.Updates.RepositoryUrl is not null);
         SelectSectionCommand = new RelayCommand<string>(s => SelectedSection = s);
-        OpenNoticesCommand = new RelayCommand(() => _deps.Shell.OpenFile(Path.Combine(AppContext.BaseDirectory, "THIRD-PARTY-NOTICES.md")));
+        OpenNoticesCommand = new RelayCommand(() => _deps.Shell.OpenFile(NoticesFile(AppContext.BaseDirectory)));
 
         LoadRules();
     }
@@ -859,6 +859,18 @@ public sealed class SettingsViewModel : PageViewModel
             LoadRules();
             OnPropertyChanged(string.Empty);
         }
+    }
+
+    /// <summary>
+    /// THIRD-PARTY-NOTICES.md: next to the program on Windows; in the app bundle's Resources folder on a Mac
+    /// (Contents/MacOS holds only code, so the bundle's signature stays clean).
+    /// </summary>
+    internal static string NoticesFile(string baseDirectory)
+    {
+        const string name = "THIRD-PARTY-NOTICES.md";
+        string beside = Path.Combine(baseDirectory, name);
+        string resources = Path.GetFullPath(Path.Combine(baseDirectory, "..", "Resources", name));
+        return !File.Exists(beside) && File.Exists(resources) ? resources : beside;
     }
 
     private void Change(string section, Action<AppSettings> mutate, [System.Runtime.CompilerServices.CallerMemberName] string? property = null)
