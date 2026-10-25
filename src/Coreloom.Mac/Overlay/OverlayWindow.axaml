@@ -1,0 +1,46 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:c="using:Coreloom.Mac.Controls"
+        xmlns:overlay="using:Coreloom.ViewModels.Overlay"
+        x:Class="Coreloom.Mac.Overlay.OverlayWindow"
+        x:DataType="overlay:OverlayViewModel"
+        Title="Coreloom readings"
+        SystemDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent"
+        CanResize="False" ShowActivated="False" ShowInTaskbar="False" SizeToContent="WidthAndHeight"
+        UseLayoutRounding="True" c:OverlayHost.IsLive="True">
+  <!-- Click-through and never focused (see OverlayNative). The content is the same template as the preview on the
+       Graphics page. While it is being moved (Shift + the hotkey, or Move on screen) it takes clicks: drag it anywhere,
+       drag the round handle to resize it, S/M/L resize a line, Done finishes. -->
+  <Grid RowDefinitions="Auto,Auto">
+    <Panel Margin="6">
+      <Rectangle Margin="-4" RadiusX="12" RadiusY="12" Stroke="#FF5B8CFF" StrokeThickness="1.5" StrokeDashArray="4,3" Fill="#01000000" Cursor="SizeAll"
+                 IsVisible="{Binding IsMoving}" />
+      <ContentControl Content="{Binding}" ContentTemplate="{StaticResource OverlayContent}" Focusable="False" />
+      <Thumb x:Name="ResizeGrip" Width="14" Height="14" Margin="0,0,-9,-9" HorizontalAlignment="Right" VerticalAlignment="Bottom" Cursor="BottomRightCorner"
+             ToolTip.Tip="Drag to resize" IsVisible="{Binding IsMoving}">
+        <Thumb.Template>
+          <ControlTemplate>
+            <Ellipse Fill="#FF5B8CFF" Stroke="#FFFFFFFF" StrokeThickness="2" />
+          </ControlTemplate>
+        </Thumb.Template>
+      </Thumb>
+    </Panel>
+    <Border Grid.Row="1" Margin="2,2,2,0" Padding="10,5,6,5" CornerRadius="9" Background="#F00E1117" HorizontalAlignment="Left"
+            IsVisible="{Binding IsMoving}" TextElement.FontFamily="{StaticResource UiFont}" TextElement.FontSize="11.5" TextElement.Foreground="#FFE6EAF2">
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Text="Drag to move · handle to resize" VerticalAlignment="Center" />
+        <TextBlock Text="{Binding ScaleText}" Margin="10,0,0,0" FontWeight="SemiBold" VerticalAlignment="Center" />
+        <TextBlock Text="{Binding MovingText}" Margin="10,0,0,0" Opacity="0.7" VerticalAlignment="Center" />
+        <Button Content="Done" Margin="10,0,0,0" Padding="10,2" Focusable="False" Cursor="Hand" Command="{Binding FinishMovingCommand}">
+          <Button.Template>
+            <ControlTemplate>
+              <Border Background="#FF5B8CFF" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                <ContentPresenter Content="{TemplateBinding Content}" Foreground="#FFFFFFFF" FontWeight="SemiBold" />
+              </Border>
+            </ControlTemplate>
+          </Button.Template>
+        </Button>
+      </StackPanel>
+    </Border>
+  </Grid>
+</Window>

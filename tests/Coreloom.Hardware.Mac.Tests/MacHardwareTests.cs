@@ -175,6 +175,20 @@ public sealed class MacHardwareTests
         }
     }
 
+    /// <summary>The real benchmark (full sizes, short runs) for the verification report; only where a report is asked for.</summary>
+    [Fact]
+    public async Task MetalBenchmark_FullSizeForTheReport()
+    {
+        Assert.SkipUnless(OperatingSystem.IsMacOS(), MacOnly);
+        string? report = Environment.GetEnvironmentVariable("CORELOOM_MAC_REPORT");
+        Assert.SkipWhen(string.IsNullOrWhiteSpace(report), "Only for the verification report.");
+        var adapters = Coreloom.Hardware.Mac.Gpu.MetalBenchmark.Adapters();
+        var scores = await Coreloom.Hardware.Mac.Gpu.MetalBenchmark.RunAsync(new Coreloom.Core.Benchmarks.GpuBenchmarkOptions(Seconds: 1.5), adapters[0], null, CancellationToken.None);
+        Assert.All(scores.Tests, t => Assert.True(t.Rate > 0, t.Name));
+        File.AppendAllText(Path.ChangeExtension(report!, ".gpu.md"), $"\nFull size: {scores.Adapter.Name}: score {scores.Score:0} (graphics {scores.Graphics:0}, compute {scores.Compute:0})\n"
+            + string.Join("\n", scores.Tests.Select(t => $"- {t.Name}: {t.Rate:0.###} {t.Unit} → {t.Score:0}")) + "\n");
+    }
+
     [Fact]
     public void MetalStress_RunsWithoutErrors()
     {
