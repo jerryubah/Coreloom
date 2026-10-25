@@ -20,6 +20,7 @@ public partial class OverviewPage : UserControl
     public OverviewPage()
     {
         InitializeComponent();
+        Coreloom.Mac.Diagnostics.LayoutProbe.Watch(this);
         Scrim.PointerPressed += (_, e) =>
         {
             if (DataContext is OverviewViewModel page)

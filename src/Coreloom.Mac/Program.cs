@@ -27,6 +27,7 @@ internal static class Program
         }
 
         App.PrimaryInstance = instance;
+        Coreloom.Mac.Diagnostics.LayoutProbe.Install();
         return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args, Avalonia.Controls.ShutdownMode.OnExplicitShutdown);
     }
 
