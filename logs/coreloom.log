@@ -1,0 +1,47 @@
+2026-10-25 12:59:13.155 INF [App] Coreloom 1.6.0+1e689f5dd5ab31ed381089025bc84e50fb664d40 starting (args: ; bundle: /Applications/Coreloom.app; macOS 15.7.9, Arm64, .NET 10.0.13, PID 4482; Apple silicon: True; virtual machine: True).
+2026-10-25 12:59:13.397 INF [App] First launch: Mac defaults applied.
+2026-10-25 12:59:14.268 INF [Telemetry] Telemetry started (7 providers, interval 1000 ms).
+2026-10-25 12:59:14.277 INF [Sensors] Sensors: no hardware sensors (virtual machine).
+2026-10-25 12:59:15.271 INF [Telemetry] Coreloom process: Running in 1 ms
+2026-10-25 12:59:15.271 INF [Telemetry] Mac sensors: Running in 14 ms — Apple Virtual Machine 1 (VirtualMac2,1); no fans reported; 0 temperature groups; sensors: no hardware sensors (virtual machine)
+2026-10-25 12:59:15.271 INF [Telemetry] macOS processor counters: Running in 9 ms — Apple M1 (Virtual): 3 threads; sensors: no hardware sensors (virtual machine)
+2026-10-25 12:59:15.271 INF [Telemetry] macOS memory: Running in 5 ms — 7 GB physical memory
+2026-10-25 12:59:15.271 INF [Telemetry] macOS storage: Running in 26 ms — 1 disk(s), 1 volume(s)
+2026-10-25 12:59:15.271 INF [Telemetry] macOS network: Running in 23 ms — 2 interface(s), primary en0
+2026-10-25 12:59:15.271 INF [Telemetry] macOS graphics drivers: Running in 5 ms — Apple Paravirtual GPU
+2026-10-25 12:59:33.314 INF [Probe] Overview header layout:
+SquircleBorder bounds=0, 0, 801, 206 desired=801, 265 measureValid=True arrangeValid=True
+  Grid bounds=15, 15, 763, 176 desired=763, 219 measureValid=True arrangeValid=True rows=[]
+    MacIllustration bounds=4, 22, 232, 176 desired=236, 176 measureValid=True arrangeValid=True
+    DockPanel bounds=258, 6, 505, 207 desired=527, 219 measureValid=True arrangeValid=True
+      Grid bounds=0, 0, 505, 47 desired=377, 47 measureValid=True arrangeValid=True rows=[27,20]
+        TextBlock bounds=0, 0, 379, 27 desired=251, 27 measureValid=True arrangeValid=True "Apple Virtual Machine 1"
+        TextBlock bounds=0, 30, 379, 17 desired=147, 20 measureValid=True arrangeValid=True "Apple Paravirtual GPU"
+        Button bounds=395, 0, 110, 28 desired=126, 28 measureValid=True arrangeValid=True
+          SquircleBorder bounds=0, 0, 110, 28 desired=110, 28 measureValid=True arrangeValid=True
+            ContentPresenter bounds=11, 6, 88, 16 desired=88, 16 measureValid=True arrangeValid=True
+              StackPanel bounds=0, 0, 88, 16 desired=88, 16 measureValid=True arrangeValid=True
+                Path bounds=0, 1, 14, 14 desired=14, 14 measureValid=True arrangeValid=True
+                TextBlock bounds=22, 0, 66, 16 desired=74, 16 measureValid=True arrangeValid=True "Customize"
+      AdaptiveGrid bounds=0, 63, 505, 144 desired=505, 160 measureValid=True arrangeValid=True
+        ItemsControl bounds=0, 0, 505, 96 desired=172, 96 measureValid=True arrangeValid=True
+          Border bounds=0, 0, 505, 96 desired=172, 96 measureValid=True arrangeValid=True
+            ItemsPresenter bounds=0, 0, 505, 96 desired=172, 96 measureValid=True arrangeValid=True
+              StackPanel bounds=0, 0, 505, 96 desired=172, 96 measureValid=True arrangeValid=True
+                ContentPresenter bounds=0, 0, 505, 24 desired=157, 24 measureValid=True arrangeValid=True
+                  DockPanel bounds=0, 4, 505, 16 desired=157, 24 measureValid=True arrangeValid=True
+                ContentPresenter bounds=0, 24, 505, 24 desired=135, 24 measureValid=True arrangeValid=True
+                  DockPanel bounds=0, 4, 505, 16 desired=135, 24 measureValid=True arrangeValid=True
+                ContentPresenter bounds=0, 48, 505, 24 desired=146, 24 measureValid=True arrangeValid=True
+                  DockPanel bounds=0, 4, 505, 16 desired=146, 24 measureValid=True arrangeValid=True
+                ContentPresenter bounds=0, 72, 505, 24 desired=172, 24 measureValid=True arrangeValid=True
+                  DockPanel bounds=0, 4, 505, 16 desired=172, 24 measureValid=True arrangeValid=True
+        ItemsControl bounds=0, 96, 505, 48 desired=198, 48 measureValid=True arrangeValid=True
+          Border bounds=0, 0, 505, 48 desired=198, 48 measureValid=True arrangeValid=True
+            ItemsPresenter bounds=0, 0, 505, 48 desired=198, 48 measureValid=True arrangeValid=True
+              StackPanel bounds=0, 0, 505, 48 desired=198, 48 measureValid=True arrangeValid=True
+                ContentPresenter bounds=0, 0, 505, 24 desired=198, 24 measureValid=True arrangeValid=True
+                  DockPanel bounds=0, 4, 505, 16 desired=198, 24 measureValid=True arrangeValid=True
+                ContentPresenter bounds=0, 24, 505, 24 desired=196, 24 measureValid=True arrangeValid=True
+                  DockPanel bounds=0, 4, 505, 16 desired=196, 24 measureValid=True arrangeValid=True
+2026-10-25 12:59:33.769 INF [Gaming] Found 0 installed games in 407 ms.

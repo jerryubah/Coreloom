@@ -1,0 +1,91 @@
+
+==> Publish for osx-arm64 (1.6.0)
+  Determining projects to restore...
+  Restored /Users/runner/work/Coreloom/Coreloom/src/Coreloom.Core/Coreloom.Core.csproj (in 5.82 sec).
+  Restored /Users/runner/work/Coreloom/Coreloom/src/Coreloom.ViewModels/Coreloom.ViewModels.csproj (in 5.82 sec).
+  Restored /Users/runner/work/Coreloom/Coreloom/src/Coreloom.Hardware.Mac/Coreloom.Hardware.Mac.csproj (in 27 ms).
+  Restored /Users/runner/work/Coreloom/Coreloom/src/Coreloom.Mac/Coreloom.Mac.csproj (in 6.4 sec).
+  Coreloom.Core -> /Users/runner/work/Coreloom/Coreloom/src/Coreloom.Core/bin/Release/net10.0/Coreloom.Core.dll
+  Coreloom.Hardware.Mac -> /Users/runner/work/Coreloom/Coreloom/src/Coreloom.Hardware.Mac/bin/Release/net10.0/Coreloom.Hardware.Mac.dll
+/Users/runner/work/Coreloom/Coreloom/src/Coreloom.ViewModels/Pages/CpuViewModel.cs(208,29): warning CS8604: Possible null reference argument for parameter 'name' in 'void AmdProcessorViewModel.SetDevice(DeviceInfo? device, string name)'. [/Users/runner/work/Coreloom/Coreloom/src/Coreloom.ViewModels/Coreloom.ViewModels.csproj]
+  Coreloom.ViewModels -> /Users/runner/work/Coreloom/Coreloom/src/Coreloom.ViewModels/bin/Release/net10.0/Coreloom.ViewModels.dll
+  Coreloom.Mac -> /Users/runner/work/Coreloom/Coreloom/src/Coreloom.Mac/bin/Release/net10.0/osx-arm64/Coreloom.dll
+  Coreloom.Mac -> /Users/runner/work/Coreloom/Coreloom/artifacts/mac/publish-arm64/
+
+==> Coreloom.app
+/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-arm64/Coreloom.app/Contents/Info.plist: OK
+Contents/MacOS:
+total 302032
+drwxr-xr-x  6 runner  staff        192 Oct 25 12:58 .
+drwxr-xr-x  6 runner  staff        192 Oct 25 12:58 ..
+-rwxr-xr-x  1 runner  staff  135082281 Oct 25 12:58 Coreloom
+-rwxr--r--  1 runner  staff    1509776 Oct 25 12:58 libAvaloniaNative.dylib
+-rwxr--r--  1 runner  staff    2922800 Oct 25 12:58 libHarfBuzzSharp.dylib
+-rwxr--r--  1 runner  staff   15116016 Oct 25 12:58 libSkiaSharp.dylib
+Contents/Resources:
+total 1640
+drwxr-xr-x  7 runner  staff     224 Oct 25 12:58 .
+drwxr-xr-x  6 runner  staff     192 Oct 25 12:58 ..
+-rw-r--r--  1 runner  staff  809909 Oct 25 12:58 AppIcon.icns
+-rw-r--r--  1 runner  staff    4380 Oct 25 12:58 LICENSE-Inter.txt
+-rw-r--r--  1 runner  staff    4399 Oct 25 12:58 LICENSE-JetBrainsMono.txt
+-rw-r--r--  1 runner  staff    1067 Oct 25 12:58 LICENSE.txt
+-rw-r--r--  1 runner  staff    5560 Oct 25 12:58 THIRD-PARTY-NOTICES.md
+arm64
+
+==> Sign ad hoc (no Developer ID configured)
+/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-arm64/Coreloom.app/Contents/MacOS/libAvaloniaNative.dylib: replacing existing signature
+/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-arm64/Coreloom.app/Contents/MacOS/libHarfBuzzSharp.dylib: replacing existing signature
+/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-arm64/Coreloom.app/Contents/MacOS/libSkiaSharp.dylib: replacing existing signature
+/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-arm64/Coreloom.app/Contents/MacOS/Coreloom: replacing existing signature
+/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-arm64/Coreloom.app: replacing existing signature
+--prepared:/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-arm64/Coreloom.app/Contents/MacOS/libHarfBuzzSharp.dylib
+--validated:/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-arm64/Coreloom.app/Contents/MacOS/libHarfBuzzSharp.dylib
+--prepared:/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-arm64/Coreloom.app/Contents/MacOS/libAvaloniaNative.dylib
+--validated:/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-arm64/Coreloom.app/Contents/MacOS/libAvaloniaNative.dylib
+--prepared:/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-arm64/Coreloom.app/Contents/MacOS/libSkiaSharp.dylib
+--validated:/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-arm64/Coreloom.app/Contents/MacOS/libSkiaSharp.dylib
+/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-arm64/Coreloom.app: valid on disk
+/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-arm64/Coreloom.app: satisfies its Designated Requirement
+    Executable=/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-arm64/Coreloom.app/Contents/MacOS/Coreloom
+    Identifier=com.jerryubah.coreloom
+    Format=app bundle with Mach-O thin (arm64)
+    CodeDirectory v=20400 size=1047375 flags=0x2(adhoc) hashes=32724+3 location=embedded
+    Signature=adhoc
+    Info.plist entries=22
+    TeamIdentifier=not set
+    Sealed Resources version=2 rules=13 files=8
+    Internal requirements count=0 size=12
+
+==> Coreloom-1.6.0-macos-arm64.zip
+
+==> Coreloom-1.6.0-macos-arm64.dmg
+2 images written to /Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-arm64/background.tiff.
+Checksumming Protective Master Boot Record (MBR : 0)…
+Protective Master Boot Record (MBR :: verified   CRC32 $9FE539C8
+Checksumming GPT Header (Primary GPT Header : 1)…
+ GPT Header (Primary GPT Header : 1): verified   CRC32 $052D53C1
+Checksumming GPT Partition Data (Primary GPT Table : 2)…
+GPT Partition Data (Primary GPT Tabl: verified   CRC32 $553378DE
+Checksumming  (Apple_Free : 3)…
+                    (Apple_Free : 3): verified   CRC32 $00000000
+Checksumming disk image (Apple_HFS : 4)…
+          disk image (Apple_HFS : 4): verified   CRC32 $2EA7806D
+Checksumming  (Apple_Free : 5)…
+                    (Apple_Free : 5): verified   CRC32 $00000000
+Checksumming GPT Partition Data (Backup GPT Table : 6)…
+GPT Partition Data (Backup GPT Table: verified   CRC32 $553378DE
+Checksumming GPT Header (Backup GPT Header : 7)…
+  GPT Header (Backup GPT Header : 7): verified   CRC32 $0B0ECEF5
+verified   CRC32 $171FC4D9
+hdiutil: verify: checksum of "/Users/runner/work/Coreloom/Coreloom/artifacts/mac/Coreloom-1.6.0-macos-arm64.dmg" is VALID
+
+==> Done
+total 221400
+drwxr-xr-x  5 runner  staff       160 Oct 25 12:59 .
+drwxr-xr-x  3 runner  staff        96 Oct 25 12:57 ..
+-rw-r--r--@ 1 runner  staff  56980277 Oct 25 12:59 Coreloom-1.6.0-macos-arm64.dmg
+-rw-r--r--  1 runner  staff  56083433 Oct 25 12:58 Coreloom-1.6.0-macos-arm64.zip
+drwxr-xr-x  3 runner  staff        96 Oct 25 12:58 Coreloom-arm64.app
+f01de34427c9723f3bd9007dda023846cf5301e2e4fdf497f3bf004cfb4844c2  /Users/runner/work/Coreloom/Coreloom/artifacts/mac/Coreloom-1.6.0-macos-arm64.zip
+436751bd69592caaea087a714848fdaa554243cc29ddbe2efa5b536b7e7296a5  /Users/runner/work/Coreloom/Coreloom/artifacts/mac/Coreloom-1.6.0-macos-arm64.dmg
