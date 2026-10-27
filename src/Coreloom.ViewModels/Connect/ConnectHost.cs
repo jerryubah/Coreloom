@@ -123,7 +123,7 @@ public sealed class ConnectHost : IAsyncDisposable
     public void RefreshAddresses()
     {
         var addresses = FindAddresses();
-        if (!addresses.Select(a => a.Address).SequenceEqual(Addresses.Select(a => a.Address)))
+        if (!addresses.SequenceEqual(Addresses)) // the addresses, or a network's name once the Network readings know it
         {
             Addresses = addresses;
             RaiseChanged();

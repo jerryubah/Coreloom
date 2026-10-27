@@ -58,6 +58,7 @@ public sealed class ConnectViewModel : ObservableObject
     private bool _visible;
     private bool _refreshQueued;
     private Timer? _clock;
+    private int _ticks;
     private PairingTicket? _ticket;
     private string _qrPath = string.Empty;
     private double _qrSize = 1;
@@ -284,6 +285,11 @@ public sealed class ConnectViewModel : ObservableObject
         if (_host.Status == ConnectStatus.On && !_host.Pairing.IsOpen)
         {
             _host.Pairing.Open();
+        }
+
+        if (++_ticks % 5 == 0)
+        {
+            _host.RefreshAddresses(); // Wi-Fi changed while the page is open
         }
 
         var ticket = _host.Pairing.Current; // renews an expired code

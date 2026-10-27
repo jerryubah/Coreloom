@@ -94,6 +94,8 @@ public sealed class ConnectViewModelTests : IDisposable
         var (monitor, settings, _) = Fixture.Create(_dir);
         settings.Current.Connect.Enabled = true;
         settings.Current.Connect.Port = 0;
+        // The Network readings come in after Connect starts with the app.
+        IReadOnlyList<(string Key, string Name, bool IsActive)> known = [];
         var mac = new MonitorContext
         {
             Engine = monitor.Engine,
@@ -101,7 +103,7 @@ public sealed class ConnectViewModelTests : IDisposable
             Processes = monitor.Processes,
             PrimaryGpuSlot = monitor.PrimaryGpuSlot,
             Gpus = monitor.Gpus,
-            NetworkAdapters = () => [("en0", "Wi-Fi", true), ("en5", "Thunderbolt Bridge", false)],
+            NetworkAdapters = () => known,
             LibreHardwareMonitorIncluded = false,
         };
         _host = new ConnectHost(Fixture.Context(mac, settings), new ConnectEnvironment
@@ -112,8 +114,10 @@ public sealed class ConnectViewModelTests : IDisposable
         }, "1.7.0");
         await _host.ApplyAsync();
         var vm = new ConnectViewModel(_host, settings, _shell, isMac: true);
-        vm.SetVisible(true);
+        Assert.Equal("en0", vm.AdapterText);
 
+        known = [("en0", "Wi-Fi", true), ("en5", "Thunderbolt Bridge", false)];
+        vm.SetVisible(true);
         Assert.Equal("Wi-Fi", vm.AdapterText);
         Assert.Equal($"Phones on Wi-Fi reach this Mac at 192.168.1.30:{_host.Port}.", vm.DetailText);
         Assert.Equal([$"10.0.0.2:{_host.Port} (utun3)"], vm.OtherAddresses);
