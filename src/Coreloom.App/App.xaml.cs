@@ -120,11 +120,13 @@ public partial class App : Application
         {
             // Run by the uninstaller (which is not elevated and so cannot delete a highest-privilege task itself).
             // No window, no instance lock; the work happens on a pool thread so nothing waits on the dispatcher.
+            // It also removes Coreloom Connect's firewall rule, if Connect was left on.
             Task.Run(async () =>
             {
                 var startupService = new StartupService();
                 await startupService.SetStartAtLogonAsync(enabled: false, minimized: false);
                 await startupService.RemoveLegacyEntriesAsync();
+                await new Services.ConnectFirewall().RemoveAsync(CancellationToken.None);
             }).GetAwaiter().GetResult();
             Shutdown(0);
             return;

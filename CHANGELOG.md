@@ -20,7 +20,7 @@ Coreloom on your phone: see your PC's or Mac's temperatures, load and power live
 ### In detail
 
 - Connect is off until you turn it on. Pairing is open only while *Settings › Connect* is showing, each code and QR link works once, and a code changes every five minutes; five wrong tries replace it, and ten in a minute pause pairing for a minute.
-- Windows: turning Connect on adds one Windows Defender Firewall rule, *Coreloom Connect*, for Coreloom on private and domain networks only (never public ones), and turning it off removes it. If your network is set to Public, Settings › Connect says so and opens Windows' network settings.
+- Windows: turning Connect on adds one Windows Defender Firewall rule, *Coreloom Connect*, for Coreloom on private and domain networks only (never public ones); turning Connect off or uninstalling Coreloom removes it. If your network is set to Public, Settings › Connect says so and opens Windows' network settings.
 - Mac: no permission is needed to let phones connect. If the macOS firewall is on, macOS may ask once whether Coreloom may accept incoming connections.
 - Coreloom listens on port 47101. While no phone is watching, Coreloom doesn't prepare any readings for one.
 - Have 1.6.x? Choose *Check for Updates* (the Coreloom menu on a Mac, *Settings › Updates* on Windows), then *Install update*.

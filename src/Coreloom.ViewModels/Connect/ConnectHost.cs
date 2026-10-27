@@ -122,7 +122,7 @@ public sealed class ConnectHost : IAsyncDisposable
     /// <summary>Looks at the network again (the address in the QR code follows Wi-Fi changes).</summary>
     public void RefreshAddresses()
     {
-        var addresses = _environment.FindAddresses();
+        var addresses = FindAddresses();
         if (!addresses.Select(a => a.Address).SequenceEqual(Addresses.Select(a => a.Address)))
         {
             Addresses = addresses;
@@ -189,7 +189,7 @@ public sealed class ConnectHost : IAsyncDisposable
                 return;
             }
 
-            Addresses = _environment.FindAddresses();
+            Addresses = FindAddresses();
             string? note = null;
             try
             {
@@ -250,6 +250,30 @@ public sealed class ConnectHost : IAsyncDisposable
         Problem = problem;
         Note = note;
         RaiseChanged();
+    }
+
+    /// <summary>
+    /// This computer's addresses, each named as the Network page names its adapter ("Wi-Fi" rather than macOS's "en0";
+    /// Windows' adapter names are already the ones people know).
+    /// </summary>
+    private IReadOnlyList<LocalAddress> FindAddresses()
+    {
+        var addresses = _environment.FindAddresses();
+        IReadOnlyList<(string Key, string Name, bool IsActive)> adapters;
+        try
+        {
+            adapters = _context.Monitor.NetworkAdapters();
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ObjectDisposedException)
+        {
+            return addresses;
+        }
+
+        return addresses.Select(a =>
+        {
+            string key = new string(a.Adapter.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
+            return adapters.FirstOrDefault(n => n.Key == key) is { Name.Length: > 0 } match && match.Name != a.Adapter ? a with { Adapter = match.Name } : a;
+        }).ToArray();
     }
 
     private void RaiseChanged() => Changed?.Invoke();

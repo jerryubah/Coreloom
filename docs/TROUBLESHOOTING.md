@@ -92,6 +92,26 @@ Run `CoreloomDiag.exe --compare` for an automatic NVML vs `nvidia-smi` compariso
   was verified, so it was deleted rather than run. *Check for updates* downloads it again.
 - Corporate proxies are honored through the Windows system proxy settings.
 
+## Coreloom on your phone (Connect)
+
+- *The phone can't reach the computer*: both must be on the same network (a phone on mobile data, or on a guest
+  Wi-Fi that keeps devices apart, can't reach it). Try the address from *Settings › Connect* in the phone's browser.
+  Coreloom only answers private addresses (192.168.x.x, 10.x.x.x, 172.16–31.x.x and the like).
+- *Windows says the network is Public*: Windows keeps phones out of Public networks. *Settings › Connect › Network
+  settings* opens Windows' network settings: set the network to *Private*. Coreloom's firewall rule
+  (*Coreloom Connect*, Windows Defender Firewall › Advanced settings › Inbound rules) covers private and domain
+  networks only.
+- *Another security suite's firewall*: allow `Coreloom.exe` on port 47101 (TCP, incoming) on your home network.
+- *A Mac with the firewall on*: if you clicked *Don't Allow* when macOS asked, allow Coreloom in *System Settings ›
+  Network › Firewall › Options*.
+- *"Port 47101 is in use by another app"*: another program took Coreloom's port. Quit it, or turn Connect off and
+  on once it's closed.
+- *The pairing code is refused*: codes change every five minutes and after each use; five wrong codes replace it,
+  and ten wrong tries in a minute pause pairing for a minute. Use the code shown now, or scan the QR code.
+- *The phone says it was removed*: the phone was removed in *Settings › Connect*, or Coreloom's paired phones were
+  reset. Pair it again.
+- The paired phones are kept in `connect.json` in the settings folder; deleting it unpairs every phone.
+
 ## Reset everything
 
 1. Exit Coreloom from the tray.

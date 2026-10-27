@@ -94,10 +94,10 @@ Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags
 Filename: "{app}\{#AppExe}"; Parameters: "{code:RelaunchParameters}"; Flags: nowait shellexec; Check: IsUpdateMode
 
 [UninstallRun]
-; Remove the optional sign-in task. A highest-privilege task can only be deleted by an elevated process, so ask
-; Coreloom to do it (Windows shows one elevation prompt). If the user declines, uninstall continues and the task
-; can be deleted in Task Scheduler.
-Filename: "{app}\{#AppExe}"; Parameters: "--remove-startup-task"; Flags: shellexec waituntilterminated; RunOnceId: "RemoveStartupTask"; Check: StartupTaskExists
+; Remove the optional sign-in task and Coreloom Connect's firewall rule. Both can only be deleted by an elevated
+; process, so ask Coreloom to do it (Windows shows one elevation prompt). If the user declines, uninstall continues;
+; the task can be deleted in Task Scheduler and the rule ("Coreloom Connect") in Windows Defender Firewall.
+Filename: "{app}\{#AppExe}"; Parameters: "--remove-startup-task"; Flags: shellexec waituntilterminated; RunOnceId: "RemoveStartupTask"; Check: StartupTaskExists or ConnectRuleExists
 
 [UninstallDelete]
 ; Downloaded updates and logs. Settings (%APPDATA%\Coreloom) are kept so a reinstall keeps your layout.
@@ -156,6 +156,14 @@ begin
     Params := Params + ' --minimized';
   if not ShellExec('', Exe, Params, ExpandConstant('{app}'), SW_SHOWNORMAL, ewNoWait, ErrorCode) then
     Log('Could not restart Coreloom after a failed update (error ' + IntToStr(ErrorCode) + ').');
+end;
+
+function ConnectRuleExists: Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := Exec(ExpandConstant('{sys}\netsh.exe'), 'advfirewall firewall show rule name="Coreloom Connect"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode)
+            and (ResultCode = 0);
 end;
 
 function StartupTaskExists: Boolean;

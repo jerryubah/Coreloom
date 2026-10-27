@@ -757,6 +757,39 @@ The headless MacShots tool couldn't reproduce it (new `--width`, `--from-width`,
 Both Macs passed the rest of the verification (packages, signatures, every page, clean quit). Windows is
 unchanged.
 
+## Coreloom on your phone: Connect (1.7.0)
+
+### Verified
+
+| What | How | Result |
+|---|---|---|
+| The cryptography agrees on both sides | Known-answer tests: the pairing and session keys, the proof and a request MAC computed by the phone app's own bundle (`vendor/crypto.js`, run in Node) are pinned in `ConnectTests.cs` and checked by the C# code | ✅ in the container, on Windows (CI) and on both Macs |
+| Pairing, sessions and readings end to end, C# phone | `ConnectServerTests`: a phone written from the protocol pairs by code and by link over loopback, opens a session, reads live readings with history, gets a Home Screen setup link and pairs with it; a used link, a wrong code, a closed window, a bad key, a replayed counter, a forged MAC, an unknown device and a forgotten phone are refused; another Host name gets 421 | ✅ 43 Connect tests on Windows (CI run 40461634859: Core 736 passed), Linux, and the Apple silicon and Intel Macs (run 40460769693) |
+| Pairing, sessions and readings end to end, the real phone app | `connect.js` itself, run in Node against the demo server (`tools/Coreloom.ConnectDemo`): link and code pairing, wrong code, session hello, first reading with history, the next reading, forged and replayed requests, setup link, unpaired device, foreign Host | ✅ 16 of 16 |
+| The phone app's pages | Playwright with Chromium at iPhone size (390 × 844, 3×) against the demo server, dark and light, PC and Mac profiles: pairing screen, wrong code, every tab, the Add to Home Screen sheet, link pairing from the URL, the Home Screen copy pairing itself, reload resuming | ✅ the only console errors are the deliberate wrong code's 403 and requests cut off by reloads |
+| The QR code | `QrCodeTests` (finder and timing patterns, format bits, versions 1–40, path data) and, earlier, decoding with ZXing | ✅ |
+| Settings › Connect on Windows | Page shots of the WPF page (run 40460766370) at 1,600 and 1,000 px: switch, the Public-network note, QR code, address, code, paired phones; the XAML checker passes | ✅ |
+| Settings › Connect on a Mac | MacShots (dark, light, off) with 0 binding errors; and in the real app on both Macs (below) | ✅ |
+| The real Mac app serves Connect | Mac verify run 40460769693: Connect turned on in the saved settings, Coreloom reopened: `/api/info`, the page (with its Content-Security-Policy), every script, the manifest, an icon and a font answer 200 on port 47101, also from the Mac's own network address (192.168.64.x); `Host: evil.example.com` gets 421; pairing is closed until Settings › Connect shows, then open (and photographed); Coreloom quits cleanly on SIGTERM and stops answering | ✅ Apple silicon and Intel |
+| Windows: an off-curve key | Windows' CNG reports it with `PlatformNotSupportedException`, which the first CI run caught; `SharedSecret` now refuses it on every platform | ✅ |
+
+### Not verified yet
+
+- **A real phone on a real home network.** No iPhone or Android phone has opened Coreloom yet: Safari's and
+  Chrome's behaviour on a device (the camera's QR link, *Add to Home Screen* and its separate storage on iOS,
+  locking and unlocking, Wi-Fi changes) is untested. Chromium at phone size is the closest check so far.
+- **Windows Defender Firewall on a real PC.** The rule is added and removed with `netsh` (Coreloom runs as
+  administrator), but GitHub's Windows machine only ran the tests over loopback, which the firewall doesn't
+  filter; nothing confirmed a phone gets through on a Private network, or that the Public-network note appears
+  on a real Public network. The uninstaller's removal of the rule is untested.
+- **The macOS firewall prompt.** GitHub's Macs have the firewall off. With it on, macOS should ask once whether
+  Coreloom may accept incoming connections, and because Coreloom is signed ad hoc it may ask again after updates.
+- Other firewalls and security suites, VPNs that capture the whole network, and routers that keep Wi-Fi clients
+  apart (guest networks, "AP isolation") will block phones; Coreloom can't detect those.
+- What the encryption protects against: someone listening on the network. The page itself comes from the
+  computer over plain HTTP, so someone able to tamper with the network's traffic could serve a changed page;
+  phones can only read, so the readings are what's at stake.
+
 ## How to re-run the checks that can run anywhere
 
 ```bash
