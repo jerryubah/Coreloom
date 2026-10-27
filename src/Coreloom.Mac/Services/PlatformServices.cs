@@ -45,7 +45,20 @@ public sealed class MacShellService : IShellService
     public string? PickOpenFile(string title, string filter, string? initialDirectory = null) =>
         AppKit.OpenPanel(title, AppKit.Extensions(filter), initialDirectory);
 
-    public void ShowMessage(string title, string message) => AppKit.Alert(title, message, confirm: false);
+    /// <summary>Where messages go once the window exists (shown over the page for five seconds instead of an alert).</summary>
+    public Action<string, string>? Messages { get; set; }
+
+    public void ShowMessage(string title, string message)
+    {
+        if (Messages is { } show)
+        {
+            show(title, message);
+        }
+        else
+        {
+            AppKit.Alert(title, message, confirm: false);
+        }
+    }
 
     public bool Confirm(string title, string message) => AppKit.Alert(title, message, confirm: true);
 }

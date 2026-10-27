@@ -127,6 +127,8 @@ public sealed class CpuViewModel : PageViewModel
     private bool _showThreads;
     private bool _hasCoreTable;
     private bool _lowLevelUnavailable;
+    private bool _lowLevelNoteSeen;
+    private readonly Dismissal _lowLevelDismissal = new();
     private string? _lowLevelMessage;
 
     public CpuViewModel(PageContext context)
@@ -303,7 +305,10 @@ public sealed class CpuViewModel : PageViewModel
         private set => SetProperty(ref _hasCoreTable, value);
     }
 
-    /// <summary>True when temperature/power/clocks are missing because of privileges or the PawnIO driver.</summary>
+    /// <summary>
+    /// True for five seconds after the page opens when temperature/power/clocks are missing because of privileges or the
+    /// PawnIO driver (the gauges keep saying they're unavailable).
+    /// </summary>
     public bool LowLevelUnavailable
     {
         get => _lowLevelUnavailable;
@@ -318,6 +323,7 @@ public sealed class CpuViewModel : PageViewModel
 
     protected override void OnActivated()
     {
+        _lowLevelNoteSeen = false;
         _deviceVersion = -1;
         Processes.Reset();
     }
@@ -386,7 +392,17 @@ public sealed class CpuViewModel : PageViewModel
 
         Temperature.Detail = Ccd1.HasValue ? $"CCD1 {Ccd1.Number}° · CCD2 {(Ccd2.HasValue ? Ccd2.Number + "°" : "—")}" : null;
 
-        LowLevelUnavailable = !Temperature.HasValue;
+        bool unavailable = !Temperature.HasValue && !_lowLevelNoteSeen;
+        if (unavailable != LowLevelUnavailable)
+        {
+            LowLevelUnavailable = unavailable;
+            _lowLevelDismissal.Update(unavailable, () =>
+            {
+                _lowLevelNoteSeen = true;
+                LowLevelUnavailable = false;
+            });
+        }
+
         LowLevelMessage = LowLevelUnavailable
             ? Catalog.Get(MetricIds.CpuTemperature)?.UnavailableReason ?? Catalog.GetUnavailableReason(MetricIds.CpuTemperature)
             : null;

@@ -54,26 +54,24 @@
   <Grid ColumnDefinitions="Auto,*">
     <!-- =========================== Sidebar =========================== -->
     <!-- The sidebar floats as a pane of liquid glass, inset from the window's edges and lit along its rim, over a backdrop
-         with two soft lights (and the desktop's own vibrancy when it's translucent). The window's traffic lights sit in
-         its top row. -->
+         with two soft lights (and the desktop's own vibrancy when it's translucent). It starts below the window's traffic
+         lights, which sit on the backdrop above it (the strip there drags the window). -->
     <Canvas Name="SidebarBackdrop" Background="{DynamicResource Brush.Sidebar}" ClipToBounds="True" IsHitTestVisible="False">
       <Ellipse Width="420" Height="420" Canvas.Left="-190" Canvas.Top="-170" Fill="{DynamicResource Brush.GlassLightA}" />
       <Ellipse Width="460" Height="460" Canvas.Left="-230" Canvas.Bottom="-210" Fill="{DynamicResource Brush.GlassLightB}" />
     </Canvas>
-    <c:SquircleBorder Name="Sidebar" Width="232" Margin="10" CornerRadius="22" Smoothing="0.7"
+    <Border Name="SidebarDrag" Height="40" VerticalAlignment="Top" Background="Transparent" />
+    <c:SquircleBorder Name="Sidebar" Width="232" Margin="10,40,10,10" CornerRadius="22" Smoothing="0.7"
                       Background="{DynamicResource Brush.GlassFill}" BorderBrush="{DynamicResource Brush.GlassRim}" BorderThickness="1"
                       Sheen="1" Shadow="1">
-      <Grid Margin="10,0,10,12" RowDefinitions="34,48,*,Auto">
-        <!-- the traffic lights' row (drag the window from here too); collapse on the right -->
-        <Border Name="SidebarDrag" Background="Transparent" />
-        <Button Theme="{StaticResource Button.Icon}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="28" Height="28"
+      <Grid Margin="10,4,10,12" RowDefinitions="52,*,Auto">
+        <!-- Brand, and collapse on the right -->
+        <Button Theme="{StaticResource Button.Icon}" HorizontalAlignment="Right" VerticalAlignment="Center" Width="28" Height="28"
                 Command="{Binding ToggleSidebarCommand}" ToolTip.Tip="Hide sidebar (⌃⌘S)"
                 IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
           <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Sidebar}" />
         </Button>
-
-        <!-- Brand -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center"
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
                     HorizontalAlignment="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter=Center|Left}"
                     Margin="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0|8,0,0,0'}">
           <Image Source="{DynamicResource Image.AppIcon}" Width="26" Height="26" RenderOptions.BitmapInterpolationMode="HighQuality" />
@@ -82,7 +80,7 @@
         </StackPanel>
 
         <!-- Navigation -->
-        <StackPanel Grid.Row="2" Margin="0,6,0,0">
+        <StackPanel Grid.Row="1" Margin="0,6,0,0">
           <Button Theme="{StaticResource Button.Icon}" HorizontalAlignment="Center" Margin="0,0,0,8" Command="{Binding ToggleSidebarCommand}"
                   ToolTip.Tip="Show sidebar (⌃⌘S)" IsVisible="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
             <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Sidebar}" />
@@ -92,7 +90,7 @@
         </StackPanel>
 
         <!-- Footer -->
-        <StackPanel Grid.Row="3">
+        <StackPanel Grid.Row="2">
           <!-- Update badge: a newer version is available, downloading or ready to install. -->
           <Button Margin="0,0,0,6" Theme="{StaticResource Button.Subtle}" Background="{DynamicResource Brush.AccentSoft}" BorderBrush="Transparent"
                   Command="{Binding OpenUpdatesCommand}" ToolTip.Tip="{Binding Updates.BadgeToolTip}"
@@ -197,6 +195,25 @@
 
       <!-- Page -->
       <c:PageHost Name="Host" Grid.Row="3" Page="{Binding CurrentPage}" Margin="0,8,0,0" />
+
+      <!-- A message over the page ("Export failed"), instead of an alert; it leaves after five seconds. -->
+      <c:SquircleBorder Grid.Row="3" ZIndex="10" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="32,0,28,28"
+                        MaxWidth="560" Padding="14,10,8,10" CornerRadius="14" Shadow="1"
+                        Background="{DynamicResource Brush.Card}" BorderBrush="{DynamicResource Brush.CardBorder}" BorderThickness="1"
+                        IsVisible="{Binding HasToast}" AutomationProperties.LiveSetting="Assertive" AutomationProperties.Name="{Binding ToastText}">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" VerticalAlignment="Top" Margin="0,1,0,0"
+                Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Elevated}" />
+          <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+            <TextBlock Text="{Binding ToastTitle}" FontSize="12.5" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding ToastText}" FontSize="12.5" Margin="0,2,0,0" TextWrapping="Wrap" TextTrimming="None" Foreground="{DynamicResource Brush.TextSecondary}" />
+          </StackPanel>
+          <Button Grid.Column="2" Theme="{StaticResource Button.Icon}" Width="28" Height="28" VerticalAlignment="Top"
+                  Command="{Binding DismissToastCommand}" ToolTip.Tip="Dismiss" AutomationProperties.Name="Dismiss">
+            <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Close}" />
+          </Button>
+        </Grid>
+      </c:SquircleBorder>
     </Grid>
   </Grid>
 </Window>

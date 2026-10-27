@@ -20,6 +20,7 @@ public sealed class BluetoothDeviceViewModel : ObservableObject
     private string? _message;
     private bool _messageIsError;
     private bool _isMatch = true;
+    private readonly Dismissal _messageDismissal = new();
 
     public BluetoothDeviceViewModel(BluetoothDeviceInfo info, Func<BluetoothDeviceViewModel, Task> toggle, Func<DateTime> now)
     {
@@ -85,11 +86,15 @@ public sealed class BluetoothDeviceViewModel : ObservableObject
         }
     }
 
-    /// <summary>How the last Connect or Disconnect went (kept while it matters).</summary>
+    /// <summary>How the last Connect or Disconnect went; leaves after five seconds.</summary>
     public string? Message
     {
         get => _message;
-        private set => SetProperty(ref _message, value);
+        private set
+        {
+            SetProperty(ref _message, value);
+            _messageDismissal.Update(value is not null, () => Message = null);
+        }
     }
 
     public bool MessageIsError
@@ -107,12 +112,8 @@ public sealed class BluetoothDeviceViewModel : ObservableObject
 
     public void ShowMessage(string? text, bool isError)
     {
-        Message = string.IsNullOrWhiteSpace(text) ? null : text;
         MessageIsError = isError;
-        if (!isError && Message is { } shown)
-        {
-            _ = ClearLaterAsync(shown);
-        }
+        Message = string.IsNullOrWhiteSpace(text) ? null : text;
     }
 
     /// <summary>Takes a fresh reading; only what changed is announced.</summary>
@@ -137,15 +138,6 @@ public sealed class BluetoothDeviceViewModel : ObservableObject
         search.Length == 0
         || Name.Contains(search, StringComparison.CurrentCultureIgnoreCase)
         || KindText.Contains(search, StringComparison.CurrentCultureIgnoreCase);
-
-    private async Task ClearLaterAsync(string shown)
-    {
-        await Task.Delay(TimeSpan.FromSeconds(6));
-        if (Message == shown)
-        {
-            Message = null;
-        }
-    }
 }
 
 /// <summary>A device plugged in by wire, with "Safely remove" for drives.</summary>
@@ -155,6 +147,7 @@ public sealed class WiredDeviceViewModel : ObservableObject
     private bool _isBusy;
     private string? _message;
     private bool _messageIsError;
+    private readonly Dismissal _messageDismissal = new();
 
     public WiredDeviceViewModel(WiredDevice device, Func<WiredDeviceViewModel, Task> eject)
     {
@@ -195,10 +188,15 @@ public sealed class WiredDeviceViewModel : ObservableObject
         }
     }
 
+    /// <summary>How the last Eject went; leaves after five seconds.</summary>
     public string? Message
     {
         get => _message;
-        private set => SetProperty(ref _message, value);
+        private set
+        {
+            SetProperty(ref _message, value);
+            _messageDismissal.Update(value is not null, () => Message = null);
+        }
     }
 
     public bool MessageIsError
@@ -209,8 +207,8 @@ public sealed class WiredDeviceViewModel : ObservableObject
 
     public void ShowMessage(string? text, bool isError)
     {
-        Message = string.IsNullOrWhiteSpace(text) ? null : text;
         MessageIsError = isError;
+        Message = string.IsNullOrWhiteSpace(text) ? null : text;
     }
 
     public void Update(WiredDevice device)
@@ -274,6 +272,10 @@ public sealed class DevicesViewModel : PageViewModel
     private BluetoothRadioInfo _radio = BluetoothRadioInfo.None;
     private bool _isRadioBusy;
     private string? _radioMessage;
+    private readonly Dismissal _radioDismissal = new();
+    private readonly HashSet<string> _lowBatteryWarned = new(StringComparer.Ordinal);
+    private readonly Dismissal _lowBatteryDismissal = new();
+    private string? _lowBatteryShownFor;
     private bool _isLoaded;
     private string _search = string.Empty;      // trimmed: what the list is filtered by
     private string _searchText = string.Empty;  // as typed (a trailing space stays while typing the next word)
@@ -361,7 +363,11 @@ public sealed class DevicesViewModel : PageViewModel
     public string? RadioMessage
     {
         get => _radioMessage;
-        private set => SetProperty(ref _radioMessage, value);
+        private set
+        {
+            SetProperty(ref _radioMessage, value);
+            _radioDismissal.Update(value is not null, () => RadioMessage = null);
+        }
     }
 
     public int ConnectedCount => _bluetooth.Count(d => d.IsConnected);
@@ -382,8 +388,29 @@ public sealed class DevicesViewModel : PageViewModel
     public string WiredSummary => _wired.Count == 0 ? (IsMac ? "Nothing plugged in by USB, Thunderbolt or display cable." : "Nothing plugged in by USB or display cable.")
         : _wired.Count == 1 ? "1 device plugged in" : $"{_wired.Count.ToString(CultureInfo.CurrentCulture)} devices plugged in";
 
-    /// <summary>"Galaxy Buds2 Pro: 12% battery left", when a connected device runs low.</summary>
-    public string? LowBatteryText => _bluetooth.Where(d => d.IsLowBattery).Select(d => $"{d.Name}: {d.Info.Battery!.Value.ToString(CultureInfo.CurrentCulture)}% battery left").FirstOrDefault();
+    /// <summary>
+    /// "Galaxy Buds2 Pro: 12% battery left", when a connected device runs low. Shown for five seconds per device; it warns
+    /// again once that device has been charged (or reconnected) and runs low again. The card keeps showing its battery.
+    /// </summary>
+    public string? LowBatteryText => LowBatteryDevice() is { } d ? $"{d.Name}: {d.Info.Battery!.Value.ToString(CultureInfo.CurrentCulture)}% battery left" : null;
+
+    private BluetoothDeviceViewModel? LowBatteryDevice() => _bluetooth.FirstOrDefault(d => d.IsLowBattery && !_lowBatteryWarned.Contains(d.Id));
+
+    private void UpdateLowBattery()
+    {
+        _lowBatteryWarned.IntersectWith(_bluetooth.Where(d => d.IsLowBattery).Select(d => d.Id));
+        string? id = LowBatteryDevice()?.Id;
+        if (id != _lowBatteryShownFor)
+        {
+            _lowBatteryShownFor = id;
+            _lowBatteryDismissal.Update(id is not null, () =>
+            {
+                _lowBatteryWarned.Add(id!);
+                UpdateLowBattery();
+                OnPropertyChanged(nameof(LowBatteryText));
+            });
+        }
+    }
 
     public bool HasBluetoothDevices => BluetoothDevices.Count > 0;
 
@@ -625,6 +652,7 @@ public sealed class DevicesViewModel : PageViewModel
         OnPropertyChanged(nameof(ConnectedCount));
         OnPropertyChanged(nameof(PairedCount));
         OnPropertyChanged(nameof(BluetoothSummary));
+        UpdateLowBattery();
         OnPropertyChanged(nameof(LowBatteryText));
         OnPropertyChanged(nameof(HasBluetoothDevices));
         OnPropertyChanged(nameof(BluetoothEmptyText));

@@ -52,10 +52,11 @@ public sealed class ConnectServer : IAsyncDisposable
     private static readonly TimeSpan SessionIdle = TimeSpan.FromMinutes(3);
     private static readonly TimeSpan ConnectedWindow = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan FreshSnapshot = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan OverlayGrace = TimeSpan.FromSeconds(10);
 
     private const string ContentSecurityPolicy =
         "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; " +
-        "connect-src 'self'; manifest-src 'self'; worker-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'; object-src 'none'";
+        "connect-src 'self'; manifest-src 'self'; media-src 'self' blob:; worker-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'; object-src 'none'";
 
     private readonly ConnectServerOptions _options;
     private readonly Func<DateTimeOffset> _now;
@@ -68,6 +69,7 @@ public sealed class ConnectServer : IAsyncDisposable
     private Snapshot? _latest;
     private TaskCompletionSource _next = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private string[] _connected = [];
+    private bool _overlayWatched;
 
     private ConnectServer(ConnectServerOptions options)
     {
@@ -80,6 +82,21 @@ public sealed class ConnectServer : IAsyncDisposable
 
     /// <summary>Raised (on a background thread) when phones connect or disconnect.</summary>
     public event Action? ConnectedChanged;
+
+    /// <summary>Raised (on a background thread) when a phone starts or stops showing its overlay.</summary>
+    public event Action? OverlayWatchedChanged;
+
+    /// <summary>A phone is showing its overlay tab: frame rates are worth measuring and readings worth sending often.</summary>
+    public bool OverlayWatched
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _overlayWatched;
+            }
+        }
+    }
 
     public int Port => _http.Port;
 
@@ -547,6 +564,14 @@ public sealed class ConnectServer : IAsyncDisposable
         }
 
         long after = body.TryGetProperty("after", out var afterElement) && afterElement.TryGetInt64(out long a) ? a : 0;
+        bool overlay = body.TryGetProperty("overlay", out var overlayElement) && overlayElement.ValueKind == JsonValueKind.True;
+        lock (_gate)
+        {
+            // Kept while the phone keeps asking (each answer comes within the long poll), dropped when it says it left.
+            session.OverlayUntil = overlay ? _now() + _options.LongPoll + OverlayGrace : DateTimeOffset.MinValue;
+        }
+
+        UpdateOverlayWatched();
         var deadline = _now() + _options.LongPoll;
         while (true)
         {
@@ -640,6 +665,7 @@ public sealed class ConnectServer : IAsyncDisposable
         }
 
         UpdateConnected();
+        UpdateOverlayWatched();
         return ConnectResponse.Empty(204);
     }
 
@@ -670,6 +696,7 @@ public sealed class ConnectServer : IAsyncDisposable
         }
 
         UpdateConnected();
+        UpdateOverlayWatched();
     }
 
     private void Housekeeping()
@@ -690,6 +717,7 @@ public sealed class ConnectServer : IAsyncDisposable
         }
 
         UpdateConnected();
+        UpdateOverlayWatched();
     }
 
     private void UpdateConnected()
@@ -712,6 +740,23 @@ public sealed class ConnectServer : IAsyncDisposable
         if (changed)
         {
             ConnectedChanged?.Invoke();
+        }
+    }
+
+    private void UpdateOverlayWatched()
+    {
+        bool watched, changed;
+        lock (_gate)
+        {
+            var now = _now();
+            watched = _sessions.Values.Any(s => s.OverlayUntil > now);
+            changed = watched != _overlayWatched;
+            _overlayWatched = watched;
+        }
+
+        if (changed)
+        {
+            OverlayWatchedChanged?.Invoke();
         }
     }
 
@@ -757,5 +802,8 @@ public sealed class ConnectServer : IAsyncDisposable
         public DateTimeOffset LastSeen { get; set; }
 
         public bool Confirmed { get; set; }
+
+        /// <summary>Until when the phone is showing its overlay (it says so with each live request).</summary>
+        public DateTimeOffset OverlayUntil { get; set; } = DateTimeOffset.MinValue;
     }
 }

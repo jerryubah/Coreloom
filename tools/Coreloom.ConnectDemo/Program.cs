@@ -14,7 +14,8 @@ namespace Coreloom.ConnectDemo;
 
 /// <summary>
 /// Coreloom Connect on sample readings: <c>dotnet run --project tools/Coreloom.ConnectDemo -- [--mac] [--port 47101]
-/// [--state DIR] [--ticket FILE] [--fast]</c>. Pairing stays open; the QR link and the code are printed and, with
+/// [--state DIR] [--ticket FILE] [--fast] [--version 1.8.0] [--update 1.8.1]</c>; a PC also runs a game at about 141 FPS for
+/// the phone's overlay. Pairing stays open; the QR link and the code are printed and, with
 /// --ticket, written to a JSON file whenever they change (for automated tests).
 /// </summary>
 internal static class Program
@@ -68,7 +69,13 @@ internal static class Program
             Platform = mac ? Coreloom.Core.HostPlatform.MacOS : Coreloom.Core.HostPlatform.Windows,
         };
 
-        var host = new ConnectHost(context, new ConnectEnvironment { DataDirectory = state }, "1.7.0");
+        string version = Option(args, "--version") ?? "1.8.0";
+        var host = new ConnectHost(context, new ConnectEnvironment { DataDirectory = state, FrameRates = mac ? null : new DemoFrameRates() }, version);
+        if (Option(args, "--update") is { } update)
+        {
+            host.UpdateNotice = () => new RemoteUpdate(update, Ready: true);
+        }
+
         await host.ApplyAsync();
         if (host.Status != ConnectStatus.On)
         {

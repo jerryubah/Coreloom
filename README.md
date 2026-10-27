@@ -36,9 +36,9 @@ Each button downloads the newest version. Once installed, Coreloom keeps itself 
 > virtual machines without temperature, power or fan sensors, so readings from real Mac hardware are the part
 > least tried so far. If a sensor reads wrong, please [open an issue](../../issues) with a diagnostic report
 > attached (*Settings › Diagnostics › Export diagnostic report*, or [CoreloomDiag](#diagnostics-coreloomdiag) on
-> Windows). **Coreloom on your phone** is new in 1.7.0: its pairing, encryption and pages are tested against the
-> real server in a phone-sized browser and on GitHub's Windows and Mac machines, but not yet on a real iPhone or
-> Android phone. [docs/VERIFICATION.md](docs/VERIFICATION.md) lists what has and hasn't been verified.
+> Windows). **Coreloom on your phone** is new in 1.7.0 (its Overlay tab in 1.8.0): its pairing, encryption and
+> pages are tested against the real server in a phone-sized browser and on GitHub's Windows and Mac machines, but
+> not yet on a real iPhone or Android phone, or with a real game's frame rate on the phone. [docs/VERIFICATION.md](docs/VERIFICATION.md) lists what has and hasn't been verified.
 
 ---
 
@@ -198,7 +198,7 @@ macOS's own sources for every reading. What changes on a Mac:
 ## Coreloom on your phone
 
 <p align="center">
-  <img src="assets/readme/coreloom-phone.webp" width="100%" alt="Coreloom on a phone: the Overview with GPU and CPU gauges, the Processor page with every core, and the Memory page in the light theme">
+  <img src="assets/readme/coreloom-phone.webp" width="100%" alt="Coreloom on a phone: the Overview with GPU and CPU gauges, the Overlay tab with a game's frame rate, frame-time graph and readings, and the Processor page with every core in the light theme">
 </p>
 
 New in 1.7.0: your PC's or Mac's readings live on your phone, over your own network. Turn it on in
@@ -209,8 +209,13 @@ already paired. No app store, no account, no cloud.
   enter the six-digit pairing code. *Add to Home Screen* (Share › Add to Home Screen on an iPhone, ⋮ › Add to Home
   screen on Android) keeps an icon that opens Coreloom full screen whenever you're on the same network.
 - **The same dashboard.** An Overview with the GPU and CPU gauges, the health check and the summary cards, then
-  Graphics, Processor (every core), Memory and More (drives, network, battery and your computer's specs), with
-  two-minute live charts, in Coreloom's dark and light themes.
+  Graphics, Processor (every core), Overlay and More (memory, drives, network, battery and your computer's specs),
+  with two-minute live charts, in Coreloom's dark and light themes.
+- **Your in-game overlay on your phone** (1.8.0). The Overlay tab shows the game in front, its FPS and frame-time
+  graph, and the readings the in-game overlay shows, even when that's turned off; choose more readings there (they
+  stay on the phone), or go full screen to keep it beside your monitor with the screen on. A Mac can't measure
+  another app's frame rate, so there it shows readings only.
+- **Updates.** When your computer has a newer Coreloom, the phone says so in a bar at the top.
 - **Paired phones** are listed in *Settings › Connect* with when each last connected; *Remove* unpairs one, and a
   phone can forget your computer from its own *More* page.
 - **Private.** Connect is off until you turn it on, answers only on private networks such as your home Wi-Fi, and

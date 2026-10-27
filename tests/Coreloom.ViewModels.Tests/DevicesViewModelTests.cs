@@ -289,4 +289,41 @@ public class DevicesViewModelTests
         Assert.Equal(2, page.BluetoothDevices.Count);
         settings.Dispose();
     }
+
+    [Fact]
+    public async Task Messages_LeaveAfterFiveSeconds_AndALowBatteryWarnsOncePerCharge()
+    {
+        using var timer = new ManualDismissals();
+        var (page, fake, settings) = Create();
+        Assert.Equal("MX Master 3S: 15% battery left", page.LowBatteryText);
+        timer.Elapse();
+        Assert.Null(page.LowBatteryText);
+        await page.RefreshAsync();
+        Assert.Null(page.LowBatteryText); // still low: not again
+
+        int i = fake.Bluetooth.FindIndex(d => d.Id == "mouse");
+        fake.Bluetooth[i] = fake.Bluetooth[i] with { Battery = 90 };
+        await page.RefreshAsync();
+        fake.Bluetooth[i] = fake.Bluetooth[i] with { Battery = 12 };
+        await page.RefreshAsync();
+        Assert.Equal("MX Master 3S: 12% battery left", page.LowBatteryText); // charged, then low again: warns again
+
+        fake.RadioSwitchWorks = false;
+        page.IsRadioOn = false;
+        await Task.Yield();
+        Assert.NotNull(page.RadioMessage);
+        timer.Elapse();
+        Assert.Null(page.RadioMessage);
+        Assert.Null(page.LowBatteryText);
+
+        fake.ConnectWorks = false;
+        var headphones = page.BluetoothDevices.Single(d => d.Id == "headphones");
+        await headphones.ActionCommand.ExecuteAsync(null);
+        Assert.Equal("Couldn't reach WH-1000XM5.", headphones.Message);
+        Assert.True(headphones.MessageIsError);
+        timer.Elapse();
+        Assert.Null(headphones.Message);
+        settings.Dispose();
+    }
+
 }

@@ -229,6 +229,7 @@ public sealed class CleanupViewModel : ObservableObject
     private string _status = "Scan to see how much space junk files take up.";
     private string? _lastResult;
     private CancellationTokenSource? _cts;
+    private readonly Dismissal _statusDismissal = new();
 
     public CleanupViewModel(IOptimizeService service, Func<long, string> formatBytes)
     {
@@ -419,12 +420,26 @@ public sealed class CleanupViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
-            Status = "Stopped.";
+            ShowForAWhile("Stopped.");
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
-            Status = $"Something went wrong: {e.Message}";
+            ShowForAWhile($"Something went wrong: {e.Message}");
         }
+    }
+
+    /// <summary>Shows a problem in the status line for five seconds, then what the last scan found.</summary>
+    private void ShowForAWhile(string problem)
+    {
+        Status = problem;
+        _statusDismissal.Update(true, () =>
+        {
+            if (Status == problem)
+            {
+                Status = !IsMeasured ? "Scan to see how much space junk files take up."
+                    : TotalBytes > 0 ? $"Found {_formatBytes(TotalBytes)} of junk." : "No junk found. Nice and tidy.";
+            }
+        });
     }
 
     private void SelectionChanged() => OnTotalsChanged();
@@ -462,6 +477,7 @@ public sealed class ProtectionViewModel : ObservableObject
     private string _summary = "Reading Windows Security…";
     private string _colorKey = ColorKeys.Neutral;
     private string? _message;
+    private readonly Dismissal _messageDismissal = new();
     private string _realTime = "—";
     private string _definitions = "—";
     private string _lastScan = "—";
@@ -521,6 +537,7 @@ public sealed class ProtectionViewModel : ObservableObject
             if (SetProperty(ref _isBusy, value))
             {
                 NotifyCommands();
+                DismissMessageLater();
             }
         }
     }
@@ -556,12 +573,21 @@ public sealed class ProtectionViewModel : ObservableObject
         private set => SetProperty(ref _colorKey, value);
     }
 
-    /// <summary>The outcome of the last action ("Definitions updated", "No threats found").</summary>
+    /// <summary>
+    /// What's happening ("Updating virus definitions…") and then the outcome ("No threats found"), which leaves after five
+    /// seconds once the work is done.
+    /// </summary>
     public string? Message
     {
         get => _message;
-        private set => SetProperty(ref _message, value);
+        private set
+        {
+            SetProperty(ref _message, value);
+            DismissMessageLater();
+        }
     }
+
+    private void DismissMessageLater() => _messageDismissal.Update(_message is not null && !_isBusy, () => Message = null);
 
     public string RealTime
     {
@@ -859,6 +885,7 @@ public sealed class MemoryOptimizeViewModel : ObservableObject
     private bool _clearStandby;
     private bool _isBusy;
     private string? _lastResult;
+    private readonly Dismissal _resultDismissal = new();
 
     public MemoryOptimizeViewModel(IOptimizeService service, Func<long, string> formatBytes, Action? openLogs = null)
     {
@@ -992,15 +1019,23 @@ public sealed class MemoryOptimizeViewModel : ObservableObject
             if (SetProperty(ref _isBusy, value))
             {
                 FreeUpCommand.NotifyCanExecuteChanged();
+                DismissResultLater();
             }
         }
     }
 
+    /// <summary>"Freeing up memory…", then how it went (which leaves after five seconds).</summary>
     public string? LastResult
     {
         get => _lastResult;
-        private set => SetProperty(ref _lastResult, value);
+        private set
+        {
+            SetProperty(ref _lastResult, value);
+            DismissResultLater();
+        }
     }
+
+    private void DismissResultLater() => _resultDismissal.Update(_lastResult is not null && !_isBusy, () => LastResult = null);
 
     public void Update(TelemetryFrame frame)
     {
@@ -1051,6 +1086,7 @@ public sealed class StartupAppViewModel : ObservableObject
     private StartupApp _app;
     private bool _isEnabled;
     private string? _problem;
+    private readonly Dismissal _problemDismissal = new();
 
     public StartupAppViewModel(StartupApp app, IOptimizeService service)
     {
@@ -1092,10 +1128,15 @@ public sealed class StartupAppViewModel : ObservableObject
         }
     }
 
+    /// <summary>Why the switch didn't change; leaves after five seconds.</summary>
     public string? Problem
     {
         get => _problem;
-        private set => SetProperty(ref _problem, value);
+        private set
+        {
+            SetProperty(ref _problem, value);
+            _problemDismissal.Update(value is not null, () => Problem = null);
+        }
     }
 
     public event EventHandler? EnabledChanged;
@@ -1107,6 +1148,7 @@ public sealed class MaintenanceTaskViewModel : ObservableObject
     private readonly Func<CancellationToken, Task<MaintenanceResult>> _run;
     private bool _isBusy;
     private string? _message;
+    private readonly Dismissal _messageDismissal = new();
     private string _colorKey = ColorKeys.Neutral;
 
     public MaintenanceTaskViewModel(string title, string description, string iconKey, Func<CancellationToken, Task<MaintenanceResult>> run)
@@ -1134,15 +1176,27 @@ public sealed class MaintenanceTaskViewModel : ObservableObject
             if (SetProperty(ref _isBusy, value))
             {
                 RunCommand.NotifyCanExecuteChanged();
+                DismissMessageLater();
             }
         }
     }
 
+    /// <summary>"Working…", then how it went (which leaves after five seconds).</summary>
     public string? Message
     {
         get => _message;
-        private set => SetProperty(ref _message, value);
+        private set
+        {
+            SetProperty(ref _message, value);
+            DismissMessageLater();
+        }
     }
+
+    private void DismissMessageLater() => _messageDismissal.Update(_message is not null && !_isBusy, () =>
+    {
+        Message = null;
+        ColorKey = ColorKeys.Neutral;
+    });
 
     public string ColorKey
     {

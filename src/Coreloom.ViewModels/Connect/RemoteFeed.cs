@@ -14,6 +14,11 @@ namespace Coreloom.ViewModels.Connect;
 /// colors by level, gauge bands, the Overview's cards in the user's order and the same secondary lines). Built only while
 /// a phone is watching, from the same frames the window shows, and kept current while the window is hidden.
 /// </summary>
+/// <summary>An update the computer has found, for the phone's notice.</summary>
+/// <param name="Version">"1.8.1".</param>
+/// <param name="Ready">Downloaded and verified: it installs with one click (or by itself) on the computer.</param>
+public sealed record RemoteUpdate(string Version, bool Ready);
+
 public sealed class RemoteFeed
 {
     /// <summary>Readings whose recent history a phone draws as charts.</summary>
@@ -37,6 +42,9 @@ public sealed class RemoteFeed
     {
         _context = context;
     }
+
+    /// <summary>The update the computer has found, if any (sent so the phone can say so).</summary>
+    public Func<RemoteUpdate?>? UpdateNotice { get; set; }
 
     private bool IsMac => _context.IsMac;
 
@@ -72,6 +80,15 @@ public sealed class RemoteFeed
             WriteStorage(w, frame);
             WriteNetwork(w, frame);
             WriteBattery(w, frame);
+            if (UpdateNotice?.Invoke() is { } update)
+            {
+                w.WritePropertyName("update");
+                w.WriteStartObject();
+                w.WriteString("version", update.Version);
+                w.WriteBoolean("ready", update.Ready);
+                w.WriteEndObject();
+            }
+
             w.WriteEndObject();
         }
 

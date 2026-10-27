@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Coreloom.Core.Gaming;
+using Coreloom.ViewModels.Infrastructure;
 using Coreloom.ViewModels.Services;
 
 namespace Coreloom.ViewModels.Pages;
@@ -22,6 +23,7 @@ public sealed class GameEditorViewModel : ObservableObject
     private string? _picture;
     private string? _preview;
     private string? _error;
+    private readonly Dismissal _errorDismissal = new();
 
     public GameEditorViewModel(GamingViewModel page, IGamingService service)
     {
@@ -127,7 +129,11 @@ public sealed class GameEditorViewModel : ObservableObject
     public string? Error
     {
         get => _error;
-        private set => SetProperty(ref _error, value);
+        private set
+        {
+            SetProperty(ref _error, value);
+            _errorDismissal.Update(value is not null, () => Error = null);
+        }
     }
 
     /// <summary>Picks a program, then opens the card with a suggested name (nothing happens when the pick is cancelled).</summary>

@@ -7,6 +7,30 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-10-27
+
+Your in-game overlay on your phone: the phone app's new Overlay tab shows the game's frame rate, its frame-time graph and the readings the in-game overlay shows, even with the in-game overlay off. Errors and warnings now leave by themselves after five seconds, and on a Mac the sidebar sits below the window's buttons.
+
+### Highlights
+
+- **The Overlay tab on your phone.** It replaces the Memory tab (memory is now at the top of the More tab). It shows what the in-game overlay shows, in its colours: the game in front, its FPS and frame time, the frame-time graph with stutters marked, and your graphics card, processor and memory readings. Tap the full-screen button to use the phone as a second screen beside your monitor, upright or sideways; the screen stays on while it's full screen.
+- **Your phone, your choice of readings.** The Overlay tab starts with what the in-game overlay shows, and offers every reading this computer has, so the phone can show more (or less) than the screen does. What you choose stays on the phone; *Same as my computer* goes back to the in-game overlay's list.
+- **On even when the in-game overlay is off.** The phone's overlay has its own switch. With the in-game overlay off on the computer, the phone still shows the frame rate and readings.
+- **Update notice on the phone.** When your computer has a newer Coreloom, a bar at the top of the phone app says so (install it on the computer, in *Settings › Updates*). After the computer has updated, the bar offers *Reload* to bring the phone app up to date too. × closes it for that version.
+- **Messages leave after five seconds.** Errors and warnings no longer stay on screen: a switch Windows refused, a failed update check, a device that couldn't connect, a benchmark that stopped, Connect's firewall note, the limited-readings banner and the like disappear after five seconds, on Windows, on a Mac and on the phone. What something *is* stays (a "Restart to finish" status, a gauge that has no reading). Messages that used to open a dialog, such as *Export failed*, now show over the page and leave too.
+- **Mac: the sidebar sits below the window's buttons.** The close, minimize and zoom buttons no longer overlap the sidebar, wide or narrow; the sidebar's collapse button moved next to the Coreloom name.
+
+### In detail
+
+- The computer measures the frame rate only while a phone shows its Overlay tab, and sends it twice a second with each frame's time, so the phone's graph moves as the game drew. On Windows it's measured from the graphics events Windows already records, as the in-game overlay does; nothing is added to games. A Mac can't measure another app's frame rate, so there the Overlay tab shows readings only.
+- Phones still only read. Choosing readings on the phone changes nothing on the computer.
+- The CPU page's note about missing sensors, the Gaming page's driver notice and the low-battery banner on Devices each show for five seconds when they apply; the driver notice counts as seen afterwards.
+- Have 1.7.0? Choose *Check for Updates* (the Coreloom menu on a Mac, *Settings › Updates* on Windows), then *Install update*. Then reload Coreloom on your phone (the phone's new bar offers it).
+
+### Feedback
+
+Tried the Overlay tab with a game? [Open an issue](https://github.com/jerryubah/Coreloom/issues) with the game, your phone and its browser, and a screenshot if something looks off.
+
 ## [1.7.0] - 2026-10-27
 
 Coreloom on your phone: see your PC's or Mac's temperatures, load and power live on your phone, over your own network. Turn it on in the new *Settings › Connect*, scan the QR code with your phone's camera, and that's it: no app store, no account, no cloud.

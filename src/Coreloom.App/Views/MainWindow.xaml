@@ -280,6 +280,31 @@
 
         <!-- Page -->
         <c:PageHost Grid.Row="3" Page="{Binding CurrentPage}" Margin="0,8,0,0" />
+
+        <!-- A message over the page ("Export failed"), instead of a dialog; it leaves after five seconds. -->
+        <c:SquircleBorder Grid.Row="3" Panel.ZIndex="10" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="32,0,28,28"
+                          MaxWidth="560" Padding="14,10,8,10" CornerRadius="14" Shadow="1"
+                          Background="{DynamicResource Brush.Card}" BorderBrush="{DynamicResource Brush.CardBorder}" BorderThickness="1"
+                          Visibility="{Binding HasToast, Converter={StaticResource BoolToVisibility}}"
+                          AutomationProperties.LiveSetting="Assertive" AutomationProperties.Name="{Binding ToastText}">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Path Style="{StaticResource IconPath}" Width="16" Height="16" VerticalAlignment="Top" Margin="0,1,0,0"
+                  Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Elevated}" />
+            <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+              <TextBlock Text="{Binding ToastTitle}" FontSize="12.5" FontWeight="SemiBold" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding ToastText}" FontSize="12.5" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.TextSecondary}" />
+            </StackPanel>
+            <Button Grid.Column="2" Style="{StaticResource Button.Icon}" Width="28" Height="28" VerticalAlignment="Top"
+                    Command="{Binding DismissToastCommand}" ToolTip="Dismiss" AutomationProperties.Name="Dismiss">
+              <Path Style="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Close}" />
+            </Button>
+          </Grid>
+        </c:SquircleBorder>
       </Grid>
     </Grid>
   </Border>

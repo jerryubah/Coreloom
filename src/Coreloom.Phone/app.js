@@ -1,10 +1,12 @@
-// Coreloom on the phone: pairing, then the computer's readings in five tabs. Everything here is drawn from the
-// snapshots Coreloom sends (formatted as the desktop app shows them); nothing on the computer can be changed.
+// Coreloom on the phone: pairing, then the computer's readings in five tabs (one of them its in-game overlay). Everything
+// here is drawn from the snapshots Coreloom sends (formatted as the desktop app shows them); nothing on the computer
+// can be changed. Error and warning messages leave by themselves after five seconds.
 import {
   ConnectError, LiveFeed, Session, forgetPairing, fromBase64Url, getInfo, loadPairing, pair, savePairing, suggestDeviceName,
 } from './connect.js';
 import { Ring, cssColor, drawDonut, metricColor, onThemeChange, parseColor, rgba, seriesVar } from './gauge.js';
 import { History, drawChart } from './chart.js';
+import { FrameTimeline, KeepAwake, drawFrameGraph } from './overlay.js';
 
 const app = document.getElementById('app');
 
@@ -39,6 +41,10 @@ const PATHS = {
   laptop: 'M5,6 L19,6 19,15 5,15 Z M2.5,18 L21.5,18',
   imac: 'M3,4 L21,4 21,16 3,16 Z M9.5,20 L14.5,20 M12,16 L12,20',
   macmini: 'M3,10 Q3,8 5,8 L19,8 Q21,8 21,10 L21,14 Q21,16 19,16 L5,16 Q3,16 3,14 Z M6.5,12 L6.51,12',
+  overlay: 'M4,5 L20,5 20,19 4,19 Z M7,12.5 L9.5,12.5 11,9 13,16 14.5,12.5 17,12.5',
+  expand: 'M4.5,9.5 L4.5,4.5 9.5,4.5 M14.5,4.5 L19.5,4.5 19.5,9.5 M19.5,14.5 L19.5,19.5 14.5,19.5 M9.5,19.5 L4.5,19.5 4.5,14.5',
+  game: 'M7,8 L17,8 C20,8 21.5,11 21.5,14 C21.5,17 19.5,18.5 18,17 L16,15 8,15 6,17 C4.5,18.5 2.5,17 2.5,14 C2.5,11 4,8 7,8 Z M7,10.5 L7,13.5 M5.5,12 L8.5,12 M16,11 L16.1,11 M18,13 L18.1,13',
+  sparkle: 'M12,3 L13.6,9.4 20,11 13.6,12.6 12,19 10.4,12.6 4,11 10.4,9.4 Z',
 };
 
 const SVG = 'http://www.w3.org/2000/svg';
@@ -76,6 +82,21 @@ function h(tag, props, ...children) {
 
 const setText = (el, text) => { if (el.textContent !== text) el.textContent = text; };
 
+/** Error and warning messages leave by themselves after this long, so none stays on screen. */
+const MESSAGE_TIME = 5000;
+
+/** Shows an element now and hides it again after five seconds (the timer starts over if it's shown again). */
+function showForAWhile(el) {
+  el.hidden = false;
+  clearTimeout(el.hideTimer);
+  el.hideTimer = setTimeout(() => { el.hidden = true; }, MESSAGE_TIME);
+}
+
+function hideNow(el) {
+  clearTimeout(el.hideTimer);
+  el.hidden = true;
+}
+
 function clearHash() {
   if (location.hash) history.replaceState(null, '', location.pathname + location.search);
 }
@@ -87,12 +108,16 @@ const phoneWord = () => (/iPad/.test(navigator.userAgent) ? 'iPad' : 'phone');
 
 // ---- Start ------------------------------------------------------------------------------------------------------
 
+/** The Coreloom version this page came from (a newer one on the computer means a newer phone app too). */
+let pageVersion = null;
+
 async function boot() {
   const params = new URLSearchParams(location.hash.slice(1));
   const linkSecret = params.get('p');
   let info = null;
   try { info = await getInfo(); } catch { /* shown on the screens below */ }
 
+  pageVersion = info?.version || null;
   let pairing = loadPairing();
   // Another computer answers at this address now (addresses get reused): this phone isn't paired with it.
   if (pairing && info?.pc && pairing.pc && info.pc !== pairing.pc) {
@@ -159,7 +184,8 @@ function showPair(info, error = null) {
   });
   const deviceName = h('input', { class: 'field__input', type: 'text', value: suggestDeviceName(), maxlength: 40, autocomplete: 'off', 'aria-label': `Name for this ${phoneWord()}` });
   const button = h('button', { class: 'button', type: 'submit', disabled: true }, 'Pair');
-  const notice = h('p', { class: 'notice', role: 'alert', hidden: !error }, icon('warning'), h('span', { text: error ? pairMessage(error, name) : '' }));
+  const notice = h('p', { class: 'notice', role: 'alert', hidden: true }, icon('warning'), h('span', { text: error ? pairMessage(error, name) : '' }));
+  if (error) showForAWhile(notice);
   const availability = h('p', { class: 'availability', text: info ? `Checking ${name}…` : `Can't reach the computer right now` });
 
   const digits = () => code.value.replace(/\D/g, '').slice(0, 6);
@@ -180,7 +206,7 @@ function showPair(info, error = null) {
     if (digits().length !== 6) return;
     button.disabled = true;
     button.replaceChildren(h('span', { class: 'spinner spinner--small' }), 'Pairing…');
-    notice.hidden = true;
+    hideNow(notice);
     try {
       const result = await pair('code', digits(), deviceName.value.trim() || suggestDeviceName());
       savePairing(result);
@@ -188,7 +214,7 @@ function showPair(info, error = null) {
       showDashboard(result);
     } catch (e) {
       notice.querySelector('span').textContent = pairMessage(e, name);
-      notice.hidden = false;
+      showForAWhile(notice);
       button.replaceChildren('Pair');
       code.value = '';
       button.disabled = true;
@@ -239,7 +265,7 @@ const TABS = [
   { id: 'overview', label: 'Overview', icon: 'overview' },
   { id: 'graphics', label: 'Graphics', icon: 'gpu' },
   { id: 'processor', label: 'Processor', icon: 'cpu' },
-  { id: 'memory', label: 'Memory', icon: 'memory' },
+  { id: 'overlay', label: 'Overlay', icon: 'overlay' },
   { id: 'more', label: 'More', icon: 'more' },
 ];
 
@@ -269,16 +295,19 @@ class Dashboard {
     this.bannerText = h('span', { class: 'banner__text' });
     this.banner = h('div', { class: 'banner', role: 'status', hidden: true }, icon('warning'), this.bannerText,
       h('button', { class: 'banner__button', type: 'button', onclick: () => this.feed?.poke() }, 'Retry'));
+    this.notice = new NoticeBar(this);
+    this.toast = new Toast();
+    this.awake = new KeepAwake();
 
     this.pages = {
       overview: new OverviewPage(this),
       graphics: new GpuPage(this),
       processor: new CpuPage(this),
-      memory: new MemoryPage(this),
+      overlay: new OverlayPage(this),
       more: new MorePage(this),
     };
     this.pagesEl = h('div', { class: 'pages' },
-      h('div', { class: 'page' }, this.banner),
+      h('div', { class: 'page page--messages' }, this.notice.el, this.banner),
       Object.entries(this.pages).map(([id, page]) => { page.el.hidden = id !== this.tab; return page.el; }));
 
     this.tabButtons = TABS.map((t) => h('button', {
@@ -288,7 +317,7 @@ class Dashboard {
     this.tabbar = h('nav', { class: 'tabbar', role: 'tablist', 'aria-label': 'Sections' }, this.tabButtons);
 
     this.sheet = new Sheet();
-    this.el = h('div', { class: 'dashboard' }, this.header, this.pagesEl, this.tabbar, this.sheet.el);
+    this.el = h('div', { class: 'dashboard' }, this.header, this.pagesEl, this.tabbar, this.sheet.el, this.toast.el);
 
     window.addEventListener('scroll', () => this.header.classList.toggle('is-scrolled', window.scrollY > 4), { passive: true });
     document.addEventListener('visibilitychange', () => this.onVisibility());
@@ -301,12 +330,21 @@ class Dashboard {
       onStatus: (status) => this.setStatus(status),
       onUnpaired: () => showUnpaired(this.pairing.name || 'your computer'),
     });
+    this.updateOverlayWish();
     this.feed.start();
+  }
+
+  /** The computer measures and sends the game's frame rate only while this phone shows its overlay. */
+  updateOverlayWish() {
+    const wants = this.tab === 'overlay' && !document.hidden && this.pages.overlay.enabled;
+    if (this.feed) this.feed.wantsOverlay = wants;
+    this.pages.overlay.setActive(wants);
   }
 
   onVisibility() {
     if (document.hidden) {
       this.feed?.stop();
+      this.updateOverlayWish();
     } else {
       this.setStatus('connecting');
       this.start();
@@ -323,6 +361,7 @@ class Dashboard {
     for (const [i, t] of TABS.entries()) this.tabButtons[i].setAttribute('aria-selected', String(t.id === id));
     for (const [pid, page] of Object.entries(this.pages)) page.el.hidden = pid !== id;
     window.scrollTo(0, 0);
+    this.updateOverlayWish();
     if (this.snapshot) this.pages[id].update(this.snapshot);
   }
 
@@ -331,15 +370,28 @@ class Dashboard {
     this.statusPill.dataset.status = status;
     setText(this.statusPill, { live: 'Live', connecting: 'Connecting', reconnecting: 'Reconnecting', offline: 'Offline' }[status] || status);
     const offline = status === 'offline';
-    this.banner.hidden = !offline;
-    setText(this.bannerText, `Can't reach ${this.pairing.name || 'your computer'}. Make sure it's on with Coreloom open, and that this ${phoneWord()} is on the same Wi‑Fi.`);
+    // The warning comes once when the computer can't be reached and goes after five seconds; the status pill keeps
+    // saying "Offline", and the readings stay dimmed, until it's back.
+    if (offline && !this.wasOffline) {
+      setText(this.bannerText, `Can't reach ${this.pairing.name || 'your computer'}. Make sure it's on with Coreloom open, and that this ${phoneWord()} is on the same Wi‑Fi.`);
+      showForAWhile(this.banner);
+    } else if (!offline) {
+      hideNow(this.banner);
+    }
+    this.wasOffline = offline;
     this.pagesEl.classList.toggle('is-stale', offline);
   }
 
-  onSnapshot(data) {
+  onSnapshot(data, hello) {
     if (data.history) this.history.seed(data.history);
     const s = data.snapshot;
+    const sameReadings = this.snapshot && this.snapshot.t === s.t;
     this.snapshot = s;
+    if (data.snapshot.overlay) this.pages.overlay.receive(data.snapshot.overlay);
+    this.notice.update(s, hello);
+    // Between readings, a phone showing its overlay gets the game's frame rate twice a second; other pages wait for
+    // the next readings.
+    if (sameReadings && this.tab !== 'overlay') return;
     for (const m of allMetrics(s)) if (m?.id && m.v !== undefined) this.history.add(m.id, s.t, m.v);
     if (/^#[0-9a-f]{6}$/i.test(s.accent || '')) document.documentElement.style.setProperty('--accent', s.accent);
     setText(this.name, s.pc?.name || this.pairing.name || 'Coreloom');
@@ -374,6 +426,80 @@ class Dashboard {
     } catch { /* the computer may be off: forget here anyway */ }
     forgetPairing();
     showPair(await getInfo().catch(() => null));
+  }
+}
+
+/**
+ * The notification bar at the top: a newer Coreloom on the computer (install it there; phones can't), or a computer
+ * that was updated since this page loaded (reload for the newer phone app). Each can be dismissed, and stays dismissed
+ * for that version.
+ */
+class NoticeBar {
+  constructor(dash) {
+    this.dash = dash;
+    this.title = h('span', { class: 'notice-bar__title' });
+    this.detail = h('span', { class: 'notice-bar__detail' });
+    this.action = h('button', { class: 'notice-bar__action', type: 'button', hidden: true });
+    this.el = h('div', { class: 'notice-bar', role: 'status', hidden: true },
+      h('span', { class: 'icon-tile' }, icon('sparkle')),
+      h('span', { class: 'notice-bar__text' }, this.title, this.detail),
+      this.action,
+      h('button', { class: 'notice-bar__close', type: 'button', 'aria-label': 'Dismiss', onclick: () => this.dismiss() }, icon('close')));
+    this.action.addEventListener('click', () => this.current?.run?.());
+    try { this.dismissed = new Set(JSON.parse(localStorage.getItem('coreloom.dismissed') || '[]')); } catch { this.dismissed = new Set(); }
+  }
+
+  update(s, hello) {
+    const name = s.pc?.name || this.dash.pairing.name || 'your computer';
+    const computer = computerWord(s.pc?.platform);
+    let next = null;
+    if (pageVersion && hello?.version && hello.version !== pageVersion) {
+      next = {
+        key: `reload:${hello.version}`,
+        title: `Coreloom on ${name} was updated to ${hello.version}`,
+        detail: 'Reload to get the newest version of this app too.',
+        label: 'Reload',
+        run: () => location.reload(),
+      };
+    } else if (s.update?.version) {
+      next = {
+        key: `update:${s.update.version}`,
+        title: `Coreloom ${s.update.version} is available`,
+        detail: s.update.ready
+          ? `It's downloaded on ${name}. Install it there in Settings › Updates.`
+          : `Install it on your ${computer} in Coreloom › Settings › Updates.`,
+      };
+    }
+    if (next && this.dismissed.has(next.key)) next = null;
+    if (next?.key === this.current?.key) return;
+    this.current = next;
+    this.el.hidden = !next;
+    if (!next) return;
+    setText(this.title, next.title);
+    setText(this.detail, next.detail);
+    this.action.hidden = !next.label;
+    setText(this.action, next.label || '');
+  }
+
+  dismiss() {
+    if (!this.current) return;
+    this.dismissed.add(this.current.key);
+    try { localStorage.setItem('coreloom.dismissed', JSON.stringify([...this.dismissed].slice(-20))); } catch { /* not kept */ }
+    this.current = null;
+    this.el.hidden = true;
+  }
+}
+
+/** A short message over the tab bar, gone after five seconds. */
+class Toast {
+  constructor() {
+    this.text = h('span');
+    this.el = h('div', { class: 'toast', role: 'alert', hidden: true }, icon('warning'), this.text);
+  }
+
+  show(text) {
+    setText(this.text, text);
+    showForAWhile(this.el);
   }
 }
 
@@ -665,12 +791,12 @@ class CpuPage extends PartPage {
   }
 }
 
-// ---- Memory -----------------------------------------------------------------------------------------------------
+// ---- Memory (on the More tab) ----------------------------------------------------------------------------------
 
-class MemoryPage {
+class MemorySection {
   constructor(dash) {
     this.dash = dash;
-    this.subtitle = h('p', { class: 'page__subtitle' });
+    this.caption = h('p', { class: 'section__note' });
     this.donut = h('canvas', { 'aria-hidden': 'true' });
     this.center = h('span', { class: 'ring__number num', text: '—' });
     this.usedText = h('strong', { class: 'num' });
@@ -684,13 +810,14 @@ class MemoryPage {
     this.grid = new TileGrid(dash);
     this.grid.el.classList.add('section');
     this.chart = new ChartCard(dash, 'Memory in use', [{ id: 'mem/load', label: 'In use', color: '--memory' }], 'percent');
-    this.el = h('div', { class: 'page', role: 'tabpanel', 'aria-label': 'Memory' },
-      h('h1', { class: 'page__title', text: 'Memory' }), this.subtitle, this.donutCard, this.grid.el, h('div', { class: 'section' }, this.chart.el));
+    this.el = h('section', null,
+      h('h2', { class: 'section__title', text: 'Memory' }), this.caption, this.donutCard, this.grid.el, h('div', { class: 'section' }, this.chart.el));
   }
 
   update(s) {
     const memory = s.memory || {};
-    setText(this.subtitle, memory.caption || '');
+    setText(this.caption, memory.caption || '');
+    this.caption.hidden = !memory.caption;
     const [load, ...rest] = memory.metrics || [];
     setText(this.center, load?.n ? `${load.n}%` : '—');
     setText(this.usedText, memory.usedText || '—');
@@ -702,6 +829,253 @@ class MemoryPage {
     this.usedSwatch.style.setProperty('--swatch', usedColor);
     this.grid.update(rest, s.t);
     this.chart.update(s, byId(s));
+  }
+}
+
+// ---- Overlay: the in-game overlay, on the phone ----------------------------------------------------------------------
+
+const OVERLAY_GROUPS = [
+  { key: 'fps', label: 'FPS', title: 'Frame rate' },
+  { key: 'gpu', label: 'GPU', title: 'Graphics card' },
+  { key: 'cpu', label: 'CPU', title: 'Processor' },
+  { key: 'ram', label: 'RAM', title: 'Memory' },
+];
+
+const FRAME_ITEMS = ['fps', 'frame-time', 'fps-low'];
+
+/**
+ * The phone's own overlay: the in-game overlay's readings (the same ones it shows, until changed here), in its look,
+ * with the game's frame rate and frame-time graph. It has its own switch: it works with the in-game overlay off, and
+ * what it shows is kept on this phone only (nothing changes on the computer).
+ */
+class OverlayPage {
+  constructor(dash) {
+    this.dash = dash;
+    this.storageKey = `coreloom.overlay.${dash.pairing.pc || 'computer'}`;
+    this.options = this.load();
+    this.timeline = new FrameTimeline();
+    this.data = null;
+    this.active = false;
+    this.full = false;
+
+    this.game = h('span', { class: 'hud__game' });
+    this.expand = h('button', { class: 'hud__expand', type: 'button', 'aria-label': 'Full screen', onclick: () => this.setFull(!this.full) }, icon('expand'));
+    this.lines = h('div', { class: 'hud__lines' });
+    this.graph = h('canvas', { class: 'hud__graph', 'aria-hidden': 'true' });
+    this.hud = h('div', { class: 'hud', role: 'img', 'aria-label': 'Overlay' },
+      h('div', { class: 'hud__top' }, icon('game', 'icon hud__game-icon'), this.game, this.expand),
+      this.lines);
+    this.stage = h('div', { class: 'hud-stage', onclick: (e) => { if (this.full && e.target === this.stage) this.setFull(false); } }, this.hud);
+    this.empty = h('div', { class: 'hud-empty card', hidden: true },
+      h('span', { class: 'icon-tile' }, icon('overlay')),
+      h('p', { class: 'hud-empty__title', text: 'The overlay is off on this phone' }),
+      h('p', { class: 'hud-empty__text', text: 'Turn it on to see your game\'s frame rate and readings here, whether or not the in-game overlay is on.' }));
+
+    this.enabledSwitch = this.switchRow('Show the overlay', 'On this phone, even with the in-game overlay off.', this.options.enabled, (on) => {
+      this.options.enabled = on;
+      this.save();
+      this.dash.updateOverlayWish();
+      this.render();
+    });
+
+    this.chips = h('div', { class: 'chip-groups' });
+    this.matchButton = h('button', { class: 'link-button', type: 'button', onclick: () => { this.options.items = null; this.save(); this.render(); } }, 'Same as my computer');
+    this.frameNote = h('p', { class: 'section__note', hidden: true });
+
+    this.el = h('div', { class: 'page', role: 'tabpanel', 'aria-label': 'Overlay' },
+      h('h1', { class: 'page__title', text: 'Overlay' }),
+      h('p', { class: 'page__subtitle', text: 'Your in-game overlay, live on your phone.' }),
+      this.stage, this.empty,
+      h('div', { class: 'card section' }, h('div', { class: 'list' }, this.enabledSwitch.row)),
+      h('section', { class: 'section' },
+        h('div', { class: 'section__head' }, h('h2', { class: 'section__title', text: 'Show' }), this.matchButton),
+        h('p', { class: 'section__note', text: 'Starts with what the in-game overlay shows. Changes here stay on this phone.' }),
+        this.frameNote,
+        h('div', { class: 'card' }, this.chips)));
+
+    document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && this.full) this.setFull(false, true); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && this.full) this.setFull(false); });
+  }
+
+  get enabled() { return this.options.enabled; }
+
+  load() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(this.storageKey) || 'null');
+      if (saved && typeof saved === 'object') return { enabled: saved.enabled !== false, items: Array.isArray(saved.items) ? saved.items : null };
+    } catch { /* defaults */ }
+    return { enabled: true, items: null };
+  }
+
+  save() {
+    try { localStorage.setItem(this.storageKey, JSON.stringify(this.options)); } catch { /* kept for this visit only */ }
+  }
+
+  switchRow(title, detail, on, change) {
+    const input = h('input', { class: 'switch__input', type: 'checkbox', role: 'switch', 'aria-label': title });
+    input.checked = on;
+    input.addEventListener('change', () => change(input.checked));
+    const row = h('label', { class: 'list__row switch-row' },
+      h('span', { class: 'list__main' }, h('span', { class: 'list__title', text: title }), h('span', { class: 'list__detail', text: detail })),
+      h('span', { class: 'switch' }, input, h('span', { class: 'switch__track' })));
+    return { row, input };
+  }
+
+  /** Overlay data from a snapshot: readings with each frame, frame rates twice a second. */
+  receive(overlay) {
+    if (overlay.values) this.data = overlay.values;
+    if (overlay.live) this.timeline.add(overlay.live);
+    this.live = overlay.live || null;
+  }
+
+  /** The page is on screen with the overlay on: draw the graph every frame. */
+  setActive(active) {
+    if (active === this.active) return;
+    this.active = active;
+    if (active) {
+      this.timeline.reset();
+      const tick = () => {
+        if (!this.active) return;
+        this.drawGraph();
+        this.raf = requestAnimationFrame(tick);
+      };
+      this.raf = requestAnimationFrame(tick);
+    } else {
+      cancelAnimationFrame(this.raf);
+      if (this.full) this.setFull(false);
+    }
+  }
+
+  /** The items shown: the phone's own choice, else the in-game overlay's. Only ones this computer has. */
+  shownItems() {
+    const catalog = this.data?.catalog || [];
+    const has = new Set(catalog.map((c) => c.id));
+    const items = (this.options.items || this.data?.shown || []).filter((id) => has.has(id));
+    return new Set(items);
+  }
+
+  toggle(id) {
+    const shown = this.shownItems();
+    if (shown.has(id)) shown.delete(id); else shown.add(id);
+    const order = (this.data?.catalog || []).map((c) => c.id);
+    this.options.items = order.filter((i) => shown.has(i));
+    this.save();
+    this.render();
+  }
+
+  setFull(full, fromBrowser = false) {
+    this.full = full;
+    this.stage.classList.toggle('is-full', full);
+    document.documentElement.classList.toggle('hud-full', full);
+    this.expand.replaceChildren(icon(full ? 'close' : 'expand'));
+    this.expand.setAttribute('aria-label', full ? 'Close full screen' : 'Full screen');
+    if (full) {
+      if (this.stage.requestFullscreen && !document.fullscreenElement) this.stage.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+      this.dash.awake.start();
+    } else {
+      if (!fromBrowser && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      this.dash.awake.stop();
+    }
+  }
+
+  update() {
+    this.render();
+  }
+
+  render() {
+    const on = this.options.enabled;
+    this.stage.hidden = !on;
+    this.empty.hidden = on;
+    this.enabledSwitch.input.checked = on;
+    this.matchButton.hidden = !this.options.items;
+    const data = this.data;
+    const mac = this.dash.snapshot?.pc?.platform === 'macos';
+    this.frameNote.hidden = !data || data.frameRates === 'measured';
+    setText(this.frameNote, mac ? 'A Mac can\'t measure another app\'s frame rate, so the overlay shows readings only.' : 'Frame rates aren\'t measured on this computer.');
+    this.renderChips(data);
+    if (on) this.renderHud(data);
+  }
+
+  renderChips(data) {
+    const catalog = data?.catalog || [];
+    const shown = this.shownItems();
+    const signature = JSON.stringify([catalog.map((c) => c.id), [...shown]]);
+    if (this.chips.dataset.sig === signature) return;
+    this.chips.dataset.sig = signature;
+    if (!catalog.length) {
+      this.chips.replaceChildren(h('p', { class: 'list__detail', text: 'Waiting for the computer…' }));
+      return;
+    }
+    this.chips.replaceChildren(...OVERLAY_GROUPS.filter((g) => catalog.some((c) => c.group === g.key)).map((group) => h('div', { class: 'chip-group' },
+      h('span', { class: 'chip-group__title', text: group.title }),
+      h('div', { class: 'chips' }, catalog.filter((c) => c.group === group.key).map((item) => h('button', {
+        class: 'chip', type: 'button', 'aria-pressed': String(shown.has(item.id)), onclick: () => this.toggle(item.id),
+      }, icon('check', 'icon chip__check'), item.name))))));
+  }
+
+  renderHud(data) {
+    const look = data?.look || {};
+    const text = /^#[0-9a-f]{6}$/i.test(look.text || '') ? look.text : '#FFFFFF';
+    const background = parseColor(/^#[0-9a-f]{6}$/i.test(look.background || '') ? look.background : '#0E1117');
+    this.hud.style.setProperty('--hud-text', text);
+    this.hud.style.setProperty('--hud-bg', rgba(background, Math.max(0.55, (look.backgroundOpacity ?? 70) / 100)));
+    this.look = { text, warning: look.warning || '#FFB547', critical: look.critical || '#FF5C5C' };
+
+    const live = this.live || {};
+    const measured = data?.frameRates === 'measured';
+    setText(this.game, live.game ? live.game.replace(/\.exe$/i, '') : measured ? 'No game in front' : (this.dash.snapshot?.pc?.name || ''));
+    this.game.classList.toggle('is-quiet', !live.game);
+
+    const shown = this.shownItems();
+    const showGraph = shown.has('frame-graph');
+    const lines = [];
+    for (const group of OVERLAY_GROUPS) {
+      let ids = (data?.catalog || []).filter((c) => c.group === group.key && c.id !== 'frame-graph' && shown.has(c.id)).map((c) => c.id);
+      if (group.key === 'fps' && showGraph && !ids.length) ids = ['fps']; // the graph sits on the FPS line
+      if (!ids.length) continue;
+      lines.push({ group, ids });
+    }
+
+    const signature = JSON.stringify([lines.map((l) => l.ids), showGraph, look.labels !== false]);
+    if (this.lines.dataset.sig !== signature) {
+      this.lines.dataset.sig = signature;
+      this.values = new Map();
+      this.lines.replaceChildren(...lines.map(({ group, ids }) => {
+        const labels = look.labels !== false;
+        const line = h('div', { class: `hud__line${labels ? '' : ' hud__line--bare'}` },
+          labels ? h('span', { class: 'hud__label', text: group.label }) : null,
+          h('span', { class: 'hud__values' }, ids.map((id) => {
+            const number = h('span', { class: 'hud__number num' });
+            const unit = h('span', { class: 'hud__unit' });
+            this.values.set(id, { number, unit });
+            return h('span', { class: `hud__value${id === 'fps' ? ' hud__value--headline' : ''}` }, number, unit);
+          })));
+        return group.key === 'fps' && showGraph ? h('div', { class: 'hud__fps' }, line, this.graph) : line;
+      }));
+      if (!lines.length) this.lines.append(h('p', { class: 'hud__hint', text: 'Choose readings to show below.' }));
+    }
+
+    const fps = live.fps;
+    for (const [id, { number, unit }] of this.values) {
+      let n = '—', u = '', color = text;
+      if (FRAME_ITEMS.includes(id)) {
+        if (id === 'fps') { n = fps?.fps ?? '—'; u = look.labels !== false ? '' : 'FPS'; }
+        if (id === 'frame-time') { n = fps?.ft ?? '—'; u = 'ms'; }
+        if (id === 'fps-low') { n = fps?.low ?? '—'; u = '1% low'; }
+      } else if (data?.items?.[id]) {
+        const item = data.items[id];
+        n = item.n; u = item.u;
+        if (look.warnings !== false && item.l) color = item.l >= 3 ? this.look.critical : this.look.warning;
+      }
+      setText(number, n);
+      setText(unit, u);
+      number.style.color = color;
+    }
+  }
+
+  drawGraph() {
+    if (!this.graph.isConnected || !this.options.enabled) return;
+    drawFrameGraph(this.graph, this.timeline, this.look || {});
   }
 }
 
@@ -723,7 +1097,7 @@ class MorePage {
     this.specs = h('ul', { class: 'list' });
     this.about = h('p', { class: 'section__note' });
 
-    const homeRow = isStandalone() ? null : h('button', { class: 'list__row list__row--action', type: 'button', onclick: () => dash.setupHomeScreen().catch(() => window.alert('Couldn\'t prepare the Home Screen link. Try again.')) },
+    const homeRow = isStandalone() ? null : h('button', { class: 'list__row list__row--action', type: 'button', onclick: () => dash.setupHomeScreen().catch(() => dash.toast.show('Couldn\'t prepare the Home Screen link. Try again.')) },
       h('span', { class: 'icon-tile' }, icon('plus')),
       h('span', { class: 'list__main' }, h('span', { class: 'list__title', text: 'Add to Home Screen' }), h('span', { class: 'list__detail', text: 'Open Coreloom like an app, full screen.' })),
       icon('chevron', 'icon chevron'));
@@ -731,10 +1105,12 @@ class MorePage {
       h('span', { class: 'icon-tile', '--tint': 'var(--critical)' }, icon('unlink')),
       h('span', { class: 'list__main' }, h('span', { class: 'list__title', text: 'Forget this computer' }), h('span', { class: 'list__detail', text: `Stop seeing its readings on this ${phoneWord()}.` })));
 
+    this.memory = new MemorySection(dash);
     this.el = h('div', { class: 'page', role: 'tabpanel', 'aria-label': 'More' },
       h('h1', { class: 'page__title', text: 'More' }),
-      h('p', { class: 'page__subtitle', text: 'Storage, network, health and this connection' }),
-      h('section', null, h('h2', { class: 'section__title', text: 'Storage' }), h('div', { class: 'card' }, this.volumes)),
+      h('p', { class: 'page__subtitle', text: 'Memory, storage, network, health and this connection' }),
+      this.memory.el,
+      h('section', { class: 'section' }, h('h2', { class: 'section__title', text: 'Storage' }), h('div', { class: 'card' }, this.volumes)),
       h('div', { class: 'section' }, this.diskTiles.el),
       h('div', { class: 'section' }, this.diskChart.el),
       h('section', { class: 'section' }, h('h2', { class: 'section__title', text: 'Network' }), this.adapter, this.netTiles.el),
@@ -747,6 +1123,7 @@ class MorePage {
   }
 
   update(s) {
+    this.memory.update(s);
     const volumes = s.storage?.volumes || [];
     if (this.volumes.childElementCount !== volumes.length || this.volumes.dataset.ids !== volumes.map((v) => v.id).join('|')) {
       this.volumes.dataset.ids = volumes.map((v) => v.id).join('|');

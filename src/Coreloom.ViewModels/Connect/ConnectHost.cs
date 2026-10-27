@@ -1,4 +1,5 @@
 using System.Net.Sockets;
+using System.Text.Json;
 using Coreloom.Core.Connect;
 using Coreloom.Core.Diagnostics;
 using Coreloom.Core.Telemetry;
@@ -53,6 +54,9 @@ public sealed class ConnectEnvironment
 
     /// <summary>This computer's addresses on its networks, best first (replaced in screenshots and tests).</summary>
     public Func<IReadOnlyList<LocalAddress>> FindAddresses { get; init; } = LocalAddresses.Find;
+
+    /// <summary>Frame rates of the program in front, for the phone's overlay (Windows); null where they can't be measured.</summary>
+    public IForegroundFrameRates? FrameRates { get; init; }
 }
 
 public enum ConnectStatus
@@ -74,6 +78,12 @@ public sealed class ConnectHost : IAsyncDisposable
     private readonly PageContext _context;
     private readonly ConnectEnvironment _environment;
     private readonly RemoteFeed _feed;
+    private readonly RemoteOverlay _overlay;
+    private readonly object _overlayGate = new();
+    private Timer? _overlayTimer;
+    private bool _measuring;
+    private byte[]? _lastSnapshot;
+    private byte[]? _overlayValues;
     private readonly SemaphoreSlim _apply = new(1, 1);
     private readonly Lazy<WebAssets> _assets;
     private readonly string _appVersion;
@@ -87,11 +97,22 @@ public sealed class ConnectHost : IAsyncDisposable
         _environment = environment;
         _appVersion = appVersion;
         _feed = new RemoteFeed(context);
+        _overlay = new RemoteOverlay(context, environment.FrameRates);
         _assets = new Lazy<WebAssets>(() => environment.Assets ?? WebAssets.Embedded());
         Store = new PairedDeviceStore(Path.Combine(environment.DataDirectory, "connect.json"));
         Pairing = new PairingWindow();
         Store.Changed += RaiseChanged;
         Pairing.Changed += RaiseChanged;
+    }
+
+    /// <summary>How often a phone showing its overlay gets the game's frame rate (readings still come with each frame).</summary>
+    public static readonly TimeSpan OverlayRefresh = TimeSpan.FromMilliseconds(500);
+
+    /// <summary>The update the computer has found (its version, and whether it's downloaded), for the phone's notice.</summary>
+    public Func<RemoteUpdate?>? UpdateNotice
+    {
+        get => _feed.UpdateNotice;
+        set => _feed.UpdateNotice = value;
     }
 
     /// <summary>Raised on any thread when the status, the paired or connected phones or the pairing code change.</summary>
@@ -177,6 +198,7 @@ public sealed class ConnectHost : IAsyncDisposable
                 });
                 server.HistoryProvider = _feed.History;
                 server.ConnectedChanged += RaiseChanged;
+                server.OverlayWatchedChanged += OnOverlayWatchedChanged;
                 _server = server;
                 _runningPort = server.Port;
             }
@@ -213,10 +235,106 @@ public sealed class ConnectHost : IAsyncDisposable
     /// <summary>Feeds a frame to the phones watching (on the UI thread, after the health check has seen it).</summary>
     public void OnFrame(TelemetryFrame frame)
     {
-        if (_server is { HasViewers: true } server)
+        if (_server is not { HasViewers: true } server)
         {
-            server.Publish(_feed.Build(frame));
+            return;
         }
+
+        byte[] snapshot = _feed.Build(frame);
+        bool overlay = server.OverlayWatched;
+        byte[]? values = overlay ? _overlay.Values(frame) : null;
+        lock (_overlayGate)
+        {
+            _lastSnapshot = snapshot;
+            _overlayValues = values;
+        }
+
+        server.Publish(overlay ? Compose(snapshot, values) : snapshot);
+    }
+
+    /// <summary>
+    /// A phone started or stopped showing its overlay: frame rates are measured (Windows), and the game's frame rate is
+    /// sent twice a second, while one does, whether or not the in-game overlay is on.
+    /// </summary>
+    private void OnOverlayWatchedChanged()
+    {
+        bool watched = _server?.OverlayWatched == true;
+        lock (_overlayGate)
+        {
+            if (watched && _overlayTimer is null)
+            {
+                _overlay.Reset();
+                if (_environment.FrameRates is { } frameRates)
+                {
+                    _measuring = true;
+                    if (!frameRates.Start())
+                    {
+                        Log.Warn(LogCategory, $"Frame rates for the phone's overlay unavailable: {frameRates.Problem}");
+                    }
+                }
+
+                _overlayTimer = new Timer(_ => PublishOverlay(), null, OverlayRefresh, OverlayRefresh);
+                Log.Info(LogCategory, "A phone shows its overlay.");
+            }
+            else if (!watched && _overlayTimer is not null)
+            {
+                StopOverlayLocked();
+                Log.Info(LogCategory, "No phone shows its overlay any more.");
+            }
+        }
+    }
+
+    private void StopOverlayLocked()
+    {
+        _overlayTimer?.Dispose();
+        _overlayTimer = null;
+        _overlayValues = null;
+        if (_measuring)
+        {
+            _measuring = false;
+            _environment.FrameRates?.Stop();
+        }
+    }
+
+    /// <summary>The latest readings again with the game's newest frame rate and frame times (from the timer's thread).</summary>
+    private void PublishOverlay()
+    {
+        byte[]? snapshot;
+        byte[]? values;
+        lock (_overlayGate)
+        {
+            snapshot = _lastSnapshot;
+            values = _overlayValues;
+        }
+
+        if (snapshot is not null && _server is { OverlayWatched: true } server)
+        {
+            server.Publish(Compose(snapshot, values));
+        }
+    }
+
+    /// <summary>A snapshot with "overlay": {"values": …, "live": …} added.</summary>
+    private byte[] Compose(byte[] snapshot, byte[]? values)
+    {
+        using var stream = new MemoryStream(snapshot.Length + 8192);
+        stream.Write(snapshot, 0, snapshot.Length - 1); // without its closing brace
+        stream.Write(",\"overlay\":"u8);
+        using (var w = new Utf8JsonWriter(stream))
+        {
+            w.WriteStartObject();
+            if (values is not null)
+            {
+                w.WritePropertyName("values");
+                w.WriteRawValue(values, skipInputValidation: true);
+            }
+
+            w.WritePropertyName("live");
+            _overlay.WriteLive(w);
+            w.WriteEndObject();
+        }
+
+        stream.WriteByte((byte)'}');
+        return stream.ToArray();
     }
 
     public async ValueTask DisposeAsync()
@@ -236,10 +354,17 @@ public sealed class ConnectHost : IAsyncDisposable
     private async Task StopAsync()
     {
         Pairing.Close();
+        lock (_overlayGate)
+        {
+            StopOverlayLocked();
+            _lastSnapshot = null;
+        }
+
         if (_server is { } server)
         {
             _server = null;
             server.ConnectedChanged -= RaiseChanged;
+            server.OverlayWatchedChanged -= OnOverlayWatchedChanged;
             await server.DisposeAsync().ConfigureAwait(false);
         }
     }

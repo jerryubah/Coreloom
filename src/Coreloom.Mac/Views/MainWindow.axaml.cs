@@ -12,7 +12,7 @@ using Coreloom.ViewModels.Pages;
 namespace Coreloom.Mac.Views;
 
 /// <summary>
-/// The main window: the glass sidebar (with the traffic lights in its top row) and the page. The title bar area drags the
+/// The main window: the glass sidebar (below the traffic lights) and the page. The title bar area drags the
 /// window and a double-click zooms it. Closing the window keeps Coreloom running in the menu bar (unless that's turned
 /// off); the Dock icon or the menu bar item brings it back.
 /// </summary>

@@ -614,6 +614,243 @@ button { cursor: pointer; }
 
 .is-stale .tile__value, .is-stale .ring__center, .is-stale .legend__value { opacity: 0.45; }
 
+/* ---- Notification bar (updates) and toast -------------------------------------------------------------------------- */
+
+.page--messages:empty { display: none; }
+
+.notice-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 14px;
+  padding: 12px 8px 12px 12px;
+  border-radius: var(--radius-m);
+  background: color-mix(in srgb, var(--accent) 12%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.notice-bar[hidden] { display: none; }
+
+.notice-bar__text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+
+.notice-bar__title { font-size: 14.5px; font-weight: 600; }
+
+.notice-bar__detail { color: var(--text-2); font-size: 13px; }
+
+.notice-bar__action {
+  flex: none;
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 17px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.notice-bar__action[hidden] { display: none; }
+
+.notice-bar__close { display: grid; place-items: center; width: 34px; height: 34px; flex: none; border: 0; border-radius: 17px; background: none; color: var(--text-3); }
+
+.notice-bar__close .icon { width: 17px; height: 17px; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--tabbar) + var(--safe-bottom) + 14px);
+  z-index: 30;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--gutter));
+  padding: 12px 16px;
+  border-radius: var(--radius-s);
+  background: var(--card-raised);
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  font-size: 14px;
+  animation: rise 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.toast[hidden] { display: none; }
+
+.toast .icon { color: var(--warn); }
+
+/* ---- Overlay tab: the in-game overlay over a game-dark stage -------------------------------------------------------- */
+
+.hud-stage {
+  position: relative;
+  padding: 14px;
+  min-height: 210px;
+  border-radius: 34px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 85% 110%, rgba(91, 140, 255, 0.28), transparent 60%),
+    radial-gradient(90% 80% at 10% -10%, rgba(69, 214, 160, 0.16), transparent 60%),
+    linear-gradient(160deg, #161A22, #07080B);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@supports (corner-shape: squircle) { .hud-stage { corner-shape: squircle; border-radius: 40px; } }
+
+.hud-stage[hidden] { display: none; }
+
+.hud {
+  --hud-size: 17px;
+  display: inline-grid;
+  gap: 6px;
+  min-width: min(100%, 300px);
+  max-width: 100%;
+  padding: 0.75em 0.95em 0.85em;
+  border-radius: 1.05em;
+  background: var(--hud-bg, rgba(14, 17, 23, 0.7));
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  color: var(--hud-text, #FFFFFF);
+  font-size: var(--hud-size);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.35);
+}
+
+@supports (corner-shape: squircle) { .hud { corner-shape: squircle; border-radius: 1.6em; } }
+
+.hud__top { display: flex; align-items: center; gap: 0.4em; margin-bottom: 0.1em; font-size: 0.72em; font-weight: 600; opacity: 0.8; }
+
+.hud__game-icon { width: 1.25em; height: 1.25em; }
+
+.hud__game { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.hud__game.is-quiet { opacity: 0.7; font-weight: 500; }
+
+.hud__expand { display: grid; place-items: center; width: 2.3em; height: 2.3em; margin: -0.5em -0.5em -0.5em 0; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.08); color: inherit; }
+
+.hud__expand .icon { width: 1.25em; height: 1.25em; }
+
+.hud__lines { display: grid; gap: 0.2em; }
+
+.hud__line { display: grid; grid-template-columns: 2.6em 1fr; align-items: baseline; column-gap: 0.55em; }
+
+.hud__line--bare { grid-template-columns: 1fr; }
+
+.hud__values { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.65em; row-gap: 0.1em; }
+
+.hud__label { font-size: 0.74em; font-weight: 600; letter-spacing: 0.02em; opacity: 0.72; }
+
+.hud__value { display: inline-flex; align-items: baseline; gap: 0.12em; }
+
+.hud__number { font-weight: 700; letter-spacing: -0.01em; }
+
+.hud__unit { font-size: 0.74em; font-weight: 600; opacity: 0.8; }
+
+.hud__value--headline .hud__number { font-size: 1.45em; line-height: 1; }
+
+.hud__fps { display: grid; gap: 0.3em; margin-bottom: 0.15em; }
+
+.hud__graph { display: block; width: 100%; min-width: 15em; height: 3.2em; }
+
+.hud__hint { margin: 0; font-size: 0.8em; opacity: 0.75; }
+
+.hud-empty { display: grid; justify-items: center; gap: 6px; padding: 28px 20px; text-align: center; }
+
+.hud-empty[hidden] { display: none; }
+
+.hud-empty__title { margin: 6px 0 0; font-weight: 600; font-size: 16px; }
+
+.hud-empty__text { margin: 0; max-width: 34ch; color: var(--text-2); font-size: 14px; }
+
+/* Full screen: the overlay alone, large, for a phone propped beside the screen. */
+.hud-stage.is-full {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding: calc(var(--safe-top) + 16px) calc(var(--safe-right) + 16px) calc(var(--safe-bottom) + 16px) calc(var(--safe-left) + 16px);
+  border: 0;
+  border-radius: 0;
+  corner-shape: round;
+  background: #050608;
+}
+
+.hud-stage.is-full .hud { --hud-size: clamp(18px, 5.2vmin, 46px); min-width: min(92vw, 30em); }
+
+.hud-stage.is-full .hud__graph { height: 4.2em; }
+
+html.hud-full, html.hud-full body { overflow: hidden; }
+
+html.hud-full .header, html.hud-full .tabbar { visibility: hidden; }
+
+.keep-awake { position: fixed; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; left: 0; bottom: 0; }
+
+/* ---- Switches and chips -------------------------------------------------------------------------------------------- */
+
+.switch-row { cursor: pointer; }
+
+.switch { position: relative; flex: none; width: 51px; height: 31px; }
+
+.switch__input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+
+.switch__track { position: absolute; inset: 0; border-radius: 16px; background: var(--neutral); transition: background 0.2s; }
+
+.switch__track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: transform 0.25s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.switch__input:checked + .switch__track { background: var(--accent); }
+
+.switch__input:checked + .switch__track::after { transform: translateX(20px); }
+
+.switch__input:focus-visible + .switch__track { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.section__head { display: flex; align-items: baseline; gap: 12px; margin-right: 4px; }
+
+.section__head .section__title { flex: 1; }
+
+.link-button { border: 0; background: none; padding: 4px 0; color: var(--accent); font-size: 14px; font-weight: 600; }
+
+.link-button[hidden] { display: none; }
+
+.chip-groups { display: grid; gap: 16px; }
+
+.chip-group { display: grid; gap: 8px; }
+
+.chip-group__title { font-size: 13.5px; font-weight: 600; color: var(--text-2); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 13px 0 11px;
+  border: 1px solid var(--input-border);
+  border-radius: 18px;
+  background: var(--input);
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.chip__check { width: 16px; height: 16px; opacity: 0.35; }
+
+.chip[aria-pressed="true"] { border-color: transparent; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); font-weight: 600; }
+
+.chip[aria-pressed="true"] .chip__check { opacity: 1; }
+
 /* ---- Sheet (Add to Home Screen) ---------------------------------------------------------------------------------- */
 
 .sheet { position: fixed; inset: 0; z-index: 50; display: grid; align-items: end; background: var(--scrim); animation: fade 0.2s ease-out; }

@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Coreloom.Core.Connect;
 using Coreloom.Core.Settings;
+using Coreloom.ViewModels.Infrastructure;
 using Coreloom.ViewModels.Services;
 
 namespace Coreloom.ViewModels.Connect;
@@ -64,6 +65,12 @@ public sealed class ConnectViewModel : ObservableObject
     private double _qrSize = 1;
     private string _renewsText = string.Empty;
     private string _url = string.Empty;
+    private string? _noteShown;
+    private string? _noteSeen;
+    private readonly Dismissal _noteDismissal = new();
+    private string? _problemShown;
+    private string? _problemSeen;
+    private readonly Dismissal _problemDismissal = new();
 
     public ConnectViewModel(ConnectHost host, SettingsService settings, IShellService shell, bool isMac, Func<DateTimeOffset>? now = null)
     {
@@ -123,7 +130,7 @@ public sealed class ConnectViewModel : ObservableObject
         ConnectStatus.On when HasAddress => $"Phones on {(AdapterText.Length > 0 ? AdapterText : "this network")} reach this {Computer} at {DisplayAddress}.",
         ConnectStatus.On => $"Connect this {Computer} to Wi-Fi or Ethernet, then pair your phone here.",
         ConnectStatus.Starting => "Opening a port on this network…",
-        ConnectStatus.Failed => Problem ?? "Something stopped Connect from starting.",
+        ConnectStatus.Failed => (Problem ?? string.Empty) == _problemSeen ? "Turn Connect off and on to try again." : Problem ?? "Something stopped Connect from starting.",
         _ => $"Turn it on to see this {Computer}'s readings live on your phone, over your own network.",
     };
 
@@ -156,7 +163,8 @@ public sealed class ConnectViewModel : ObservableObject
 
     public string? Problem => _host.Problem;
 
-    public bool HasNote => _host.Note is not null && IsOn;
+    /// <summary>A warning about the network (a firewall that may block phones); shown for five seconds each time it changes.</summary>
+    public bool HasNote => _host.Note is not null && IsOn && _host.Note != _noteSeen;
 
     public string? Note => _host.Note;
 
@@ -332,8 +340,37 @@ public sealed class ConnectViewModel : ObservableObject
         }, null);
     }
 
+    /// <summary>Warnings and why Connect couldn't start leave after five seconds (the headline still says it couldn't start).</summary>
+    private void DismissLater()
+    {
+        string? note = IsOn ? _host.Note : null;
+        if (note != _noteShown)
+        {
+            _noteShown = note;
+            _noteSeen = null;
+            _noteDismissal.Update(note is not null, () =>
+            {
+                _noteSeen = note;
+                Refresh();
+            });
+        }
+
+        string? problem = _host.Status == ConnectStatus.Failed ? _host.Problem ?? string.Empty : null;
+        if (problem != _problemShown)
+        {
+            _problemShown = problem;
+            _problemSeen = null;
+            _problemDismissal.Update(problem is not null, () =>
+            {
+                _problemSeen = problem;
+                Refresh();
+            });
+        }
+    }
+
     private void Refresh()
     {
+        DismissLater();
         var primary = _host.Addresses.FirstOrDefault();
         Url = primary is null || _host.Status != ConnectStatus.On ? string.Empty : primary.Url(_host.Port);
 

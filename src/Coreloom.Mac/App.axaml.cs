@@ -123,6 +123,7 @@ public partial class App : Application
         var memoryLog = new MemoryLogSink();
         InitializeLogging(paths, memoryLog);
         RegisterExceptionHandlers();
+        AutoDismiss.Context = SynchronizationContext.Current; // messages leave by themselves after five seconds
 
         var app = AppVersionInfo.FromAssembly(typeof(App).Assembly);
         Log.Info("App", $"Coreloom {app.InformationalVersion} starting (args: {string.Join(' ', arguments)}; bundle: {MacLifetimeService.BundlePath ?? "none"}; "
@@ -239,6 +240,7 @@ public partial class App : Application
             },
         });
         _shell = shell;
+        shellService.Messages = shell.ShowToast; // "Export failed" and the like show over the page, then leave
         MacNotifications.Initialize(action => Dispatcher.UIThread.Post(action));
 
         // ---- Window, menus & menu bar item --------------------------------------------------------
@@ -754,7 +756,14 @@ public partial class App : Application
             if (!_exiting && DateTime.UtcNow - _lastCrashDialog > TimeSpan.FromSeconds(30))
             {
                 _lastCrashDialog = DateTime.UtcNow;
-                AppKit.Alert("Something went wrong in Coreloom", $"{DescribeError(e.Exception)}\n\nThe error was logged. Coreloom will keep running.", confirm: false, warning: true);
+                if (_shell is { } shell && _window is { IsVisible: true })
+                {
+                    shell.ShowToast("Something went wrong in Coreloom", $"{DescribeError(e.Exception)} The error was logged; Coreloom keeps running.");
+                }
+                else
+                {
+                    AppKit.Alert("Something went wrong in Coreloom", $"{DescribeError(e.Exception)}\n\nThe error was logged. Coreloom will keep running.", confirm: false, warning: true);
+                }
             }
         };
 

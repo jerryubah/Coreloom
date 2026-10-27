@@ -775,7 +775,8 @@ GitHub's Macs check every build of Coreloom for Mac, but they are virtual machin
    all have values. Compare utilization with Activity Monitor and memory with its Memory tab (binary units).
    Run `sudo powermetrics --samplers cpu_power,gpu_power -n 1` to compare the power figures. Make the window
    narrow and wide: the Overview's top card should always show every spec, in one or two columns (fixed in 1.6.1).
-3. **Menu bar and Dock.** The menu bar item's readings, *Pause*, *Settings…*, *Quit*; closing the window keeps
+3. **Window, menu bar and Dock.** The close, minimize and zoom buttons sit above the sidebar, clear of it, with the
+   sidebar wide and narrow (1.8.0). The menu bar item's readings, *Pause*, *Settings…*, *Quit*; closing the window keeps
    Coreloom in the menu bar (and hides its Dock icon if that's on); clicking the Dock icon brings the window back.
 4. **Devices.** *Allow Bluetooth…* should bring up macOS's prompt; after *Allow*, your accessories and (for Apple's
    own) their batteries appear. Connect and disconnect one.
@@ -789,7 +790,7 @@ GitHub's Macs check every build of Coreloom for Mac, but they are virtual machin
 Send back screenshots of anything that reads wrong, with the report from *Settings › Diagnostics › Export
 diagnostic report*.
 
-## 9. Your phone (Coreloom Connect, 1.7.0)
+## 9. Your phone (Coreloom Connect, 1.7.0; the Overlay tab, 1.8.0)
 
 Coreloom Connect has been tested against its real server in a phone-sized browser, and on GitHub's Windows and Mac
 machines over loopback, but not with a real phone on a real home network. With your PC or Mac and your phone on
@@ -805,12 +806,21 @@ the same Wi-Fi:
    *Settings › Connect* into the browser, enter the six-digit code and a name. A wrong code says so; five wrong codes
    replace the code on the desktop.
 4. **Readings.** Compare the Overview's GPU and CPU gauges, temperatures and power with the desktop: they should
-   match within a second or two. Visit Graphics, Processor (every core), Memory and More.
+   match within a second or two. Visit Graphics, Processor (every core) and More (memory is at its top).
 5. **Add to Home Screen.** iPhone: *More › Add to Home Screen*, then Share › *Add to Home Screen*. Android: ⋮ ›
    *Add to Home screen*. Open it from the icon: it should open full screen and connect without pairing again.
 6. **Coming and going.** Lock the phone for a minute and unlock it; turn Wi-Fi off and on; quit and reopen Coreloom
    on the computer. The phone should show *Reconnecting…* and then *Live* again by itself.
-7. **Removing.** *Remove…* next to the phone in *Settings › Connect*: the phone should say it was removed and offer to pair again.
+7. **The Overlay tab (1.8.0).** Start a game on the PC and open *Overlay* on the phone: the game's name, its FPS and
+   frame time, and the frame-time graph should move with the game, with the readings the in-game overlay shows.
+   Turn the in-game overlay off on the PC: the phone's keeps going. Tap readings under *Show* to add or remove
+   them (the PC's overlay doesn't change), then *Same as my computer*. Tap the full-screen button and turn the phone
+   sideways; leave it for a few minutes: the screen should stay on. On a Mac the tab shows readings without a frame
+   rate.
+8. **Messages and updates (1.8.0).** A wrong pairing code's message and the *Reconnecting…* banner should leave after
+   five seconds. When the computer has a newer Coreloom, the phone shows a bar saying so; × closes it for that
+   version.
+9. **Removing.** *Remove…* next to the phone in *Settings › Connect*: the phone should say it was removed and offer to pair again.
    Turning Connect off should make the phone show that it can't reach the computer (and, on Windows, remove the
    firewall rule).
 

@@ -280,4 +280,28 @@ public class OptimizeViewModelTests
         Assert.Empty(page.Cleanup.Categories);
         settings.Dispose();
     }
+
+    [Fact]
+    public async Task Outcomes_LeaveFiveSecondsAfterTheWorkIsDone()
+    {
+        using var timer = new ManualDismissals();
+        var (page, _, settings) = Create();
+        var dns = page.Speed.FlushDns;
+        var result = await dns.RunAsync(CancellationToken.None);
+        Assert.Equal(result.Message, dns.Message);
+        Assert.Equal(1, timer.Waiting); // "Working…" never waited to leave; the outcome does
+        timer.Elapse();
+        Assert.Null(dns.Message);
+
+        if (page.Protection.UpdateCommand.CanExecute(null))
+        {
+            await page.Protection.UpdateCommand.ExecuteAsync(null);
+            Assert.NotNull(page.Protection.Message);
+            timer.Elapse();
+            Assert.Null(page.Protection.Message);
+        }
+
+        settings.Dispose();
+    }
+
 }

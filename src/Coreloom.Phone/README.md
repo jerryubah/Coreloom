@@ -11,12 +11,14 @@ pairing code shown there. "Add to Home Screen" keeps an icon that opens it full 
 | --- | --- |
 | `index.html` | The page: boot screen, metadata for iOS and Android, the fonts and the app. |
 | `app.css` | Coreloom's design tokens (the desktop app's dark and light palettes), components and layout. |
-| `app.js` | The app: pairing, the five tabs (Overview, Graphics, Processor, Memory, More), the sheet, the Home Screen link. |
+| `app.js` | The app: pairing, the five tabs (Overview, Graphics, Processor, Overlay, More), the update notice, the sheet, the Home Screen link. |
+| `overlay.js` | The Overlay tab's frame-time graph (smooth between updates) and keeping the screen on in full screen. |
 | `connect.js` | The protocol: pairing, sessions, signed requests, sealed readings, reconnecting. |
 | `gauge.js` | The desktop's tick-ring gauge on a canvas, colour scales and the memory donut. |
 | `chart.js` | Two-minute live charts and sparklines. |
 | `vendor/crypto.js` | P-256, HKDF, HMAC-SHA-256 and AES-GCM from the audited noble libraries (MIT), bundled by `build/phone/crypto`. |
 | `icons/`, `fonts/` | Home Screen icons from the brand tile and Inter (SIL OFL), made by `build/phone/make-assets.py`. |
+| `media/awake.mp4` | A 3 KB silent 16×16 video, looped while the overlay is full screen so the phone doesn't lock (pages over plain HTTP get no wake lock). |
 | `manifest.webmanifest` | Name, colours and icons for Android's "Add to Home screen". |
 
 No framework, no build step for the app itself, no third-party requests: the page's Content-Security-Policy allows
@@ -34,6 +36,13 @@ only Coreloom's own address.
 - **Sessions.** Each visit starts a session with a nonce from each side (HKDF again). Every request carries an
   HMAC over its path and body and a counter that only goes up, so a copied request can't be replayed. Readings come
   back sealed with the session key; `/api/live` waits up to 20 s for the next one.
+- **The overlay.** While the phone shows its Overlay tab, each `/api/live` request says `"overlay":true`; for as long
+  as a phone keeps saying so (plus ten seconds), the computer measures the frame rate of the program in front
+  (Windows: from its graphics events, as the in-game overlay does, whether or not that is on) and sends a reading
+  twice a second with the frame times shown since the last one, so the phone can draw the graph as the game drew
+  its frames. Which readings the phone shows is kept on the phone; nothing is sent back.
+- **Messages leave.** Errors and warnings (a wrong code, the connection dropping) show for five seconds; the
+  update notice stays until it's closed, and closing it is remembered for that version.
 - **Limits.** Coreloom only answers addresses on private networks (10/8, 172.16/12, 192.168/16, 169.254/16,
   100.64/10, IPv6 link-local and unique-local, loopback) and only Host names that are an address, `.local`,
   `localhost` or the computer's own name. Phones only read: nothing on the computer can be changed through Connect.

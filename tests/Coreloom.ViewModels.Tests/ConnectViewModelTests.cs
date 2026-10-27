@@ -21,15 +21,17 @@ public sealed class ConnectViewModelTests : IDisposable
         }
     }
 
-    private async Task<(ConnectViewModel ViewModel, ConnectHost Host, SettingsService Settings)> CreateAsync(bool enabled, bool withNetwork = true)
+    private async Task<(ConnectViewModel ViewModel, ConnectHost Host, SettingsService Settings)> CreateAsync(
+        bool enabled, bool withNetwork = true, int port = 0, IConnectPlatform? platform = null)
     {
         var (monitor, settings, _) = Fixture.Create(_dir);
         settings.Current.Connect.Enabled = enabled;
-        settings.Current.Connect.Port = 0; // any free port
+        settings.Current.Connect.Port = port; // 0: any free port
         var context = Fixture.Context(monitor, settings);
         _host = new ConnectHost(context, new ConnectEnvironment
         {
             DataDirectory = _dir,
+            Platform = platform ?? NoConnectPlatform.Instance,
             Assets = new WebAssets(new Dictionary<string, byte[]> { ["index.html"] = "<!doctype html>"u8.ToArray() }),
             FindAddresses = () => withNetwork
                 ? [new LocalAddress(IPAddress.Parse("192.168.1.24"), "Wi-Fi", true), new LocalAddress(IPAddress.Parse("100.84.12.7"), "VPN", false)]
@@ -249,6 +251,64 @@ public sealed class ConnectViewModelTests : IDisposable
         {
             Questions.Add(title);
             return Answer;
+        }
+    }
+
+    [Fact]
+    public async Task AFirewallWarning_AndWhyConnectCouldntStart_LeaveAfterFiveSeconds()
+    {
+        using var timer = new ManualDismissals();
+        var (vm, host, _) = await CreateAsync(enabled: true, platform: new WarningPlatform());
+        vm.SetVisible(true);
+        Assert.Equal(ConnectStatus.On, host.Status);
+        Assert.True(vm.HasNote);
+        Assert.True(vm.CanOpenNetworkSettings);
+        timer.Elapse();
+        Assert.False(vm.HasNote);
+        Assert.False(vm.CanOpenNetworkSettings);
+        Assert.Equal(ConnectStatus.On, host.Status);
+        await host.DisposeAsync();
+
+        var blocker = Listen(); // the port Connect wants, taken by another app
+        int taken = ((IPEndPoint)blocker.LocalEndpoint).Port;
+        var (failed, failedHost, _) = await CreateAsync(enabled: true, port: taken);
+        failed.SetVisible(true);
+        Assert.Equal(ConnectStatus.Failed, failedHost.Status);
+        Assert.Equal($"Port {taken} is in use by another app.", failed.DetailText);
+        timer.Elapse();
+        Assert.Equal("Connect couldn't start", failed.HeadlineText); // the state stays
+        Assert.Equal("Turn Connect off and on to try again.", failed.DetailText);
+        blocker.Stop();
+    }
+
+    /// <summary>Listens as Connect does (IPv4 and IPv6 where there is IPv6), on any free port.</summary>
+    private static System.Net.Sockets.TcpListener Listen()
+    {
+        try
+        {
+            var listener = new System.Net.Sockets.TcpListener(IPAddress.IPv6Any, 0);
+            listener.Server.DualMode = true;
+            listener.Start();
+            return listener;
+        }
+        catch (System.Net.Sockets.SocketException)
+        {
+            var listener = new System.Net.Sockets.TcpListener(IPAddress.Any, 0);
+            listener.Start();
+            return listener;
+        }
+    }
+
+    private sealed class WarningPlatform : IConnectPlatform
+    {
+        public Task<string?> AllowAsync(int port, CancellationToken token) => Task.FromResult<string?>("This network is set to Public, so phones may be kept out.");
+
+        public Task RemoveAsync(CancellationToken token) => Task.CompletedTask;
+
+        public bool CanOpenNetworkSettings => true;
+
+        public void OpenNetworkSettings()
+        {
         }
     }
 }

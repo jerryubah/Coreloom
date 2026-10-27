@@ -159,6 +159,7 @@ public partial class App : Application
         var memoryLog = new MemoryLogSink();
         InitializeLogging(paths, memoryLog);
         RegisterExceptionHandlers();
+        AutoDismiss.Context = SynchronizationContext.Current; // messages leave by themselves after five seconds
 
         bool importedSettings = paths.MigratePreviousSettings();
         if (importedSettings)
@@ -272,6 +273,7 @@ public partial class App : Application
         var startup = new StartupService();
 
         _splash?.SetStatus("Opening dashboard");
+        var frameRates = _frameRates = new Overlay.EtwFrameRateSource();
         var shell = new ShellViewModel(new ShellDependencies
         {
             Monitor = monitor,
@@ -290,6 +292,7 @@ public partial class App : Application
             {
                 DataDirectory = paths.SettingsDirectory,
                 Platform = new Services.ConnectFirewall(),
+                FrameRates = new Overlay.PhoneFrameRates(frameRates),
             },
             Tools = new ToolServices
             {
@@ -297,11 +300,12 @@ public partial class App : Application
                 SpeedTest = new SpeedTestService($"Coreloom/{app.DisplayVersion}"),
                 Optimizer = new WindowsOptimizeService(),
                 Devices = _devices = new WindowsDeviceService(),
-                Gaming = new WindowsGamingService(_frameRates = new Overlay.EtwFrameRateSource(), paths.LocalDirectory, $"Coreloom/{app.DisplayVersion}"),
+                Gaming = new WindowsGamingService(frameRates, paths.LocalDirectory, $"Coreloom/{app.DisplayVersion}"),
                 CoreScheduling = new WindowsCoreSchedulingService(),
             },
         });
         _shell = shell;
+        shellService.Messages = shell.ShowToast; // "Export failed" and the like show over the page, then leave
 
         // ---- Window & tray ----------------------------------------------------------------------
         var window = new MainWindow(shell)
@@ -891,8 +895,15 @@ public partial class App : Application
             if (!_exiting && DateTime.UtcNow - _lastCrashDialog > TimeSpan.FromSeconds(30))
             {
                 _lastCrashDialog = DateTime.UtcNow;
-                MessageBox.Show($"Something went wrong in Coreloom:\n\n{DescribeError(e.Exception)}\n\nThe error was logged. Coreloom will keep running.",
-                    "Coreloom", MessageBoxButton.OK, MessageBoxImage.Warning);
+                if (_shell is { } shell && MainWindow is { IsVisible: true })
+                {
+                    shell.ShowToast("Something went wrong in Coreloom", $"{DescribeError(e.Exception)} The error was logged; Coreloom keeps running.");
+                }
+                else
+                {
+                    MessageBox.Show($"Something went wrong in Coreloom:\n\n{DescribeError(e.Exception)}\n\nThe error was logged. Coreloom will keep running.",
+                        "Coreloom", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
             }
         };
 

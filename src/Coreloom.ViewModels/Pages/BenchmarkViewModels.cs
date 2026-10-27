@@ -187,6 +187,7 @@ public sealed class StorageBenchmarkViewModel : ObservableObject
     private double _progress;
     private string _status = "Measures how fast the drive reads and writes, using a temporary file that is deleted afterwards.";
     private string? _error;
+    private readonly Dismissal _errorDismissal = new();
     private string? _summary;
     private bool _hasResult;
     private bool _drivesLoaded;
@@ -274,7 +275,11 @@ public sealed class StorageBenchmarkViewModel : ObservableObject
     public string? Error
     {
         get => _error;
-        private set => SetProperty(ref _error, value);
+        private set
+        {
+            SetProperty(ref _error, value);
+            _errorDismissal.Update(value is not null, () => Error = null);
+        }
     }
 
     /// <summary>"C: · 1 GB test · finished in 31 s".</summary>
@@ -485,6 +490,7 @@ public sealed class SpeedTestViewModel : ObservableObject
     private string _phase = "Ready";
     private string _status = "Tests your connection with Cloudflare's speed test servers. On a fast connection a test uses a lot of data (about 1 GB at 1 Gbit/s).";
     private string? _error;
+    private readonly Dismissal _errorDismissal = new();
     private string? _server;
     private string? _finished;
     private bool _hasResult;
@@ -555,7 +561,11 @@ public sealed class SpeedTestViewModel : ObservableObject
     public string? Error
     {
         get => _error;
-        private set => SetProperty(ref _error, value);
+        private set
+        {
+            SetProperty(ref _error, value);
+            _errorDismissal.Update(value is not null, () => Error = null);
+        }
     }
 
     /// <summary>"Cloudflare · Lagos (LOS) · Example Telecom".</summary>

@@ -108,7 +108,17 @@ Phones see a computer's readings through a small server inside Coreloom, on the 
 - **Readings.** `ConnectHost.OnFrame` runs after the shell's own frame handling and builds a snapshot
   (`RemoteFeed`: names, formatted values, colours from the desktop's scales, health, specs, storage, network and
   battery) only while a phone is watching. `/api/live` long-polls up to 20 s; the first answer also carries the
-  last two minutes of chart history.
+  last two minutes of chart history. The snapshot's `update` says when this computer has a newer version
+  (`UpdatesViewModel.ShowBadge`), for the phone's notice bar.
+- **The phone's overlay (1.8.0).** A live request with `"overlay":true` keeps that session's `OverlayUntil` a long
+  poll plus ten seconds ahead; `ConnectServer.OverlayWatched` is true while any session's is, and
+  `OverlayWatchedChanged` tells `ConnectHost`. While watched, the host starts `IForegroundFrameRates` (Windows:
+  `PhoneFrameRates`, a lease named "phone overlay" on the shared `EtwFrameRateSource`, for the foreground window's
+  program; a Mac has none) and a 500 ms timer republishes the last snapshot with an `overlay` part from
+  `RemoteOverlay`: `values` (every overlay reading this computer has, the in-game overlay's items and look, built on
+  the UI thread with each frame) and `live` (the program, its FPS and the frame times shown since the last
+  publish, on the host's own clock so the phone can place them). The readings use `OverlayReadings`, which the
+  in-game overlay shares. What a phone chooses to show stays in its own storage.
 - **Platform.** `IConnectPlatform` lets Windows add and remove its firewall rule (`netsh advfirewall`, private and
   domain profiles, Coreloom's own program and port) and check whether the network is Public
   (`Get-NetConnectionProfile`). macOS needs no permission to accept connections (Apple TN3179); the Mac app's

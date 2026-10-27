@@ -215,6 +215,7 @@ public sealed class SettingsViewModel : PageViewModel
     private readonly SettingsDependencies _deps;
     private bool _restartRequired;
     private string? _startupMessage;
+    private readonly Dismissal _startupDismissal = new();
     private bool _isApplyingStartup;
     private string _overheadText = "—";
     private DateTime _lastProviderRefresh = DateTime.MinValue;
@@ -559,10 +560,27 @@ public sealed class SettingsViewModel : PageViewModel
         set => Change("Desktop", s => s.Desktop.HideDockIconWhenClosed = value);
     }
 
+    /// <summary>How Coreloom starts with the computer, or (for five seconds) why that couldn't be set up.</summary>
     public string? StartupMessage
     {
         get => _startupMessage;
         private set => SetProperty(ref _startupMessage, value);
+    }
+
+    private string? StartupExplanation() => !Settings.Current.Desktop.StartWithWindows ? null
+        : IsMac ? "Opens at login (listed in System Settings › General › Login Items)."
+        : "Starts at sign-in with administrator rights through Task Scheduler, so there is no UAC prompt.";
+
+    private void ShowStartupProblem(string problem)
+    {
+        StartupMessage = problem;
+        _startupDismissal.Update(true, () =>
+        {
+            if (StartupMessage == problem)
+            {
+                StartupMessage = StartupExplanation();
+            }
+        });
     }
 
     /// <summary>
@@ -581,22 +599,22 @@ public sealed class SettingsViewModel : PageViewModel
         {
             var desktop = Settings.Current.Desktop;
             bool ok = await _deps.Startup.SetStartAtLogonAsync(desktop.StartWithWindows, desktop.LaunchMinimized);
-            StartupMessage = IsMac
-                ? !ok
+            if (!ok)
+            {
+                ShowStartupProblem(IsMac
                     ? "Could not update the login item. Check System Settings › General › Login Items, or the log in Settings › Diagnostics."
-                    : desktop.StartWithWindows
-                        ? "Opens at login (listed in System Settings › General › Login Items)."
-                        : null
-                : !ok
-                    ? "Could not update the sign-in task. Check Task Scheduler or the log in Settings › Diagnostics."
-                    : desktop.StartWithWindows
-                        ? "Starts at sign-in with administrator rights through Task Scheduler, so there is no UAC prompt."
-                        : null;
+                    : "Could not update the sign-in task. Check Task Scheduler or the log in Settings › Diagnostics.");
+            }
+            else
+            {
+                _startupDismissal.Cancel();
+                StartupMessage = StartupExplanation();
+            }
         }
         catch (Exception ex)
         {
             Log.Warn("Startup", "Updating startup registration failed.", ex);
-            StartupMessage = $"Could not update startup registration: {ex.Message}";
+            ShowStartupProblem($"Could not update startup registration: {ex.Message}");
         }
         finally
         {

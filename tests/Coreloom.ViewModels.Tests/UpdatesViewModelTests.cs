@@ -729,4 +729,25 @@ public sealed class UpdatesViewModelTests : IDisposable
 
         public IReadOnlyList<Coreloom.Core.Diagnostics.LogEntry> RecentLog() => [];
     }
+
+    [Fact]
+    public async Task AFailedCheck_LeavesAfterFiveSeconds()
+    {
+        using var timer = new ManualDismissals();
+        var updates = Create();
+        _github.Fail = true;
+        await updates.CheckAsync(userInitiated: true);
+        Assert.Equal(UpdatePhase.Failed, updates.Phase);
+        Assert.Equal("Couldn't check for updates", updates.HeadlineText);
+
+        timer.Elapse();
+        Assert.Equal(UpdatePhase.Idle, updates.Phase);
+        Assert.DoesNotContain("Couldn't", updates.HeadlineText);
+        Assert.Equal(0, timer.Waiting);
+
+        _github.Fail = false;
+        await updates.CheckAsync(userInitiated: true);
+        Assert.Equal(0, timer.Waiting); // nothing went wrong: nothing to dismiss
+    }
+
 }

@@ -424,6 +424,7 @@ public sealed class BenchmarkingViewModel : PageViewModel
     private bool _isStressRunning;
     private string _status = "Close other apps for the steadiest scores. Each benchmark takes about a minute.";
     private string? _error;
+    private readonly Dismissal _errorDismissal = new();
     private BenchmarkFilterOption _filter;
     private GpuAdapter? _selectedCard;
     private bool _cardsLoaded;
@@ -637,6 +638,8 @@ public sealed class BenchmarkingViewModel : PageViewModel
             {
                 OnPropertyChanged(nameof(HasError));
             }
+
+            _errorDismissal.Update(!string.IsNullOrEmpty(value), () => Error = null);
         }
     }
 

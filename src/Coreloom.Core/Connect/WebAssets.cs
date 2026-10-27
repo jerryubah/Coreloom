@@ -77,6 +77,7 @@ public sealed class WebAssets
         ".png" => "image/png",
         ".ico" => "image/x-icon",
         ".woff2" => "font/woff2",
+        ".mp4" => "video/mp4",
         ".txt" => "text/plain; charset=utf-8",
         _ => "application/octet-stream",
     };

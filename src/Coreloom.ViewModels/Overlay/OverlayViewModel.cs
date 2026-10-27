@@ -170,8 +170,7 @@ public sealed class OverlayViewModel : ObservableObject
     private int? _processId;
     private int _pacingCap;
     private string _layoutKey = string.Empty;
-    private int _fanCatalogVersion = -1;
-    private IReadOnlyList<string> _cpuFanIds = [];
+    private readonly OverlayReadings _readings;
     private double _screenScale = 1;
     private double? _liveScale;
     private bool _isMoving;
@@ -180,6 +179,7 @@ public sealed class OverlayViewModel : ObservableObject
     public OverlayViewModel(PageContext context)
     {
         _context = context;
+        _readings = new OverlayReadings(context);
         FrameTimes = new Feed(this);
         FinishMovingCommand = new RelayCommand(() => IsMoving = false);
         context.Settings.Changed += OnSettingsChanged;
@@ -455,7 +455,7 @@ public sealed class OverlayViewModel : ObservableObject
 
         if (_values.TryGetValue(OverlayCatalog.CpuFan, out var cpuFan))
         {
-            var formatted = CpuFanRpm(frame) is double rpm ? ValueStyles.Format(ValueStyle.Fan, rpm, f) : FormattedValue.Unavailable;
+            var formatted = _readings.CpuFan(frame);
             cpuFan.Number = formatted.Number;
             cpuFan.Unit = formatted.Unit;
             cpuFan.Color = Options.TextColor;
@@ -505,30 +505,7 @@ public sealed class OverlayViewModel : ObservableObject
         return $"{slot}|{Options.ShowLabels}|{string.Join(',', shown)}";
     }
 
-    private bool IsAvailable(string id, TelemetryFrame frame, int slot) => id switch
-    {
-        OverlayCatalog.CpuFan => CpuFanRpm(frame) is not null,
-        OverlayCatalog.GpuFan => frame.Contains(MetricIds.GpuFanRpm(slot, 1)) || frame.Contains(MetricIds.GpuFanPercent(slot, 1)),
-        OverlayCatalog.CpuClock => frame.Contains(MetricIds.CpuClockEffectiveAverage) || frame.Contains(MetricIds.CpuClockDerived),
-        _ => MetricIdFor(id, slot) is { } metricId && frame.Contains(metricId),
-    };
-
-    private static string? MetricIdFor(string id, int slot) => id switch
-    {
-        OverlayCatalog.GpuLoad => MetricIds.GpuLoad(slot),
-        OverlayCatalog.GpuTemperature => MetricIds.GpuTemperature(slot),
-        OverlayCatalog.GpuHotSpot => MetricIds.GpuHotSpotTemperature(slot),
-        OverlayCatalog.GpuPower => MetricIds.GpuPower(slot),
-        OverlayCatalog.GpuClock => MetricIds.GpuCoreClock(slot),
-        OverlayCatalog.GpuMemoryClock => MetricIds.GpuMemoryClock(slot),
-        OverlayCatalog.GpuMemory => MetricIds.GpuMemoryUsed(slot),
-        OverlayCatalog.GpuVoltage => MetricIds.GpuVoltage(slot),
-        OverlayCatalog.CpuLoad => MetricIds.CpuLoad,
-        OverlayCatalog.CpuTemperature => MetricIds.CpuTemperature,
-        OverlayCatalog.CpuPower => MetricIds.CpuPower,
-        OverlayCatalog.Ram => MetricIds.MemoryUsed,
-        _ => null,
-    };
+    private bool IsAvailable(string id, TelemetryFrame frame, int slot) => _readings.IsAvailable(id, frame, slot);
 
     private void Rebuild(TelemetryFrame frame)
     {
@@ -626,57 +603,7 @@ public sealed class OverlayViewModel : ObservableObject
         _ => "RAM",
     };
 
-    private MetricViewModel? MetricFor(string id, int slot, TelemetryFrame? frame = null)
-    {
-        var settings = _context.Settings.Current;
-        return id switch
-        {
-            OverlayCatalog.GpuLoad => new(MetricIds.GpuLoad(slot), "GPU", ValueStyle.Percent, thresholds: Thresholds.Load),
-            OverlayCatalog.GpuTemperature => new(MetricIds.GpuTemperature(slot), "GPU temperature", ValueStyle.Temperature,
-                thresholds: SystemHealthViewModel.AlertThresholds(settings, "gpu-temp", Thresholds.GpuTemperature, 8)),
-            OverlayCatalog.GpuHotSpot => new(MetricIds.GpuHotSpotTemperature(slot), "Hot spot", ValueStyle.Temperature, thresholds: new Thresholds(90, 100, 60)),
-            OverlayCatalog.GpuPower => new(MetricIds.GpuPower(slot), "GPU power", ValueStyle.Power),
-            OverlayCatalog.GpuClock => new(MetricIds.GpuCoreClock(slot), "GPU clock", ValueStyle.ClockMegahertz),
-            OverlayCatalog.GpuMemoryClock => new(MetricIds.GpuMemoryClock(slot), "Memory clock", ValueStyle.ClockMegahertz),
-            OverlayCatalog.GpuMemory => new(MetricIds.GpuMemoryUsed(slot), "VRAM", ValueStyle.MemoryBytes),
-            OverlayCatalog.GpuFan => frame is null || frame.Contains(MetricIds.GpuFanRpm(slot, 1))
-                ? new(MetricIds.GpuFanRpm(slot, 1), "GPU fan", ValueStyle.Fan)
-                : new(MetricIds.GpuFanPercent(slot, 1), "GPU fan", ValueStyle.Percent),
-            OverlayCatalog.GpuVoltage => new(MetricIds.GpuVoltage(slot), "GPU voltage", ValueStyle.Millivolts),
-            OverlayCatalog.CpuLoad => new(MetricIds.CpuLoad, "CPU", ValueStyle.Percent, thresholds: Thresholds.Load),
-            OverlayCatalog.CpuTemperature => new(MetricIds.CpuTemperature, "CPU temperature", ValueStyle.Temperature,
-                thresholds: SystemHealthViewModel.AlertThresholds(settings, "cpu-temp", Thresholds.CpuTemperature, 10)),
-            OverlayCatalog.CpuPower => new(MetricIds.CpuPower, "CPU power", ValueStyle.Power),
-            OverlayCatalog.CpuClock => frame is null || frame.Contains(MetricIds.CpuClockEffectiveAverage)
-                ? new(MetricIds.CpuClockEffectiveAverage, "CPU clock", ValueStyle.ClockGigahertz)
-                : new(MetricIds.CpuClockDerived, "CPU clock", ValueStyle.ClockGigahertz),
-            OverlayCatalog.Ram => new(MetricIds.MemoryUsed, "RAM", ValueStyle.MemoryBytes),
-            _ => null,
-        };
-    }
-
-    private double? CpuFanRpm(TelemetryFrame frame)
-    {
-        var catalog = _context.Monitor.Engine.Catalog;
-        if (catalog.Version != _fanCatalogVersion)
-        {
-            _fanCatalogVersion = catalog.Version;
-            _cpuFanIds = PcFans.Classify(catalog
-                .Where(d => d.Kind == MetricKind.Fan && d.Id.StartsWith("board/fan/", StringComparison.Ordinal))
-                .Select(d => new PcFanSensor(d.Id, d.Name))).Cpu.Select(s => s.Id).ToArray();
-        }
-
-        double? rpm = null;
-        foreach (string id in _cpuFanIds)
-        {
-            if (frame.TryGetValue(id, out double value))
-            {
-                rpm = Math.Max(rpm ?? 0, value);
-            }
-        }
-
-        return rpm;
-    }
+    private MetricViewModel? MetricFor(string id, int slot, TelemetryFrame? frame = null) => _readings.MetricFor(id, slot, frame);
 
     /// <summary>The graph's view of the frame-rate source: the program in front, and its pacing target.</summary>
     private sealed class Feed(OverlayViewModel overlay) : IFrameTimeFeed

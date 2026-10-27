@@ -68,6 +68,8 @@ public sealed class UpdatesViewModel : ObservableObject
     private DateTime _readySinceUtc;
     private string? _problem;
     private string? _failedHeadline;
+    private string? _problemShown;
+    private readonly Dismissal _problemDismissal = new();
     private string? _resultMessage;
     private double _progress;
     private string? _progressText;
@@ -923,8 +925,38 @@ public sealed class UpdatesViewModel : ObservableObject
     private static string WithTail(string? summary, string tail) =>
         string.IsNullOrWhiteSpace(summary) ? tail : $"{summary} {tail}";
 
+    /// <summary>
+    /// What went wrong leaves after five seconds: a failed check goes back to "You have Coreloom …", and an update that
+    /// couldn't download or install goes back to offering it (trying again shows the problem again if it's still there).
+    /// </summary>
+    private void DismissProblemLater()
+    {
+        string? problem = IsBusy ? null : _problem ?? (_phase == UpdatePhase.Failed ? _failedHeadline ?? string.Empty : null);
+        if (problem == _problemShown)
+        {
+            return;
+        }
+
+        _problemShown = problem;
+        _problemDismissal.Update(problem is not null, () =>
+        {
+            _problemShown = null;
+            _problem = null;
+            _failedHeadline = null;
+            if (_phase == UpdatePhase.Failed)
+            {
+                Phase = UpdatePhase.Idle;
+            }
+            else
+            {
+                RaiseState();
+            }
+        });
+    }
+
     private void RaiseState()
     {
+        DismissProblemLater();
         OnPropertyChanged(nameof(IsChecking));
         OnPropertyChanged(nameof(IsDownloading));
         OnPropertyChanged(nameof(IsReady));

@@ -716,4 +716,30 @@ public class GamingViewModelTests
         Assert.Equal("582.10", settings2.Current.Gaming.LastDriverVersion);
         settings2.Dispose();
     }
+
+    [Fact]
+    public async Task WhatASwitchDid_LeavesAfterFiveSeconds_AndItsStatusStays()
+    {
+        using var timer = new ManualDismissals();
+        var (page, fake, settings) = Create(f => f.Refuse = GamingTweak.UltimatePower);
+        var power = page.Boosts.Single(b => b.Tweak == GamingTweak.UltimatePower);
+        string? note = power.Message;
+        power.IsOn = true;
+        await Task.Yield();
+        Assert.Equal("Windows didn't allow the change.", power.Message);
+        timer.Elapse();
+        Assert.Equal(note, power.Message);
+
+        await page.ApplyAllCommand.ExecuteAsync(null);
+        var gpu = page.Boosts.Single(b => b.Tweak == GamingTweak.GpuScheduling);
+        Assert.Equal("Restart Windows to finish.", gpu.Message); // still there after the other switches' refreshes
+        Assert.NotNull(page.HeroMessage);
+        timer.Elapse();
+        Assert.Null(page.HeroMessage);
+        Assert.Null(gpu.Message);
+        Assert.Equal("Restart to finish", gpu.StatusText); // the state stays
+        Assert.True(page.RestartPending);
+        settings.Dispose();
+    }
+
 }

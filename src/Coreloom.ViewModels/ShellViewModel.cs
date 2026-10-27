@@ -64,6 +64,11 @@ public sealed class ShellViewModel : ObservableObject
     private bool _coveredByGame;
     private bool _pageActive = true;
     private bool _bannerDismissed;
+    private bool _bannerTiming;
+    private readonly Dismissal _bannerDismissal = new();
+    private string? _toastTitle;
+    private string? _toastText;
+    private readonly Dismissal _toastDismissal = new();
     private string _trayText = "Coreloom";
     private long _lastFrameSequence;
 
@@ -86,6 +91,13 @@ public sealed class ShellViewModel : ObservableObject
         History = new HistoryViewModel(context, deps.Shell);
         Optimize = new OptimizeViewModel(context);
         Connect = deps.Connect is { } connect ? new Connect.ConnectHost(context, connect, deps.App.DisplayVersion) : null;
+        if (Connect is not null)
+        {
+            // Phones say when this computer has an update waiting (they can't install it: that's done here).
+            Connect.UpdateNotice = () => deps.Updates.ShowBadge && deps.Updates.UpdateVersion is { } version
+                ? new Connect.RemoteUpdate(version, deps.Updates.Phase == UpdatePhase.Ready)
+                : null;
+        }
         Settings = new SettingsViewModel(context, new SettingsDependencies
         {
             Theme = deps.Theme,
@@ -130,7 +142,9 @@ public sealed class ShellViewModel : ObservableObject
         {
             _bannerDismissed = true;
             OnPropertyChanged(nameof(ShowLimitedModeBanner));
+            DismissBannerLater();
         });
+        DismissToastCommand = new RelayCommand(HideToast);
         OpenUpdatesCommand = new RelayCommand(() =>
         {
             Settings.SelectedSection = "Updates";
@@ -153,6 +167,7 @@ public sealed class ShellViewModel : ObservableObject
 
         ApplySettings("All");
         _currentPage.Activate(deps.Monitor.Engine.LatestFrame);
+        DismissBannerLater();
     }
 
     public TimelineViewModel Timeline { get; }
@@ -215,6 +230,59 @@ public sealed class ShellViewModel : ObservableObject
     public IRelayCommand OpenPawnIoCommand { get; }
 
     public IRelayCommand DismissBannerCommand { get; }
+
+    public IRelayCommand DismissToastCommand { get; }
+
+    /// <summary>A message shown over the page ("Export failed"), instead of a dialog that waits to be closed.</summary>
+    public string? ToastTitle
+    {
+        get => _toastTitle;
+        private set => SetProperty(ref _toastTitle, value);
+    }
+
+    public string? ToastText
+    {
+        get => _toastText;
+        private set
+        {
+            if (SetProperty(ref _toastText, value))
+            {
+                OnPropertyChanged(nameof(HasToast));
+            }
+        }
+    }
+
+    public bool HasToast => _toastText is not null;
+
+    /// <summary>Shows a message over the page for five seconds (what the platform's ShowMessage does once the window exists).</summary>
+    public void ShowToast(string title, string message)
+    {
+        ToastTitle = title;
+        ToastText = message;
+        _toastDismissal.Update(true, HideToast);
+    }
+
+    private void HideToast()
+    {
+        _toastDismissal.Cancel();
+        ToastText = null;
+        ToastTitle = null;
+    }
+
+    /// <summary>The limited-mode banner leaves by itself after it's been on screen for five seconds, as if dismissed.</summary>
+    private void DismissBannerLater()
+    {
+        bool timing = ShowLimitedModeBanner && _pageActive;
+        if (timing != _bannerTiming)
+        {
+            _bannerTiming = timing;
+            _bannerDismissal.Update(timing, () =>
+            {
+                _bannerTiming = false;
+                DismissBannerCommand.Execute(null);
+            });
+        }
+    }
 
     public IRelayCommand OpenUpdatesCommand { get; }
 
@@ -397,6 +465,7 @@ public sealed class ShellViewModel : ObservableObject
         }
 
         _pageActive = active;
+        DismissBannerLater();
         if (active)
         {
             _currentPage.Activate(_deps.Monitor.Engine.LatestFrame);

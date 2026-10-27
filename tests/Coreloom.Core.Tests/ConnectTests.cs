@@ -567,6 +567,47 @@ public sealed class ConnectServerTests
     }
 
     [Fact]
+    public async Task APhoneShowingItsOverlay_IsWatchedUntilItStopsAsking()
+    {
+        await using var running = Start();
+        _pairing.Open();
+        var paired = await PairAsync("code", Encoding.ASCII.GetBytes(_pairing.Current!.Code), "Test Phone");
+        var session = await OpenSessionAsync(paired!.Value);
+        var changes = new List<bool>();
+        _server.OverlayWatchedChanged += () =>
+        {
+            lock (changes)
+            {
+                changes.Add(_server.OverlayWatched);
+            }
+        };
+        _server.Publish("""{"t":1}"""u8.ToArray());
+        Assert.False(_server.OverlayWatched);
+
+        using (var watching = await session.PostAsync("/api/live", new { after = 0, overlay = true }))
+        {
+            Assert.Equal(HttpStatusCode.OK, watching.StatusCode);
+        }
+
+        Assert.True(_server.OverlayWatched);
+        using (var still = await session.PostAsync("/api/live", new { after = 0, overlay = true }))
+        {
+            Assert.Equal(HttpStatusCode.OK, still.StatusCode);
+        }
+
+        using (var other = await session.PostAsync("/api/live", new { after = 0 })) // another tab
+        {
+            Assert.Equal(HttpStatusCode.OK, other.StatusCode);
+        }
+
+        Assert.False(_server.OverlayWatched);
+        lock (changes)
+        {
+            Assert.Equal(new[] { true, false }, changes); // told once each way
+        }
+    }
+
+    [Fact]
     public async Task ALinkPairsOnceAndAWrongSecretIsRefused()
     {
         await using var running = Start();

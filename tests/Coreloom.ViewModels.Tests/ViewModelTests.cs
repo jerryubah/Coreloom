@@ -542,4 +542,22 @@ public class ShellViewModelTests
         Assert.False(first.Option.IsSelected);
         settings.Dispose();
     }
+
+    [Fact]
+    public void AMessage_ShowsOverThePage_AndLeavesAfterFiveSeconds()
+    {
+        using var timer = new ManualDismissals();
+        var (shell, _, settings, _) = Create();
+        shell.ShowToast("Export failed", "The disk is full.");
+        Assert.True(shell.HasToast);
+        Assert.Equal("Export failed", shell.ToastTitle);
+        timer.Elapse();
+        Assert.False(shell.HasToast);
+
+        shell.ShowToast("Export failed", "The disk is full.");
+        shell.DismissToastCommand.Execute(null);
+        Assert.False(shell.HasToast);
+        Assert.Equal(0, timer.Waiting);
+        settings.Dispose();
+    }
 }

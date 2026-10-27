@@ -143,6 +143,9 @@ public sealed class GamingTweakViewModel : ObservableObject
     private IRelayCommand? _detailsCommand;
     private bool _isBusy;
     private string? _message;
+    private string? _note;
+    private bool _showingOutcome;
+    private readonly Dismissal _outcomeDismissal = new();
     private bool? _pending;
 
     private string? _recommendation;
@@ -276,17 +279,32 @@ public sealed class GamingTweakViewModel : ObservableObject
         }
     }
 
-    /// <summary>Why it can't be used, what went wrong, or that a restart is needed.</summary>
+    /// <summary>
+    /// Why it can't be used (or a hint), which stays; or, for five seconds after the switch is used, what went wrong or
+    /// that a restart is needed (the status keeps saying "Restart to finish").
+    /// </summary>
     public string? Message
     {
         get => _message;
-        set
+        private set
         {
             if (SetProperty(ref _message, value))
             {
                 OnPropertyChanged(nameof(HasMessage));
             }
         }
+    }
+
+    /// <summary>Shows how using the switch went for five seconds, then the usual note again; null shows the note now.</summary>
+    internal void ShowOutcome(string? message)
+    {
+        _showingOutcome = message is not null;
+        Message = message ?? _note;
+        _outcomeDismissal.Update(_showingOutcome, () =>
+        {
+            _showingOutcome = false;
+            Message = _note;
+        });
     }
 
     public bool HasMessage => !string.IsNullOrEmpty(_message);
@@ -302,7 +320,12 @@ public sealed class GamingTweakViewModel : ObservableObject
     {
         _status = status;
         _pending = null;
-        Message = status.NeedsRestart ? "Restart Windows to finish." : status.Note; // why it can't be used, or a hint
+        _note = status.NeedsRestart ? null : status.Note; // why it can't be used, or a hint
+        if (!_showingOutcome)
+        {
+            Message = _note;
+        }
+
         OnPropertyChanged(nameof(IsSupported));
         OnPropertyChanged(nameof(IsOn));
         OnPropertyChanged(nameof(NeedsRestart));
@@ -331,6 +354,7 @@ public sealed class FramePacerViewModel : ObservableObject
     private readonly GamingViewModel _page;
     private bool _isBusy;
     private string? _message;
+    private readonly Dismissal _messageDismissal = new();
     private bool _hasLive;
     private string _liveFps = "—";
     private string _liveLow = "—";
@@ -623,6 +647,7 @@ public sealed class FramePacerViewModel : ObservableObject
 
     public bool HasGameCaps => _gameCaps.Count > 0;
 
+    /// <summary>What went wrong, or that the game needs a restart; leaves after five seconds.</summary>
     public string? Message
     {
         get => _message;
@@ -632,6 +657,8 @@ public sealed class FramePacerViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(HasMessage));
             }
+
+            _messageDismissal.Update(!string.IsNullOrEmpty(value), () => Message = null);
         }
     }
 
@@ -810,6 +837,9 @@ public sealed class GamingViewModel : PageViewModel
     private RunningGame? _running;
     private bool _watching;
     private string? _heroMessage;
+    private readonly Dismissal _heroDismissal = new();
+    private readonly Dismissal _driverNoticeDismissal = new();
+    private bool _driverNoticeShowing;
 
     public GamingViewModel(PageContext context)
         : base("gaming", "Gaming", "Icon.Controller", context)
@@ -1008,7 +1038,7 @@ public sealed class GamingViewModel : PageViewModel
 
     public string ReadinessColorKey => AllBoostsOn ? ColorKeys.ToneCool : Readiness >= 0.5 ? ColorKeys.ToneNormal : ColorKeys.ToneWarm;
 
-    /// <summary>What the last "Boost now" did.</summary>
+    /// <summary>What the last "Boost now" (or adding, removing or starting a game) did; leaves after five seconds.</summary>
     public string? HeroMessage
     {
         get => _heroMessage;
@@ -1018,6 +1048,8 @@ public sealed class GamingViewModel : PageViewModel
             {
                 OnPropertyChanged(nameof(HasHeroMessage));
             }
+
+            _heroDismissal.Update(!string.IsNullOrEmpty(value), () => HeroMessage = null);
         }
     }
 
@@ -1226,6 +1258,7 @@ public sealed class GamingViewModel : PageViewModel
 
     protected override void OnActivated()
     {
+        DismissDriverNoticeLater();
         if (!IsLoaded && !IsScanning)
         {
             _ = LoadAsync();
@@ -1237,7 +1270,11 @@ public sealed class GamingViewModel : PageViewModel
         }
     }
 
-    protected override void OnDeactivated() => Watch(false);
+    protected override void OnDeactivated()
+    {
+        Watch(false);
+        DismissDriverNoticeLater(); // not on screen: it waits for the next visit
+    }
 
     protected override void OnUpdate(TelemetryFrame frame)
     {
@@ -1634,6 +1671,22 @@ public sealed class GamingViewModel : PageViewModel
         OnPropertyChanged(nameof(FrameLimitText));
         OnPropertyChanged(nameof(DriverNotice));
         OnPropertyChanged(nameof(HasDriverNotice));
+        DismissDriverNoticeLater();
+    }
+
+    /// <summary>The driver notice leaves by itself five seconds after it's been on screen, as if dismissed.</summary>
+    private void DismissDriverNoticeLater()
+    {
+        bool showing = HasDriverNotice && IsActive;
+        if (showing != _driverNoticeShowing)
+        {
+            _driverNoticeShowing = showing;
+            _driverNoticeDismissal.Update(showing, () =>
+            {
+                _driverNoticeShowing = false;
+                DismissDriverNotice();
+            });
+        }
     }
 
     private void ApplyShaderCaches()
@@ -1697,7 +1750,7 @@ public sealed class GamingViewModel : PageViewModel
             tweak.Apply(CoreScheduling.Status);
             if (!outcome.Success)
             {
-                tweak.Message = outcome.Message;
+                tweak.ShowOutcome(outcome.Message);
             }
 
             HeroChanged();
@@ -1705,7 +1758,7 @@ public sealed class GamingViewModel : PageViewModel
         }
 
         tweak.IsBusy = true;
-        tweak.Message = null;
+        tweak.ShowOutcome(null);
         TweakResult result;
         try
         {
@@ -1724,11 +1777,11 @@ public sealed class GamingViewModel : PageViewModel
         await RefreshStatusAsync(force: true);
         if (!result.Success)
         {
-            tweak.Message = result.Message;
+            tweak.ShowOutcome(result.Message);
         }
         else if (result.NeedsRestart || tweak.NeedsRestart)
         {
-            tweak.Message = "Restart Windows to finish.";
+            tweak.ShowOutcome("Restart Windows to finish.");
         }
 
         HeroChanged();

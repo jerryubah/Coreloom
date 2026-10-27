@@ -79,8 +79,17 @@ public sealed class ShellService : IShellService
         return dialog.ShowDialog(Application.Current?.MainWindow) == true ? dialog.FileName : null;
     }
 
+    /// <summary>Where messages go once the window exists (shown over the page for five seconds instead of a dialog).</summary>
+    public Action<string, string>? Messages { get; set; }
+
     public void ShowMessage(string title, string message)
     {
+        if (Messages is { } show && Application.Current?.MainWindow is { IsVisible: true })
+        {
+            show(title, message);
+            return;
+        }
+
         var owner = Application.Current?.MainWindow;
         if (owner is { IsVisible: true })
         {

@@ -180,9 +180,12 @@ export class Session {
     return { n, bytes: new Uint8Array(await response.arrayBuffer()) };
   }
 
-  /** The next readings after `after` (waits up to 20 s on the computer), or null when nothing new came. */
-  async live(after) {
-    const { n, bytes } = await this.request('/api/live', { after }, 35000);
+  /**
+   * The next readings after `after` (waits up to 20 s on the computer), or null when nothing new came. `overlay` says
+   * this phone shows its overlay, so the computer measures the game's frame rate and sends it twice a second.
+   */
+  async live(after, overlay = false) {
+    const { n, bytes } = await this.request('/api/live', overlay ? { after, overlay: true } : { after }, 35000);
     if (!bytes) return null;
     const plain = open(this.encryptKey, bytes, `coreloom/live\n${n}`);
     if (!plain) throw new ConnectError('tampered');
@@ -227,6 +230,7 @@ export class LiveFeed {
     this.failures = 0;
     this.wake = null;
     this.status = 'connecting';
+    this.wantsOverlay = false;
   }
 
   start() {
@@ -272,7 +276,7 @@ export class LiveFeed {
           this.after = 0;
         }
 
-        const data = await this.session.live(this.after);
+        const data = await this.session.live(this.after, this.wantsOverlay);
         this.failures = 0;
         if (data) {
           this.after = data.seq;
