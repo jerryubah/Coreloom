@@ -773,6 +773,13 @@ unchanged.
 | The real Mac app serves Connect | Mac verify runs 40460769693 and 40489520359 (the release commit): Connect turned on in the saved settings, Coreloom reopened: `/api/info`, the page (with its Content-Security-Policy), every script, the manifest, an icon and a font answer 200 on port 47101, also from the Mac's own network address (192.168.64.x); `Host: evil.example.com` gets 421; pairing is closed until Settings › Connect shows, then open (and photographed); Coreloom quits cleanly on SIGTERM and stops answering. The first run's picture said "Phones on en0": the network is now named as the Network page names it ("Ethernet" on the runners) | ✅ Apple silicon and Intel |
 | Windows: an off-curve key | Windows' CNG reports it with `PlatformNotSupportedException`, which the first CI run caught; `SharedSecret` now refuses it on every platform | ✅ |
 
+### Updating to 1.7.0 on a Mac
+
+| Run | Result |
+|---|---|
+| The published 1.6.1 app (downloaded from its release) → the published 1.7.0, runs 40492628869 and the re-run on `macupdatetest-170-b` | ✅ Apple silicon and Intel, both times: found and verified in about 20 s, replaced after quitting, 1.7.0 running with "Coreloom was updated to 1.7.0" |
+| 0.9.0 (built from 1.7.0's code) → the published 1.7.0, same runs | ✅ Intel, both times. ❌ Apple silicon, both times: GitHub answered the update check with its rate limit ("GitHub rate limit reached", the 60 requests an hour GitHub allows a shared runner address without signing in), so nothing was downloaded within the test's 10 minutes; after reopening, the first run did download and verify 1.7.0. The same Mac updated the 1.6.1 app minutes later. On a home connection the limit is per household, and Coreloom says "try again later" when it's hit |
+
 ### Not verified yet
 
 - **A real phone on a real home network.** No iPhone or Android phone has opened Coreloom yet: Safari's and
