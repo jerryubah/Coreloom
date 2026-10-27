@@ -797,6 +797,32 @@ unchanged.
   computer over plain HTTP, so someone able to tamper with the network's traffic could serve a changed page;
   phones can only read, so the readings are what's at stake.
 
+## 1.8.0: the phone's Overlay tab, messages that leave, the Mac sidebar
+
+### Verified
+
+| What | How | Result |
+|---|---|---|
+| The overlay channel | `ConnectServerTests.APhoneShowingItsOverlay_IsWatchedUntilItStopsAsking`: a live request with `"overlay":true` makes the server watched (told once), another without it ends that; `RemoteOverlayTests`: the readings on offer (more than the in-game overlay shows, none this computer lacks, none for frame rates on a computer that can't measure them), the in-game overlay's items and look, frame times sent once each on the computer's clock and afresh for another game | ✅ in the container and on GitHub's Windows machine (CI run 40582329983: Core 737, view models 199, Hardware 83, all passed) and Linux |
+| The Overlay tab, the real phone app | Playwright with Chromium at iPhone size against the demo server, which pretends a game runs at about 141 FPS with stutters: the game, FPS and frame time, the graph moving with stutters marked, readings added and removed (kept on the phone), *Same as my computer*, the switch off, full screen upright and sideways, dark and light; `connect.js` in Node 16 of 16 | ✅ the only console errors are the deliberate wrong code's 403 and requests cut off by reloads |
+| The update notice on the phone | The demo server told to offer 1.8.1: the bar says *Coreloom 1.8.1 is available*, × keeps it closed for that version | ✅ |
+| Messages leave after five seconds | View-model tests with a stand-in timer: a refused switch (the note comes back, the "Restart to finish" status stays), *Boost now*'s result, a failed update check (back to "You have Coreloom …"), Bluetooth and radio errors, the low-battery banner (once per charge), maintenance and Defender outcomes (not while working), Connect's firewall note and why it couldn't start, the message that replaced the *Export failed* dialog; the timer itself runs the dismissal on the UI thread and never after being cancelled. The phone: the wrong-code message is gone after 5 s | ✅ in the container, on Windows and Linux (run 40582329983); the Mac tests passed on both Macs (187 + 1 skipped on Apple silicon, 188 on Intel) |
+| Windows pages | Page shots (run 40582333493: Gaming, Benchmarking, Graphics, Processor, Memory, Storage, Smart Optimize, Settings › Connect) and the XAML checker; the WPF window with the new message over the page compiled in CI | ✅ |
+| The Mac sidebar below the traffic lights | MacShots (0 binding errors) and the real app on GitHub's Macs (Mac verify run 40582339670): on the Intel Mac's 1920 × 1080 screen with the sidebar wide, and the Apple silicon Mac's 1024 × 768 screen with it narrow, the close, minimize and zoom buttons sit on the backdrop above the sidebar; every page, Connect on port 47101 and a clean quit passed on both | ✅ Apple silicon and Intel |
+
+### Not verified yet
+
+- **A real game's frame rate on a real phone.** The phone's overlay has only been fed by the demo server's pretend
+  game. On a real PC it measures the program in front from Windows' graphics events, as the in-game overlay does,
+  under its own name ("phone overlay"), so it works with the in-game overlay off; that hasn't run with a real game.
+- **Keeping the screen on.** Full screen asks for a wake lock where the browser offers one (HTTPS pages only, so not
+  Coreloom's) and otherwise plays a 3 KB silent video in a loop, which is how iPhones and Android phones are usually
+  kept awake from a web page. Not tried on a real phone; the phone's own Auto-Lock wins if it doesn't take.
+- Full screen on an iPhone: Safari only offers full screen for videos, so on an iPhone the button fills the page
+  instead (open from the Home Screen icon for the most room).
+- The five-second messages on real Windows and Mac windows: the timer is tested, and each page's view model, but
+  nobody has watched them leave in the apps yet.
+
 ## How to re-run the checks that can run anywhere
 
 ```bash
