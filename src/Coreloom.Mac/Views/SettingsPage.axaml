@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:c="using:Coreloom.Mac.Controls"
              xmlns:b="using:Coreloom.Mac.Behaviors"
-             xmlns:pages="using:Coreloom.ViewModels.Pages">
+             xmlns:pages="using:Coreloom.ViewModels.Pages"
+             xmlns:cn="using:Coreloom.ViewModels.Connect">
 
   <!-- Settings on a Mac: the Windows page's sections with macOS's words and switches (Open at login, the menu bar and
        the Dock, a translucent sidebar), without the Windows-only sensor sources (LibreHardwareMonitor, PawnIO, USB fan
@@ -186,6 +187,12 @@
     </Style>
     <Style Selector="Border.updateCircle.accent">
       <Setter Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
+    </Style>
+    <Style Selector="Border.updateCircle.success">
+      <Setter Property="Background" Value="{DynamicResource Brush.SuccessSoft}" />
+    </Style>
+    <Style Selector="Border.updateCircle.critical">
+      <Setter Property="Background" Value="{DynamicResource Brush.CriticalSoft}" />
     </Style>
     <Style Selector="Path.updateIcon">
       <Setter Property="Stroke" Value="{DynamicResource Brush.TextSecondary}" />
@@ -567,6 +574,160 @@
               </Button>
             </Grid>
           </c:SquircleBorder>
+        </StackPanel>
+
+        <!-- ======================================================================= -->
+        <!-- Connect: this Mac's readings on a phone                                 -->
+        <!-- ======================================================================= -->
+        <StackPanel b:Motion.Entrance="True" IsVisible="{Binding SelectedSection, Converter={StaticResource EqualsToBool}, ConverterParameter=Connect}">
+          <TextBlock Theme="{StaticResource Panel.Header}" Text="Connect" />
+          <TextBlock Theme="{StaticResource Panel.Intro}" Text="See this Mac's readings live on your phone. Pair it once by scanning a code, then open Coreloom from your phone's Home Screen whenever you're on the same network." />
+
+          <StackPanel DataContext="{Binding Connect}" IsVisible="{Binding $parent[UserControl].DataContext.Connect, Converter={StaticResource HasValue}}">
+            <!-- Status, with the switch -->
+            <c:SquircleBorder Theme="{StaticResource Card}">
+              <StackPanel>
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <Border Classes="updateCircle" Classes.accent="{Binding StatusTone, Converter={StaticResource EqualsToBool}, ConverterParameter=Accent}"
+                          Classes.success="{Binding StatusTone, Converter={StaticResource EqualsToBool}, ConverterParameter=Success}"
+                          Classes.critical="{Binding StatusTone, Converter={StaticResource EqualsToBool}, ConverterParameter=Critical}"
+                          Width="40" Height="40" CornerRadius="20" VerticalAlignment="Top">
+                    <Path Classes="updateIcon" Classes.success="{Binding StatusTone, Converter={StaticResource EqualsToBool}, ConverterParameter=Success}"
+                          Classes.accent="{Binding StatusTone, Converter={StaticResource EqualsToBool}, ConverterParameter=Accent}"
+                          Classes.critical="{Binding StatusTone, Converter={StaticResource EqualsToBool}, ConverterParameter=Critical}"
+                          Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Phone}" />
+                  </Border>
+                  <StackPanel Grid.Column="1" Margin="14,0,16,0" VerticalAlignment="Center">
+                    <TextBlock Theme="{StaticResource Text.CardTitle}" Text="{Binding HeadlineText}" TextWrapping="Wrap" />
+                    <TextBlock Theme="{StaticResource Text.Secondary}" Text="{Binding DetailText}" TextWrapping="Wrap" TextTrimming="None" Margin="0,4,0,0" />
+                  </StackPanel>
+                  <c:RadialGauge Grid.Column="2" Theme="{StaticResource Spinner}" Margin="0,0,14,0" VerticalAlignment="Center" IsVisible="{Binding IsStarting}"
+                                 b:Spin.IsSpinning="{Binding IsStarting}" />
+                  <CheckBox Grid.Column="2" Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center"
+                            IsVisible="{Binding !IsStarting}" AutomationProperties.Name="Let phones connect" ToolTip.Tip="Let phones on this network connect" />
+                </Grid>
+                <!-- A note about the network (for example, a network macOS treats as public) -->
+                <c:SquircleBorder Theme="{StaticResource Card.Inset}" Margin="54,14,0,0" IsVisible="{Binding HasNote}">
+                  <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.Info}" VerticalAlignment="Top" Margin="0,1,0,0" />
+                    <TextBlock Grid.Column="1" Theme="{StaticResource Text.Secondary}" Text="{Binding Note}" TextWrapping="Wrap" TextTrimming="None" Margin="10,0,12,0" />
+                    <Button Grid.Column="2" Theme="{StaticResource Button.Secondary}" Content="Network Settings…" Command="{Binding OpenNetworkSettingsCommand}"
+                            IsVisible="{Binding CanOpenNetworkSettings}" VerticalAlignment="Center" />
+                  </Grid>
+                </c:SquircleBorder>
+              </StackPanel>
+            </c:SquircleBorder>
+
+            <!-- Pair a phone: the QR code, or the address and a six-digit code -->
+            <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,12,0,0" Padding="20" IsVisible="{Binding IsPairingOpen}">
+              <Grid ColumnDefinitions="Auto,*">
+                <c:SquircleBorder Width="192" Height="192" CornerRadius="18" Background="#FFFFFF" BorderBrush="{DynamicResource Brush.CardBorder}" BorderThickness="1" Padding="6" VerticalAlignment="Top"
+                                  ToolTip.Tip="Scan with your phone's camera" AutomationProperties.Name="Pairing QR code">
+                  <Viewbox Stretch="Uniform">
+                    <Canvas Width="{Binding QrSize}" Height="{Binding QrSize}">
+                      <Path Fill="#0A0B0E" Data="{Binding QrPath, Converter={StaticResource StringToGeometry}}" />
+                    </Canvas>
+                  </Viewbox>
+                </c:SquircleBorder>
+                <StackPanel Grid.Column="1" Margin="24,0,0,0">
+                  <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Pair a phone" />
+                  <TextBlock Theme="{StaticResource Text.Secondary}" TextWrapping="Wrap" TextTrimming="None" Margin="0,4,0,0"
+                             Text="Point your phone's camera at the code and tap the link. Coreloom opens in the phone's browser, already paired." />
+                  <Border Theme="{StaticResource Divider}" Margin="0,16" />
+                  <TextBlock Theme="{StaticResource Text.Secondary}" TextWrapping="Wrap" TextTrimming="None"
+                             Text="No camera? Type this address into the phone's browser, then enter the code." />
+                  <WrapPanel Margin="0,12,0,0">
+                    <StackPanel Margin="0,0,32,8">
+                      <TextBlock Theme="{StaticResource Text.Label}" Text="Address" />
+                      <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <TextBlock Text="{Binding DisplayAddress}" FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" FontFeatures="+tnum"
+                                   VerticalAlignment="Center" />
+                        <Button Theme="{StaticResource Button.Icon}" Width="28" Height="28" Margin="6,0,0,0" Command="{Binding CopyAddressCommand}"
+                                ToolTip.Tip="Copy address" AutomationProperties.Name="Copy address">
+                          <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Copy}" />
+                        </Button>
+                      </StackPanel>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,0,8">
+                      <TextBlock Theme="{StaticResource Text.Label}" Text="Pairing code" />
+                      <TextBlock Theme="{StaticResource Text.ValueLarge}" Text="{Binding PairingCode}" LetterSpacing="1.5" Margin="0,2,0,0"
+                                 AutomationProperties.Name="Pairing code" />
+                    </StackPanel>
+                  </WrapPanel>
+                  <StackPanel Orientation="Horizontal" Margin="0,6,0,0" IsVisible="{Binding !IsPaused}">
+                    <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding RenewsText}" VerticalAlignment="Center" />
+                    <Button Theme="{StaticResource Button.Link}" Content="New code now" FontSize="11.5" Command="{Binding RenewCommand}" Margin="10,0,0,0"
+                            VerticalAlignment="Center" ToolTip.Tip="Replace the QR code and the pairing code." />
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" Margin="0,6,0,0" IsVisible="{Binding IsPaused}">
+                    <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Elevated}" />
+                    <TextBlock Theme="{StaticResource Text.Secondary}" Text="Too many wrong codes. Pairing resumes in a minute." Margin="6,0,0,0" VerticalAlignment="Center" />
+                  </StackPanel>
+                  <ItemsControl ItemsSource="{Binding OtherAddresses}" Margin="0,10,0,0" Focusable="False" IsVisible="{Binding HasOtherAddresses}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding StringFormat='Also reachable at {0}'}" TextTrimming="None" TextWrapping="Wrap" />
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Grid>
+            </c:SquircleBorder>
+
+            <!-- On, but no network to pair on -->
+            <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,12,0,0" IsVisible="{Binding NeedsNetwork}">
+              <Grid ColumnDefinitions="Auto,*">
+                <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Network}" VerticalAlignment="Top" Margin="0,1,0,0" />
+                <TextBlock Grid.Column="1" Theme="{StaticResource Text.Secondary}" TextWrapping="Wrap" TextTrimming="None" Margin="10,0,0,0"
+                           Text="This Mac isn't on a local network. Join Wi-Fi or plug in Ethernet, and the pairing code appears here." />
+              </Grid>
+            </c:SquircleBorder>
+
+            <!-- Paired phones -->
+            <Grid ColumnDefinitions="*,Auto" Margin="0,20,0,6" IsVisible="{Binding HasDevices}">
+              <TextBlock Theme="{StaticResource Text.Label}" Text="{Binding DevicesTitle}" VerticalAlignment="Center" />
+              <Button Grid.Column="1" Theme="{StaticResource Button.Link}" Content="Remove All…" FontSize="12" Command="{Binding RemoveAllCommand}"
+                      ToolTip.Tip="Unpair every phone. Each one has to be paired again to see this Mac." />
+            </Grid>
+            <c:SquircleBorder Theme="{StaticResource Card}" Padding="20,4,20,6" IsVisible="{Binding HasDevices}">
+              <ItemsControl ItemsSource="{Binding Devices}" Focusable="False">
+                <ItemsControl.Styles>
+                  <!-- No hairline under the last phone -->
+                  <Style Selector="ContentPresenter:nth-last-child(1) > Border">
+                    <Setter Property="BorderThickness" Value="0" />
+                  </Style>
+                </ItemsControl.Styles>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="{x:Type cn:PairedDeviceViewModel}">
+                    <Border Theme="{StaticResource Row}" Padding="0,11">
+                      <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Panel Width="34" Height="34" VerticalAlignment="Center">
+                          <c:SquircleBorder Background="{DynamicResource Brush.Surface}" CornerRadius="10">
+                            <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Phone}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                          </c:SquircleBorder>
+                          <Ellipse Width="10" Height="10" Fill="{DynamicResource Brush.Success}" Stroke="{DynamicResource Brush.Card}" StrokeThickness="2"
+                                   HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-2,-2" IsVisible="{Binding IsConnected}" />
+                        </Panel>
+                        <StackPanel Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center">
+                          <TextBlock Theme="{StaticResource Row.Title}" Text="{Binding Name}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                          <TextBlock Theme="{StaticResource Row.Description}" Text="{Binding StatusText}" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <Button Grid.Column="2" Theme="{StaticResource Button.Secondary}" Content="Remove…" Command="{Binding RemoveCommand}" VerticalAlignment="Center"
+                                ToolTip.Tip="Unpair this phone. It stops seeing this Mac until it's paired again." />
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </c:SquircleBorder>
+
+            <!-- How it stays private -->
+            <Grid ColumnDefinitions="Auto,*" Margin="2,18,0,0">
+              <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Shield}" Stroke="{DynamicResource Brush.TextTertiary}" VerticalAlignment="Top" Margin="0,1,0,0" />
+              <TextBlock Grid.Column="1" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="8,0,0,0"
+                         Text="Connect answers only on private networks like your home Wi-Fi, and only phones you've paired. Readings are encrypted between this Mac and your phone, and nothing goes through the internet or any server. Phones can view readings; they can't change anything on this Mac. Pairing is open only while this page is showing." />
+            </Grid>
+          </StackPanel>
         </StackPanel>
 
         <!-- ======================================================================= -->

@@ -242,7 +242,7 @@ public sealed class OverviewViewModel : PageViewModel
     private int _deviceVersion = -1;
     private IReadOnlyList<KeyValueItem> _leftSpecs = [];
     private IReadOnlyList<KeyValueItem> _rightSpecs = [];
-    private int _driveCount;
+    private SystemSpecsInfo? _specsInfo;
     private int _fanCatalogVersion = -1;
     private IReadOnlyList<PcFanSensor> _cpuFans = [];
     private IReadOnlyList<PcFanSensor> _caseFans = [];
@@ -651,69 +651,20 @@ public sealed class OverviewViewModel : PageViewModel
 
     private void RefreshStaticInfo()
     {
-        var summary = Monitor.Summary;
-        var cpu = Devices.Get(MetricIds.CpuDeviceId);
-        string cpuName = ShortCpuName(cpu?.Name ?? summary.CpuName);
-        var gpu = Monitor.Gpus().FirstOrDefault(g => g.Slot == _gpuSlot);
-        var gpuDevice = Devices.Get(MetricIds.GpuDeviceId(_gpuSlot));
-        string? gpuName = Clean(gpuDevice?.Name ?? gpu.Name);
-        bool integrated = gpuDevice?.IsIntegrated ?? gpu.IsIntegrated;
-
-        Specs.SetIdentity(
-            (IsMac ? SystemDescriptions.MacModelName(summary.Motherboard) : SystemDescriptions.BoardName(summary.Motherboard)) ?? summary.ComputerName,
-            gpuName ?? cpuName,
-            SystemDescriptions.GpuSizeFor(gpuName, integrated),
-            SystemDescriptions.GpuBadge(gpuName));
-
-        if (IsMac)
-        {
-            // Apple silicon: one chip carries the GPU and the memory is unified. An Intel Mac has a processor and its own
-            // graphics memory (a virtual Mac's Apple-made display adapter doesn't make it Apple silicon).
-            bool appleSilicon = cpuName?.StartsWith("Apple", StringComparison.Ordinal) == true;
-            bool unified = appleSilicon && gpuDevice?.Vendor == "Apple";
-            _leftSpecs = Rows(
-                (appleSilicon ? "Chip" : "Processor", cpuName),
-                ("Cores", cpu?.GetProperty("Cores") is { } cores ? $"{cores} · {summary.LogicalProcessors} threads" : SystemDescriptions.CoresLine(summary.PhysicalCores, summary.LogicalProcessors)),
-                ("Memory", SystemDescriptions.MemoryLine(summary.InstalledMemoryBytes, summary.MemoryModules, Formatter) + (unified ? " unified" : string.Empty)));
-            _rightSpecs = Rows(
-                ("GPU cores", gpuDevice?.GetProperty("GPU cores")),
-                ("Graphics memory", unified ? null : gpuDevice?.GetProperty("Memory")),
-                ("System", SystemDescriptions.WindowsLine(summary.OperatingSystem, summary.OsVersion)),
-                ("Firmware", summary.Bios));
-        }
-        else
-        {
-            _leftSpecs = Rows(
-                ("Processor", cpuName),
-                ("Cores", summary.LogicalProcessors > 0 ? SystemDescriptions.CoresLine(summary.PhysicalCores, summary.LogicalProcessors) : null),
-                ("Memory", SystemDescriptions.MemoryLine(summary.InstalledMemoryBytes, summary.MemoryModules, Formatter)));
-            _rightSpecs = Rows(
-                ("Graphics memory", gpuDevice?.GetProperty("VRAM")),
-                ("Driver", gpuDevice?.GetProperty("Driver")),
-                ("System", SystemDescriptions.WindowsLine(summary.OperatingSystem, summary.OsVersion)),
-                ("BIOS", summary.Bios));
-        }
-
-        _driveCount = Devices.GetByCategory(MetricCategory.Storage)
-            .Count(d => d.Id.StartsWith("disk/", StringComparison.Ordinal) && !string.Equals(d.GetProperty("Removable"), "Yes", StringComparison.OrdinalIgnoreCase));
+        var info = SystemSpecs.Describe(Monitor, _gpuSlot, IsMac, Formatter);
+        _specsInfo = info;
+        Specs.SetIdentity(info.Title, info.Subtitle, info.GpuSize, info.GpuLabel);
+        _leftSpecs = info.Left;
+        _rightSpecs = info.Right;
 
         // The header carries the board and the operating system now.
         Subtitle = null;
 
         // Volumes for the storage panel (system drive first).
-        string systemLetter = IsMac
-            ? Devices.GetByCategory(MetricCategory.Storage).FirstOrDefault(d => d.Kind == "Volume" && d.GetProperty("Mount point") == "/")?.Id[4..] ?? string.Empty
-            : Path.GetPathRoot(Environment.SystemDirectory)?.TrimEnd('\\', ':', '/') is { Length: 1 } l ? l.ToUpperInvariant() : "C";
-        var volumes = Devices.GetByCategory(MetricCategory.Storage)
-            .Where(d => d.Kind == "Volume" && d.Id.StartsWith("vol/", StringComparison.Ordinal))
-            .Select(d => (Letter: d.Id[4..], d.Name))
-            .OrderBy(v => v.Letter == systemLetter ? 0 : 1)
-            .ThenBy(v => v.Letter, StringComparer.Ordinal)
-            .ToArray();
-        if (!_storage.Volumes.Select(v => v.Letter).SequenceEqual(volumes.Select(v => v.Letter)))
+        if (!_storage.Volumes.Select(v => v.Letter).SequenceEqual(info.Volumes.Select(v => v.Letter)))
         {
             _storage.Volumes.Clear();
-            foreach (var (letter, name) in volumes)
+            foreach (var (letter, name) in info.Volumes)
             {
                 _storage.Volumes.Add(new VolumeViewModel(letter, name));
             }
@@ -726,25 +677,7 @@ public sealed class OverviewViewModel : PageViewModel
     /// </summary>
     private void UpdateSpecs(TelemetryFrame frame, UnitFormatter f)
     {
-        double total = 0;
-        var disks = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var volume in _storage.Volumes)
-        {
-            // A Mac's volumes share their disk's space (one APFS container): count each disk once.
-            string disk = IsMac ? Devices.Get($"vol/{volume.Letter}")?.GetProperty("Disk number") ?? volume.Letter : volume.Letter;
-            if (disks.Add(disk) && frame.TryGetValue(MetricIds.VolumeTotal(volume.Letter), out double size) && size > 0)
-            {
-                total += size;
-            }
-        }
-
-        string? storage = (_driveCount, total) switch
-        {
-            (0, <= 0) => null,
-            (0, _) => f.Bytes(total, 1).ToString(),
-            (_, <= 0) => DriveCount(_driveCount),
-            _ => $"{DriveCount(_driveCount)} · {f.Bytes(total, 1)}",
-        };
+        string? storage = _specsInfo is null ? null : SystemSpecs.StorageLine(_specsInfo, frame, Devices, IsMac, f);
         IReadOnlyList<KeyValueItem> left = storage is null ? _leftSpecs : [.. _leftSpecs, new KeyValueItem("Storage", storage)];
         Specs.SetSpecs(left, _rightSpecs);
 
@@ -776,14 +709,4 @@ public sealed class OverviewViewModel : PageViewModel
         Specs.SetFans(PcFans.Read(_cpuFans, _caseFans, id => frame.TryGetValue(id, out double rpm) ? rpm : null, f));
     }
 
-    private static string DriveCount(int count) => count == 1 ? "1 drive" : $"{count} drives";
-
-    private static KeyValueItem[] Rows(params (string Key, string? Value)[] rows) =>
-        rows.Where(r => !string.IsNullOrWhiteSpace(r.Value) && r.Value != "—").Select(r => new KeyValueItem(r.Key, r.Value!.Trim())).ToArray();
-
-    private static string? Clean(string? name) =>
-        string.IsNullOrWhiteSpace(name)
-            ? null
-            : string.Join(' ', name.Replace("(R)", string.Empty, StringComparison.OrdinalIgnoreCase).Replace("(TM)", string.Empty, StringComparison.OrdinalIgnoreCase)
-                .Split(' ', StringSplitOptions.RemoveEmptyEntries));
 }

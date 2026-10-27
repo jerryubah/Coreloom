@@ -203,6 +203,9 @@ public sealed class SettingsDependencies
     public required AppVersionInfo App { get; init; }
 
     public IOverheadService? Overhead { get; init; }
+
+    /// <summary>Coreloom Connect, when this app has it (Settings › Connect).</summary>
+    public Connect.ConnectHost? Connect { get; init; }
 }
 
 /// <summary>All user settings, grouped into sections. Every change is applied immediately and persisted.</summary>
@@ -222,8 +225,12 @@ public sealed class SettingsViewModel : PageViewModel
         : base("settings", "Settings", "Icon.Settings", context)
     {
         _deps = deps;
-        Subtitle = "Appearance, monitoring, dashboard, alerts and updates";
         Logs = new LogViewerViewModel(deps.Diagnostics, deps.Shell);
+        Connect = deps.Connect is { } connect ? new Connect.ConnectViewModel(connect, context.Settings, deps.Shell, IsMac) : null;
+        Subtitle = Connect is null ? "Appearance, monitoring, dashboard, alerts and updates" : "Appearance, monitoring, alerts, your phone and updates";
+        Sections = Connect is null
+            ? ["Appearance", "Monitoring", "Desktop", "Alerts", "Diagnostics", "Logs", "About", "Updates"]
+            : ["Appearance", "Monitoring", "Desktop", "Alerts", "Connect", "Diagnostics", "Logs", "About", "Updates"];
 
         ThemeOptions = [new(ThemePreference.Dark, "Dark"), new(ThemePreference.Light, "Light"), new(ThemePreference.System, IsMac ? "Use macOS setting" : "Use Windows setting")];
         AccentOptions = AccentPalette.Presets.Select(p => new AccentOption(p.Name, p.Hex)).ToArray();
@@ -263,19 +270,30 @@ public sealed class SettingsViewModel : PageViewModel
 
     // ---- Navigation within settings ----------------------------------------------------------
 
-    public IReadOnlyList<string> Sections { get; } = ["Appearance", "Monitoring", "Desktop", "Alerts", "Diagnostics", "Logs", "About", "Updates"];
+    public IReadOnlyList<string> Sections { get; }
 
     public string? SelectedSection
     {
         get => _selectedSection;
         set
         {
-            if (SetProperty(ref _selectedSection, value) && value == "Logs")
+            if (SetProperty(ref _selectedSection, value))
             {
-                _ = Logs.LoadAsync(); // read fresh every time the viewer is opened
+                if (value == "Logs")
+                {
+                    _ = Logs.LoadAsync(); // read fresh every time the viewer is opened
+                }
+
+                UpdateConnectVisibility();
             }
         }
     }
+
+    /// <summary>Settings › Connect, when this app has Coreloom Connect.</summary>
+    public Connect.ConnectViewModel? Connect { get; }
+
+    /// <summary>Pairing is open only while Settings › Connect is on screen.</summary>
+    private void UpdateConnectVisibility() => Connect?.SetVisible(IsActive && SelectedSection == "Connect");
 
     /// <summary>The log viewer (Settings › Logs).</summary>
     public LogViewerViewModel Logs { get; }
@@ -811,10 +829,15 @@ public sealed class SettingsViewModel : PageViewModel
         _lastProviderRefresh = DateTime.MinValue;
         RefreshAlertMetricOptions();
         OnPropertyChanged(string.Empty);
+        UpdateConnectVisibility();
     }
+
+    protected override void OnDeactivated() => UpdateConnectVisibility();
 
     protected override void OnUpdate(TelemetryFrame frame)
     {
+        Connect?.Tick();
+
         if (DateTime.UtcNow - _lastProviderRefresh < TimeSpan.FromSeconds(2))
         {
             return;

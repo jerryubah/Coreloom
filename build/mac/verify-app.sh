@@ -130,6 +130,78 @@ else
   fi
 fi
 
+# ---- Connect: the phone app and readings, served to this Mac's network ----------------------------------------
+# Turned on in the settings Coreloom just saved, then Coreloom is opened again: the server answers, serves the phone
+# app's files, refuses other host names, and opens pairing while Settings › Connect is showing.
+settings="$HOME/Library/Application Support/Coreloom/settings.json"
+connect="http://127.0.0.1:47101"
+{ echo; echo "## Connect"; } >> "$OUT/app.md"
+if [[ -f "$settings" ]] && python3 - "$settings" <<'PY'
+import json, sys
+path = sys.argv[1]
+with open(path) as f:
+    settings = json.load(f)
+settings.setdefault("connect", {})["enabled"] = True
+with open(path, "w") as f:
+    json.dump(settings, f, indent=2)
+PY
+then
+  open "$APP" || fail "open (Connect)"
+  pid=""
+  for _ in $(seq 1 60); do
+    pid="$(pgrep -x Coreloom | head -1)"
+    [[ -n "$pid" ]] && break
+    sleep 1
+  done
+  sleep 10
+  if info="$(curl -sS --max-time 10 "$connect/api/info")"; then
+    echo "- \`GET /api/info\`: \`$info\`" >> "$OUT/app.md"
+    [[ "$info" == *'"app":"Coreloom"'* ]] || fail "Connect's /api/info"
+    [[ "$info" == *'"code":false'* ]] || fail "pairing was open without Settings › Connect showing"
+  else
+    fail "Connect didn't answer on port 47101"
+  fi
+  for path in / /app.js /app.css /connect.js /gauge.js /chart.js /vendor/crypto.js /manifest.webmanifest /icons/apple-touch-icon.png /fonts/Inter-SemiBold.woff2; do
+    code="$(curl -sS -o /dev/null -w '%{http_code}' --compressed --max-time 10 "$connect$path")"
+    echo "- \`GET $path\`: $code" >> "$OUT/app.md"
+    [[ "$code" == 200 ]] || fail "Connect's $path"
+  done
+  csp="$(curl -sS -D - -o /dev/null --max-time 10 "$connect/" | grep -i '^content-security-policy' || true)"
+  [[ -n "$csp" ]] || fail "the phone app's page has no Content-Security-Policy"
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 -H 'Host: evil.example.com' "$connect/api/info")"
+  echo "- Another host name (\`Host: evil.example.com\`): $code" >> "$OUT/app.md"
+  [[ "$code" == 421 ]] || fail "Connect answered another host name"
+  lan="$(ipconfig getifaddr en0 2> /dev/null || true)"
+  if [[ -n "$lan" ]]; then
+    code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 "http://$lan:47101/api/info" 2> /dev/null || true)"
+    echo "- From this Mac's network address $lan: ${code:-no answer} (answered only when the address is a private one)" >> "$OUT/app.md"
+  fi
+
+  # Settings › Connect: pairing opens while it shows (the QR code and the code are in the picture).
+  "$APP/Contents/MacOS/Coreloom" --page connect > /dev/null 2>&1 &
+  sleep 5
+  screencapture -x "$OUT/$(printf '%02d' "${n:-90}")-connect.png" 2> /dev/null || true
+  pairing="$(curl -sS --max-time 10 "$connect/api/info" || true)"
+  echo "- With Settings › Connect showing: \`$pairing\`" >> "$OUT/app.md"
+  [[ "$pairing" == *'"code":true'* ]] || fail "pairing didn't open with Settings › Connect showing"
+
+  kill -TERM "$pid" 2> /dev/null
+  for _ in $(seq 1 20); do kill -0 "$pid" 2> /dev/null || break; sleep 0.5; done
+  if kill -0 "$pid" 2> /dev/null; then
+    fail "Coreloom didn't quit within 10 s of SIGTERM (Connect on)"
+    kill -KILL "$pid" 2> /dev/null
+  else
+    echo "- Quit cleanly on SIGTERM with Connect on" >> "$OUT/app.md"
+  fi
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 "$connect/api/info" 2> /dev/null || true)"
+  if [[ "$code" == 200 ]]; then
+    fail "Connect still answered after Coreloom quit"
+  fi
+else
+  echo "- (no settings file to turn Connect on in)" >> "$OUT/app.md"
+  fail "Connect: no settings file"
+fi
+
 # ---- What it wrote ---------------------------------------------------------------------------------------------
 mkdir -p "$OUT/logs"
 cp -R "$HOME/Library/Logs/Coreloom/." "$OUT/logs/" 2> /dev/null || true

@@ -214,6 +214,20 @@ internal static class Program
                 Capture(window, Path.Combine(output, $"settings-{section.ToLowerInvariant()}.png"));
             }
 
+            // Settings › Connect turned off, and in the light theme.
+            if (shell.Settings.Connect is { } connect)
+            {
+                shell.Settings.SelectedSection = "Connect";
+                connect.IsEnabled = false;
+                Settle(window, data, 3);
+                Capture(window, Path.Combine(output, "settings-connect-off.png"));
+                connect.IsEnabled = true;
+                theme.Apply(new AppearanceSettings { Theme = ThemePreference.Light, ReducedMotion = true, AnimateValues = false, UseMica = false });
+                Settle(window, data, 3);
+                Capture(window, Path.Combine(output, "settings-connect-light.png"));
+                theme.Apply(new AppearanceSettings { Theme = ThemePreference.Dark, ReducedMotion = true, AnimateValues = false, UseMica = false });
+            }
+
             shell.Settings.SelectedSection = shell.Settings.Sections[0];
         }
 

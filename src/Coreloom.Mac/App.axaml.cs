@@ -228,6 +228,7 @@ public partial class App : Application
             Updates = updates,
             App = app,
             Platform = HostPlatform.MacOS,
+            Connect = new Coreloom.ViewModels.Connect.ConnectEnvironment { DataDirectory = paths.SettingsDirectory },
             Tools = new ToolServices
             {
                 Benchmarks = new MacBenchmarkService(paths.SettingsDirectory),
@@ -483,11 +484,18 @@ public partial class App : Application
     // Window, Dock and menu bar
     // ------------------------------------------------------------------------------------------------
 
-    /// <summary>Opens a page by its key ("gaming", "settings"); nothing for an unknown key or none.</summary>
+    /// <summary>Opens a page by its key ("gaming", "settings", or "connect" for Settings › Connect); nothing for an unknown key or none.</summary>
     private void NavigateTo(string? key)
     {
         if (key is null || _shell is not { } shell)
         {
+            return;
+        }
+
+        if (string.Equals(key, "connect", StringComparison.OrdinalIgnoreCase) && shell.Settings.Connect is not null)
+        {
+            shell.Navigate(shell.Settings);
+            shell.Settings.SelectedSection = "Connect";
             return;
         }
 
@@ -670,6 +678,11 @@ public partial class App : Application
             }
 
             _settings?.Flush();
+            if (_shell?.Connect is { } connect)
+            {
+                connect.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(3)); // phones see the Mac go away
+            }
+
             _gameWatcher?.Dispose();
             _gameWatcher = null;
             _overlay?.Dispose();

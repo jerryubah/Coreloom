@@ -1,5 +1,6 @@
 using Coreloom.Core;
 using Coreloom.Core.Alerts;
+using Coreloom.Core.Connect;
 using Coreloom.Core.Diagnostics;
 using Coreloom.Core.Hardware;
 using Coreloom.Core.History;
@@ -7,6 +8,7 @@ using Coreloom.Core.Settings;
 using Coreloom.Core.Telemetry;
 using Coreloom.Core.Updates;
 using Coreloom.ViewModels;
+using Coreloom.ViewModels.Connect;
 using Coreloom.ViewModels.Infrastructure;
 using Coreloom.ViewModels.Pages;
 using Coreloom.ViewModels.Services;
@@ -116,8 +118,28 @@ internal sealed class SampleData
         var stubs = new Stubs();
         var app = new AppVersionInfo(SemanticVersion.Parse("1.6.0"), "1.6.0", "jerryubah/Coreloom", null);
         var updates = new UpdatesViewModel(app, Settings, stubs, stubs, new HttpClient(), Path.GetTempPath());
+
+        // Settings › Connect: on, on a home Wi-Fi address, with two paired phones.
+        string connectFolder = Path.Combine(Path.GetTempPath(), "coreloom-macshots-connect-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(connectFolder);
+        var phones = new PairedDeviceStore(Path.Combine(connectFolder, "connect.json"));
+        var now = DateTimeOffset.UtcNow;
+        phones.Touch(phones.Add("iPad Pro", "code", now.AddDays(-9)).Id, now.AddDays(-2));
+        phones.Touch(phones.Add("Jerry's iPhone", "link", now.AddDays(-3)).Id, now.AddMinutes(-4));
+        Settings.Current.Connect.Enabled = true;
+        Settings.Current.Connect.Port = 47121;
+
         return new ShellViewModel(new ShellDependencies
         {
+            Connect = new ConnectEnvironment
+            {
+                DataDirectory = connectFolder,
+                FindAddresses = () =>
+                [
+                    new LocalAddress(System.Net.IPAddress.Parse("192.168.1.24"), "Wi-Fi", true),
+                    new LocalAddress(System.Net.IPAddress.Parse("100.84.12.7"), "VPN", false),
+                ],
+            },
             Monitor = Monitor,
             Settings = Settings,
             Alerts = new AlertEngine(TimeSpan.FromMinutes(10)),

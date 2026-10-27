@@ -10,6 +10,7 @@
   <conv:ColorKeyToBrushConverter x:Key="ColorKeyToBrush" />
   <conv:LevelToBrushConverter x:Key="LevelToBrush" />
   <conv:IconKeyToGeometryConverter x:Key="IconKeyToGeometry" />
+  <conv:StringToGeometryConverter x:Key="StringToGeometry" />
   <conv:FractionToPercentConverter x:Key="FractionToPercent" />
   <conv:HexToBrushConverter x:Key="HexToBrush" />
   <conv:IntToDoubleConverter x:Key="IntToDouble" />

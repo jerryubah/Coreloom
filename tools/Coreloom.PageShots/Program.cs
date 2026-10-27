@@ -56,6 +56,11 @@ internal static class Program
     {
         var data = new SampleData();
 
+        var (settings, connect) = SampleSettings.Create(data);
+        await ShootAsync(Path.Combine(output, "settings-connect.png"), new SettingsPage { DataContext = settings }, 1150, () => settings.Refresh(data));
+        await ShootAsync(Path.Combine(output, "settings-connect-narrow.png"), new SettingsPage { DataContext = settings }, 1250, () => settings.Refresh(data), 1000);
+        await connect.DisposeAsync();
+
         var gaming = data.Gaming();
         await ShootAsync(Path.Combine(output, "gaming.png"), new GamingPage { DataContext = gaming }, null, () => gaming.Refresh(data));
         await ShootAsync(Path.Combine(output, "gaming-narrow.png"), new GamingPage { DataContext = gaming }, null, () => gaming.Refresh(data), 1000);

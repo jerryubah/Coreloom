@@ -1,0 +1,14 @@
+{
+  "name": "coreloom-phone-crypto",
+  "private": true,
+  "description": "Builds src/Coreloom.Phone/vendor/crypto.js: P-256, HKDF, HMAC, SHA-256 and AES-GCM from the audited noble libraries (MIT).",
+  "scripts": {
+    "build": "esbuild entry.js --bundle --format=esm --minify --legal-comments=eof --outfile=../../../src/Coreloom.Phone/vendor/crypto.js"
+  },
+  "devDependencies": {
+    "@noble/ciphers": "2.4.0",
+    "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0",
+    "esbuild": "0.28.2"
+  }
+}

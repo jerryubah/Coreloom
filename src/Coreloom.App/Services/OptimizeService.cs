@@ -478,7 +478,7 @@ internal sealed partial class WindowsOptimizeService : IOptimizeService
 
     // ---- Processes --------------------------------------------------------------------------------
 
-    private static Task<(int Exit, string Output, string Error)> PowerShellAsync(string script, TimeSpan timeout, CancellationToken cancellationToken)
+    internal static Task<(int Exit, string Output, string Error)> PowerShellAsync(string script, TimeSpan timeout, CancellationToken cancellationToken)
     {
         // UTF-8 out, so names and paths with any characters survive; the script goes in encoded, so nothing needs quoting.
         string full = "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8\n" + script;

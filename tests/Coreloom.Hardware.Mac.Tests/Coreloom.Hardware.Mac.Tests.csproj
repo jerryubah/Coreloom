@@ -24,6 +24,11 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <!-- Coreloom Connect's cryptography (AES-GCM, P-256, HKDF), QR codes and server, checked on macOS as well. -->
+  <ItemGroup>
+    <Compile Include="..\Coreloom.Core.Tests\ConnectTests.cs" Link="ConnectTests.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\Coreloom.Core\Coreloom.Core.csproj" />
     <ProjectReference Include="..\..\src\Coreloom.Hardware.Mac\Coreloom.Hardware.Mac.csproj" />

@@ -10,6 +10,13 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Coreloom.Core.Tests" />
+    <!-- Runs the Connect tests (tests/Coreloom.Core.Tests/ConnectTests.cs) on the macOS runners too. -->
+    <InternalsVisibleTo Include="Coreloom.Hardware.Mac.Tests" />
+  </ItemGroup>
+
+  <!-- The phone app (src/Coreloom.Phone), served to phones by Coreloom Connect. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\Coreloom.Phone\**\*" Exclude="..\Coreloom.Phone\README.md" LogicalName="connect-web/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

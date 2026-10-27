@@ -44,6 +44,9 @@ public sealed class ShellDependencies
 
     /// <summary>The system Coreloom runs on: the pages' wording and what they offer follow it (Windows by default).</summary>
     public Coreloom.Core.HostPlatform Platform { get; init; } = Coreloom.Core.HostPlatform.Windows;
+
+    /// <summary>Coreloom Connect (phones on the local network); null leaves it out (tests, tools).</summary>
+    public Connect.ConnectEnvironment? Connect { get; init; }
 }
 
 /// <summary>
@@ -82,6 +85,7 @@ public sealed class ShellViewModel : ObservableObject
         Network = new NetworkViewModel(context);
         History = new HistoryViewModel(context, deps.Shell);
         Optimize = new OptimizeViewModel(context);
+        Connect = deps.Connect is { } connect ? new Connect.ConnectHost(context, connect, deps.App.DisplayVersion) : null;
         Settings = new SettingsViewModel(context, new SettingsDependencies
         {
             Theme = deps.Theme,
@@ -93,6 +97,7 @@ public sealed class ShellViewModel : ObservableObject
             Updates = deps.Updates,
             App = deps.App,
             Overhead = deps.Overhead,
+            Connect = Connect,
         });
 
         context.OpenLogs = (category, search) =>
@@ -176,6 +181,9 @@ public sealed class ShellViewModel : ObservableObject
     public OptimizeViewModel Optimize { get; }
 
     public SettingsViewModel Settings { get; }
+
+    /// <summary>Coreloom Connect, when this app has it.</summary>
+    public Connect.ConnectHost? Connect { get; }
 
     public UpdatesViewModel Updates => _deps.Updates;
 
@@ -416,9 +424,10 @@ public sealed class ShellViewModel : ObservableObject
 
         UpdateTrayText(frame);
 
-        // Health and the overlay are kept current while the window is hidden: you're in a game.
+        // Health, the overlay and phones are kept current while the window is hidden: you're in a game, or away.
         _context.Health.Update(frame);
         _context.Overlay.OnFrame(frame);
+        Connect?.OnFrame(frame);
         if (!_pageActive)
         {
             return; // hidden, minimized or covered by a game: no charts to draw
@@ -537,6 +546,11 @@ public sealed class ShellViewModel : ObservableObject
         if (all || section == "Sidebar")
         {
             OnPropertyChanged(nameof(IsSidebarCollapsed));
+        }
+
+        if ((all || section == "Connect") && Connect is { } connect)
+        {
+            _ = connect.ApplyAsync();
         }
     }
 

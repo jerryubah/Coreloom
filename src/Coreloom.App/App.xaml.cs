@@ -284,6 +284,11 @@ public partial class App : Application
             Updates = updates,
             App = app,
             Overhead = Services.OverheadMeters.Shared,
+            Connect = new Coreloom.ViewModels.Connect.ConnectEnvironment
+            {
+                DataDirectory = paths.SettingsDirectory,
+                Platform = new Services.ConnectFirewall(),
+            },
             Tools = new ToolServices
             {
                 Benchmarks = new Services.WindowsBenchmarkService(paths.SettingsDirectory),
@@ -799,6 +804,11 @@ public partial class App : Application
             }
 
             _settings?.Flush();
+            if (_shell?.Connect is { } connect)
+            {
+                connect.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(3)); // phones see the computer go away
+            }
+
             _adaptivePacing?.Dispose();
             _adaptivePacing = null;
             _coreScheduling?.Dispose();

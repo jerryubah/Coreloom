@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Runs Coreloom Connect on sample readings (a Windows PC, or a Mac with the mac option), so the phone app can be tried and
+       photographed without a real computer behind it. Runs anywhere .NET runs. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Coreloom.ConnectDemo</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Coreloom.ViewModels\Coreloom.ViewModels.csproj" />
+  </ItemGroup>
+
+</Project>

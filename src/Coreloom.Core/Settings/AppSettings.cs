@@ -47,6 +47,8 @@ public sealed class AppSettings
 
     public DiagnosticsSettings Diagnostics { get; set; } = new();
 
+    public ConnectSettings Connect { get; set; } = new();
+
     public WindowPlacement? Window { get; set; }
 
     /// <summary>Repairs out-of-range or missing values. Returns the same instance for chaining.</summary>
@@ -62,6 +64,11 @@ public sealed class AppSettings
         Alerts ??= new AlertSettings();
         Updates ??= new UpdateSettings();
         Diagnostics ??= new DiagnosticsSettings();
+        Connect ??= new ConnectSettings();
+        if (Connect.Port is < 1024 or > 65535)
+        {
+            Connect.Port = ConnectSettings.DefaultPort;
+        }
 
         if (!AccentPalette.IsValidHex(Appearance.Accent))
         {
@@ -330,6 +337,18 @@ public sealed class UpdateSettings
 public sealed class DiagnosticsSettings
 {
     public bool VerboseLogging { get; set; }
+}
+
+/// <summary>Coreloom Connect: phones on the same network see this computer's readings (Settings › Connect).</summary>
+public sealed class ConnectSettings
+{
+    public const int DefaultPort = 47101;
+
+    /// <summary>Off until turned on: then Coreloom answers phones on the local network (only paired ones see readings).</summary>
+    public bool Enabled { get; set; }
+
+    /// <summary>The TCP port phones connect to.</summary>
+    public int Port { get; set; } = DefaultPort;
 }
 
 public sealed class WindowPlacement

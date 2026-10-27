@@ -52,5 +52,9 @@
   <!-- Shown by macOS when the Devices page first lists Bluetooth accessories. -->
   <key>NSBluetoothAlwaysUsageDescription</key>
   <string>Coreloom lists your Bluetooth accessories and their battery levels on the Devices page, and connects or disconnects them when you ask.</string>
+  <!-- Settings › Connect: phones on the same network open Coreloom's readings. Answering incoming connections doesn't
+       need this permission (Apple TN3179), but macOS shows this text if it ever asks. -->
+  <key>NSLocalNetworkUsageDescription</key>
+  <string>When you turn on Connect, Coreloom lets phones you've paired on this network see this Mac's readings.</string>
 </dict>
 </plist>

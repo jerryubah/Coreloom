@@ -131,6 +131,15 @@ public sealed class IconKeyToGeometryConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
+/// <summary>Path data ("M0 0h1v1h-1z…") → geometry, for pictures built at run time (the Connect QR code).</summary>
+public sealed class StringToGeometryConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is string { Length: > 0 } data ? Geometry.Parse(data) : null;
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => Binding.DoNothing;
+}
+
 /// <summary>Fraction (0..1) → percentage (0..100) for progress bars.</summary>
 public sealed class FractionToPercentConverter : IValueConverter
 {
