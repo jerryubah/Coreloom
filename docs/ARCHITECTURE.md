@@ -72,6 +72,50 @@ On a Mac the top and bottom layers are swapped for their macOS counterparts and 
   and a small shell helper swaps the bundles after Coreloom quits (keeping the old one until the new one is in
   place) and reopens it with `--updated` or `--update-failed`.
 
+## Coreloom Connect (1.7.0)
+
+Phones see a computer's readings through a small server inside Coreloom, on the local network only.
+
+```
+ phone browser                                    Coreloom (Windows or Mac)
+┌──────────────────────────┐   HTTP, LAN only    ┌───────────────────────────────────────────────┐
+│ src/Coreloom.Phone        │ ◄──────────────────│ Core/Connect/MiniHttpServer (TcpListener)     │
+│ app.js  gauge.js chart.js │   GET / app files  │   ConnectServer: routing, Host check, pairing,│
+│ connect.js (protocol)     │ ──────────────────►│   sessions, long-poll /api/live, WebAssets    │
+│ vendor/crypto.js (noble)  │   POST /api/…      │ ViewModels/Connect: ConnectHost (start/stop,  │
+└──────────────────────────┘   sealed readings   │   firewall, addresses) · RemoteFeed (frame →  │
+                                                 │   JSON) · ConnectViewModel (Settings › Connect)│
+                                                 └───────────────────────────────────────────────┘
+```
+
+- **Server.** `MiniHttpServer` is a deliberately small HTTP/1.1 server on a `TcpListener` (IPv6 dual mode, IPv4 as a
+  fallback): keep-alive, `Content-Length` bodies only (no chunked uploads), 16 KB headers, 32 KB bodies, 32
+  connections, and connections from anything but loopback, private, link-local, carrier-grade NAT (100.64/10) and
+  IPv6 unique-local addresses dropped before a byte is read. `ConnectServer` refuses Host names that aren't an
+  address, `localhost`, a `.local` name or the computer's own name (DNS rebinding), serves the phone app's files
+  (embedded in Core under `connect-web/`, with ETags, gzip and a strict Content-Security-Policy) and the API.
+- **Pairing.** `PairingWindow` holds a 32-byte link secret (in the QR code's URL fragment, which a browser doesn't
+  send) and a six-digit code, renewed every five minutes, after each use and after five wrong codes; ten failures
+  in a minute pause pairing for a minute. It's open only while Settings › Connect is on screen
+  (`SettingsViewModel` calls `ConnectViewModel.SetVisible`). A paired phone may ask for a one-time setup link
+  (15 minutes, at most four) so a Home Screen copy, which has its own storage on iOS, can pair itself.
+- **Cryptography** (`ConnectCrypto`, and the same steps in `connect.js`): an ephemeral P-256 ECDH per pairing; the
+  shared X coordinate, the pairing secret and both public keys give through HKDF-SHA-256 an encryption key and a MAC
+  key; the phone proves the secret with an HMAC, and the computer answers with a random 32-byte device key sealed
+  with AES-256-GCM. Each session derives keys from the device key and a nonce from each side; requests carry an
+  HMAC over path and body and a strictly increasing counter; readings come back sealed with the counter in the
+  associated data. Known-answer tests pin the C# and JavaScript sides to the same values.
+- **Readings.** `ConnectHost.OnFrame` runs after the shell's own frame handling and builds a snapshot
+  (`RemoteFeed`: names, formatted values, colours from the desktop's scales, health, specs, storage, network and
+  battery) only while a phone is watching. `/api/live` long-polls up to 20 s; the first answer also carries the
+  last two minutes of chart history.
+- **Platform.** `IConnectPlatform` lets Windows add and remove its firewall rule (`netsh advfirewall`, private and
+  domain profiles, Coreloom's own program and port) and check whether the network is Public
+  (`Get-NetConnectionProfile`). macOS needs no permission to accept connections (Apple TN3179); the Mac app's
+  Info.plist still carries `NSLocalNetworkUsageDescription`.
+- **Paired phones** live in `connect.json` in the settings folder (mode 600 on a Mac): the computer's id and each
+  phone's id, name, key and when it was paired and last seen; at most 20.
+
 ## Telemetry pipeline
 
 1. **Providers** implement `ITelemetryProvider`.

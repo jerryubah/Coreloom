@@ -104,9 +104,9 @@ public static class ConnectCrypto
                 });
                 return _key.DeriveRawSecretAgreement(other.PublicKey);
             }
-            catch (CryptographicException)
+            catch (Exception e) when (e is CryptographicException or PlatformNotSupportedException)
             {
-                return null; // not on the curve
+                return null; // not on the curve (Windows' CNG says so with PlatformNotSupportedException)
             }
         }
 

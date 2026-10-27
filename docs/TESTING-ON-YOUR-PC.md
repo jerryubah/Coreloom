@@ -788,3 +788,31 @@ GitHub's Macs check every build of Coreloom for Mac, but they are virtual machin
 
 Send back screenshots of anything that reads wrong, with the report from *Settings › Diagnostics › Export
 diagnostic report*.
+
+## 9. Your phone (Coreloom Connect, 1.7.0)
+
+Coreloom Connect has been tested against its real server in a phone-sized browser, and on GitHub's Windows and Mac
+machines over loopback, but not with a real phone on a real home network. With your PC or Mac and your phone on
+the same Wi-Fi:
+
+1. **Turn it on.** *Settings › Connect*, flip the switch. On Windows, Coreloom adds the *Coreloom Connect* firewall
+   rule (`netsh advfirewall firewall show rule name="Coreloom Connect"` lists it); if the card says your network is
+   *Public*, use *Network settings* to set it to *Private*. On a Mac with the firewall on, macOS may ask whether
+   Coreloom may accept incoming connections: allow it.
+2. **Pair with the camera.** Point the iPhone's Camera (or Android's camera or Google Lens) at the QR code and tap
+   the link. Coreloom opens in the browser, already paired, and the desktop lists the phone as *Connected now*.
+3. **Pair with the code.** On a second phone (or after *More › Forget this computer*), type the address shown in
+   *Settings › Connect* into the browser, enter the six-digit code and a name. A wrong code says so; five wrong codes
+   replace the code on the desktop.
+4. **Readings.** Compare the Overview's GPU and CPU gauges, temperatures and power with the desktop: they should
+   match within a second or two. Visit Graphics, Processor (every core), Memory and More.
+5. **Add to Home Screen.** iPhone: *More › Add to Home Screen*, then Share › *Add to Home Screen*. Android: ⋮ ›
+   *Add to Home screen*. Open it from the icon: it should open full screen and connect without pairing again.
+6. **Coming and going.** Lock the phone for a minute and unlock it; turn Wi-Fi off and on; quit and reopen Coreloom
+   on the computer. The phone should show *Reconnecting…* and then *Live* again by itself.
+7. **Removing.** *Remove…* next to the phone in *Settings › Connect*: the phone should say it was removed and offer to pair again.
+   Turning Connect off should make the phone show that it can't reach the computer (and, on Windows, remove the
+   firewall rule).
+
+Send back the phone's model, its browser and its version, and screenshots of anything that looks wrong or reads
+differently from the desktop.

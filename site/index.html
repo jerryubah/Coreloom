@@ -187,6 +187,8 @@
   .film { margin: 16px 0 0; }
   .film .frame { aspect-ratio: 16 / 9; }
   .film img { aspect-ratio: 16 / 9; }
+  .film .frame.phone { aspect-ratio: auto; border: 0; box-shadow: none; background: none; border-radius: 0; padding: 8px 4% 0; }
+  .film .frame.phone img { aspect-ratio: auto; }
 
   /* Steps */
   .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 30px; counter-reset: step; }
@@ -338,7 +340,7 @@
         <div class="feature">
           <div class="fi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></div>
           <h3>Alerts and readings anywhere</h3>
-          <p>Notifications when a reading stays past your threshold, readings in the menu bar or tray, and an in-game overlay over full-screen apps and games.</p>
+          <p>Notifications when a reading stays past your threshold, readings in the menu bar or tray, an in-game overlay, and your computer's readings live on your phone over your own Wi-Fi.</p>
         </div>
       </div>
 
@@ -352,6 +354,10 @@
           <figcaption>Smart Optimize on a Mac: one scan, then clean up only what you choose.</figcaption>
         </figure>
       </div>
+      <figure class="gallery film" style="display:block">
+        <div class="frame phone"><img src="assets/coreloom-phone.webp" width="1324" height="879" loading="lazy" alt="Coreloom on a phone: the Overview with GPU and CPU gauges, the Processor page with every core, and the Memory page."></div>
+        <figcaption>New in 1.7: on your phone. Turn on Settings › Connect, scan the QR code, and your computer's readings are live on your phone. No app store, no account, no cloud.</figcaption>
+      </figure>
       <figure class="gallery film" style="display:block">
         <div class="frame"><img src="assets/coreloom-film.avif" width="1600" height="900" loading="lazy" alt="Coreloom's product film on Windows: the PC lighting up, the dashboard, gauges, Game Boost, the frame limiter, the game library, the in-game overlay and Smart Optimize."></div>
         <figcaption>Coreloom on Windows: the product film.</figcaption>
@@ -393,7 +399,7 @@
       <h2>It reads. It never meddles.</h2>
       <div class="band">
         <div><b>Read-only monitoring</b><span>No overclocking, fan control or firmware changes. Ever.</span></div>
-        <div><b>No telemetry</b><span>Only update checks to GitHub, and Cloudflare when you run a speed test.</span></div>
+        <div><b>No telemetry</b><span>Only update checks to GitHub, and Cloudflare when you run a speed test. Your phone connects over your own network.</span></div>
         <div><b>Nothing added to games</b><span>No injection, so anti-cheat has nothing to object to.</span></div>
         <div><b>Changes only on your click</b><span>Every switch says what it does and turns off again.</span></div>
       </div>

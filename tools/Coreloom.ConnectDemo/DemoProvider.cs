@@ -137,7 +137,7 @@ internal sealed class DemoProvider : ITelemetryProvider
         Add(MetricIds.MemoryUsed, MetricCategory.Memory, MetricKind.Data, 31d * (1L << 30), "Memory used");
         Add(MetricIds.MemoryAvailable, MetricCategory.Memory, MetricKind.Data, 33d * (1L << 30), "Available");
         Add(MetricIds.MemoryTotal, MetricCategory.Memory, MetricKind.Data, 64d * (1L << 30), "Physical memory");
-        Add(MetricIds.MemoryLoad, MetricCategory.Memory, MetricKind.Load, 48.4, "Memory utilization");
+        Add(MetricIds.MemoryLoad, MetricCategory.Memory, MetricKind.Load, 48.4, "Memory utilization"); // 31 of 64 GB
         Add(MetricIds.MemoryApp, MetricCategory.Memory, MetricKind.Data, 21.3 * (1L << 30), "App memory");
         Add(MetricIds.MemoryWired, MetricCategory.Memory, MetricKind.Data, 4.1 * (1L << 30), "Wired memory");
         Add(MetricIds.MemoryCompressed, MetricCategory.Memory, MetricKind.Data, 5.6 * (1L << 30), "Compressed");
@@ -185,7 +185,8 @@ internal sealed class DemoProvider : ITelemetryProvider
             double wobble = kind is MetricKind.Load or MetricKind.Power or MetricKind.Throughput or MetricKind.Clock or MetricKind.Fan
                 ? 1 + (0.22 * Math.Sin((_tick * 0.11) + phase)) + (0.12 * Math.Sin((_tick * 0.43) + (phase * 2))) + (0.05 * Math.Sin(_tick * 1.9))
                 : kind == MetricKind.Temperature ? 1 + (0.06 * Math.Sin((_tick * 0.07) + phase)) : 1;
-            if (id.Contains("limit", StringComparison.Ordinal) || id.EndsWith("/total", StringComparison.Ordinal) || id.Contains("vol/", StringComparison.Ordinal))
+            if (id.Contains("limit", StringComparison.Ordinal) || id.EndsWith("/total", StringComparison.Ordinal) || id.Contains("vol/", StringComparison.Ordinal)
+                || id == MetricIds.MemoryLoad) // stays in step with memory in use / usable, as the real reading does
             {
                 wobble = 1;
             }

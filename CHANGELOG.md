@@ -7,6 +7,28 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-10-27
+
+Coreloom on your phone: see your PC's or Mac's temperatures, load and power live on your phone, over your own network. Turn it on in the new *Settings › Connect*, scan the QR code with your phone's camera, and that's it: no app store, no account, no cloud.
+
+### Highlights
+
+- **Coreloom on your phone.** Your computer's readings in Coreloom's own design on an iPhone, Android phone or tablet: an Overview with the GPU and CPU gauges and health check, then Graphics, Processor (every core), Memory and More (drives, network, battery and your computer's specs), with two-minute live charts and light and dark themes. It's served by Coreloom itself and opens in the phone's browser; *Add to Home Screen* keeps an icon that opens it full screen.
+- **Settings › Connect.** One switch lets phones connect. While the section is open it shows a QR code that pairs a phone the moment it's scanned, or a six-digit pairing code to type with the address. Paired phones are listed with when each last connected, and *Remove* unpairs one.
+- **Private by design.** Connect answers only on private networks like your home Wi-Fi, and only phones you've paired. Pairing uses a one-time key exchange, and every reading is encrypted between your computer and your phone; nothing goes through the internet or any server. Phones can only look: nothing on your computer can be changed from a phone.
+
+### In detail
+
+- Connect is off until you turn it on. Pairing is open only while *Settings › Connect* is showing, each code and QR link works once, and a code changes every five minutes; five wrong tries replace it, and ten in a minute pause pairing for a minute.
+- Windows: turning Connect on adds one Windows Defender Firewall rule, *Coreloom Connect*, for Coreloom on private and domain networks only (never public ones), and turning it off removes it. If your network is set to Public, Settings › Connect says so and opens Windows' network settings.
+- Mac: no permission is needed to let phones connect. If the macOS firewall is on, macOS may ask once whether Coreloom may accept incoming connections.
+- Coreloom listens on port 47101. While no phone is watching, Coreloom doesn't prepare any readings for one.
+- Have 1.6.x? Choose *Check for Updates* (the Coreloom menu on a Mac, *Settings › Updates* on Windows), then *Install update*.
+
+### Feedback
+
+Tried it on your phone? [Open an issue](https://github.com/jerryubah/Coreloom/issues) with the phone and browser you used, and a screenshot if something looks off.
+
 ## [1.6.1] - 2026-10-25
 
 On a Mac, the Overview's top card now always fits your Mac's specs.

@@ -14,14 +14,14 @@ public sealed class ConnectViewModelTests : IDisposable
 
     public void Dispose()
     {
-        _host?.DisposeAsync().AsTask().Wait();
+        _host?.DisposeAsync().AsTask().GetAwaiter().GetResult();
         if (Directory.Exists(_dir))
         {
             Directory.Delete(_dir, recursive: true);
         }
     }
 
-    private (ConnectViewModel ViewModel, ConnectHost Host, SettingsService Settings) Create(bool enabled, bool withNetwork = true)
+    private async Task<(ConnectViewModel ViewModel, ConnectHost Host, SettingsService Settings)> CreateAsync(bool enabled, bool withNetwork = true)
     {
         var (monitor, settings, _) = Fixture.Create(_dir);
         settings.Current.Connect.Enabled = enabled;
@@ -35,14 +35,14 @@ public sealed class ConnectViewModelTests : IDisposable
                 ? [new LocalAddress(IPAddress.Parse("192.168.1.24"), "Wi-Fi", true), new LocalAddress(IPAddress.Parse("100.84.12.7"), "VPN", false)]
                 : [],
         }, "1.7.0");
-        _host.ApplyAsync().GetAwaiter().GetResult();
+        await _host.ApplyAsync();
         return (new ConnectViewModel(_host, settings, _shell, isMac: false), _host, settings);
     }
 
     [Fact]
-    public void OffSaysSoAndShowsNoCode()
+    public async Task OffSaysSoAndShowsNoCode()
     {
-        var (vm, host, _) = Create(enabled: false);
+        var (vm, host, _) = await CreateAsync(enabled: false);
         vm.SetVisible(true);
 
         Assert.Equal(ConnectStatus.Off, host.Status);
@@ -56,9 +56,9 @@ public sealed class ConnectViewModelTests : IDisposable
     }
 
     [Fact]
-    public void OnShowsTheQrCodeAndCodeOnlyWhileTheSectionIsShowing()
+    public async Task OnShowsTheQrCodeAndCodeOnlyWhileTheSectionIsShowing()
     {
-        var (vm, host, _) = Create(enabled: true);
+        var (vm, host, _) = await CreateAsync(enabled: true);
         Assert.Equal(ConnectStatus.On, host.Status);
         Assert.False(host.Pairing.IsOpen); // not until Settings › Connect is on screen
         Assert.False(vm.IsPairingOpen);
@@ -89,9 +89,9 @@ public sealed class ConnectViewModelTests : IDisposable
     }
 
     [Fact]
-    public void WithoutANetworkItAsksForOne()
+    public async Task WithoutANetworkItAsksForOne()
     {
-        var (vm, _, _) = Create(enabled: true, withNetwork: false);
+        var (vm, _, _) = await CreateAsync(enabled: true, withNetwork: false);
         vm.SetVisible(true);
         Assert.True(vm.NeedsNetwork);
         Assert.False(vm.IsPairingOpen);
@@ -99,27 +99,27 @@ public sealed class ConnectViewModelTests : IDisposable
     }
 
     [Fact]
-    public void TheSwitchTurnsConnectOnAndOff()
+    public async Task TheSwitchTurnsConnectOnAndOff()
     {
-        var (vm, host, settings) = Create(enabled: false);
+        var (vm, host, settings) = await CreateAsync(enabled: false);
         vm.IsEnabled = true;
         Assert.True(settings.Current.Connect.Enabled);
-        host.ApplyAsync().GetAwaiter().GetResult(); // what the shell does when the setting changes
+        await host.ApplyAsync(); // what the shell does when the setting changes
         vm.SetVisible(true);
         Assert.True(vm.IsOn);
         Assert.True(vm.IsPairingOpen);
 
         vm.IsEnabled = false;
-        host.ApplyAsync().GetAwaiter().GetResult();
+        await host.ApplyAsync();
         vm.Tick();
         Assert.Equal(ConnectStatus.Off, host.Status);
         Assert.False(host.Pairing.IsOpen);
     }
 
     [Fact]
-    public void ListsPairedPhonesAndRemovesThem()
+    public async Task ListsPairedPhonesAndRemovesThem()
     {
-        var (vm, host, _) = Create(enabled: true);
+        var (vm, host, _) = await CreateAsync(enabled: true);
         var now = DateTimeOffset.UtcNow;
         var iphone = host.Store.Add("Jerry's iPhone", "qr", now.AddDays(-1));
         host.Store.Add("iPad", "code", now.AddDays(-3));
@@ -175,7 +175,7 @@ public sealed class ConnectViewModelTests : IDisposable
         Assert.Equal(38, temperature.GetProperty("v").GetDouble(), 3);
         Assert.Equal("38", temperature.GetProperty("n").GetString());
         Assert.Equal("°C", temperature.GetProperty("u").GetString());
-        Assert.Equal("24.0 GB", root.GetProperty("memory").GetProperty("usedText").GetString().Replace("GiB", "GB"));
+        Assert.Equal("24.0 GB", root.GetProperty("memory").GetProperty("usedText").GetString()!.Replace("GiB", "GB"));
         Assert.True(root.GetProperty("health").TryGetProperty("key", out _));
         Assert.NotEmpty(root.GetProperty("overview").GetProperty("cards").EnumerateArray());
 

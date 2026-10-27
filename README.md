@@ -9,7 +9,8 @@ storage and network telemetry, animated charts with up to an hour of history, a 
 clean-up, threshold alerts, a tray or menu bar icon and verified in-app updates.
 
 Coreloom only **reads** sensors. It never changes clocks, voltages, fan curves or firmware settings, never
-installs drivers or services, and never sends your data anywhere.
+installs drivers or services, and never sends your data to the internet. New in 1.7.0: see your computer's readings
+live on your phone, over your own network ([Coreloom on your phone](#coreloom-on-your-phone)).
 
 ## Download
 
@@ -35,8 +36,9 @@ Each button downloads the newest version. Once installed, Coreloom keeps itself 
 > virtual machines without temperature, power or fan sensors, so readings from real Mac hardware are the part
 > least tried so far. If a sensor reads wrong, please [open an issue](../../issues) with a diagnostic report
 > attached (*Settings › Diagnostics › Export diagnostic report*, or [CoreloomDiag](#diagnostics-coreloomdiag) on
-> Windows). [docs/VERIFICATION.md](docs/VERIFICATION.md) lists
-> what has and hasn't been verified.
+> Windows). **Coreloom on your phone** is new in 1.7.0: its pairing, encryption and pages are tested against the
+> real server in a phone-sized browser and on GitHub's Windows and Mac machines, but not yet on a real iPhone or
+> Android phone. [docs/VERIFICATION.md](docs/VERIFICATION.md) lists what has and hasn't been verified.
 
 ---
 
@@ -192,6 +194,35 @@ macOS's own sources for every reading. What changes on a Mac:
 - **No administrator rights.** Coreloom for Mac runs as you, with no helper, kernel extension or driver. The few
   changes that need your password (freeing memory, the DNS cache, the power mode) ask through macOS's own
   dialog, and only when you click them.
+
+## Coreloom on your phone
+
+<p align="center">
+  <img src="assets/readme/coreloom-phone.webp" width="100%" alt="Coreloom on a phone: the Overview with GPU and CPU gauges, the Processor page with every core, and the Memory page in the light theme">
+</p>
+
+New in 1.7.0: your PC's or Mac's readings live on your phone, over your own network. Turn it on in
+*Settings › Connect*, point your phone's camera at the QR code there, and Coreloom opens in the phone's browser,
+already paired. No app store, no account, no cloud.
+
+- **Pair once.** Scan the QR code, or type the address shown in *Settings › Connect* into the phone's browser and
+  enter the six-digit pairing code. *Add to Home Screen* (Share › Add to Home Screen on an iPhone, ⋮ › Add to Home
+  screen on Android) keeps an icon that opens Coreloom full screen whenever you're on the same network.
+- **The same dashboard.** An Overview with the GPU and CPU gauges, the health check and the summary cards, then
+  Graphics, Processor (every core), Memory and More (drives, network, battery and your computer's specs), with
+  two-minute live charts, in Coreloom's dark and light themes.
+- **Paired phones** are listed in *Settings › Connect* with when each last connected; *Remove* unpairs one, and a
+  phone can forget your computer from its own *More* page.
+- **Private.** Connect is off until you turn it on, answers only on private networks such as your home Wi-Fi, and
+  only phones you've paired. Pairing is a one-time key exchange (P-256), every reading is encrypted
+  (AES-256-GCM) between your computer and your phone, and nothing goes through the internet or any server. Phones
+  can only look: nothing on your computer can be changed from a phone. Pairing is open only while
+  *Settings › Connect* is showing, and each code works once.
+- **On Windows,** turning Connect on adds one firewall rule, *Coreloom Connect*, for private and domain networks
+  (never public ones), and turning it off removes it. If your Wi-Fi is set to *Public*, Settings › Connect says so.
+  **On a Mac** nothing needs allowing, unless the macOS firewall is on, in which case macOS may ask once.
+
+How it works is in [src/Coreloom.Phone/README.md](src/Coreloom.Phone/README.md).
 
 ## What Coreloom reads, and from where
 
@@ -393,9 +424,12 @@ LibreHardwareMonitor's own report. See [docs/TESTING-ON-YOUR-PC.md](docs/TESTING
   `store.steampowered.com` with the game's name, the game's pictures from `api.steampowered.com`, and the picture
   servers `shared.akamai.steamstatic.com` and `cdn.cloudflare.steamstatic.com`). Pictures are kept on your PC; a game
   nothing is found for is looked up again after a week. No hardware data is included.
+- **Coreloom Connect stays on your network.** Only when you turn it on in *Settings › Connect*, Coreloom answers
+  phones on your own network (port 47101, private addresses only) and shows its readings to the phones you've
+  paired, encrypted. Nothing is sent to the internet, and a phone can't change anything on your computer.
 - **Always elevated on Windows, never on a Mac.** On Windows Coreloom runs as administrator so the sensor driver can
-  be read and Smart Optimize can clean system folders, but it never installs drivers or services and has no remote
-  access of any kind. On a Mac it runs as you; the few changes that need your password ask for it through macOS's
+  be read and Smart Optimize can clean system folders, but it never installs drivers or services and can't be
+  controlled from anywhere else (Coreloom Connect only lets paired phones look). On a Mac it runs as you; the few changes that need your password ask for it through macOS's
   own dialog when you click them.
 - **On a Mac, the same rules.** The Gaming page's switches set macOS's own settings (`pmset`, `defaults`) and turn
   off again; Smart Optimize deletes only inside your own Library's caches and logs (and what you tick) and empties
@@ -415,9 +449,11 @@ src/
   Coreloom.ViewModels/    MVVM presentation layer shared by both apps (no UI types; unit-tested)
   Coreloom.App/           Windows app (WPF): theme, chart controls, pages, tray, startup, single instance
   Coreloom.Mac/           Mac app (Avalonia): the same pages, menu bar item, menus, in-game overlay, updater
+  Coreloom.Phone/         the phone app (Coreloom Connect), served by Coreloom to paired phones on your network
   Coreloom.Diagnostics/   CoreloomDiag command-line diagnostic tool
 tests/                 xUnit v3 tests for Core, Hardware (Windows and Mac) and ViewModels
-tools/                 PageShots (Windows) and MacShots (Mac): every page drawn with sample data
+tools/                 PageShots (Windows) and MacShots (Mac): every page drawn with sample data; ConnectDemo:
+                       Coreloom Connect with sample readings, to try the phone app
 installer/Coreloom.iss    Inno Setup script
 build/                 build.ps1 (Windows), mac/bundle.sh and mac/verify-app.sh (Mac), release notes, checks
 site/                  the download page (GitHub Pages)

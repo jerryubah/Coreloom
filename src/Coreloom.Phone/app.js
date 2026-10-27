@@ -679,7 +679,7 @@ class MemoryPage {
       h('div', { class: 'donut-row' },
         h('div', { class: 'ring' }, this.donut, h('div', { class: 'ring__center' }, h('div', { class: 'ring__value' }, this.center), h('span', { class: 'ring__label', text: 'in use' }))),
         h('div', { class: 'donut-legend' },
-          h('div', { class: 'donut-legend__row' }, h('span', { class: 'legend__swatch', '--swatch': 'var(--memory)' }), 'In use', this.usedText),
+          h('div', { class: 'donut-legend__row' }, (this.usedSwatch = h('span', { class: 'legend__swatch', '--swatch': 'var(--memory)' })), 'In use', this.usedText),
           h('div', { class: 'donut-legend__row' }, h('span', { class: 'legend__swatch', '--swatch': 'var(--track)' }), 'Available', this.availableText))));
     this.grid = new TileGrid(dash);
     this.grid.el.classList.add('section');
@@ -696,7 +696,10 @@ class MemoryPage {
     setText(this.usedText, memory.usedText || '—');
     setText(this.availableText, memory.availableText || '—');
     const used = memory.used || 0, available = memory.available || 0;
-    drawDonut(this.donut, [{ value: used, color: rgba(load?.g ? metricColor(load) : parseColor(cssColor('--memory'))) }, { value: available, color: cssColor('--track') }]);
+    // The ring takes the gauges' colour scale (as on the desktop); its legend swatch follows it.
+    const usedColor = rgba(load?.g ? metricColor(load) : parseColor(cssColor('--memory')));
+    drawDonut(this.donut, [{ value: used, color: usedColor }, { value: available, color: cssColor('--track') }]);
+    this.usedSwatch.style.setProperty('--swatch', usedColor);
     this.grid.update(rest, s.t);
     this.chart.update(s, byId(s));
   }

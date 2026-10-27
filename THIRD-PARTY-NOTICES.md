@@ -37,6 +37,23 @@ files in a build is determined by NuGet; run `dotnet list package --include-tran
 - The font files are embedded unmodified in `Coreloom.exe`'s assembly resources. Each license text is
   also installed next to the app as `LICENSE-Inter.txt` and `LICENSE-JetBrainsMono.txt`.
 
+## The phone app (Coreloom Connect): noble cryptography and Inter
+
+The phone app in `src/Coreloom.Phone`, which Coreloom serves to paired phones, is embedded in `Coreloom.Core`'s
+assembly resources (in both the Windows and the Mac app).
+
+| Component | License | Source |
+|---|---|---|
+| @noble/curves 2.4.0 (P-256) | MIT (© Paul Miller) | https://github.com/paulmillr/noble-curves |
+| @noble/hashes 2.4.0 (SHA-256, HMAC, HKDF) | MIT (© Paul Miller) | https://github.com/paulmillr/noble-hashes |
+| @noble/ciphers 2.4.0 (AES-GCM) | MIT (© Paul Miller) | https://github.com/paulmillr/noble-ciphers |
+| Inter (Regular, Medium, SemiBold, Bold) as WOFF2, Latin subset | SIL OFL 1.1 (© 2016 The Inter Project Authors) | https://github.com/rsms/inter |
+
+- The noble libraries are bundled unmodified into `vendor/crypto.js` (see `build/phone/crypto`); their license
+  notices are kept at the end of that file.
+- Inter is subset to the characters Coreloom shows and converted to WOFF2 (`build/phone/make-assets.py`). Inter's
+  copyright notice declares no Reserved Font Name. Its license is served with the fonts as `fonts/LICENSE-Inter.txt`.
+
 ## Coreloom icon
 
 The application icon, logo and startup splash files in `assets/branding` (including `assets/branding/splash`) are
