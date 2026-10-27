@@ -810,6 +810,13 @@ unchanged.
 | Windows pages | Page shots (run 40582333493: Gaming, Benchmarking, Graphics, Processor, Memory, Storage, Smart Optimize, Settings › Connect) and the XAML checker; the WPF window with the new message over the page compiled in CI | ✅ |
 | The Mac sidebar below the traffic lights | MacShots (0 binding errors) and the real app on GitHub's Macs (Mac verify run 40582339670): on the Intel Mac's 1920 × 1080 screen with the sidebar wide, and the Apple silicon Mac's 1024 × 768 screen with it narrow, the close, minimize and zoom buttons sit on the backdrop above the sidebar; every page, Connect on port 47101 and a clean quit passed on both | ✅ Apple silicon and Intel |
 
+### Updating to 1.8.0 on a Mac
+
+| Run | Result |
+|---|---|
+| The published 1.7.0 app (downloaded from its release) → the published 1.8.0, runs 40586214778 and 40589066122 (`macupdatetest-180`, `-180-b`) | ✅ Apple silicon both times: found and verified in about 20 s, replaced after quitting, 1.8.0 running with "Coreloom was updated to 1.8.0" and the sidebar below the window's buttons. Intel: ❌ the first time (GitHub answered the update check with its rate limit for the shared runner, so nothing was downloaded in 10 minutes), ✅ on the re-run |
+| 0.9.0 (built from 1.8.0's code) → the published 1.8.0, same runs | ✅ Apple silicon both times. Intel: the first run couldn't build the 0.9.0 disk image ("hdiutil: create failed - Resource busy", a runner hiccup), ✅ on the re-run |
+
 ### Not verified yet
 
 - **A real game's frame rate on a real phone.** The phone's overlay has only been fed by the demo server's pretend
