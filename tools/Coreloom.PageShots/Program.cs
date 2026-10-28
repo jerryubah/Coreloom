@@ -59,6 +59,12 @@ internal static class Program
         var (settings, connect) = SampleSettings.Create(data);
         await ShootAsync(Path.Combine(output, "settings-connect.png"), new SettingsPage { DataContext = settings }, 1150, () => settings.Refresh(data));
         await ShootAsync(Path.Combine(output, "settings-connect-narrow.png"), new SettingsPage { DataContext = settings }, 1250, () => settings.Refresh(data), 1000);
+
+        // Settings › Updates with a newer version out: the "What's new" card (its notes are CHANGELOG.md's newest section).
+        data.Settings.Update("Updates", s => s.Updates.AutoInstall = false);
+        await settings.Updates.CheckCommand.ExecuteAsync(null);
+        settings.SelectedSection = "Updates";
+        await ShootAsync(Path.Combine(output, "settings-updates.png"), new SettingsPage { DataContext = settings }, 1500, () => settings.Refresh(data));
         await connect.DisposeAsync();
 
         var gaming = data.Gaming();

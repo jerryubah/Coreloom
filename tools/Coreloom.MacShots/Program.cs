@@ -105,6 +105,18 @@ internal static class Program
     {
         var data = new SampleData();
         data.Prefill();
+
+        // A Bluetooth device renamed in Coreloom (Devices shows the given name, its tool tip the device's own).
+        data.Settings.Update("Devices", s => s.Devices.BluetoothNames["3"] = "Desk trackpad");
+
+        // A few readings in the menu bar, so Settings › Menu bar's preview has something to show.
+        data.Settings.Update("MenuBar", s =>
+        {
+            foreach (string id in new[] { "gpu", "fans", "gpu-temp", "memory", "cpu" })
+            {
+                s.MenuBar.For(id).Shown = true;
+            }
+        });
         var shell = data.Shell(theme);
 
         // The Mac picture's lighting color (--glow=Rainbow), and the desktop picture off (--no-wallpaper).
@@ -197,6 +209,22 @@ internal static class Program
                 window.Height = Math.Min(16000, (top + scroller.Extent.Height + 8) * Scale);
                 Settle(window, data, 2);
                 Capture(window, Path.Combine(output, $"{name}-full.png"));
+            }
+        }
+
+        // A Bluetooth device being renamed.
+        if (only is null || only.Split(',').Contains("devices"))
+        {
+            shell.Navigate(shell.Devices);
+            window.Height = WindowHeight * Scale;
+            Settle(window, data, 4);
+            if (shell.Devices.BluetoothDevices.FirstOrDefault(d => d.Id == "2") is { } device)
+            {
+                device.RenameCommand.Execute(null);
+                device.EditName = "Studio keyboard";
+                Settle(window, data, 4);
+                Capture(window, Path.Combine(output, "devices-rename.png"));
+                device.CancelRenameCommand.Execute(null);
             }
         }
 

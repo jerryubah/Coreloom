@@ -190,9 +190,14 @@ public static class BenchmarkScale
         }
 
         double was = result.ComputeFactor > 0 ? result.ComputeFactor : 1;
-        if (Math.Abs(was - computeFactor) < 1e-9 || result.Tests.Count == 0)
+        if (result.Tests.Count == 0)
         {
-            return result with { ComputeFactor = computeFactor };
+            return result; // nothing to work the compute part out from
+        }
+
+        if (Math.Abs(was - computeFactor) < 1e-9)
+        {
+            return result.ComputeFactor == computeFactor ? result : result with { ComputeFactor = computeFactor };
         }
 
         double change = computeFactor / was;

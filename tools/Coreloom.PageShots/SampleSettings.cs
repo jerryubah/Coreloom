@@ -51,7 +51,7 @@ internal static class SampleSettings
                 Shell = stubs,
                 Lifetime = stubs,
                 Diagnostics = stubs,
-                Updates = new UpdatesViewModel(app, data.Settings, stubs, stubs, new HttpClient(), Path.GetTempPath()),
+                Updates = new UpdatesViewModel(app, data.Settings, stubs, stubs, new HttpClient(new SampleReleases()), Path.GetTempPath()),
                 App = app,
                 Connect = host,
             });
@@ -136,5 +136,47 @@ internal static class SampleSettings
         public bool Prepare(VerifiedPackage package) => false;
 
         public bool LaunchAndExit(VerifiedPackage package, UpdateInstallOptions options) => false;
+    }
+}
+
+/// <summary>
+/// GitHub's releases as the update check sees them: one newer release whose notes are the newest section of CHANGELOG.md
+/// (so Settings › Updates shows an update and its "What's new").
+/// </summary>
+internal sealed class SampleReleases : HttpMessageHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        string notes = "A newer version.";
+        string version = "9.9.9";
+        if (File.Exists("CHANGELOG.md"))
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(File.ReadAllText("CHANGELOG.md"), @"^## \[(\d+\.\d+\.\d+)\][^\n]*\n(.*?)(?=^## \[)",
+                System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.Singleline);
+            if (match.Success)
+            {
+                version = match.Groups[1].Value;
+                notes = match.Groups[2].Value;
+            }
+        }
+
+        var releases = new System.Text.Json.Nodes.JsonArray
+        {
+            new System.Text.Json.Nodes.JsonObject
+            {
+                ["tag_name"] = "v" + version,
+                ["name"] = "Coreloom " + version,
+                ["body"] = notes,
+                ["html_url"] = $"https://github.com/jerryubah/Coreloom/releases/tag/v{version}",
+                ["published_at"] = "2026-10-28T18:00:00Z",
+                ["draft"] = false,
+                ["prerelease"] = false,
+                ["assets"] = new System.Text.Json.Nodes.JsonArray(),
+            },
+        };
+        return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+        {
+            Content = new StringContent(releases.ToJsonString(), System.Text.Encoding.UTF8, "application/json"),
+        });
     }
 }

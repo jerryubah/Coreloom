@@ -44,7 +44,7 @@
               <ColumnDefinition Width="*" />
               <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Grid Width="38" Height="38" VerticalAlignment="Center">
+            <Grid Width="38" Height="38" VerticalAlignment="Top">
               <Ellipse x:Name="Halo" Fill="{DynamicResource Brush.TextTertiary}" Opacity="0.14" />
               <Path x:Name="Glyph" Style="{StaticResource IconPath}" Width="18" Height="18" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
                     Stroke="{DynamicResource Brush.TextSecondary}" />

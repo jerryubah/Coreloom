@@ -32,7 +32,7 @@
           <!-- Icon, name and type (the name gets the whole width), and Rename. Renaming swaps the name for a text box:
                Enter or a click elsewhere keeps the name, Esc cancels, and an empty box goes back to the device's own. -->
           <Grid ColumnDefinitions="Auto,*,Auto">
-            <Grid Width="38" Height="38" VerticalAlignment="Center">
+            <Grid Width="38" Height="38" VerticalAlignment="Top">
               <Ellipse Fill="{Binding IsConnected, Converter={StaticResource BoolToBrush}, ConverterParameter='Brush.Success|Brush.TextTertiary'}" Opacity="0.14" />
               <Path Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
                     Stroke="{Binding IsConnected, Converter={StaticResource BoolToBrush}, ConverterParameter='Brush.Success|Brush.TextSecondary'}" />

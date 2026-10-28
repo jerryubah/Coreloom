@@ -104,7 +104,7 @@ public static class MenuBarModuleRenderer
     {
         "memory" => "88.8 GB",
         "cpu-temp" or "gpu-temp" => "100°C",
-        "fans" => "8,888 rpm",
+        "fans" => "8,888 RPM",
         "network" => "↓ 88.8 MB/s",
         "power" => "88.8 W",
         _ => "100%",
