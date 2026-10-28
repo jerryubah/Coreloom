@@ -89,12 +89,18 @@ internal sealed class SampleData
 
     public GamingViewModel Gaming() => Page(c => new GamingViewModel(c));
 
+    /// <summary>The sample tools (games, core scheduling, clean-up, benchmarks).</summary>
+    public ToolServices Tools => new() { Gaming = new SampleGaming(), CoreScheduling = new SampleCores(), Optimizer = new SampleOptimize(), Benchmarks = new SampleBenchmarks() };
+
+    /// <summary>Takes a new reading (the sample values drift a little each time).</summary>
+    public TelemetryFrame Poll() => Engine.PollOnce();
+
     private PageContext Context() => new()
     {
         Monitor = Monitor,
         Settings = Settings,
         Timeline = new TimelineViewModel(Engine.History),
-        Tools = new ToolServices { Gaming = new SampleGaming(), CoreScheduling = new SampleCores(), Optimizer = new SampleOptimize(), Benchmarks = new SampleBenchmarks() },
+        Tools = Tools,
     };
 }
 

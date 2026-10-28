@@ -54,6 +54,16 @@ internal static class Program
 
     private static async Task RunAsync(string output)
     {
+        try
+        {
+            await ShootWindowAsync(output);
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine($"The window shot failed: {e}");
+            File.WriteAllText(Path.Combine(output, "windows-overview-error.txt"), e.ToString());
+        }
+
         var data = new SampleData();
 
         var (settings, connect) = SampleSettings.Create(data);
@@ -180,6 +190,62 @@ internal static class Program
     }
 
     /// <summary>Lays the page out at its full height (or <paramref name="height"/>), lets it settle and saves a PNG.</summary>
+    /// <summary>
+    /// The whole window on the Overview, dark and light, at twice its size: the website's picture of Coreloom on Windows
+    /// (windows-overview.png, windows-overview-light.png).
+    /// </summary>
+    private static async Task ShootWindowAsync(string output)
+    {
+        var data = new SampleData();
+        var shell = SampleSettings.Shell(data);
+        var window = new MainWindow(shell)
+        {
+            Width = 1440,
+            Height = 960,
+            WindowStartupLocation = WindowStartupLocation.Manual,
+            Left = -3000,
+            Top = 0,
+            ShowActivated = false,
+            ShowInTaskbar = false,
+        };
+        window.Show();
+        foreach (var (name, preference) in new[] { ("windows-overview", ThemePreference.Dark), ("windows-overview-light", ThemePreference.Light) })
+        {
+            ThemeService.Instance?.Apply(new AppearanceSettings { Theme = preference, ReducedMotion = true });
+            for (int i = 0; i < 40; i++)
+            {
+                shell.OnFrame(data.Poll());
+                await Task.Delay(120);
+                await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            }
+
+            var root = (FrameworkElement)window.Content;
+            root.UpdateLayout();
+            const double dpi = 192;
+            var background = new DrawingVisual();
+            using (var dc = background.RenderOpen())
+            {
+                dc.DrawRectangle(Application.Current.TryFindResource("Brush.WindowBackground") as Brush ?? Brushes.Black, null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
+            }
+
+            var bitmap = new RenderTargetBitmap((int)Math.Ceiling(root.ActualWidth * dpi / 96), (int)Math.Ceiling(root.ActualHeight * dpi / 96), dpi, dpi, PixelFormats.Pbgra32);
+            bitmap.Render(background);
+            bitmap.Render(root);
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(bitmap));
+            using (var stream = File.Create(Path.Combine(output, name + ".png")))
+            {
+                encoder.Save(stream);
+            }
+
+            Console.WriteLine($"{name}.png: {root.ActualWidth:0} × {root.ActualHeight:0}");
+        }
+
+        ThemeService.Instance?.Apply(new AppearanceSettings { Theme = ThemePreference.Dark, ReducedMotion = true });
+        window.AllowClose = true;
+        window.Close();
+    }
+
     private static async Task ShootAsync(string file, FrameworkElement page, double? height, Action tick, double width = PageWidth)
     {
         page.Width = width;

@@ -60,6 +60,29 @@ internal static class SampleSettings
         return (page, host!);
     }
 
+    /// <summary>The whole app (sidebar and Overview) with no update waiting, for the website's picture of Coreloom on Windows.</summary>
+    public static ShellViewModel Shell(SampleData data)
+    {
+        var stubs = new Stubs();
+        var app = new AppVersionInfo(SemanticVersion.Parse("1.8.1"), "1.8.1", "jerryubah/Coreloom", null);
+        return new ShellViewModel(new ShellDependencies
+        {
+            Monitor = data.Monitor,
+            Settings = data.Settings,
+            Alerts = new Coreloom.Core.Alerts.AlertEngine(TimeSpan.FromMinutes(10)),
+            Theme = stubs,
+            Startup = stubs,
+            Elevation = stubs,
+            Shell = stubs,
+            Lifetime = stubs,
+            Diagnostics = stubs,
+            Updates = new UpdatesViewModel(app, data.Settings, stubs, stubs, new HttpClient(new SampleReleases(none: true)), Path.GetTempPath()),
+            App = app,
+            Tools = data.Tools,
+            Platform = HostPlatform.Windows,
+        });
+    }
+
     /// <summary>Windows' side of Connect without touching the firewall: says the network is Public, to show the note.</summary>
     private sealed class SamplePlatform : IConnectPlatform
     {
@@ -75,7 +98,7 @@ internal static class SampleSettings
         }
     }
 
-    private sealed class Stubs : IThemeService, IStartupService, IElevationService, IShellService, IAppLifetime, IDiagnosticsService, IUpdateInstaller
+    internal sealed class Stubs : IThemeService, IStartupService, IElevationService, IShellService, IAppLifetime, IDiagnosticsService, IUpdateInstaller
     {
         public bool IsMicaSupported => true;
 
@@ -143,10 +166,15 @@ internal static class SampleSettings
 /// GitHub's releases as the update check sees them: one newer release whose notes are the newest section of CHANGELOG.md
 /// (so Settings › Updates shows an update and its "What's new").
 /// </summary>
-internal sealed class SampleReleases : HttpMessageHandler
+internal sealed class SampleReleases(bool none = false) : HttpMessageHandler
 {
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
+        if (none)
+        {
+            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent("[]", System.Text.Encoding.UTF8, "application/json") });
+        }
+
         string notes = "A newer version.";
         string version = "9.9.9";
         if (File.Exists("CHANGELOG.md"))
