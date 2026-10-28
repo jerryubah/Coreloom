@@ -117,7 +117,7 @@ internal sealed class SampleData
     {
         var stubs = new Stubs();
         var app = new AppVersionInfo(SemanticVersion.Parse("1.6.0"), "1.6.0", "jerryubah/Coreloom", null);
-        var updates = new UpdatesViewModel(app, Settings, stubs, stubs, new HttpClient(), Path.GetTempPath());
+        var updates = new UpdatesViewModel(app, Settings, stubs, stubs, new HttpClient(new SampleReleases()), Path.GetTempPath());
 
         // Settings › Connect: on, on a home Wi-Fi address, with two paired phones.
         string connectFolder = Path.Combine(Path.GetTempPath(), "coreloom-macshots-connect-" + Guid.NewGuid().ToString("N"));
@@ -348,4 +348,36 @@ internal sealed class SampleProcesses : IProcessSampler
 
     public IReadOnlyList<ProcessUsage> Sample() =>
         [.. Apps.Select(a => new ProcessUsage(a.Name, a.Count, a.Cpu, (long)(a.Gb * (1L << 30)), (long)(a.Gb * 0.8 * (1L << 30))))];
+}
+
+/// <summary>
+/// GitHub's releases as the update check sees them: none, unless MACSHOTS_RELEASE names a markdown file, which becomes the
+/// notes of a newer release (so Settings › Updates shows an update and its "What's new").
+/// </summary>
+internal sealed class SampleReleases : HttpMessageHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        string? notes = Environment.GetEnvironmentVariable("MACSHOTS_RELEASE") is { Length: > 0 } path && File.Exists(path) ? File.ReadAllText(path) : null;
+        var releases = new System.Text.Json.Nodes.JsonArray();
+        if (notes is not null)
+        {
+            releases.Add(new System.Text.Json.Nodes.JsonObject
+            {
+                ["tag_name"] = "v1.8.1",
+                ["name"] = "Coreloom 1.8.1",
+                ["body"] = notes,
+                ["html_url"] = "https://github.com/jerryubah/Coreloom/releases/tag/v1.8.1",
+                ["published_at"] = "2026-10-28T18:00:00Z",
+                ["draft"] = false,
+                ["prerelease"] = false,
+                ["assets"] = new System.Text.Json.Nodes.JsonArray(),
+            });
+        }
+
+        return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+        {
+            Content = new StringContent(releases.ToJsonString(), System.Text.Encoding.UTF8, "application/json"),
+        });
+    }
 }

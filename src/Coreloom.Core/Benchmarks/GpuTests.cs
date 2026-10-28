@@ -34,8 +34,18 @@ public static class GpuTests
 
     public static IReadOnlyList<GpuTestInfo> All { get; } = [Lighting, RayMarching, Compute, Bandwidth, Physics];
 
-    /// <summary>Points for a rate: 10,000 at the reference rate.</summary>
-    public static double Score(double rate, double reference) => rate > 0 && reference > 0 ? rate / reference * BenchmarkScale.Gpu : 0;
+    /// <summary>
+    /// On a Mac, the compute tests' points are multiplied by this (since 1.8.1): Apple's graphics processors score far
+    /// higher in the graphics tests than in compute on this scale, and a Mac's compute part read as small next to its
+    /// graphics part. Results saved earlier are brought up to it (<see cref="BenchmarkScale.Upgrade"/>).
+    /// </summary>
+    public const double MetalComputeFactor = 10;
+
+    /// <summary>Points for a rate: 10,000 at the reference rate (times <paramref name="factor"/>).</summary>
+    public static double Score(double rate, double reference, double factor = 1) => rate > 0 && reference > 0 ? rate / reference * BenchmarkScale.Gpu * factor : 0;
+
+    /// <summary>The points multiplier for a test: <paramref name="computeFactor"/> for the compute tests, 1 for graphics.</summary>
+    public static double FactorFor(string category, double computeFactor) => category == "Compute" ? computeFactor : 1;
 
     /// <summary>The overall score and the graphics and compute parts (geometric means, so every test counts the same).</summary>
     public static (double Overall, double Graphics, double Compute) Scores(IReadOnlyList<BenchmarkTestResult> tests) => (

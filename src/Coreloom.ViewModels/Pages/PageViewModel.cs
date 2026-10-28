@@ -55,6 +55,9 @@ public abstract partial class PageViewModel : ObservableObject
         set => SetProperty(ref _isEnabled, value);
     }
 
+    /// <summary>A red dot on the page's icon in the sidebar (Settings: a new version of Coreloom is available).</summary>
+    public virtual bool HasNotice => false;
+
     public TimelineViewModel Timeline => Context.Timeline;
 
     protected PageContext Context { get; }

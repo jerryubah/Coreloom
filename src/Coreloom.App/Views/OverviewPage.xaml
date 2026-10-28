@@ -252,12 +252,15 @@
                   <Ellipse Fill="{Binding Hex, Converter={StaticResource HexToBrush}}" />
                   <Ellipse Visibility="{Binding IsRainbow, Converter={StaticResource BoolToVisibility}}">
                     <Ellipse.Fill>
+                      <!-- The whole spectrum, red through violet -->
                       <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Offset="0" Color="#FF2933" />
-                        <GradientStop Offset="0.25" Color="#FFC21A" />
-                        <GradientStop Offset="0.5" Color="#1AD96B" />
-                        <GradientStop Offset="0.75" Color="#0D6BFF" />
-                        <GradientStop Offset="1" Color="#9E4DFF" />
+                        <GradientStop Offset="0.08" Color="#FF2933" />
+                        <GradientStop Offset="0.24" Color="#FF8A1A" />
+                        <GradientStop Offset="0.38" Color="#FFD41A" />
+                        <GradientStop Offset="0.52" Color="#1AD96B" />
+                        <GradientStop Offset="0.66" Color="#18C8FF" />
+                        <GradientStop Offset="0.8" Color="#0D6BFF" />
+                        <GradientStop Offset="0.94" Color="#9E4DFF" />
                       </LinearGradientBrush>
                     </Ellipse.Fill>
                   </Ellipse>

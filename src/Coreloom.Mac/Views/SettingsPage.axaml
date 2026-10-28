@@ -4,13 +4,77 @@
              xmlns:c="using:Coreloom.Mac.Controls"
              xmlns:b="using:Coreloom.Mac.Behaviors"
              xmlns:pages="using:Coreloom.ViewModels.Pages"
-             xmlns:cn="using:Coreloom.ViewModels.Connect">
+             xmlns:cn="using:Coreloom.ViewModels.Connect"
+             xmlns:mb="using:Coreloom.ViewModels.MenuBar">
 
   <!-- Settings on a Mac: the Windows page's sections with macOS's words and switches (Open at login, the menu bar and
        the Dock, a translucent sidebar), without the Windows-only sensor sources (LibreHardwareMonitor, PawnIO, USB fan
        controllers). -->
 
   <UserControl.Resources>
+    <!-- An option of a menu bar module, as a chip: a tick and the accent when it's on -->
+    <ControlTheme x:Key="OptionChip" TargetType="CheckBox">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Margin" Value="0,0,6,0" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border x:Name="Chip" CornerRadius="8" Padding="9,4" Background="{DynamicResource Brush.ControlHover}" BorderBrush="Transparent" BorderThickness="1">
+            <StackPanel Orientation="Horizontal">
+              <Path x:Name="Tick" Theme="{StaticResource IconPath}" Width="10" Height="10" Data="{StaticResource Icon.Check}" Stroke="{DynamicResource Brush.Accent}"
+                    Margin="0,0,5,0" IsVisible="False" />
+              <ContentPresenter Content="{TemplateBinding Content}" VerticalAlignment="Center" />
+            </StackPanel>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:checked">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}" />
+        <Style Selector="^ /template/ Border#Chip">
+          <Setter Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
+        </Style>
+        <Style Selector="^ /template/ Path#Tick">
+          <Setter Property="IsVisible" Value="True" />
+        </Style>
+      </Style>
+      <Style Selector="^:pointerover /template/ Border#Chip">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.InputBorder}" />
+      </Style>
+      <Style Selector="^:disabled">
+        <Setter Property="Opacity" Value="0.45" />
+      </Style>
+    </ControlTheme>
+
+    <!-- One module in Settings › Menu bar: its icon, what it shows and its reading now, the options, and the switch. -->
+    <DataTemplate x:Key="MenuBarModuleRow" DataType="{x:Type mb:MenuBarModuleViewModel}">
+      <Border Theme="{StaticResource Row}" Opacity="{Binding IsAvailable, Converter={StaticResource BoolToValue}, ConverterParameter='1|0.55'}">
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+          <c:SquircleBorder Classes="moduleIcon" Classes.on="{Binding Shown}" Width="38" Height="38" CornerRadius="11" VerticalAlignment="Top" Margin="0,1,0,0">
+            <Path Classes="moduleIcon" Classes.on="{Binding Shown}" Theme="{StaticResource IconPath}" Width="17" Height="17"
+                  Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
+          </c:SquircleBorder>
+          <StackPanel Grid.Column="1" Margin="14,0,16,0" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Theme="{StaticResource Row.Title}" Text="{Binding Name}" />
+              <Border Theme="{StaticResource Badge}" Background="{DynamicResource Brush.Surface}" Padding="7,1" Margin="8,0,0,0" VerticalAlignment="Center"
+                      IsVisible="{Binding IsAvailable}">
+                <TextBlock Text="{Binding Current}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+              </Border>
+              <TextBlock Text="{Binding AvailabilityText}" FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextTertiary}"
+                         IsVisible="{Binding !IsAvailable}" />
+            </StackPanel>
+            <TextBlock Theme="{StaticResource Row.Description}" Text="{Binding Description}" />
+          </StackPanel>
+          <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0" IsEnabled="{Binding Shown}">
+            <CheckBox Theme="{StaticResource OptionChip}" Content="Name" IsChecked="{Binding ShowName}" ToolTip.Tip="The small name beside the reading" />
+            <CheckBox Theme="{StaticResource OptionChip}" Content="Bar" IsChecked="{Binding ShowGauge}" IsVisible="{Binding HasGauge}" ToolTip.Tip="A slim bar that fills with the reading" />
+          </StackPanel>
+          <CheckBox Grid.Column="3" Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding Shown}" IsEnabled="{Binding IsAvailable}" VerticalAlignment="Center"
+                    AutomationProperties.Name="{Binding Name, StringFormat='Show {0} in the menu bar'}" />
+        </Grid>
+      </Border>
+    </DataTemplate>
     <!-- One settings row: bottom hairline, comfortable vertical rhythm. -->
     <ControlTheme x:Key="Row" TargetType="Border">
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.Divider}" />
@@ -134,39 +198,87 @@
       </Grid>
     </DataTemplate>
 
-    <!-- Body of a "What's new" card (a ReleaseSummaryViewModel): intro, a short list with category chips, "and N more". -->
-    <DataTemplate x:Key="WhatsNewBody">
+    <!-- The top of a "What's new" card (a ReleaseSummaryViewModel): the release's areas as chips, then its date and size. -->
+    <DataTemplate x:Key="WhatsNewMeta">
       <StackPanel>
-        <TextBlock Text="{Binding Intro}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource Brush.Text}" Margin="0,0,0,12" IsVisible="{Binding HasIntro}" />
-        <ItemsControl ItemsSource="{Binding Items}" Focusable="False" Grid.IsSharedSizeScope="True" IsVisible="{Binding HasItems}">
+        <ItemsControl ItemsSource="{Binding Categories}" Focusable="False" IsVisible="{Binding HasCategories}" Margin="0,0,0,10">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
             <DataTemplate>
-              <Grid RowDefinitions="Auto,Auto" Margin="0,0,0,10">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="Auto" SharedSizeGroup="WhatsNewChip" />
-                  <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Border Theme="{StaticResource Badge}" Background="{DynamicResource Brush.AccentSoft}" Padding="7,1" Margin="0,1,10,0"
-                        VerticalAlignment="Top" HorizontalAlignment="Left" IsVisible="{Binding HasCategory}">
-                  <TextBlock Text="{Binding Category}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
-                </Border>
-                <Ellipse Width="5" Height="5" Fill="{DynamicResource Brush.Accent}" Margin="2,7,12,0" VerticalAlignment="Top" HorizontalAlignment="Left"
-                         IsVisible="{Binding !HasCategory}" />
-                <TextBlock Grid.Column="1" Text="{Binding Lead}" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource Brush.Text}"
-                           FontWeight="{Binding HasTitle, Converter={StaticResource BoolToValue}, ConverterParameter='SemiBold|Normal'}" />
-                <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding Detail}" TextWrapping="Wrap" FontSize="12.5" Margin="0,2,0,0"
-                           Foreground="{DynamicResource Brush.TextSecondary}" IsVisible="{Binding HasDetail}" />
-              </Grid>
+              <Border CornerRadius="9" Padding="9,3" Margin="0,0,6,6" Background="#14FFFFFF" BorderBrush="{DynamicResource Brush.AccentEdge}" BorderThickness="1">
+                <TextBlock Text="{Binding}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
+              </Border>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding MoreText}" Margin="0,0,0,2" IsVisible="{Binding MoreText, Converter={StaticResource HasValue}}" />
+        <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding MetaText}" IsVisible="{Binding MetaText, Converter={StaticResource HasValue}}" />
+      </StackPanel>
+    </DataTemplate>
+
+    <!-- Body of a "What's new" card (a ReleaseSummaryViewModel): intro, the changes on an inset panel with hairlines between
+         them (each with its area as a chip), "and N more". -->
+    <DataTemplate x:Key="WhatsNewBody">
+      <StackPanel>
+        <TextBlock Text="{Binding Intro}" TextWrapping="Wrap" FontSize="13.5" LineHeight="20" Foreground="{DynamicResource Brush.Text}" Margin="0,0,0,14" IsVisible="{Binding HasIntro}" />
+        <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="16,4" IsVisible="{Binding HasItems}">
+          <ItemsControl Classes="whatsNew" ItemsSource="{Binding Items}" Focusable="False" Grid.IsSharedSizeScope="True">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <StackPanel>
+                  <Border Classes="rule" Height="1" Background="{DynamicResource Brush.Divider}" />
+                  <Grid RowDefinitions="Auto,Auto" Margin="0,11">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" SharedSizeGroup="WhatsNewChip" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Theme="{StaticResource Badge}" Background="{DynamicResource Brush.AccentSoft}" Padding="8,2" Margin="0,0,12,0"
+                            VerticalAlignment="Top" HorizontalAlignment="Left" IsVisible="{Binding HasCategory}">
+                      <TextBlock Text="{Binding Category}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
+                    </Border>
+                    <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.AccentGradient}" Margin="2,7,14,0" VerticalAlignment="Top" HorizontalAlignment="Left"
+                             IsVisible="{Binding !HasCategory}" />
+                    <TextBlock Grid.Column="1" Text="{Binding Lead}" TextWrapping="Wrap" FontSize="13.5" Foreground="{DynamicResource Brush.Text}"
+                               FontWeight="{Binding HasTitle, Converter={StaticResource BoolToValue}, ConverterParameter='SemiBold|Normal'}" />
+                    <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding Detail}" TextWrapping="Wrap" FontSize="12.5" LineHeight="18" Margin="0,3,0,0"
+                               Foreground="{DynamicResource Brush.TextSecondary}" IsVisible="{Binding HasDetail}" />
+                  </Grid>
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </c:SquircleBorder>
+        <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding MoreText}" Margin="2,10,0,0" IsVisible="{Binding MoreText, Converter={StaticResource HasValue}}" />
         <TextBlock Theme="{StaticResource Text.Secondary}" Text="This release has no summary. Its full notes are on GitHub." TextWrapping="Wrap" IsVisible="{Binding IsEmpty}" />
       </StackPanel>
     </DataTemplate>
   </UserControl.Resources>
 
   <UserControl.Styles>
+    <!-- "What's new": hairlines between the changes, not above the first. -->
+    <Style Selector="ItemsControl.whatsNew > ContentPresenter:nth-child(1) Border.rule">
+      <Setter Property="IsVisible" Value="False" />
+    </Style>
+    <!-- "What's new": the install button's glow brightens with it. -->
+    <Style Selector="Panel.glowButton:pointerover > Border.glow">
+      <Setter Property="Opacity" Value="0.9" />
+    </Style>
+    <!-- A menu bar module's icon: the accent while it's in the menu bar. -->
+    <Style Selector="c|SquircleBorder.moduleIcon">
+      <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
+    </Style>
+    <Style Selector="c|SquircleBorder.moduleIcon.on">
+      <Setter Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
+    </Style>
+    <Style Selector="Path.moduleIcon">
+      <Setter Property="Stroke" Value="{DynamicResource Brush.TextSecondary}" />
+    </Style>
+    <Style Selector="Path.moduleIcon.on">
+      <Setter Property="Stroke" Value="{DynamicResource Brush.Accent}" />
+    </Style>
     <!-- A log entry's level: blue for info, orange for warnings, red for errors. -->
     <Style Selector="TextBlock.level">
       <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
@@ -485,6 +597,30 @@
         </StackPanel>
 
         <!-- ======================================================================= -->
+        <!-- Menu bar (readings in the menu bar itself)                              -->
+        <!-- ======================================================================= -->
+        <StackPanel b:Motion.Entrance="True" IsVisible="{Binding SelectedSection, Converter={StaticResource EqualsToBool}, ConverterParameter=Menu bar}">
+          <TextBlock Theme="{StaticResource Panel.Header}" Text="Menu bar" />
+          <TextBlock Theme="{StaticResource Panel.Intro}" Text="Readings right in the menu bar, each as its own item, updated with every reading. Turn on the ones you want at a glance; ⌘-drag an item in the menu bar to move it. Click one for Coreloom's menu." />
+
+          <c:SquircleBorder Theme="{StaticResource Card.Hero}" Padding="18,16" Margin="0,0,0,12">
+            <StackPanel>
+              <TextBlock Theme="{StaticResource Text.Label}" Text="Preview" Margin="0,0,0,8" />
+              <c:MenuBarPreview Readings="{Binding MenuBar.Readings}" IsDarkBar="True" />
+              <TextBlock Theme="{StaticResource Text.Caption}" Margin="2,8,0,0" TextWrapping="Wrap"
+                         Text="Nothing in the menu bar yet besides Coreloom's icon. Turn a module on below."
+                         IsVisible="{Binding !MenuBar.HasReadings}" />
+            </StackPanel>
+          </c:SquircleBorder>
+
+          <c:SquircleBorder Theme="{StaticResource Card}" Padding="20,4,20,10">
+            <ItemsControl ItemsSource="{Binding MenuBar.Modules}" ItemTemplate="{StaticResource MenuBarModuleRow}" Focusable="False" />
+          </c:SquircleBorder>
+          <TextBlock Theme="{StaticResource Text.Caption}" Margin="4,10,0,0" TextWrapping="Wrap"
+                     Text="Coreloom's own menu bar icon stays, with its menu. Readings follow the units chosen in Monitoring." />
+        </StackPanel>
+
+        <!-- ======================================================================= -->
         <!-- Alerts                                                                  -->
         <!-- ======================================================================= -->
         <StackPanel b:Motion.Entrance="True" IsVisible="{Binding SelectedSection, Converter={StaticResource EqualsToBool}, ConverterParameter=Alerts}">
@@ -776,50 +912,102 @@
               </StackPanel>
             </c:SquircleBorder>
 
-            <!-- What's new in the version that is available / downloading / ready -->
-            <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,12,0,0" IsVisible="{Binding ShowUpdateSummary}">
-              <StackPanel>
-                <Grid Margin="0,0,0,12" ColumnDefinitions="Auto,*">
-                  <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.Accent}" VerticalAlignment="Top" Margin="0,2,0,0" />
-                  <StackPanel Grid.Column="1" Margin="10,0,0,0" DataContext="{Binding UpdateSummary}">
-                    <TextBlock Theme="{StaticResource Text.CardTitle}" Text="{Binding Heading}" />
-                    <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding PublishedText}" Margin="0,2,0,0"
-                               IsVisible="{Binding PublishedText, Converter={StaticResource HasValue}}" />
-                  </StackPanel>
-                </Grid>
-                <ContentControl Content="{Binding UpdateSummary}" ContentTemplate="{StaticResource WhatsNewBody}" Focusable="False" />
-                <WrapPanel Margin="0,14,0,0">
-                  <Button Theme="{StaticResource Button.Primary}" Command="{Binding InstallCommand}" Margin="0,0,8,0" IsVisible="{Binding ShowInstallButton}"
-                          ToolTip.Tip="Downloads the update if needed, quits Coreloom, replaces the app and opens it again.">
-                    <StackPanel Orientation="Horizontal">
-                      <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Download}" Stroke="{DynamicResource Brush.OnAccent}" />
-                      <TextBlock Text="Install update" Margin="6,0,0,0" />
+            <!-- What's new in the version that is available / downloading / ready: the release as a hero, its version in
+                 the brand gradient over a soft bloom, then its changes and the way to install it. -->
+            <c:SquircleBorder Theme="{StaticResource Card.Glow}" GlowKey="Accent" GlowStrength="1" Sheen="0.8" Padding="0" Margin="0,12,0,0"
+                              BorderBrush="{DynamicResource Brush.AccentEdge}" IsVisible="{Binding ShowUpdateSummary}">
+              <Grid ClipToBounds="True">
+                <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.AccentWash}" IsHitTestVisible="False" />
+                <Ellipse Width="440" Height="440" Margin="0,-230,-170,0" HorizontalAlignment="Right" VerticalAlignment="Top"
+                         Fill="{DynamicResource Brush.AccentBloom}" IsHitTestVisible="False" />
+                <StackPanel Margin="26,24,26,24">
+                  <Grid ColumnDefinitions="Auto,*">
+                    <Panel Width="52" Height="52" VerticalAlignment="Top">
+                      <Border CornerRadius="18" Background="{DynamicResource Brush.AccentGradient}" Opacity="0.55" Margin="4,8,4,-4" IsHitTestVisible="False">
+                        <Border.Effect>
+                          <BlurEffect Radius="14" />
+                        </Border.Effect>
+                      </Border>
+                      <c:SquircleBorder CornerRadius="16" Background="{DynamicResource Brush.AccentGradient}" BorderBrush="#40FFFFFF" BorderThickness="1" Sheen="1">
+                        <Path Theme="{StaticResource IconPath}" Width="24" Height="24" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
+                      </c:SquircleBorder>
+                    </Panel>
+                    <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding BadgeText}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
+                      <TextBlock FontSize="30" FontWeight="Bold" LetterSpacing="-0.6" Margin="0,1,0,0" Foreground="{DynamicResource Brush.Text}">
+                        <Run Text="Coreloom " /><Run Text="{Binding UpdateSummary.Version, Mode=OneWay}" Foreground="{DynamicResource Brush.AccentGradient}" />
+                      </TextBlock>
                     </StackPanel>
-                  </Button>
-                  <Button Theme="{StaticResource Button.Subtle}" Content="Skip this version" Command="{Binding SkipCommand}"
-                          ToolTip.Tip="Don't install this version. You'll hear about the next one." />
-                </WrapPanel>
-              </StackPanel>
+                  </Grid>
+
+                  <ContentControl Margin="70,14,0,0" Content="{Binding UpdateSummary}" ContentTemplate="{StaticResource WhatsNewMeta}" Focusable="False" />
+                  <ContentControl Margin="0,20,0,0" Content="{Binding UpdateSummary}" ContentTemplate="{StaticResource WhatsNewBody}" Focusable="False" />
+
+                  <Grid Margin="0,20,0,0" ColumnDefinitions="*,Auto">
+                    <WrapPanel>
+                      <Panel Classes="glowButton" Margin="0,0,10,0" IsVisible="{Binding ShowInstallButton}">
+                        <Border Classes="glow" CornerRadius="14" Background="{DynamicResource Brush.AccentGradient}" Opacity="0.55" Margin="10,10,10,-4" IsHitTestVisible="False">
+                          <Border.Effect>
+                            <BlurEffect Radius="16" />
+                          </Border.Effect>
+                        </Border>
+                        <Button Theme="{StaticResource Button.AccentGradient}" Padding="20,10" Command="{Binding InstallCommand}"
+                                ToolTip.Tip="Downloads the update if needed, quits Coreloom, replaces the app and opens it again.">
+                          <StackPanel Orientation="Horizontal">
+                            <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Download}" Stroke="{DynamicResource Brush.OnAccent}" />
+                            <TextBlock Text="Install update" Margin="8,0,0,0" FontWeight="SemiBold" />
+                          </StackPanel>
+                        </Button>
+                      </Panel>
+                      <Button Theme="{StaticResource Button.Subtle}" Content="Skip this version" Command="{Binding SkipCommand}" Padding="14,10"
+                              ToolTip.Tip="Don't install this version. You'll hear about the next one." />
+                    </WrapPanel>
+                    <Button Grid.Column="1" Theme="{StaticResource Button.Subtle}" Command="{Binding OpenUpdateReleaseCommand}" Padding="12,10" VerticalAlignment="Top">
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Full release notes" />
+                        <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.External}" Margin="6,0,0,0" />
+                      </StackPanel>
+                    </Button>
+                  </Grid>
+                </StackPanel>
+              </Grid>
             </c:SquircleBorder>
 
-            <!-- What's new in the running version (after Coreloom updated itself) -->
-            <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,12,0,0" IsVisible="{Binding ShowInstalledSummary}">
-              <StackPanel>
-                <Grid Margin="0,0,0,12" ColumnDefinitions="Auto,*">
-                  <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.Accent}" VerticalAlignment="Top" Margin="0,2,0,0" />
-                  <TextBlock Grid.Column="1" Margin="10,0,0,0" Theme="{StaticResource Text.CardTitle}" Text="{Binding InstalledHeading}" />
-                </Grid>
-                <ContentControl Content="{Binding InstalledSummary}" ContentTemplate="{StaticResource WhatsNewBody}" Focusable="False"
-                                IsVisible="{Binding InstalledSummary, Converter={StaticResource HasValue}}" />
-                <TextBlock Theme="{StaticResource Text.Secondary}" Text="{Binding InstalledSummaryFallback}" TextWrapping="Wrap"
-                           IsVisible="{Binding InstalledSummary, Converter={StaticResource HasValue}, ConverterParameter=Invert}" />
-                <Button Theme="{StaticResource Button.Secondary}" Command="{Binding OpenInstalledReleaseCommand}" Margin="0,10,0,0" HorizontalAlignment="Left">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Release notes on GitHub" />
-                    <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.External}" Margin="6,0,0,0" />
-                  </StackPanel>
-                </Button>
-              </StackPanel>
+            <!-- What's new in the running version (after Coreloom updated itself): the same card, quieter, with no install -->
+            <c:SquircleBorder Theme="{StaticResource Card.Glow}" GlowKey="Accent" GlowStrength="0.6" Sheen="0.6" Padding="0" Margin="0,12,0,0"
+                              BorderBrush="{DynamicResource Brush.AccentEdge}" IsVisible="{Binding ShowInstalledSummary}">
+              <Grid ClipToBounds="True">
+                <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.AccentWash}" IsHitTestVisible="False" />
+                <Ellipse Width="400" Height="400" Margin="0,-220,-170,0" HorizontalAlignment="Right" VerticalAlignment="Top"
+                         Fill="{DynamicResource Brush.AccentBloom}" Opacity="0.75" IsHitTestVisible="False" />
+                <StackPanel Margin="26,24,26,24">
+                  <Grid ColumnDefinitions="Auto,*">
+                    <c:SquircleBorder Width="52" Height="52" CornerRadius="16" Background="{DynamicResource Brush.AccentSoft}" BorderBrush="{DynamicResource Brush.AccentEdge}"
+                                      BorderThickness="1" VerticalAlignment="Top">
+                      <Path Theme="{StaticResource IconPath}" Width="24" Height="24" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.Accent}" />
+                    </c:SquircleBorder>
+                    <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
+                      <TextBlock Text="New in this version" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
+                      <TextBlock FontSize="30" FontWeight="Bold" LetterSpacing="-0.6" Margin="0,1,0,0" Foreground="{DynamicResource Brush.Text}">
+                        <Run Text="Coreloom " /><Run Text="{Binding CurrentVersion, Mode=OneWay}" Foreground="{DynamicResource Brush.AccentGradient}" />
+                      </TextBlock>
+                    </StackPanel>
+                  </Grid>
+
+                  <ContentControl Margin="70,14,0,0" Content="{Binding InstalledSummary}" ContentTemplate="{StaticResource WhatsNewMeta}" Focusable="False"
+                                  IsVisible="{Binding InstalledSummary, Converter={StaticResource HasValue}}" />
+                  <ContentControl Margin="0,20,0,0" Content="{Binding InstalledSummary}" ContentTemplate="{StaticResource WhatsNewBody}" Focusable="False"
+                                  IsVisible="{Binding InstalledSummary, Converter={StaticResource HasValue}}" />
+                  <TextBlock Theme="{StaticResource Text.Secondary}" Text="{Binding InstalledSummaryFallback}" TextWrapping="Wrap" Margin="70,12,0,0"
+                             IsVisible="{Binding InstalledSummary, Converter={StaticResource HasValue}, ConverterParameter=Invert}" />
+                  <Button Theme="{StaticResource Button.Secondary}" Command="{Binding OpenInstalledReleaseCommand}" Margin="0,18,0,0" HorizontalAlignment="Left" Padding="14,9">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Full release notes" />
+                      <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.External}" Margin="6,0,0,0" />
+                    </StackPanel>
+                  </Button>
+                </StackPanel>
+              </Grid>
             </c:SquircleBorder>
           </StackPanel>
 

@@ -49,6 +49,11 @@ public sealed class AppSettings
 
     public ConnectSettings Connect { get; set; } = new();
 
+    public DevicesSettings Devices { get; set; } = new();
+
+    /// <summary>macOS: the readings shown in the menu bar itself, one item per module.</summary>
+    public MenuBarSettings MenuBar { get; set; } = new();
+
     public WindowPlacement? Window { get; set; }
 
     /// <summary>Repairs out-of-range or missing values. Returns the same instance for chaining.</summary>
@@ -65,6 +70,10 @@ public sealed class AppSettings
         Updates ??= new UpdateSettings();
         Diagnostics ??= new DiagnosticsSettings();
         Connect ??= new ConnectSettings();
+        Devices ??= new DevicesSettings();
+        Devices.Normalize();
+        MenuBar ??= new MenuBarSettings();
+        MenuBar.Normalize();
         if (Connect.Port is < 1024 or > 65535)
         {
             Connect.Port = ConnectSettings.DefaultPort;
@@ -198,6 +207,16 @@ public sealed class DashboardSettings
 
     /// <summary>Lighting color of the PC picture in the Overview header.</summary>
     public PcGlow PcGlow { get; set; } = PcGlow.Blue;
+
+    /// <summary>macOS: the MacBook in the Overview header shows the Mac's own desktop picture on its screen.</summary>
+    public bool ShowDesktopPicture { get; set; } = true;
+
+    /// <summary>
+    /// The person turned <see cref="ShowDesktopPicture"/> on themselves. A desktop picture kept in a folder macOS guards
+    /// (Desktop, Documents, Downloads, iCloud Drive) is read only then, so macOS's "wants to access" question never comes
+    /// out of the blue.
+    /// </summary>
+    public bool DesktopPictureChosen { get; set; }
 }
 
 /// <summary>Lighting colors for the PC picture in the Overview header.</summary>
@@ -349,6 +368,42 @@ public sealed class ConnectSettings
 
     /// <summary>The TCP port phones connect to.</summary>
     public int Port { get; set; } = DefaultPort;
+}
+
+public sealed class DevicesSettings
+{
+    public const int MaximumNameLength = 48;
+
+    /// <summary>
+    /// Names given to Bluetooth devices in Coreloom, by device id. Coreloom shows these instead of the name the device
+    /// reports; Windows' and macOS's own Bluetooth settings keep theirs.
+    /// </summary>
+    public Dictionary<string, string> BluetoothNames { get; set; } = new(StringComparer.Ordinal);
+
+    /// <summary>The name to show for a device: the one given in Coreloom, or the device's own.</summary>
+    public string NameFor(string id, string reported) =>
+        BluetoothNames.TryGetValue(id, out string? name) && !string.IsNullOrWhiteSpace(name) ? name : reported;
+
+    /// <summary>A name as it is kept: trimmed and at most <see cref="MaximumNameLength"/> characters; null when empty.</summary>
+    public static string? Clean(string? name)
+    {
+        string trimmed = (name ?? string.Empty).Trim();
+        return trimmed.Length == 0 ? null : trimmed.Length > MaximumNameLength ? trimmed[..MaximumNameLength].TrimEnd() : trimmed;
+    }
+
+    internal void Normalize()
+    {
+        var names = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var (id, name) in BluetoothNames ?? [])
+        {
+            if (!string.IsNullOrWhiteSpace(id) && Clean(name) is { } clean && names.Count < 200)
+            {
+                names[id] = clean;
+            }
+        }
+
+        BluetoothNames = names;
+    }
 }
 
 public sealed class WindowPlacement

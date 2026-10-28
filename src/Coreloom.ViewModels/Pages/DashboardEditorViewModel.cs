@@ -63,6 +63,7 @@ public sealed class DashboardEditorViewModel : ObservableObject
         OpenCommand = new RelayCommand(Open);
         CloseCommand = new RelayCommand(() => IsOpen = false);
         ResetLayoutCommand = new RelayCommand(ResetLayout);
+        AllowDesktopPictureCommand = new RelayCommand(AllowDesktopPicture);
         LoadCards();
     }
 
@@ -91,6 +92,33 @@ public sealed class DashboardEditorViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// macOS: the MacBook in the header shows the Mac's own desktop picture. Turning it on here also counts as choosing it
+    /// (a picture in a folder macOS guards is then read; see <see cref="DashboardSettings.DesktopPictureChosen"/>).
+    /// </summary>
+    public bool ShowDesktopPicture
+    {
+        get => _settings.Current.Dashboard.ShowDesktopPicture;
+        set
+        {
+            if (value != _settings.Current.Dashboard.ShowDesktopPicture)
+            {
+                _settings.Update("Dashboard", s =>
+                {
+                    s.Dashboard.ShowDesktopPicture = value;
+                    s.Dashboard.DesktopPictureChosen = value;
+                });
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// macOS: shows the desktop picture even though it's kept in a folder macOS guards (the person chose it; macOS may then
+    /// ask them once).
+    /// </summary>
+    public IRelayCommand AllowDesktopPictureCommand { get; }
+
     /// <summary>Minimum, maximum and average on the summary cards.</summary>
     public bool ShowStatistics
     {
@@ -117,6 +145,17 @@ public sealed class DashboardEditorViewModel : ObservableObject
         LoadCards();
         OnPropertyChanged(nameof(ShowStatistics));
         OnPropertyChanged(nameof(ShowPcPicture));
+        OnPropertyChanged(nameof(ShowDesktopPicture));
+    }
+
+    private void AllowDesktopPicture()
+    {
+        _settings.Update("Dashboard", s =>
+        {
+            s.Dashboard.ShowDesktopPicture = true;
+            s.Dashboard.DesktopPictureChosen = true;
+        });
+        OnPropertyChanged(nameof(ShowDesktopPicture));
     }
 
     internal void MoveCard(DashboardCardSettingViewModel card, int delta)

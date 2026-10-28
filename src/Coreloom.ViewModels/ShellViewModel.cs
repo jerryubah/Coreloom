@@ -98,6 +98,7 @@ public sealed class ShellViewModel : ObservableObject
                 ? new Connect.RemoteUpdate(version, deps.Updates.Phase == UpdatePhase.Ready)
                 : null;
         }
+        MenuBar = context.IsMac ? new MenuBar.MenuBarModulesViewModel(context) : null;
         Settings = new SettingsViewModel(context, new SettingsDependencies
         {
             Theme = deps.Theme,
@@ -110,6 +111,7 @@ public sealed class ShellViewModel : ObservableObject
             App = deps.App,
             Overhead = deps.Overhead,
             Connect = Connect,
+            MenuBar = MenuBar,
         });
 
         context.OpenLogs = (category, search) =>
@@ -199,6 +201,9 @@ public sealed class ShellViewModel : ObservableObject
 
     /// <summary>Coreloom Connect, when this app has it.</summary>
     public Connect.ConnectHost? Connect { get; }
+
+    /// <summary>macOS: the readings shown in the menu bar itself (Settings › Menu bar).</summary>
+    public MenuBar.MenuBarModulesViewModel? MenuBar { get; }
 
     public UpdatesViewModel Updates => _deps.Updates;
 
@@ -497,6 +502,7 @@ public sealed class ShellViewModel : ObservableObject
         _context.Health.Update(frame);
         _context.Overlay.OnFrame(frame);
         Connect?.OnFrame(frame);
+        MenuBar?.Update(frame);
         if (!_pageActive)
         {
             return; // hidden, minimized or covered by a game: no charts to draw

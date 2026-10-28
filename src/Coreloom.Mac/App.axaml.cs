@@ -49,6 +49,7 @@ public partial class App : Application
     private ShellViewModel? _shell;
     private MainWindow? _window;
     private MenuBarService? _menuBar;
+    private MenuBarModuleItems? _menuBarModules;
     private MacOverlayService? _overlay;
     private MacGameWatcher? _gameWatcher;
     private MacDeviceService? _devices;
@@ -176,6 +177,7 @@ public partial class App : Application
         }
 
         BrandLogos.Configure(paths.VendorLogoDirectory);
+        DesktopPicture.Initialize(paths.LocalDirectory);
         var theme = new ThemeService(Resources);
         theme.Initialize(settings.Appearance);
 
@@ -288,6 +290,16 @@ public partial class App : Application
             },
             quit: Quit);
         _menuBar = menuBar;
+        if (shell.MenuBar is { } modules)
+        {
+            // The readings turned on in Settings › Menu bar, each as its own item in the menu bar.
+            _menuBarModules = new MenuBarModuleItems(modules, ShowMainWindow, () =>
+            {
+                shell.Settings.SelectedSection = "Menu bar";
+                OpenSettings();
+            }, Quit);
+        }
+
         AppMenus.Install(this, window, shell, new AppMenus.Actions(ShowMainWindow, OpenSettings, CheckForUpdates, Quit));
 
         shell.PropertyChanged += (_, pe) =>
@@ -693,6 +705,8 @@ public partial class App : Application
             _devices = null;
             _menuBar?.Dispose();
             _menuBar = null;
+            _menuBarModules?.Dispose();
+            _menuBarModules = null;
 
             if (_host is not null)
             {

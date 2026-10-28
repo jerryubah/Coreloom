@@ -12,7 +12,7 @@ using Coreloom.ViewModels.Pages;
 namespace Coreloom.Mac.Views;
 
 /// <summary>
-/// The main window: the glass sidebar (below the traffic lights) and the page. The title bar area drags the
+/// The main window: the glass sidebar (with the window's close, minimize and zoom buttons in its top row) and the page. The title bar area drags the
 /// window and a double-click zooms it. Closing the window keeps Coreloom running in the menu bar (unless that's turned
 /// off); the Dock icon or the menu bar item brings it back.
 /// </summary>
@@ -21,7 +21,7 @@ public partial class MainWindow : Window
     public static readonly StyledProperty<bool> IsCompactSidebarProperty = AvaloniaProperty.Register<MainWindow, bool>(nameof(IsCompactSidebar));
 
     private const double ExpandedSidebarWidth = 232;
-    private const double CompactSidebarWidth = 62;
+    private const double CompactSidebarWidth = 76; // wide enough for the window buttons inside the glass
     private const double AutoCompactWidth = 980;
 
     private readonly ShellViewModel? _shell;
@@ -53,7 +53,12 @@ public partial class MainWindow : Window
             dragArea.PointerPressed += OnTitleBarPressed;
         }
 
-        Loaded += (_, _) => UpdateSidebar(animate: false);
+        Loaded += (_, _) =>
+        {
+            UpdateSidebar(animate: false);
+            // Once laid out: where macOS put the window buttons, and that clicks near the top reach Coreloom (logged).
+            Avalonia.Threading.DispatcherTimer.RunOnce(CheckTitleBar, TimeSpan.FromSeconds(2));
+        };
         PositionChanged += (_, e) =>
         {
             if (WindowState == WindowState.Normal)
@@ -78,8 +83,9 @@ public partial class MainWindow : Window
             }
         };
         AddHandler(KeyDownEvent, OnWindowKeyDown, RoutingStrategies.Tunnel);
+        TextBoxFocus.Attach(this); // clicking outside a text box (or Esc) leaves it
 
-        // The translucent sidebar: macOS's vibrancy (a blur of what's behind the window) under the sidebar column.
+        // The translucent sidebar: macOS's vibrancy (a blur of what's behind the window) through the sidebar's glass.
         if (Themes.ThemeService.Instance is { } theme)
         {
             ApplyTranslucency(theme);
@@ -87,8 +93,60 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ApplyTranslucency(Themes.ThemeService theme) =>
+    /// <summary>
+    /// Logs where macOS put the window buttons and which view a click on the controls near the top would reach (a check
+    /// for the Mac verification runs: the buttons should sit inside the glass, and every control should still be ours).
+    /// </summary>
+    private void CheckTitleBar()
+    {
+        try
+        {
+            if (TryGetPlatformHandle() is not { HandleDescriptor: "NSWindow" } handle)
+            {
+                return;
+            }
+
+            var points = new List<(string, double, double, bool)>();
+            void Add(string name, Control? control)
+            {
+                if (control is { IsVisible: true } && control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), this) is { } p)
+                {
+                    points.Add((name, p.X, p.Y, true));
+                }
+            }
+
+            Add("collapse", CollapseButton);
+            Add("range", RangePicker);
+            Add("freeze", FreezeButton);
+            if (Sidebar.TranslatePoint(default, this) is { } glass)
+            {
+                points.Add(("glass top", glass.X + (Sidebar.Bounds.Width / 2), glass.Y + 4, false));
+            }
+
+            var (report, reach) = Native.WindowChrome.Describe(handle.Handle, points);
+            string glassText = Sidebar.TranslatePoint(default, this) is { } g
+                ? FormattableString.Invariant($"glass {g.X:0},{g.Y:0} {Sidebar.Bounds.Width:0}×{Sidebar.Bounds.Height:0}")
+                : "glass ?";
+            if (reach)
+            {
+                Coreloom.Core.Diagnostics.Log.Info("Window", $"Title bar: {glassText}; {report}");
+            }
+            else
+            {
+                Coreloom.Core.Diagnostics.Log.Warn("Window", $"Title bar: a control near the top doesn't get clicks. {glassText}; {report}");
+            }
+        }
+        catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException or InvalidOperationException)
+        {
+            Coreloom.Core.Diagnostics.Log.Warn("Window", "Checking the title bar failed.", e);
+        }
+    }
+
+    private void ApplyTranslucency(Themes.ThemeService theme)
+    {
         TransparencyLevelHint = theme.IsTranslucent ? [WindowTransparencyLevel.AcrylicBlur, WindowTransparencyLevel.None] : [WindowTransparencyLevel.None];
+        Backdrop.SeeThroughGlass = theme.IsTranslucent;
+    }
 
     public bool IsCompactSidebar
     {

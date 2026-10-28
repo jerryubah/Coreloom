@@ -89,6 +89,12 @@ public sealed record BenchmarkResult
     public int PointsAtReference { get; init; }
 
     /// <summary>
+    /// GPU results: what the compute tests' points were multiplied by (<see cref="GpuTests.MetalComputeFactor"/> on a Mac
+    /// since 1.8.1, else 1). Missing (0) in results saved earlier, where it was 1.
+    /// </summary>
+    public double ComputeFactor { get; init; }
+
+    /// <summary>
     /// The headline number: the multi-core score for the CPU benchmark, the overall score for the GPU benchmark, the
     /// stability (percent) for a stress test.
     /// </summary>
@@ -168,7 +174,45 @@ public static class BenchmarkScale
     /// A result on today's scale: a GPU result saved by 1.5.0 (on the 1,000-point scale) has its score, parts and test
     /// points multiplied by ten; anything else is returned as it is (with its scale filled in).
     /// </summary>
-    public static BenchmarkResult Upgrade(BenchmarkResult result)
+    public static BenchmarkResult Upgrade(BenchmarkResult result) => Upgrade(result, 1);
+
+    /// <summary>
+    /// As <see cref="Upgrade(BenchmarkResult)"/>, and a GPU result's compute tests brought to
+    /// <paramref name="computeFactor"/> (a Mac's results saved before 1.8.1 have theirs multiplied by ten, with the compute
+    /// part and the overall score worked out again).
+    /// </summary>
+    public static BenchmarkResult Upgrade(BenchmarkResult result, double computeFactor)
+    {
+        result = UpgradeScale(result);
+        if (result.Kind != BenchmarkKind.Gpu || computeFactor <= 0)
+        {
+            return result;
+        }
+
+        double was = result.ComputeFactor > 0 ? result.ComputeFactor : 1;
+        if (Math.Abs(was - computeFactor) < 1e-9 || result.Tests.Count == 0)
+        {
+            return result with { ComputeFactor = computeFactor };
+        }
+
+        double change = computeFactor / was;
+        var tests = result.Tests.Select(t => t.Category == "Compute" ? t with { Score = t.Score * change, SingleScore = t.SingleScore * change } : t).ToList();
+        var (overall, graphics, compute) = GpuTests.Scores(tests);
+        return result with
+        {
+            ComputeFactor = computeFactor,
+            Tests = tests,
+            Score = overall,
+            Subscores = result.Subscores.Select(s => s.Name switch
+            {
+                "Graphics" => s with { Score = graphics },
+                "Compute" => s with { Score = compute },
+                _ => s,
+            }).ToList(),
+        };
+    }
+
+    private static BenchmarkResult UpgradeScale(BenchmarkResult result)
     {
         int current = For(result.Kind);
         if (result.PointsAtReference == current)
@@ -203,12 +247,15 @@ public sealed class BenchmarkHistory
     public const int Capacity = 200;
 
     private readonly List<BenchmarkResult> _results = [];
+    private readonly double _computeFactor;
 
-    public BenchmarkHistory(IEnumerable<BenchmarkResult>? results = null)
+    /// <param name="computeFactor">What this computer's GPU compute tests are multiplied by (see <see cref="GpuTests.MetalComputeFactor"/>).</param>
+    public BenchmarkHistory(IEnumerable<BenchmarkResult>? results = null, double computeFactor = 1)
     {
+        _computeFactor = computeFactor;
         if (results is not null)
         {
-            _results.AddRange(results.Where(r => r is not null && !string.IsNullOrEmpty(r.Id)).DistinctBy(r => r.Id).Select(BenchmarkScale.Upgrade));
+            _results.AddRange(results.Where(r => r is not null && !string.IsNullOrEmpty(r.Id)).DistinctBy(r => r.Id).Select(r => BenchmarkScale.Upgrade(r, _computeFactor)));
             Sort();
             Trim();
         }
@@ -220,7 +267,7 @@ public sealed class BenchmarkHistory
     {
         ArgumentNullException.ThrowIfNull(result);
         _results.RemoveAll(r => r.Id == result.Id);
-        _results.Add(BenchmarkScale.Upgrade(result));
+        _results.Add(BenchmarkScale.Upgrade(result, _computeFactor));
         Sort();
         Trim();
     }

@@ -50,7 +50,13 @@
          clipped on the right). -->
     <DataTemplate x:Key="NavItemTemplate" DataType="{x:Type pages:PageViewModel}">
       <StackPanel x:Name="Row" Orientation="Horizontal" Margin="14,0,10,0">
-        <Path Style="{StaticResource IconPath}" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
+        <Grid VerticalAlignment="Center">
+          <Path Style="{StaticResource IconPath}" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
+          <!-- A red dot when the page has news (Settings, when an update is out) -->
+          <Ellipse Width="9" Height="9" Fill="{DynamicResource Brush.Critical}" Stroke="{DynamicResource Brush.Surface}" StrokeThickness="1.5"
+                   HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-3,-4,0" IsHitTestVisible="False"
+                   Visibility="{Binding HasNotice, Converter={StaticResource BoolToVisibility}}" />
+        </Grid>
         <TextBlock Text="{Binding Title}" Margin="14,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                    Visibility="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
       </StackPanel>
@@ -61,6 +67,60 @@
         </DataTrigger>
       </DataTemplate.Triggers>
     </DataTemplate>
+
+    <!-- The update button: the brand gradient with a soft glow of its own colors under it, brightening on hover. -->
+    <Style x:Key="Button.Update" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}" />
+      <Setter Property="Background" Value="{DynamicResource Brush.AccentGradient}" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Padding" Value="9,8,12,8" />
+      <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+      <Setter Property="RenderTransform">
+        <Setter.Value>
+          <ScaleTransform />
+        </Setter.Value>
+      </Setter>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Grid>
+              <Border x:Name="Glow" CornerRadius="16" Background="{TemplateBinding Background}" Opacity="0.5" Margin="8,10,8,-2" IsHitTestVisible="False">
+                <Border.Effect>
+                  <BlurEffect Radius="16" />
+                </Border.Effect>
+              </Border>
+              <c:SquircleBorder x:Name="Root" CornerRadius="14" Background="{TemplateBinding Background}" BorderBrush="#38FFFFFF" BorderThickness="1" Sheen="1">
+                <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+              </c:SquircleBorder>
+              <c:SquircleBorder x:Name="Sheen" CornerRadius="14" Background="White" Opacity="0" IsHitTestVisible="False" />
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Sheen" Property="Opacity" Value="0.08" />
+                <Setter TargetName="Glow" Property="Opacity" Value="0.85" />
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter Property="RenderTransform">
+                  <Setter.Value>
+                    <ScaleTransform ScaleX="0.98" ScaleY="0.98" />
+                  </Setter.Value>
+                </Setter>
+              </Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Brush.Text}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+          <Setter Property="HorizontalContentAlignment" Value="Center" />
+          <Setter Property="Padding" Value="0,7" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
 
     <!-- The brand mark: beside the name when expanded, centered over the icons when collapsed. -->
     <Style x:Key="SidebarBrand" TargetType="StackPanel">
@@ -128,32 +188,20 @@
 
           <!-- Footer -->
           <StackPanel Grid.Row="2">
-            <!-- Update badge: a newer version is available, downloading or ready to install. -->
-            <Button Margin="0,0,0,6" Background="{DynamicResource Brush.AccentSoft}" BorderBrush="Transparent"
+            <!-- Update button: a newer version is available, downloading or ready to install. -->
+            <Button Style="{StaticResource Button.Update}" Margin="0,0,0,8"
                     Command="{Binding OpenUpdatesCommand}" ToolTip="{Binding Updates.BadgeToolTip}"
                     AutomationProperties.Name="{Binding Updates.BadgeToolTip}"
                     Visibility="{Binding Updates.ShowBadge, Converter={StaticResource BoolToVisibility}}">
-              <Button.Style>
-                <Style TargetType="Button" BasedOn="{StaticResource Button.Subtle}">
-                  <Setter Property="HorizontalContentAlignment" Value="Left" />
-                  <Setter Property="Padding" Value="12,8" />
-                  <Style.Triggers>
-                    <DataTrigger Binding="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                      <Setter Property="HorizontalContentAlignment" Value="Center" />
-                      <Setter Property="Padding" Value="0,8" />
-                    </DataTrigger>
-                  </Style.Triggers>
-                </Style>
-              </Button.Style>
               <StackPanel Orientation="Horizontal">
-                <Grid Width="16" Height="16" VerticalAlignment="Center">
-                  <Path Style="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Download}" Stroke="{DynamicResource Brush.Accent}" />
-                  <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Accent}" Stroke="{DynamicResource Brush.Surface}" StrokeThickness="1.5"
-                           HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-3,0" />
-                </Grid>
-                <TextBlock Text="{Binding Updates.BadgeText}" Margin="10,0,0,0" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}"
-                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                           Visibility="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                <Border Width="28" Height="28" CornerRadius="9" Background="#30FFFFFF" VerticalAlignment="Center">
+                  <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
+                </Border>
+                <StackPanel Margin="10,0,0,0" VerticalAlignment="Center"
+                            Visibility="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+                  <TextBlock Text="{Binding Updates.BadgeText}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.OnAccent}" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{Binding Updates.BadgeDetail}" FontSize="11" Margin="0,1,0,0" Foreground="{DynamicResource Brush.OnAccent}" Opacity="0.8" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
               </StackPanel>
             </Button>
             <ListBox x:Name="SettingsNav" Style="{StaticResource NavList}" ItemContainerStyle="{StaticResource NavItemBound}"

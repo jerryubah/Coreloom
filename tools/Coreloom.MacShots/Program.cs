@@ -50,6 +50,12 @@ internal static class Program
         var theme = new ThemeService(Application.Current!.Resources);
         theme.Initialize(new AppearanceSettings { ReducedMotion = true, AnimateValues = false, UseMica = false });
 
+        // A picture to show as the Mac's desktop picture on the Overview's MacBook (--wallpaper=path).
+        if (args.FirstOrDefault(a => a.StartsWith("--wallpaper=", StringComparison.Ordinal)) is { } wallpaper)
+        {
+            Coreloom.Mac.Services.DesktopPicture.ShowForPreview(Path.GetFullPath(wallpaper[12..]));
+        }
+
         int exitCode = 0;
         if (args.Contains("--test-glow"))
         {
@@ -100,6 +106,34 @@ internal static class Program
         var data = new SampleData();
         data.Prefill();
         var shell = data.Shell(theme);
+
+        // The Mac picture's lighting color (--glow=Rainbow), and the desktop picture off (--no-wallpaper).
+        if (Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("--glow=", StringComparison.Ordinal)) is { } glow)
+        {
+            data.Settings.Update("Dashboard", s => s.Dashboard.PcGlow = Enum.Parse<PcGlow>(glow[7..], ignoreCase: true));
+        }
+
+        if (Environment.GetCommandLineArgs().Contains("--no-wallpaper"))
+        {
+            data.Settings.Update("Dashboard", s => s.Dashboard.ShowDesktopPicture = false);
+        }
+
+        // An update to show in Settings › Updates (MACSHOTS_RELEASE=notes.md).
+        if (Environment.GetEnvironmentVariable("MACSHOTS_RELEASE") is { Length: > 0 })
+        {
+            data.Settings.Update("Updates", s => s.Updates.AutoInstall = false);
+            var check = shell.Updates.CheckCommand.ExecuteAsync(null);
+            for (int i = 0; i < 400 && !check.IsCompleted; i++)
+            {
+                Dispatcher.UIThread.RunJobs();
+                Thread.Sleep(5);
+            }
+        }
+
+        if (Environment.GetCommandLineArgs().Contains("--customize"))
+        {
+            shell.Overview.CustomizeCommand.Execute(null);
+        }
         if (Environment.GetCommandLineArgs().Contains("--collapsed"))
         {
             shell.IsSidebarCollapsed = true;

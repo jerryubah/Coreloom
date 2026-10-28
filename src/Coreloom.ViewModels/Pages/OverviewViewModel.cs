@@ -343,6 +343,12 @@ public sealed class OverviewViewModel : PageViewModel
     /// <summary>The picture of the PC on the left of the header (Customize).</summary>
     public bool ShowPcPicture => Settings.Current.Dashboard.ShowPcPicture;
 
+    /// <summary>macOS: the MacBook's screen shows the Mac's desktop picture (Customize).</summary>
+    public bool ShowDesktopPicture => Settings.Current.Dashboard.ShowDesktopPicture;
+
+    /// <summary>The person turned the desktop picture on themselves (see <see cref="DashboardSettings.DesktopPictureChosen"/>).</summary>
+    public bool DesktopPictureChosen => Settings.Current.Dashboard.DesktopPictureChosen;
+
     /// <summary>Opens the Customize card on the Overview.</summary>
     public IRelayCommand CustomizeCommand { get; }
 
@@ -368,6 +374,8 @@ public sealed class OverviewViewModel : PageViewModel
             ApplyLayout();
             OnPropertyChanged(nameof(ShowStatisticsOnCards));
             OnPropertyChanged(nameof(ShowPcPicture));
+            OnPropertyChanged(nameof(ShowDesktopPicture));
+            OnPropertyChanged(nameof(DesktopPictureChosen));
         }
 
         if (section == "All")

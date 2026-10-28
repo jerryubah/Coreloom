@@ -207,7 +207,7 @@ public sealed class CpuViewModel : PageViewModel
         Sensors = new SensorTableViewModel(d => d.Category is MetricCategory.Cpu or MetricCategory.Motherboard && !d.Id.StartsWith("cpu/thread/", StringComparison.Ordinal));
         _showThreads = Settings.Current.Monitoring.ShowPerThreadGraphs;
         _vendor = HardwareVendors.Detect(null, Monitor.Summary.CpuName);
-        Amd.SetDevice(null, Monitor.Summary.CpuName);
+        Amd.SetDevice(null, Monitor.Summary.CpuName ?? string.Empty);
     }
 
     /// <summary>The AMD card (architecture, SMU readings, read-only tuning); shown for AMD processors.</summary>

@@ -206,6 +206,9 @@ public sealed class SettingsDependencies
 
     /// <summary>Coreloom Connect, when this app has it (Settings › Connect).</summary>
     public Connect.ConnectHost? Connect { get; init; }
+
+    /// <summary>macOS: the readings shown in the menu bar itself (Settings › Menu bar).</summary>
+    public MenuBar.MenuBarModulesViewModel? MenuBar { get; init; }
 }
 
 /// <summary>All user settings, grouped into sections. Every change is applied immediately and persisted.</summary>
@@ -229,9 +232,21 @@ public sealed class SettingsViewModel : PageViewModel
         Logs = new LogViewerViewModel(deps.Diagnostics, deps.Shell);
         Connect = deps.Connect is { } connect ? new Connect.ConnectViewModel(connect, context.Settings, deps.Shell, IsMac) : null;
         Subtitle = Connect is null ? "Appearance, monitoring, dashboard, alerts and updates" : "Appearance, monitoring, alerts, your phone and updates";
-        Sections = Connect is null
-            ? ["Appearance", "Monitoring", "Desktop", "Alerts", "Diagnostics", "Logs", "About", "Updates"]
-            : ["Appearance", "Monitoring", "Desktop", "Alerts", "Connect", "Diagnostics", "Logs", "About", "Updates"];
+        MenuBar = deps.MenuBar;
+        var sections = new List<string> { "Appearance", "Monitoring", "Desktop" };
+        if (MenuBar is not null)
+        {
+            sections.Add("Menu bar");
+        }
+
+        sections.Add("Alerts");
+        if (Connect is not null)
+        {
+            sections.Add("Connect");
+        }
+
+        sections.AddRange(["Diagnostics", "Logs", "About", "Updates"]);
+        Sections = sections;
 
         ThemeOptions = [new(ThemePreference.Dark, "Dark"), new(ThemePreference.Light, "Light"), new(ThemePreference.System, IsMac ? "Use macOS setting" : "Use Windows setting")];
         AccentOptions = AccentPalette.Presets.Select(p => new AccentOption(p.Name, p.Hex)).ToArray();
@@ -267,7 +282,17 @@ public sealed class SettingsViewModel : PageViewModel
         OpenNoticesCommand = new RelayCommand(() => _deps.Shell.OpenFile(NoticesFile(AppContext.BaseDirectory)));
 
         LoadRules();
+        deps.Updates.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(UpdatesViewModel.ShowBadge))
+            {
+                OnPropertyChanged(nameof(HasNotice));
+            }
+        };
     }
+
+    /// <summary>A new version of Coreloom is available, downloading or ready: a red dot on Settings in the sidebar.</summary>
+    public override bool HasNotice => _deps.Updates.ShowBadge;
 
     // ---- Navigation within settings ----------------------------------------------------------
 
@@ -292,6 +317,9 @@ public sealed class SettingsViewModel : PageViewModel
 
     /// <summary>Settings › Connect, when this app has Coreloom Connect.</summary>
     public Connect.ConnectViewModel? Connect { get; }
+
+    /// <summary>macOS: Settings › Menu bar, the modules that can show their readings in the menu bar.</summary>
+    public MenuBar.MenuBarModulesViewModel? MenuBar { get; }
 
     /// <summary>Pairing is open only while Settings › Connect is on screen.</summary>
     private void UpdateConnectVisibility() => Connect?.SetVisible(IsActive && SelectedSection == "Connect");
@@ -898,6 +926,7 @@ public sealed class SettingsViewModel : PageViewModel
         if (section == "All")
         {
             LoadRules();
+            MenuBar?.Reload();
             OnPropertyChanged(string.Empty);
         }
     }

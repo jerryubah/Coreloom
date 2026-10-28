@@ -7,6 +7,31 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.8.1] - 2026-10-28
+
+Readings in your Mac's menu bar, your own wallpaper on the Overview's MacBook, Bluetooth devices you can rename, and an update that's hard to miss.
+
+### Highlights
+
+- **Mac: readings in the menu bar.** The new *Settings › Menu bar* puts the readings you pick in the menu bar itself, each as its own item: processor and graphics load, memory, their temperatures, the fastest fan, network, storage, battery and power. Each can show its name and a slim bar, and a preview shows them before you look up.
+- **Mac: your wallpaper on the MacBook.** The Overview's MacBook is a new, photo-like picture whose screen shows your Mac's own desktop picture, with the screen's light falling on the keyboard. *Customize › Show my desktop picture on the screen* switches back to Coreloom's picture in the lighting color.
+- **Mac: one background, a sidebar of glass.** The window's background now runs all around, and the sidebar is a pane of glass on it, back at the top with the close, minimize and zoom buttons inside it. The collapse button sits on their line, and every icon is centered on its title.
+- **An update is easy to spot.** When a new version is out, Settings gets a red dot in the sidebar and the button above it says *New update available* in Coreloom's gradient. The *What's new* card in *Settings › Updates* is redesigned: the version up front, then each change at a glance, then *Install update*.
+- **Rename your Bluetooth devices.** Click the pencil on a device's card (or right-click the card) and give it a name you'll recognize. Coreloom keeps the name; Windows' and macOS's own Bluetooth settings keep the device's. Leave the name empty to go back to the device's own.
+- **Leave a search box with a click.** Clicking anywhere outside a search or text box, the title bar included, or pressing Esc, leaves it, on Windows and on a Mac.
+
+### In detail
+
+- Mac: GPU benchmark compute scores are ten times what they were, so they read like the graphics scores. Results you saved earlier are converted, so comparisons stay fair. Windows scores are unchanged.
+- The *Rainbow* lighting swatch shows the whole spectrum, and on a Mac the picture's glow is a rainbow too.
+- Mac: the menu bar readings use Coreloom's own readings and refresh with them; macOS colors them for light and dark menu bars, and ⌘-drag puts them in any order. Clicking one opens *Open Coreloom*, *Menu Bar Settings…* and *Quit Coreloom*.
+- Mac: the desktop picture is read on your Mac only. A picture kept in Desktop, Documents, Downloads or another app's folder shows once you choose *Show it* in Customize, since macOS asks before an app reads those folders.
+- Have 1.8.0? Choose *Check for Updates* (the Coreloom menu on a Mac, *Settings › Updates* on Windows), then *Install update*.
+
+### Feedback
+
+Tried the menu bar readings or the new MacBook? [Open an issue](https://github.com/jerryubah/Coreloom/issues) with your Mac's model and a screenshot if something looks off.
+
 ## [1.8.0] - 2026-10-27
 
 Your in-game overlay on your phone: the phone app's new Overlay tab shows the game's frame rate, its frame-time graph and the readings the in-game overlay shows, even with the in-game overlay off. Errors and warnings now leave by themselves after five seconds, and on a Mac the sidebar sits below the window's buttons.

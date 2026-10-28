@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:c="using:Coreloom.Mac.Controls"
              xmlns:b="using:Coreloom.Mac.Behaviors"
+             xmlns:s="using:Coreloom.Mac.Services"
              xmlns:pages="using:Coreloom.ViewModels.Pages"
              xmlns:inf="using:Coreloom.ViewModels.Infrastructure">
 
@@ -188,7 +189,7 @@
     </DataTemplate>
     <!-- One lighting color in the Customize card: a swatch with its name underneath. -->
     <DataTemplate x:Key="GlowSwatch" DataType="{x:Type pages:GlowOptionViewModel}">
-      <Button Classes="glow" Classes.selected="{Binding IsSelected}" Width="62" Margin="0,0,4,0" Cursor="Hand" ToolTip.Tip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
+      <Button Classes="glow" Classes.selected="{Binding IsSelected}" Width="62" Margin="0,0,4,0" VerticalAlignment="Top" Cursor="Hand" ToolTip.Tip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
               Command="{Binding DataContext.Specs.SelectGlowCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
               CommandParameter="{Binding}">
         <Button.Template>
@@ -201,13 +202,17 @@
                   <Ellipse Fill="{Binding Hex, Converter={StaticResource HexToBrush}}" />
                   <Ellipse IsVisible="{Binding IsRainbow}">
                     <Ellipse.Fill>
-                      <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                      <!-- The whole spectrum around the dot, red back to red -->
+                      <ConicGradientBrush Center="50%,50%" Angle="0">
                         <GradientStop Offset="0" Color="#FF2933" />
-                        <GradientStop Offset="0.25" Color="#FFC21A" />
-                        <GradientStop Offset="0.5" Color="#1AD96B" />
-                        <GradientStop Offset="0.75" Color="#0D6BFF" />
-                        <GradientStop Offset="1" Color="#9E4DFF" />
-                      </LinearGradientBrush>
+                        <GradientStop Offset="0.14" Color="#FF8A1A" />
+                        <GradientStop Offset="0.28" Color="#FFD41A" />
+                        <GradientStop Offset="0.43" Color="#1AD96B" />
+                        <GradientStop Offset="0.57" Color="#18C8FF" />
+                        <GradientStop Offset="0.71" Color="#0D6BFF" />
+                        <GradientStop Offset="0.86" Color="#9E4DFF" />
+                        <GradientStop Offset="1" Color="#FF2933" />
+                      </ConicGradientBrush>
                     </Ellipse.Fill>
                   </Ellipse>
                   <Ellipse Fill="{DynamicResource Brush.Accent}" IsVisible="{Binding IsAccent}" />
@@ -274,8 +279,9 @@
                           Padding="{Binding ShowPcPicture, Converter={StaticResource BoolToValue}, ConverterParameter='14,14,22,14|24,18,22,16'}">
           <Grid ColumnDefinitions="Auto,*">
             <!-- Shown or not, and its lighting color: see Customize -->
-            <c:MacIllustration Width="232" Height="176" Margin="4,0,0,0" VerticalAlignment="Center" IsVisible="{Binding ShowPcPicture}"
-                               Model="{Binding Specs.Title}" Glow="{Binding Specs.Glow}" />
+            <c:MacIllustration Width="232" Height="176" Margin="4,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" IsVisible="{Binding ShowPcPicture}"
+                               Model="{Binding Specs.Title}" Glow="{Binding Specs.Glow}"
+                               UseDesktopPicture="{Binding ShowDesktopPicture}" DesktopPictureChosen="{Binding DesktopPictureChosen}" />
 
             <!-- The name and Customize on top, the specs under them in one or two columns. The specs come in after the
                  page opens (and Storage once the drives are known), so the card grows with them. -->
@@ -348,6 +354,26 @@
               </CheckBox>
 
               <StackPanel Classes="dimmable" Margin="0,14,0,0" IsEnabled="{Binding Customize.ShowPcPicture}">
+                <!-- The Mac's own desktop picture on its screen (Macs with a screen) -->
+                <StackPanel IsVisible="{Binding Specs.Title, Converter={x:Static c:MacIllustration.HasScreen}}" Margin="0,0,0,16">
+                  <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding Customize.ShowDesktopPicture}">
+                    <StackPanel>
+                      <TextBlock Text="Show my desktop picture on the screen" FontSize="13.5" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
+                      <TextBlock Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,3,0,0"
+                                 Text="Your Mac's own wallpaper, read on this Mac only. Off, the screen shows Coreloom's picture in the lighting color." />
+                    </StackPanel>
+                  </CheckBox>
+                  <Border Margin="0,10,0,0" Padding="12,9" CornerRadius="10" Background="{DynamicResource Brush.ControlHover}"
+                          IsVisible="{Binding IsBlocked, Source={x:Static s:DesktopPicture.State}}">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" VerticalAlignment="Center"
+                                 Text="Your wallpaper is kept in a folder macOS asks about before an app reads it, so Coreloom's picture shows for now." />
+                      <Button Grid.Column="1" Theme="{StaticResource Button.Secondary}" Content="Show it" Margin="12,0,0,0" VerticalAlignment="Center"
+                              Command="{Binding Customize.AllowDesktopPictureCommand}"
+                              ToolTip.Tip="Read your wallpaper now; macOS may ask you once" />
+                    </Grid>
+                  </Border>
+                </StackPanel>
                 <TextBlock Theme="{StaticResource Text.Caption}" Text="Lighting color." TextWrapping="Wrap" Margin="0,0,0,10" />
                 <ItemsControl ItemsSource="{Binding Specs.GlowOptions}" ItemTemplate="{StaticResource GlowSwatch}" Focusable="False">
                   <ItemsControl.ItemsPanel>

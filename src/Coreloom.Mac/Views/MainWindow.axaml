@@ -12,7 +12,7 @@
         Foreground="{DynamicResource Brush.Text}"
         FontFamily="{StaticResource UiFont}" FontSize="13"
         ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaChromeHints="PreferSystemChrome"
+        ExtendClientAreaChromeHints="PreferSystemChrome, OSXThickTitleBar"
         ExtendClientAreaTitleBarHeightHint="52"
         UseLayoutRounding="True">
 
@@ -33,6 +33,40 @@
   </Window.DataTemplates>
 
   <Window.Resources>
+    <!-- The sidebar's update button: the accent gradient (as on the banners' buttons), a lit rim, and a soft glow beneath
+         it in the same colors that brightens under the pointer. -->
+    <ControlTheme x:Key="Button.Update" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}" />
+      <Setter Property="Background" Value="{DynamicResource Brush.AccentGradient}" />
+      <Setter Property="RenderTransformOrigin" Value="50%,50%" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Panel>
+            <Border Name="Glow" CornerRadius="16" Background="{TemplateBinding Background}" Opacity="0.5" Margin="8,10,8,-2" IsHitTestVisible="False">
+              <Border.Effect>
+                <BlurEffect Radius="16" />
+              </Border.Effect>
+            </Border>
+            <c:SquircleBorder Name="Root" CornerRadius="14" Background="{TemplateBinding Background}" BorderBrush="#38FFFFFF" BorderThickness="1" Sheen="1">
+              <ContentPresenter Margin="{TemplateBinding Padding}" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+            </c:SquircleBorder>
+            <c:SquircleBorder Name="Sheen" CornerRadius="14" Background="White" Opacity="0" IsHitTestVisible="False" />
+          </Panel>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:pointerover /template/ c|SquircleBorder#Sheen">
+        <Setter Property="Opacity" Value="0.08" />
+      </Style>
+      <Style Selector="^:pointerover /template/ Border#Glow">
+        <Setter Property="Opacity" Value="0.85" />
+      </Style>
+      <Style Selector="^:pressed">
+        <Setter Property="RenderTransform" Value="scale(0.98)" />
+      </Style>
+    </ControlTheme>
+
     <!-- A sidebar item: the icon, and the title beside it unless the sidebar is narrow (then a tool tip names it). -->
     <ControlTheme x:Key="NavItemBound" TargetType="ListBoxItem" BasedOn="{StaticResource NavItem}">
       <Setter Property="IsEnabled" Value="{Binding IsEnabled}" />
@@ -40,12 +74,22 @@
       <Setter Property="ToolTip.Placement" Value="Right" />
     </ControlTheme>
 
+    <!-- The icons are drawn on their own 24-point grid (not stretched to fill a box), so each keeps the size it was
+         designed at, and the grid's middle sits on the title's middle. Settings gets a red dot when an update is out. -->
     <DataTemplate x:Key="NavItemTemplate" DataType="pages:PageViewModel">
       <StackPanel Orientation="Horizontal"
-                  Margin="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0|14,0,10,0'}"
+                  Margin="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0|11,0,10,0'}"
                   HorizontalAlignment="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter=Center|Left}">
-        <Path Theme="{StaticResource IconPath}" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
-        <TextBlock Text="{Binding Title}" Margin="14,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+        <Panel Width="24" Height="24" VerticalAlignment="Center" Margin="0,0.5,0,0">
+          <Canvas Width="24" Height="24">
+            <Path Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" Stroke="{Binding $parent[ListBoxItem].Foreground}"
+                  StrokeThickness="1.7" StrokeJoin="Round" StrokeLineCap="Round" />
+          </Canvas>
+          <Ellipse Width="9" Height="9" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,1,0,0"
+                   Fill="{DynamicResource Brush.Critical}" Stroke="{DynamicResource Brush.Surface}" StrokeThickness="1.5"
+                   IsVisible="{Binding HasNotice}" ToolTip.Tip="A new version of Coreloom is available" />
+        </Panel>
+        <TextBlock Text="{Binding Title}" Margin="12,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                    IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}" />
       </StackPanel>
     </DataTemplate>
@@ -53,34 +97,35 @@
 
   <Grid ColumnDefinitions="Auto,*">
     <!-- =========================== Sidebar =========================== -->
-    <!-- The sidebar floats as a pane of liquid glass, inset from the window's edges and lit along its rim, over a backdrop
-         with two soft lights (and the desktop's own vibrancy when it's translucent). It starts below the window's traffic
-         lights, which sit on the backdrop above it (the strip there drags the window). -->
-    <Canvas Name="SidebarBackdrop" Background="{DynamicResource Brush.Sidebar}" ClipToBounds="True" IsHitTestVisible="False">
-      <Ellipse Width="420" Height="420" Canvas.Left="-190" Canvas.Top="-170" Fill="{DynamicResource Brush.GlassLightA}" />
-      <Ellipse Width="460" Height="460" Canvas.Left="-230" Canvas.Bottom="-210" Fill="{DynamicResource Brush.GlassLightB}" />
-    </Canvas>
-    <Border Name="SidebarDrag" Height="40" VerticalAlignment="Top" Background="Transparent" />
-    <c:SquircleBorder Name="Sidebar" Width="232" Margin="10,40,10,10" CornerRadius="22" Smoothing="0.7"
+    <!-- One background flows all around the window; the sidebar floats on it as a pane of liquid glass, inset from the
+         window's edges and lit along its rim. The window's own close, minimize and zoom buttons sit inside the glass, in
+         its top row (the window has a tall title bar, so macOS places them there), with the collapse button on their
+         line at the right. When the sidebar is translucent, the background leaves the glass's shape open so the
+         desktop's vibrancy shows through the glass alone. -->
+    <c:WindowBackdrop Name="Backdrop" Grid.ColumnSpan="2" Background="{DynamicResource Brush.ContentLayer}" Glass="{Binding #Sidebar}" />
+    <c:SquircleBorder Name="Sidebar" Width="232" Margin="10" CornerRadius="22" Smoothing="0.7"
                       Background="{DynamicResource Brush.GlassFill}" BorderBrush="{DynamicResource Brush.GlassRim}" BorderThickness="1"
                       Sheen="1" Shadow="1">
-      <Grid Margin="10,4,10,12" RowDefinitions="52,*,Auto">
-        <!-- Brand, and collapse on the right -->
-        <Button Theme="{StaticResource Button.Icon}" HorizontalAlignment="Right" VerticalAlignment="Center" Width="28" Height="28"
-                Command="{Binding ToggleSidebarCommand}" ToolTip.Tip="Hide sidebar (⌃⌘S)"
+      <Grid Margin="10,0,10,12" RowDefinitions="30,50,*,Auto">
+        <!-- The window buttons' row: drag the window from here too; collapse on the right, on the buttons' centre line -->
+        <Border Name="SidebarDrag" Margin="-10,0" Background="Transparent" />
+        <Button Name="CollapseButton" Theme="{StaticResource Button.Icon}" HorizontalAlignment="Right" VerticalAlignment="Center" Width="28" Height="28"
+                Margin="0,0,-3,0" Command="{Binding ToggleSidebarCommand}" ToolTip.Tip="Hide sidebar (⌃⌘S)"
                 IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
           <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Sidebar}" />
         </Button>
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+
+        <!-- Brand -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center"
                     HorizontalAlignment="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter=Center|Left}"
-                    Margin="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0|8,0,0,0'}">
+                    Margin="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0|10,0,0,0'}">
           <Image Source="{DynamicResource Image.AppIcon}" Width="26" Height="26" RenderOptions.BitmapInterpolationMode="HighQuality" />
           <TextBlock Text="Coreloom" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"
                      IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}" />
         </StackPanel>
 
         <!-- Navigation -->
-        <StackPanel Grid.Row="1" Margin="0,6,0,0">
+        <StackPanel Grid.Row="2" Margin="0,4,0,0">
           <Button Theme="{StaticResource Button.Icon}" HorizontalAlignment="Center" Margin="0,0,0,8" Command="{Binding ToggleSidebarCommand}"
                   ToolTip.Tip="Show sidebar (⌃⌘S)" IsVisible="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
             <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Sidebar}" />
@@ -90,23 +135,21 @@
         </StackPanel>
 
         <!-- Footer -->
-        <StackPanel Grid.Row="2">
-          <!-- Update badge: a newer version is available, downloading or ready to install. -->
-          <Button Margin="0,0,0,6" Theme="{StaticResource Button.Subtle}" Background="{DynamicResource Brush.AccentSoft}" BorderBrush="Transparent"
+        <StackPanel Grid.Row="3">
+          <!-- A newer version is available, downloading or ready to install: the brand's gradient with a soft glow under it. -->
+          <Button Name="UpdateButton" Theme="{StaticResource Button.Update}" Margin="0,0,0,8" HorizontalAlignment="Stretch"
                   Command="{Binding OpenUpdatesCommand}" ToolTip.Tip="{Binding Updates.BadgeToolTip}"
                   AutomationProperties.Name="{Binding Updates.BadgeToolTip}" IsVisible="{Binding Updates.ShowBadge}"
-                  HorizontalAlignment="Stretch"
                   HorizontalContentAlignment="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter=Center|Left}"
-                  Padding="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0,8|12,8'}">
+                  Padding="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0,7|9,8,12,8'}">
             <StackPanel Orientation="Horizontal">
-              <Panel Width="16" Height="16" VerticalAlignment="Center">
-                <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Download}" Stroke="{DynamicResource Brush.Accent}" />
-                <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Accent}" Stroke="{DynamicResource Brush.Surface}" StrokeThickness="1.5"
-                         HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-3,0" />
-              </Panel>
-              <TextBlock Text="{Binding Updates.BadgeText}" Margin="10,0,0,0" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}"
-                         VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                         IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}" />
+              <Border Width="28" Height="28" CornerRadius="9" Background="#30FFFFFF" VerticalAlignment="Center">
+                <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
+              </Border>
+              <StackPanel Margin="10,0,0,0" VerticalAlignment="Center" IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
+                <TextBlock Text="{Binding Updates.BadgeText}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.OnAccent}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding Updates.BadgeDetail}" FontSize="11" Margin="0,1,0,0" Foreground="{DynamicResource Brush.OnAccent}" Opacity="0.8" TextTrimming="CharacterEllipsis" />
+              </StackPanel>
             </StackPanel>
           </Button>
           <ListBox Name="SettingsNav" Theme="{StaticResource NavList}" ItemContainerTheme="{StaticResource NavItemBound}"
@@ -117,9 +160,8 @@
 
     <!-- =========================== Content =========================== -->
     <Grid Grid.Column="1" RowDefinitions="40,Auto,Auto,*">
-      <Border Grid.RowSpan="4" Background="{DynamicResource Brush.ContentLayer}" />
       <!-- The title bar: drag the window from it; a double-click zooms it, as everywhere on macOS. -->
-      <Border Name="TitleBar" Background="{DynamicResource Brush.TitleBar}" />
+      <Border Name="TitleBar" Background="Transparent" />
 
       <!-- Page header -->
       <Grid Grid.Row="1" Margin="32,0,28,0" ColumnDefinitions="*,Auto">
@@ -147,11 +189,11 @@
           </Border>
 
           <!-- Time window -->
-          <ListBox Theme="{StaticResource Segmented}" ItemsSource="{Binding WindowOptions}" DisplayMemberBinding="{Binding Label}"
+          <ListBox Name="RangePicker" Theme="{StaticResource Segmented}" ItemsSource="{Binding WindowOptions}" DisplayMemberBinding="{Binding Label}"
                    SelectedValueBinding="{Binding Value}" SelectedValue="{Binding SelectedWindow}" ToolTip.Tip="Chart time range" />
 
           <!-- Freeze charts -->
-          <ToggleButton Theme="{StaticResource ToggleButton.Icon}" Margin="8,0,0,0" IsChecked="{Binding IsChartsFrozen}"
+          <ToggleButton Name="FreezeButton" Theme="{StaticResource ToggleButton.Icon}" Margin="8,0,0,0" IsChecked="{Binding IsChartsFrozen}"
                         ToolTip.Tip="Pause charts to inspect them (monitoring continues)">
             <Panel>
               <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Pause}" IsVisible="{Binding !IsChartsFrozen}" />

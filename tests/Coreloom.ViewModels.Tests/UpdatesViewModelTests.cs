@@ -193,7 +193,7 @@ public sealed class UpdatesViewModelTests : IDisposable
 
         Assert.Equal(UpdatePhase.Ready, updates.Phase);
         Assert.True(updates.ShowBadge);
-        Assert.Equal("Install update", updates.BadgeText);
+        Assert.Equal("New update available", updates.BadgeText);
         Assert.Equal("Coreloom 1.1.0 is ready to install", updates.HeadlineText);
         Assert.True(updates.ShowInstallButton);
         Assert.Contains("next time Coreloom starts", updates.DetailText);
@@ -239,7 +239,7 @@ public sealed class UpdatesViewModelTests : IDisposable
         Assert.Equal(UpdatePhase.Available, updates.Phase);
         Assert.Equal(0, _github.InstallerRequests);
         Assert.True(updates.ShowBadge);
-        Assert.Equal("Update available", updates.BadgeText);
+        Assert.Equal("New update available", updates.BadgeText);
         Assert.True(updates.ShowInstallButton);
         Assert.Contains("closes Coreloom for a moment", updates.DetailText);
         Assert.Equal("Coreloom 1.1.0 is available", Assert.Single(notes).Title);

@@ -42,6 +42,7 @@
     <AvaloniaResource Include="..\..\assets\branding\dark\png\coreloom-dark-128.png" Link="Assets\coreloom-dark-128.png" />
     <AvaloniaResource Include="..\..\assets\branding\dark\png\coreloom-dark-256.png" Link="Assets\coreloom-dark-256.png" />
     <AvaloniaResource Include="Assets\*.png" />
+    <AvaloniaResource Include="Assets\MacBook\*.png" />
     <None Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

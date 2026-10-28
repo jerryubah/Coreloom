@@ -20,6 +20,13 @@
     <!-- A paired Bluetooth device, kept compact: icon, name and type; a status pill and battery; Connect or Disconnect. -->
     <DataTemplate x:Key="BluetoothCard" DataType="{x:Type pages:BluetoothDeviceViewModel}">
       <c:SquircleBorder x:Name="Card" Style="{StaticResource Card}" Padding="14,13,14,14" ToolTip="{Binding AddressText}" ToolTipService.InitialShowDelay="900">
+        <c:SquircleBorder.ContextMenu>
+          <ContextMenu>
+            <MenuItem Header="Rename…" Command="{Binding RenameCommand}" />
+            <MenuItem Header="Use the device's own name" Command="{Binding ResetNameCommand}"
+                      Visibility="{Binding HasCustomName, Converter={StaticResource BoolToVisibility}}" />
+          </ContextMenu>
+        </c:SquircleBorder.ContextMenu>
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -29,24 +36,45 @@
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
 
-          <!-- Icon, name and type (the name gets the whole width) -->
+          <!-- Icon, name and type (the name gets the whole width), and Rename. Renaming swaps the name for a text box:
+               Enter or a click elsewhere keeps the name, Esc cancels, and an empty box goes back to the device's own. -->
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" />
               <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <Grid Width="38" Height="38" VerticalAlignment="Center">
               <Ellipse x:Name="Halo" Fill="{DynamicResource Brush.TextTertiary}" Opacity="0.14" />
               <Path x:Name="Glyph" Style="{StaticResource IconPath}" Width="18" Height="18" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
                     Stroke="{DynamicResource Brush.TextSecondary}" />
             </Grid>
-            <StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
+            <StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center"
+                        Visibility="{Binding IsRenaming, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
               <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis"
-                         ToolTip="{Binding Name}" />
+                         ToolTip="{Binding NameToolTip}" />
               <TextBlock Style="{StaticResource Text.Caption}" Margin="0,1,0,0" TextTrimming="CharacterEllipsis">
                 <Run Text="{Binding KindText, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding TransportText, Mode=OneWay}" />
               </TextBlock>
             </StackPanel>
+            <StackPanel Grid.Column="1" Grid.ColumnSpan="2" Margin="11,0,0,0" VerticalAlignment="Center"
+                        Visibility="{Binding IsRenaming, Converter={StaticResource BoolToVisibility}}">
+              <TextBox Style="{StaticResource TextBox.Default}" Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}" MaxLength="48" Padding="8,5"
+                       AutomationProperties.Name="Device name" b:EditBox.FocusOnShow="True" b:EditBox.CommitOnLeave="{Binding SaveNameCommand}">
+                <TextBox.InputBindings>
+                  <KeyBinding Key="Enter" Command="{Binding SaveNameCommand}" />
+                  <KeyBinding Key="Escape" Command="{Binding CancelRenameCommand}" />
+                </TextBox.InputBindings>
+              </TextBox>
+              <TextBlock Style="{StaticResource Text.Caption}" Margin="1,5,0,0" TextWrapping="Wrap">
+                <Run Text="Shown in Coreloom only. Leave it empty for its own name, " /><Run Text="{Binding ReportedName, Mode=OneWay}" /><Run Text="." />
+              </TextBlock>
+            </StackPanel>
+            <Button Grid.Column="2" Style="{StaticResource Button.Icon}" Width="28" Height="28" Margin="6,0,-5,0" VerticalAlignment="Center"
+                    Command="{Binding RenameCommand}" ToolTip="Rename" AutomationProperties.Name="Rename"
+                    Visibility="{Binding IsRenaming, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+              <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Edit}" />
+            </Button>
           </Grid>
 
           <!-- Status pill and battery -->

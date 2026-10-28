@@ -518,7 +518,7 @@ public sealed class BenchmarkingViewModel : PageViewModel
             saved = [];
         }
 
-        _history = new BenchmarkHistory(saved);
+        _history = new BenchmarkHistory(saved, ComputeFactor);
         Cpu.Device = ShortCpuName(Monitor.Summary.CpuName);
         Refresh();
     }
@@ -644,6 +644,9 @@ public sealed class BenchmarkingViewModel : PageViewModel
     }
 
     public bool HasError => !string.IsNullOrEmpty(_error);
+
+    /// <summary>What this computer's GPU compute tests are multiplied by: ten on a Mac (Metal), else one.</summary>
+    private double ComputeFactor => IsMac ? GpuTests.MetalComputeFactor : 1;
 
     // ----- Stress test --------------------------------------------------------------------------------------------
 
@@ -1013,6 +1016,7 @@ public sealed class BenchmarkingViewModel : PageViewModel
             Finished = DateTimeOffset.Now,
             AppVersion = _appVersion,
             PointsAtReference = BenchmarkScale.Gpu,
+            ComputeFactor = ComputeFactor,
             Score = scores.Score,
             Subscores = [new("Graphics", scores.Graphics), new("Compute", scores.Compute)],
             Device = scores.Adapter.Name,

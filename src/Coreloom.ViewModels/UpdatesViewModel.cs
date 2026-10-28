@@ -107,6 +107,7 @@ public sealed class UpdatesViewModel : ObservableObject
         CancelDownloadCommand = new RelayCommand(CancelDownload, () => _phase == UpdatePhase.Downloading);
         SkipCommand = new RelayCommand(Skip, () => _phase is UpdatePhase.Available or UpdatePhase.Ready);
         OpenInstalledReleaseCommand = new RelayCommand(() => _shell.OpenUrl(InstalledReleaseUrl ?? RepositoryUrl ?? "https://github.com"), () => InstalledReleaseUrl is not null || RepositoryUrl is not null);
+        OpenUpdateReleaseCommand = new RelayCommand(() => _shell.OpenUrl(UpdateReleaseUrl!), () => UpdateReleaseUrl is not null);
         DismissUpdatedBannerCommand = new RelayCommand(DismissUpdatedBanner);
     }
 
@@ -155,13 +156,21 @@ public sealed class UpdatesViewModel : ObservableObject
     public bool ShowBadge => _phase is UpdatePhase.Available or UpdatePhase.Downloading or UpdatePhase.Ready or UpdatePhase.Installing
         || (_phase == UpdatePhase.Checking && (_pending is not null || _release is not null));
 
+    /// <summary>The sidebar button: "New update available", or what's happening while it downloads and installs.</summary>
     public string BadgeText => _phase switch
     {
-        UpdatePhase.Ready => "Install update",
-        UpdatePhase.Checking when _pending is not null => "Install update",
         UpdatePhase.Downloading => "Downloading update",
         UpdatePhase.Installing => "Updating…",
-        _ => "Update available",
+        _ => "New update available",
+    };
+
+    /// <summary>The line under it: "Coreloom 1.8.1", or "Coreloom 1.8.1 · ready to install".</summary>
+    public string BadgeDetail => _phase switch
+    {
+        UpdatePhase.Ready => $"Coreloom {UpdateVersion} · ready to install",
+        UpdatePhase.Checking when _pending is not null => $"Coreloom {UpdateVersion} · ready to install",
+        UpdatePhase.Downloading => $"Coreloom {UpdateVersion} · {(int)Math.Round(_progress * 100)}%",
+        _ => $"Coreloom {UpdateVersion}",
     };
 
     public string BadgeToolTip => _phase switch
@@ -228,7 +237,13 @@ public sealed class UpdatesViewModel : ObservableObject
     public double Progress
     {
         get => _progress;
-        private set => SetProperty(ref _progress, value);
+        private set
+        {
+            if (SetProperty(ref _progress, value))
+            {
+                OnPropertyChanged(nameof(BadgeDetail));
+            }
+        }
     }
 
     // Which action the status card offers.
@@ -251,6 +266,11 @@ public sealed class UpdatesViewModel : ObservableObject
     public ReleaseSummaryViewModel? UpdateSummary => ShowBadge ? _updateSummary : null;
 
     public bool ShowUpdateSummary => UpdateSummary is not null;
+
+    /// <summary>The available version's release page on GitHub.</summary>
+    public string? UpdateReleaseUrl => _phase == UpdatePhase.Ready || _release is null
+        ? _pending?.HtmlUrl ?? _release?.HtmlUrl.ToString() ?? (RepositoryUrl is null || UpdateVersion is null ? null : $"{RepositoryUrl}/releases/tag/v{UpdateVersion}")
+        : _release.HtmlUrl.ToString();
 
     // ---- The installed version --------------------------------------------------------------------
 
@@ -320,6 +340,9 @@ public sealed class UpdatesViewModel : ObservableObject
 
 
     public IRelayCommand OpenInstalledReleaseCommand { get; }
+
+    /// <summary>Opens the available version's full release notes.</summary>
+    public IRelayCommand OpenUpdateReleaseCommand { get; }
 
     public IRelayCommand DismissUpdatedBannerCommand { get; }
 
@@ -963,6 +986,7 @@ public sealed class UpdatesViewModel : ObservableObject
         OnPropertyChanged(nameof(IsBusy));
         OnPropertyChanged(nameof(ShowBadge));
         OnPropertyChanged(nameof(BadgeText));
+        OnPropertyChanged(nameof(BadgeDetail));
         OnPropertyChanged(nameof(BadgeToolTip));
         OnPropertyChanged(nameof(StatusIcon));
         OnPropertyChanged(nameof(StatusTone));
@@ -974,6 +998,7 @@ public sealed class UpdatesViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowCancelButton));
         OnPropertyChanged(nameof(UpdateVersion));
         OnPropertyChanged(nameof(UpdateSummary));
+        OnPropertyChanged(nameof(UpdateReleaseUrl));
         OnPropertyChanged(nameof(ShowUpdateSummary));
         OnPropertyChanged(nameof(InstalledSummary));
         OnPropertyChanged(nameof(ShowInstalledSummary));
@@ -984,6 +1009,7 @@ public sealed class UpdatesViewModel : ObservableObject
         CancelDownloadCommand.NotifyCanExecuteChanged();
         SkipCommand.NotifyCanExecuteChanged();
         OpenInstalledReleaseCommand.NotifyCanExecuteChanged();
+        OpenUpdateReleaseCommand.NotifyCanExecuteChanged();
     }
 }
 
@@ -1010,7 +1036,7 @@ public sealed class ReleaseSummaryViewModel : StaticItem
     {
         Version = version;
         Intro = summary.Intro;
-        Items = summary.Items.Select(i => new WhatsNewItem(i.Category, i.Title, i.Text)).ToArray();
+        Items = summary.Items.Select(Item).ToArray();
         MoreText = summary.MoreCount switch
         {
             0 => null,
@@ -1019,7 +1045,52 @@ public sealed class ReleaseSummaryViewModel : StaticItem
         };
         PublishedText = published is { } p ? $"Released {p.ToLocalTime().ToString("MMMM d, yyyy", CultureInfo.CurrentCulture)}" : null;
         OneLine = summary.ToOneLine();
+        ChangeCount = Items.Count + summary.MoreCount;
+        Categories = Items.Select(i => i.Category).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase).Take(5).ToArray();
     }
+
+    /// <summary>
+    /// One change as the card shows it. A title that starts with a platform ("Mac: readings in the menu bar") shows the
+    /// platform as its chip and the rest as its title.
+    /// </summary>
+    private static WhatsNewItem Item(ReleaseNoteItem item)
+    {
+        if (item.Category is null && item.Title is { } title)
+        {
+            foreach (string platform in Platforms)
+            {
+                if (title.Length > platform.Length + 2 && title.StartsWith(platform + ": ", StringComparison.OrdinalIgnoreCase))
+                {
+                    string rest = title[(platform.Length + 2)..].Trim();
+                    return new WhatsNewItem(platform, char.ToUpper(rest[0], CultureInfo.CurrentCulture) + rest[1..], item.Text);
+                }
+            }
+        }
+
+        return new WhatsNewItem(item.Category, item.Title, item.Text);
+    }
+
+    private static readonly string[] Platforms = ["Mac", "Windows", "Phone", "Connect", "Website"];
+
+    /// <summary>How many changes the release notes list (the ones shown and the rest).</summary>
+    public int ChangeCount { get; }
+
+    /// <summary>"9 changes", for the card's header.</summary>
+    public string? ChangesText => ChangeCount switch
+    {
+        0 => null,
+        1 => "1 change",
+        int n => $"{n} changes",
+    };
+
+    /// <summary>The areas the release touches ("Mac", "Windows", "Website"), up to five, for chips in the card's header.</summary>
+    public IReadOnlyList<string> Categories { get; }
+
+    /// <summary>The chips show when the release spans more than one area.</summary>
+    public bool HasCategories => Categories.Count > 1;
+
+    /// <summary>The release date and the number of changes on one line: "Released October 28, 2026 · 9 changes".</summary>
+    public string? MetaText => string.Join(" · ", new[] { PublishedText, ChangesText }.OfType<string>()) is { Length: > 0 } text ? text : null;
 
     public string Version { get; }
 

@@ -4,37 +4,122 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Coreloom.Core.Devices;
+using Coreloom.Core.Settings;
 using Coreloom.Core.Telemetry;
 using Coreloom.ViewModels.Infrastructure;
 using Coreloom.ViewModels.Services;
 
 namespace Coreloom.ViewModels.Pages;
 
+/// <summary>Names given to Bluetooth devices in Coreloom (kept in settings).</summary>
+public interface IDeviceNames
+{
+    /// <summary>The name to show: the one given in Coreloom, or <paramref name="reported"/>.</summary>
+    string NameFor(string id, string reported);
+
+    /// <summary>Gives a device a name in Coreloom, or (null or blank) goes back to the device's own.</summary>
+    void Rename(string id, string? name);
+}
+
 /// <summary>A card for one paired Bluetooth device: what it is, whether it's connected, its battery and Connect/Disconnect.</summary>
 public sealed class BluetoothDeviceViewModel : ObservableObject
 {
     private readonly Func<BluetoothDeviceViewModel, Task> _toggle;
     private readonly Func<DateTime> _now;
+    private readonly IDeviceNames? _names;
     private BluetoothDeviceInfo _info;
+    private bool _isRenaming;
+    private string _editName = string.Empty;
     private bool _isBusy;
     private string? _message;
     private bool _messageIsError;
     private bool _isMatch = true;
     private readonly Dismissal _messageDismissal = new();
 
-    public BluetoothDeviceViewModel(BluetoothDeviceInfo info, Func<BluetoothDeviceViewModel, Task> toggle, Func<DateTime> now)
+    public BluetoothDeviceViewModel(BluetoothDeviceInfo info, Func<BluetoothDeviceViewModel, Task> toggle, Func<DateTime> now, IDeviceNames? names = null)
     {
         _info = info;
         _toggle = toggle;
         _now = now;
+        _names = names;
         ActionCommand = new AsyncRelayCommand(() => _toggle(this), () => !IsBusy);
+        RenameCommand = new RelayCommand(BeginRename, () => _names is not null);
+        SaveNameCommand = new RelayCommand(SaveName);
+        CancelRenameCommand = new RelayCommand(() => IsRenaming = false);
+        ResetNameCommand = new RelayCommand(() => ApplyName(null), () => HasCustomName);
     }
 
     public BluetoothDeviceInfo Info => _info;
 
     public string Id => _info.Id;
 
-    public string Name => _info.Name;
+    /// <summary>The name shown: the one given in Coreloom, or the device's own.</summary>
+    public string Name => _names?.NameFor(_info.Id, _info.Name) ?? _info.Name;
+
+    /// <summary>The name the device reports (Windows' and macOS's Bluetooth settings show this one).</summary>
+    public string ReportedName => _info.Name;
+
+    /// <summary>The device has a name given in Coreloom.</summary>
+    public bool HasCustomName => !string.Equals(Name, _info.Name, StringComparison.Ordinal);
+
+    /// <summary>The name's tool tip: "Named in Coreloom. The device calls itself …".</summary>
+    public string NameToolTip => HasCustomName ? $"Named in Coreloom. The device calls itself “{_info.Name}”." : Name;
+
+    /// <summary>The card shows a text box to rename the device.</summary>
+    public bool IsRenaming
+    {
+        get => _isRenaming;
+        private set => SetProperty(ref _isRenaming, value);
+    }
+
+    /// <summary>The name being typed while renaming.</summary>
+    public string EditName
+    {
+        get => _editName;
+        set => SetProperty(ref _editName, value ?? string.Empty);
+    }
+
+    /// <summary>Opens the text box with the current name.</summary>
+    public IRelayCommand RenameCommand { get; }
+
+    /// <summary>Keeps the typed name (an empty box goes back to the device's own name).</summary>
+    public IRelayCommand SaveNameCommand { get; }
+
+    public IRelayCommand CancelRenameCommand { get; }
+
+    /// <summary>Goes back to the name the device reports.</summary>
+    public IRelayCommand ResetNameCommand { get; }
+
+    /// <summary>Raised after the name changed (the page re-sorts and re-filters).</summary>
+    public event EventHandler? Renamed;
+
+    private void BeginRename()
+    {
+        EditName = Name;
+        IsRenaming = true;
+    }
+
+    private void SaveName()
+    {
+        if (!IsRenaming)
+        {
+            return;
+        }
+
+        string? clean = DevicesSettings.Clean(EditName);
+        ApplyName(clean is null || clean == _info.Name ? null : clean);
+    }
+
+    private void ApplyName(string? name)
+    {
+        IsRenaming = false;
+        _names?.Rename(_info.Id, name);
+        OnPropertyChanged(nameof(Name));
+        OnPropertyChanged(nameof(HasCustomName));
+        OnPropertyChanged(nameof(NameToolTip));
+        ResetNameCommand.NotifyCanExecuteChanged();
+        Renamed?.Invoke(this, EventArgs.Empty);
+    }
 
     public string KindText => DeviceKinds.Text(_info.Kind);
 
@@ -113,7 +198,8 @@ public sealed class BluetoothDeviceViewModel : ObservableObject
     public void ShowMessage(string? text, bool isError)
     {
         MessageIsError = isError;
-        Message = string.IsNullOrWhiteSpace(text) ? null : text;
+        // Messages name the device as it reports itself ("Couldn't reach WH-1000XM5."): use the name given in Coreloom.
+        Message = string.IsNullOrWhiteSpace(text) ? null : HasCustomName ? text.Replace(_info.Name, Name, StringComparison.Ordinal) : text;
     }
 
     /// <summary>Takes a fresh reading; only what changed is announced.</summary>
@@ -137,6 +223,7 @@ public sealed class BluetoothDeviceViewModel : ObservableObject
     public bool Matches(string search) =>
         search.Length == 0
         || Name.Contains(search, StringComparison.CurrentCultureIgnoreCase)
+        || _info.Name.Contains(search, StringComparison.CurrentCultureIgnoreCase)
         || KindText.Contains(search, StringComparison.CurrentCultureIgnoreCase);
 }
 
@@ -262,6 +349,7 @@ public sealed class DevicesViewModel : PageViewModel
     private readonly SynchronizationContext? _sync;
     private readonly List<BluetoothDeviceViewModel> _bluetooth = [];
     private readonly List<WiredDeviceViewModel> _wired = [];
+    private readonly IDeviceNames _names;
     private readonly Dictionary<DeviceGroup, DeviceGroupViewModel> _groups = [];
     private DateTime _lastBluetooth = DateTime.MinValue;
     private DateTime _lastWired = DateTime.MinValue;
@@ -284,6 +372,7 @@ public sealed class DevicesViewModel : PageViewModel
         : base("devices", "Devices", "Icon.Devices", context)
     {
         _service = context.Tools.Devices;
+        _names = new SettingsDeviceNames(context.Settings);
         _sync = SynchronizationContext.Current;
         _service.Changed += OnServiceChanged;
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
@@ -628,17 +717,44 @@ public sealed class DevicesViewModel : PageViewModel
             }
             else
             {
-                next.Add(new BluetoothDeviceViewModel(info, ToggleAsync, Now));
+                var device = new BluetoothDeviceViewModel(info, ToggleAsync, Now, _names);
+                device.Renamed += (_, _) => ApplyBluetoothOrder();
+                next.Add(device);
             }
         }
 
         // A device being connected or disconnected stays on screen even if Windows briefly stops listing it.
         next.AddRange(byId.Values.Where(d => d.IsBusy));
         _bluetooth.Clear();
-        _bluetooth.AddRange(next
-            .OrderByDescending(d => d.IsConnected)
-            .ThenBy(d => d.Name, StringComparer.CurrentCultureIgnoreCase));
+        _bluetooth.AddRange(next);
+        ApplyBluetoothOrder();
+    }
+
+    /// <summary>Connected first, then by name (the name given in Coreloom, when there is one).</summary>
+    private void ApplyBluetoothOrder()
+    {
+        var ordered = _bluetooth.OrderByDescending(d => d.IsConnected).ThenBy(d => d.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+        _bluetooth.Clear();
+        _bluetooth.AddRange(ordered);
         ApplyBluetooth();
+    }
+
+    /// <summary>Names given to devices in Coreloom, kept in settings.</summary>
+    private sealed class SettingsDeviceNames(SettingsService settings) : IDeviceNames
+    {
+        public string NameFor(string id, string reported) => settings.Current.Devices.NameFor(id, reported);
+
+        public void Rename(string id, string? name) => settings.Update("Devices", s =>
+        {
+            if (DevicesSettings.Clean(name) is { } clean)
+            {
+                s.Devices.BluetoothNames[id] = clean;
+            }
+            else
+            {
+                s.Devices.BluetoothNames.Remove(id);
+            }
+        });
     }
 
     private void ApplyBluetooth()

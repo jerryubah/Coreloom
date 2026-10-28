@@ -1,7 +1,13 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data.Converters;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
+using Avalonia.Threading;
+using Coreloom.Core.Diagnostics;
 using Coreloom.Core.Settings;
+using Coreloom.Mac.Services;
 using Coreloom.Mac.Themes;
 using Coreloom.ViewModels.Pages;
 
@@ -18,9 +24,10 @@ public enum MacForm
 }
 
 /// <summary>
-/// A drawing of the Mac Coreloom runs on for the Overview header: a laptop, an all-in-one, a small or a tall desktop or a
-/// tower, picked from the model's name, its screen (or status light) lit in the lighting color chosen in Customize. It's
-/// Coreloom's own simple drawing in the spirit of the hardware, with no company logo on it.
+/// A picture of the Mac Coreloom runs on for the Overview header, picked from the model's name: a MacBook (a photo-like
+/// picture whose screen shows the Mac's own desktop picture, or Coreloom's in the lighting color, and whose keyboard deck
+/// catches the screen's light), or a drawing of an all-in-one, a small or a tall desktop or a tower, lit in the lighting
+/// color chosen in Customize. No company logo is on any of them.
 /// </summary>
 public sealed class MacIllustration : Control
 {
@@ -28,8 +35,34 @@ public sealed class MacIllustration : Control
 
     public static readonly StyledProperty<PcGlow> GlowProperty = AvaloniaProperty.Register<MacIllustration, PcGlow>(nameof(Glow), PcGlow.Blue);
 
+    /// <summary>The screen shows the Mac's own desktop picture (Customize).</summary>
+    public static readonly StyledProperty<bool> UseDesktopPictureProperty = AvaloniaProperty.Register<MacIllustration, bool>(nameof(UseDesktopPicture));
+
+    /// <summary>The person turned the desktop picture on themselves (a picture in a folder macOS guards is read only then).</summary>
+    public static readonly StyledProperty<bool> DesktopPictureChosenProperty = AvaloniaProperty.Register<MacIllustration, bool>(nameof(DesktopPictureChosen));
+
+    /// <summary>Whether a model has a screen to show a desktop picture on (for Customize).</summary>
+    public static readonly FuncValueConverter<string?, bool> HasScreen = new(model => FormOf(model) is MacForm.Laptop or MacForm.AllInOne);
+
     private const double CanvasWidth = 240;
     private const double CanvasHeight = 180;
+
+    // The MacBook picture (Assets/MacBook, made by build/mac/make-macbook.py): where its screen and keyboard deck are, in
+    // the picture's pixels, and the width it's shown at in points.
+    private static readonly Rect PictureScreen = new(80.93, 14.38, 511.05 - 80.93, 291.95 - 14.38);
+    private static readonly Rect PictureDeck = new(14.5, 297.5, 577.5 - 14.5, 349.0 - 297.5);
+    private const double PictureScreenRadius = 3;
+    private const double PictureNotchHeight = 8.25;
+    private const double MacBookWidth = 204;
+
+    private static readonly Lazy<Bitmap?> MacBookBody = new(() => LoadPicture("body.png"));
+    private static readonly Lazy<Bitmap?> MacBookDeck = new(() => LoadPicture("deck.png"));
+
+    private DispatcherTimer? _refresh;
+    private RenderTargetBitmap? _wallpaper;
+    private (PcGlow Glow, Color Light, bool Dark)? _wallpaperKey;
+    private RenderTargetBitmap? _reflection;
+    private IImage? _reflectionSource;
 
     private static readonly Color[] Rainbow =
     [
@@ -38,7 +71,9 @@ public sealed class MacIllustration : Control
 
     static MacIllustration()
     {
-        AffectsRender<MacIllustration>(ModelProperty, GlowProperty);
+        AffectsRender<MacIllustration>(ModelProperty, GlowProperty, UseDesktopPictureProperty);
+        UseDesktopPictureProperty.Changed.AddClassHandler<MacIllustration>((picture, _) => picture.RefreshDesktopPicture());
+        DesktopPictureChosenProperty.Changed.AddClassHandler<MacIllustration>((picture, _) => picture.RefreshDesktopPicture());
     }
 
     public MacIllustration()
@@ -62,6 +97,47 @@ public sealed class MacIllustration : Control
         set => SetValue(GlowProperty, value);
     }
 
+    public bool UseDesktopPicture
+    {
+        get => GetValue(UseDesktopPictureProperty);
+        set => SetValue(UseDesktopPictureProperty, value);
+    }
+
+    public bool DesktopPictureChosen
+    {
+        get => GetValue(DesktopPictureChosenProperty);
+        set => SetValue(DesktopPictureChosenProperty, value);
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        DesktopPicture.Changed += OnDesktopPictureChanged;
+
+        // A new desktop picture shows within half a minute (the check is quick when nothing changed).
+        _refresh = new DispatcherTimer(TimeSpan.FromSeconds(30), DispatcherPriority.Background, (_, _) => RefreshDesktopPicture());
+        _refresh.Start();
+        RefreshDesktopPicture();
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+        DesktopPicture.Changed -= OnDesktopPictureChanged;
+        _refresh?.Stop();
+        _refresh = null;
+    }
+
+    private void OnDesktopPictureChanged(object? sender, EventArgs e) => InvalidateVisual();
+
+    private void RefreshDesktopPicture()
+    {
+        if (UseDesktopPicture && IsVisible && FormOf(Model) is MacForm.Laptop or MacForm.AllInOne && _refresh is not null)
+        {
+            DesktopPicture.Refresh(DesktopPictureChosen);
+        }
+    }
+
     public static MacForm FormOf(string? model)
     {
         string name = model ?? string.Empty;
@@ -77,6 +153,12 @@ public sealed class MacIllustration : Control
         var bounds = Bounds;
         if (bounds.Width <= 0 || bounds.Height <= 0)
         {
+            return;
+        }
+
+        if (FormOf(Model) == MacForm.Laptop && MacBookBody.Value is { } body)
+        {
+            DrawMacBook(context, body, new Rect(bounds.Size));
             return;
         }
 
@@ -101,6 +183,186 @@ public sealed class MacIllustration : Control
                     DrawDesktop(context, light, dark, tall: FormOf(Model) == MacForm.Studio);
                     break;
             }
+        }
+    }
+
+    /// <summary>
+    /// The MacBook picture, <see cref="MacBookWidth"/> points wide and centered: the lighting color's glow behind it, the
+    /// desktop picture (or Coreloom's) on its screen under a faint glare, and the screen's light on the keyboard deck.
+    /// </summary>
+    private void DrawMacBook(DrawingContext context, Bitmap body, Rect bounds)
+    {
+        var size = body.Size;
+        double scale = Math.Min(Math.Min(MacBookWidth, bounds.Width) / size.Width, bounds.Height * 0.94 / size.Height);
+        var area = new Rect((bounds.Width - (size.Width * scale)) / 2, (bounds.Height - (size.Height * scale)) / 2, size.Width * scale, size.Height * scale);
+        Rect Place(Rect r) => new(area.X + (r.X * scale), area.Y + (r.Y * scale), r.Width * scale, r.Height * scale);
+        var screen = Place(PictureScreen);
+        var (light, deep) = LightingColors();
+
+        DrawHalo(context, screen.Inflate(new Thickness(screen.Width * 0.2, screen.Height * 0.24, screen.Width * 0.2, screen.Height * 0.32)), light);
+
+        var (picture, glow) = ScreenPicture(light, deep);
+        using (context.PushRenderOptions(new RenderOptions { BitmapInterpolationMode = BitmapInterpolationMode.HighQuality }))
+        {
+            double radius = PictureScreenRadius * scale;
+            using (context.PushClip(new RoundedRect(screen, radius, radius, 0, 0)))
+            {
+                DrawFilled(context, picture, screen);
+
+                // The menu bar, as deep as the camera's notch, and a faint glare across the glass.
+                context.DrawRectangle(new SolidColorBrush(Color.FromArgb(52, 0, 0, 0)), null, new Rect(screen.X, screen.Y, screen.Width, PictureNotchHeight * scale));
+                context.DrawRectangle(Glare, null, screen);
+            }
+
+            context.DrawImage(body, area);
+            if (Reflection(glow, body) is { } reflection)
+            {
+                // Added as light (screen blending): bright colors show on the aluminium and keys, dark ones leave them be.
+                using (context.PushRenderOptions(new RenderOptions { BitmapBlendingMode = BitmapBlendingMode.Screen }))
+                {
+                    context.DrawImage(reflection, area);
+                }
+            }
+        }
+    }
+
+    private static readonly IBrush Glare = new LinearGradientBrush
+    {
+        StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+        EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+        GradientStops =
+        [
+            new GradientStop(Color.FromArgb(34, 255, 255, 255), 0),
+            new GradientStop(Color.FromArgb(7, 255, 255, 255), 0.42),
+            new GradientStop(Color.FromArgb(0, 255, 255, 255), 0.43),
+            new GradientStop(Color.FromArgb(0, 255, 255, 255), 1),
+        ],
+    };
+
+    /// <summary>The light the screen casts around the Mac, in the lighting color (all its colors for the rainbow).</summary>
+    private void DrawHalo(DrawingContext context, Rect area, Color light)
+    {
+        var falloff = new RadialGradientBrush
+        {
+            GradientStops = [new GradientStop(Color.FromArgb(150, 255, 255, 255), 0), new GradientStop(Color.FromArgb(60, 255, 255, 255), 0.5), new GradientStop(Color.FromArgb(0, 255, 255, 255), 1)],
+        };
+        using (context.PushOpacityMask(falloff, area))
+        {
+            context.DrawRectangle(Glow == PcGlow.Rainbow ? RainbowBrush(horizontal: true) : new SolidColorBrush(light), null, area);
+        }
+    }
+
+    /// <summary>The rainbow lighting as a brush: red through violet.</summary>
+    internal static LinearGradientBrush RainbowBrush(bool horizontal)
+    {
+        var stops = new GradientStops();
+        for (int i = 0; i < Rainbow.Length; i++)
+        {
+            stops.Add(new GradientStop(Rainbow[i], i / (double)(Rainbow.Length - 1)));
+        }
+
+        return new LinearGradientBrush
+        {
+            StartPoint = new RelativePoint(0, horizontal ? 0.5 : 1, RelativeUnit.Relative),
+            EndPoint = new RelativePoint(1, horizontal ? 0.5 : 0, RelativeUnit.Relative),
+            GradientStops = stops,
+        };
+    }
+
+    /// <summary>
+    /// What the screen shows, and a tiny copy of it for the light it casts: the Mac's desktop picture when it's on and could
+    /// be read, otherwise Coreloom's picture in the lighting color.
+    /// </summary>
+    private (IImage Picture, IImage Glow) ScreenPicture(Color light, Color deep)
+    {
+        if (UseDesktopPicture && DesktopPicture.Picture is { } picture && DesktopPicture.Glow is { } glow)
+        {
+            return (picture, glow);
+        }
+
+        bool dark = ThemeService.Instance?.IsDark != false;
+        if (_wallpaper is null || _wallpaperKey != (Glow, light, dark))
+        {
+            // Drawn once per color at about the screen's size on a Retina display.
+            const double width = 172;
+            const double height = 111;
+            const double pixels = 2.8;
+            _wallpaper?.Dispose();
+            _wallpaper = new RenderTargetBitmap(new PixelSize((int)(width * pixels), (int)(height * pixels)));
+            using (var wallpaper = _wallpaper.CreateDrawingContext())
+            using (wallpaper.PushTransform(Matrix.CreateScale(pixels, pixels)))
+            {
+                var area = new Rect(0, 0, width, height);
+                wallpaper.DrawRectangle(Wallpaper(light, deep, area), null, area);
+                DrawWaves(wallpaper, area, light);
+            }
+
+            _wallpaperKey = (Glow, light, dark);
+        }
+
+        return (_wallpaper, _wallpaper);
+    }
+
+    /// <summary>Draws an image to fill an area, cut to its shape from the middle.</summary>
+    private static void DrawFilled(DrawingContext context, IImage image, Rect area)
+    {
+        var size = image.Size;
+        if (size.Width <= 0 || size.Height <= 0)
+        {
+            return;
+        }
+
+        double scale = Math.Max(area.Width / size.Width, area.Height / size.Height);
+        double width = area.Width / scale;
+        double height = area.Height / scale;
+        context.DrawImage(image, new Rect((size.Width - width) / 2, (size.Height - height) / 2, width, height), area);
+    }
+
+    /// <summary>
+    /// The screen's light on the keyboard deck, as an image the size of the MacBook picture: the screen's colors, blurred
+    /// and mirrored at the hinge, brightest there and fading toward the front edge (the deck mask).
+    /// </summary>
+    private RenderTargetBitmap? Reflection(IImage glow, Bitmap body)
+    {
+        if (ReferenceEquals(glow, _reflectionSource) && _reflection is not null)
+        {
+            return _reflection;
+        }
+
+        if (MacBookDeck.Value is not { } deck)
+        {
+            return null;
+        }
+
+        _reflection?.Dispose();
+        _reflection = new RenderTargetBitmap(body.PixelSize);
+        _reflectionSource = glow;
+        var full = new Rect(body.Size);
+        double hinge = PictureDeck.Y;
+        double depth = PictureDeck.Height * 1.15;
+        using (var context = _reflection.CreateDrawingContext())
+        using (context.PushOpacityMask(new ImageBrush(deck) { Stretch = Stretch.Fill }, full))
+        using (context.PushOpacity(0.62))
+        using (context.PushRenderOptions(new RenderOptions { BitmapInterpolationMode = BitmapInterpolationMode.HighQuality }))
+        using (context.PushTransform(Matrix.CreateScale(1, -1) * Matrix.CreateTranslation(0, 2 * hinge)))
+        {
+            // Wider than the screen: the light spreads across the deck.
+            context.DrawImage(glow, new Rect(PictureScreen.X - 56, hinge - depth, PictureScreen.Width + 112, depth));
+        }
+
+        return _reflection;
+    }
+
+    private static Bitmap? LoadPicture(string name)
+    {
+        try
+        {
+            return new Bitmap(AssetLoader.Open(new Uri($"avares://Coreloom/Assets/MacBook/{name}")));
+        }
+        catch (Exception e) when (e is IOException or InvalidOperationException or ArgumentException or UriFormatException)
+        {
+            Log.Warn("Overview", $"The MacBook picture ({name}) couldn't be loaded; a drawing shows instead.", e);
+            return null;
         }
     }
 
@@ -247,7 +509,7 @@ public sealed class MacIllustration : Control
         context.DrawRectangle(Aluminium(dark), null, new RoundedRect(new Rect(84, 159, 72, 4), 2));
 
         var body = new Rect(16, 6, 208, 128);
-        context.DrawRectangle(null, null, new RoundedRect(body, 9), new BoxShadows(new BoxShadow { Blur = 40, Spread = -8, Color = Color.FromArgb(90, light.R, light.G, light.B) }));
+        DrawHalo(context, body.Inflate(new Thickness(30, 24)), light);
 
         // The chin in a pastel of the lighting color, the bezel white.
         context.DrawRectangle(new SolidColorBrush(Mix(light, Colors.White, 0.55)), null, new RoundedRect(body, 9));
@@ -256,8 +518,18 @@ public sealed class MacIllustration : Control
         var screen = front.Deflate(new Thickness(6, 6, 6, 4));
         using (context.PushClip(new RoundedRect(screen, 2)))
         {
-            context.DrawRectangle(Wallpaper(light, deep, screen), null, screen);
-            DrawWaves(context, screen, light);
+            if (UseDesktopPicture && DesktopPicture.Picture is { } picture)
+            {
+                using (context.PushRenderOptions(new RenderOptions { BitmapInterpolationMode = BitmapInterpolationMode.HighQuality }))
+                {
+                    DrawFilled(context, picture, screen);
+                }
+            }
+            else
+            {
+                context.DrawRectangle(Wallpaper(light, deep, screen), null, screen);
+                DrawWaves(context, screen, light);
+            }
         }
     }
 
@@ -269,10 +541,7 @@ public sealed class MacIllustration : Control
         var top = new Rect(front.X + 4, front.Y - 14, front.Width - 8, 18);
 
         // Light on the desk under it, and its shadow.
-        context.DrawEllipse(new RadialGradientBrush
-        {
-            GradientStops = [new GradientStop(Color.FromArgb(120, light.R, light.G, light.B), 0), new GradientStop(Color.FromArgb(0, light.R, light.G, light.B), 1)],
-        }, null, new Rect(front.X - 34, front.Bottom - 16, front.Width + 68, 34));
+        DrawHalo(context, new Rect(front.X - 34, front.Bottom - 16, front.Width + 68, 34), light);
         Shadow(context, new Rect(front.X - 10, front.Bottom - 6, front.Width + 20, 16), 0.5);
 
         // The top, seen from slightly above.
@@ -306,10 +575,7 @@ public sealed class MacIllustration : Control
     private void DrawTower(DrawingContext context, Color light, bool dark)
     {
         var body = new Rect(76, 20, 88, 140);
-        context.DrawEllipse(new RadialGradientBrush
-        {
-            GradientStops = [new GradientStop(Color.FromArgb(110, light.R, light.G, light.B), 0), new GradientStop(Color.FromArgb(0, light.R, light.G, light.B), 1)],
-        }, null, new Rect(body.X - 40, body.Bottom - 14, body.Width + 80, 30));
+        DrawHalo(context, new Rect(body.X - 40, body.Bottom - 14, body.Width + 80, 30), light);
         Shadow(context, new Rect(body.X - 8, body.Bottom - 6, body.Width + 16, 14), 0.5);
         context.DrawRectangle(Aluminium(dark, 0, 1.4), null, new RoundedRect(body, 8));
 
