@@ -859,6 +859,27 @@ unchanged.
 - **Bluetooth renaming on real devices** (the names are Coreloom's; the system's Bluetooth settings keep theirs) and clicking out of search boxes in the real apps.
 - **The Mac's GPU compute scores** on real Apple silicon: ten times what 1.8.0 showed; how they compare with the graphics scores on a real M-series GPU isn't known yet.
 
+## 1.8.2: your background behind frosted glass, System health that fits, a softer shadow
+
+### Verified
+
+| What | How | Result |
+|---|---|---|
+| Tests | Core (`Release182Tests`: background settings default to Coreloom's gradient and repair bad values, round trip through the settings file; the presets dark, unique and complete; the gradient dithered and lit where its lights are; a picture covering the frame from its middle; the blur keeping the average; each kind making the background and a smaller frost; System health fitting its content on rows of its own and taking a taller neighbour's height) and view models (`Release182ViewModelTests`: Mica/Translucent only where the system has it; choosing a color, gradient or picture switches and saves; custom colors take valid hex only; the sliders clamped and described; your own picture copied and the previous copy removed, none offered without a folder; only the health tile fits its content; the Storage card's read/write chart) | ✅ in the container (Core 750, view models 213, Mac tests 180 + 8 skipped) and on GitHub (CI run 40810174991: Windows Core 750, view models 213, Hardware 83; Linux; macOS 188 on Intel, 187 + 1 skipped on Apple silicon) |
+| One background, frosted glass on both apps | MacShots (0 binding errors) of every page over Coreloom's gradient and over each of the six pictures, dark and light; page shots of the WPF window (runs 40808456208 and 40809589418) over the gradient, Midnight, Aurora and Dunes, and Settings › Appearance: the sidebar and every card show the blurred part of the background right behind them, with no separate color behind the sidebar | ✅ |
+| The real app on GitHub's Macs | Mac verify runs 40808456542 and 40809591267: a new step saves the Aurora picture as the background and reopens Coreloom ("Background: Image aurora drawn at 943×634 (frost 158×106) in 85–146 ms" on Apple silicon, 1360×880 in about 400 ms on Intel, off the screen's work), then *Translucent* ("Background: See-through"); screenshots of both, every page, Connect, menu bar readings and a clean quit | ✅ Apple silicon and Intel |
+| System health fits its content | MacShots and the runners' Overview: on its own row the card ends under its last line (no empty space); beside a taller card the tests above check it takes that height | ✅ |
+| A softer shadow | MacShots before and after: the band beside the sidebar went from about 35 % darker than the background to under 15 %, and nothing is drawn inside the glass | ✅ |
+| Storage fills its card | MacShots of the whole Overview: the read/write chart under the drives ends level with the Network card's chart | ✅ on the Mac; Windows compiled and drew the window (page shots), but the shots don't scroll down to that card |
+| Website and README | The website's Mac and Windows pictures and the README's two pictures redrawn from these shots; Playwright against the page as a Mac and a Windows visitor, 1440 and 390 px: the new "New in 1.8.2" section switches the window between backgrounds, no horizontal scrolling | ✅ |
+
+### Not verified yet
+
+- **Your own picture on a real computer**: the file dialogs, a HEIC picture converted by macOS's `sips`, very large pictures. The tests choose a picture through a stand-in for the dialog.
+- **Mica on Windows for the whole window** (page shots can't show Mica) and *Translucent* on a Mac with a real desktop picture behind it (GitHub's Macs show a black desktop).
+- **Cost on a real high-resolution screen**: the background is drawn once per window size off the screen's work and each card copies its part; scrolling and resizing on a 4K or Retina display haven't been timed.
+- The light theme's pale version of each background has only been seen in MacShots and on the runners' light menu bar setting.
+
 ## How to re-run the checks that can run anywhere
 
 ```bash
