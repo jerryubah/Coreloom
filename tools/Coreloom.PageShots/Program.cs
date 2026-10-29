@@ -191,8 +191,8 @@ internal static class Program
 
     /// <summary>Lays the page out at its full height (or <paramref name="height"/>), lets it settle and saves a PNG.</summary>
     /// <summary>
-    /// The whole window on the Overview, dark and light, at twice its size: the website's picture of Coreloom on Windows
-    /// (windows-overview.png, windows-overview-light.png).
+    /// The whole window at twice its size, for the website's pictures of Coreloom on Windows: the Overview dark and light
+    /// (windows-overview.png, windows-overview-light.png), Gaming and Smart Optimize.
     /// </summary>
     private static async Task ShootWindowAsync(string output)
     {
@@ -209,9 +209,31 @@ internal static class Program
             ShowInTaskbar = false,
         };
         window.Show();
-        foreach (var (name, preference) in new[] { ("windows-overview", ThemePreference.Dark), ("windows-overview-light", ThemePreference.Light) })
+
+        // The build machine's screen is smaller than the window: the window's content goes on a canvas inside it, where
+        // it takes its own size (1440 × 960), as on a bigger screen.
+        var root = (FrameworkElement)window.Content;
+        window.Content = null;
+        root.Width = 1440;
+        root.Height = 960;
+        var canvas = new Canvas();
+        canvas.Children.Add(root);
+        window.Content = canvas;
+        window.IsCompactSidebar = false;
+
+        // The build machine isn't an administrator: the note about it isn't part of the picture.
+        shell.DismissBannerCommand.Execute(null);
+        var shots = new (string Name, ThemePreference Theme, PageViewModel Page)[]
+        {
+            ("windows-overview", ThemePreference.Dark, shell.Overview),
+            ("windows-overview-light", ThemePreference.Light, shell.Overview),
+            ("windows-gaming", ThemePreference.Dark, shell.Gaming),
+            ("windows-optimize", ThemePreference.Dark, shell.Optimize),
+        };
+        foreach (var (name, preference, page) in shots)
         {
             ThemeService.Instance?.Apply(new AppearanceSettings { Theme = preference, ReducedMotion = true });
+            shell.Navigate(page);
             for (int i = 0; i < 40; i++)
             {
                 shell.OnFrame(data.Poll());
@@ -219,7 +241,6 @@ internal static class Program
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             }
 
-            var root = (FrameworkElement)window.Content;
             root.UpdateLayout();
             const double dpi = 192;
             var background = new DrawingVisual();
