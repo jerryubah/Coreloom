@@ -5,7 +5,8 @@
              xmlns:b="using:Coreloom.Mac.Behaviors"
              xmlns:pages="using:Coreloom.ViewModels.Pages"
              xmlns:cn="using:Coreloom.ViewModels.Connect"
-             xmlns:mb="using:Coreloom.ViewModels.MenuBar">
+             xmlns:mb="using:Coreloom.ViewModels.MenuBar"
+             xmlns:ap="using:Coreloom.Core.Appearance">
 
   <!-- Settings on a Mac: the Windows page's sections with macOS's words and switches (Open at login, the menu bar and
        the Dock, a translucent sidebar), without the Windows-only sensor sources (LibreHardwareMonitor, PawnIO, USB fan
@@ -140,6 +141,38 @@
         <Setter Property="IsVisible" Value="True" />
         <Setter Property="Stroke" Value="{DynamicResource Brush.Accent}" />
       </Style>
+    </ControlTheme>
+
+    <!-- A background's swatch (a gradient or a picture): a small rounded window onto it, ringed in the accent when chosen. -->
+    <ControlTheme x:Key="BackdropTile" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Width" Value="120" />
+      <Setter Property="Height" Value="76" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Panel>
+            <c:SquircleBorder Name="Face" CornerRadius="12" ClipContent="True" Margin="3" Background="{DynamicResource Brush.Surface}"
+                              BorderBrush="{DynamicResource Brush.GlassRim}" BorderThickness="1">
+              <ContentPresenter Content="{TemplateBinding Content}" />
+            </c:SquircleBorder>
+            <c:SquircleBorder Name="Ring" CornerRadius="15" BorderBrush="{DynamicResource Brush.Accent}" BorderThickness="2" IsVisible="{TemplateBinding Tag}" IsHitTestVisible="False" />
+          </Panel>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:pointerover /template/ c|SquircleBorder#Face">
+        <Setter Property="Margin" Value="1" />
+      </Style>
+      <Style Selector="^:focus-visible /template/ c|SquircleBorder#Ring">
+        <Setter Property="IsVisible" Value="True" />
+      </Style>
+    </ControlTheme>
+
+    <!-- A swatch's name under it. -->
+    <ControlTheme x:Key="Backdrop.Caption" TargetType="TextBlock" BasedOn="{StaticResource Text.Caption}">
+      <Setter Property="HorizontalAlignment" Value="Center" />
+      <Setter Property="Margin" Value="0,4,0,0" />
+      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+      <Setter Property="MaxWidth" Value="116" />
     </ControlTheme>
 
     <!-- The log viewer: a virtualized list of entries in the page's scroll style. -->
@@ -401,13 +434,148 @@
                 </StackPanel>
               </Border>
 
+              <!-- Background: what fills the window behind the glass sidebar and cards. -->
               <Border Theme="{StaticResource Row}">
-                <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding UseMica}" IsEnabled="{Binding IsMicaSupported}">
-                  <StackPanel>
-                    <TextBlock Theme="{StaticResource Row.Title}" Text="Translucent sidebar" />
-                    <TextBlock Theme="{StaticResource Row.Description}" Text="Lets your desktop picture tint the sidebar, like Finder's. Off: a solid sidebar. macOS shows it solid too when Reduce transparency is on in Accessibility settings." />
+                <StackPanel>
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel VerticalAlignment="Center">
+                      <TextBlock Theme="{StaticResource Row.Title}" Text="Background" />
+                      <TextBlock Theme="{StaticResource Row.Description}" Text="Fills the whole window. The sidebar and every card are frosted glass on it." />
+                    </StackPanel>
+                    <ListBox Grid.Column="1" Theme="{StaticResource Segmented}" Margin="16,0,0,0" VerticalAlignment="Center"
+                             ItemsSource="{Binding Backdrop.Kinds}" DisplayMemberBinding="{Binding Label}"
+                             SelectedValueBinding="{Binding Value}" SelectedValue="{Binding Backdrop.Kind}" AutomationProperties.Name="Background" />
+                  </Grid>
+
+                  <!-- Gradients -->
+                  <ItemsControl Margin="-3,14,0,0" ItemsSource="{Binding Backdrop.Gradients}" Focusable="False" IsVisible="{Binding Backdrop.IsGradient}">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <WrapPanel />
+                      </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate DataType="{x:Type ap:BackdropGradient}">
+                        <StackPanel Margin="0,0,10,10">
+                          <Button Theme="{StaticResource BackdropTile}" ToolTip.Tip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
+                                  Command="{Binding $parent[UserControl].DataContext.Backdrop.SelectGradientCommand}" CommandParameter="{Binding Id}">
+                            <Button.Tag>
+                              <MultiBinding Converter="{StaticResource MultiEquals}">
+                                <Binding Path="Id" />
+                                <Binding Path="$parent[UserControl].DataContext.Backdrop.Gradient" />
+                              </MultiBinding>
+                            </Button.Tag>
+                            <Image Source="{Binding Converter={StaticResource BackdropGradientPreview}}" Stretch="UniformToFill" />
+                          </Button>
+                          <TextBlock Theme="{StaticResource Backdrop.Caption}" Text="{Binding Name}" />
+                        </StackPanel>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+
+                  <!-- Colors -->
+                  <Grid Margin="0,14,0,0" ColumnDefinitions="*,Auto" IsVisible="{Binding Backdrop.IsColor}">
+                    <ItemsControl ItemsSource="{Binding Backdrop.Colors}" Focusable="False">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                          <WrapPanel />
+                        </ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type ap:BackdropColor}">
+                          <Button Theme="{StaticResource Swatch}" Width="38" Height="38" Margin="0,0,8,8" ToolTip.Tip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
+                                  Background="{Binding Hex, Converter={StaticResource HexToBrush}}"
+                                  Command="{Binding $parent[UserControl].DataContext.Backdrop.SelectColorCommand}" CommandParameter="{Binding Hex}">
+                            <Button.Tag>
+                              <MultiBinding Converter="{StaticResource MultiEquals}">
+                                <Binding Path="Hex" />
+                                <Binding Path="$parent[UserControl].DataContext.Backdrop.Color" />
+                              </MultiBinding>
+                            </Button.Tag>
+                          </Button>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="16,0,0,0">
+                      <Border Width="38" Height="38" CornerRadius="19" Background="{Binding Backdrop.Color, Converter={StaticResource HexToBrush}}"
+                              BorderBrush="{DynamicResource Brush.GlassRim}" BorderThickness="1" />
+                      <TextBox Theme="{StaticResource TextBox.Default}" Width="110" Margin="10,0,0,0" Text="{Binding Backdrop.CustomColor}" VerticalAlignment="Center"
+                               ToolTip.Tip="Any color as #RRGGBB. Dark colors suit the dark theme; the light theme shows a pale tint of it."
+                               AutomationProperties.Name="Custom background color" KeyDown="OnCommitOnEnter" />
+                    </StackPanel>
+                  </Grid>
+
+                  <!-- Pictures -->
+                  <StackPanel Margin="0,14,0,0" IsVisible="{Binding Backdrop.IsImage}">
+                    <WrapPanel Margin="-3,0,0,0">
+                      <ItemsControl ItemsSource="{Binding Backdrop.Images}" Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <WrapPanel />
+                          </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate DataType="{x:Type ap:BackdropPicture}">
+                            <StackPanel Margin="0,0,10,10">
+                              <Button Theme="{StaticResource BackdropTile}" ToolTip.Tip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
+                                      Command="{Binding $parent[UserControl].DataContext.Backdrop.SelectImageCommand}" CommandParameter="{Binding Id}">
+                                <Button.Tag>
+                                  <MultiBinding Converter="{StaticResource MultiEquals}">
+                                    <Binding Path="Id" />
+                                    <Binding Path="$parent[UserControl].DataContext.Backdrop.Image" />
+                                  </MultiBinding>
+                                </Button.Tag>
+                                <Image Source="{Binding Id, Converter={StaticResource BackdropThumbnail}}" Stretch="UniformToFill" />
+                              </Button>
+                              <TextBlock Theme="{StaticResource Backdrop.Caption}" Text="{Binding Name}" />
+                            </StackPanel>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+
+                      <!-- Your own picture, once chosen -->
+                      <StackPanel Margin="0,0,10,10" IsVisible="{Binding Backdrop.HasCustomImage}">
+                        <Button Theme="{StaticResource BackdropTile}" ToolTip.Tip="Your picture" AutomationProperties.Name="Your picture"
+                                Command="{Binding Backdrop.SelectImageCommand}" CommandParameter="custom"
+                                Tag="{Binding Backdrop.Image, Converter={StaticResource EqualsToBool}, ConverterParameter=custom}">
+                          <Image Source="{Binding Backdrop.CustomImagePath, Converter={StaticResource BackdropThumbnail}}" Stretch="UniformToFill" />
+                        </Button>
+                        <TextBlock Theme="{StaticResource Backdrop.Caption}" Text="Your picture" />
+                      </StackPanel>
+
+                      <!-- Choose one -->
+                      <StackPanel Margin="0,0,10,10" IsVisible="{Binding Backdrop.CanChooseImage}">
+                        <Button Theme="{StaticResource BackdropTile}" Command="{Binding Backdrop.ChooseImageCommand}"
+                                ToolTip.Tip="Choose a picture from your Mac (a copy is kept in Coreloom's folder)" AutomationProperties.Name="Choose a picture">
+                          <Path Theme="{StaticResource IconPath}" Width="20" Height="20" Data="M12,5 L12,19 M5,12 L19,12" Stroke="{DynamicResource Brush.TextSecondary}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Button>
+                        <TextBlock Theme="{StaticResource Backdrop.Caption}" Text="Choose…" />
+                      </StackPanel>
+                    </WrapPanel>
+                    <TextBlock Theme="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Elevated}" Margin="0,0,0,8" TextWrapping="Wrap"
+                               Text="{Binding Backdrop.Message}" IsVisible="{Binding Backdrop.HasMessage}" />
+
+                    <Grid Margin="0,4,0,0" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
+                      <TextBlock Text="Picture strength" FontSize="12.5" VerticalAlignment="Center" Margin="0,0,16,0"
+                                 ToolTip.Tip="How strongly the picture shows through. Lower keeps the cards and text easier to read." />
+                      <Slider Grid.Column="1" Theme="{StaticResource Slider.Default}" Minimum="10" Maximum="100" SmallChange="5" LargeChange="10"
+                              Value="{Binding Backdrop.ImageOpacity}" AutomationProperties.Name="Picture strength" />
+                      <TextBlock Grid.Column="2" Text="{Binding Backdrop.ImageOpacityText}" Theme="{StaticResource Text.Caption}" MinWidth="44"
+                                 TextAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0" />
+                      <TextBlock Grid.Row="1" Text="Frosted glass" FontSize="12.5" VerticalAlignment="Center" Margin="0,10,16,0"
+                                 ToolTip.Tip="How much the frosted layer over the picture blurs it. The cards always frost what's behind them." />
+                      <Slider Grid.Row="1" Grid.Column="1" Theme="{StaticResource Slider.Default}" Minimum="0" Maximum="100" SmallChange="5" LargeChange="10" Margin="0,10,0,0"
+                              Value="{Binding Backdrop.Blur}" AutomationProperties.Name="Frosted glass blur" />
+                      <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Backdrop.BlurText}" Theme="{StaticResource Text.Caption}" MinWidth="44"
+                                 TextAlignment="Right" VerticalAlignment="Center" Margin="12,10,0,0" />
+                    </Grid>
                   </StackPanel>
-                </CheckBox>
+
+                  <!-- See-through -->
+                  <TextBlock Theme="{StaticResource Row.Description}" Margin="0,12,0,0" Text="{Binding Backdrop.SeeThroughText}" TextWrapping="Wrap"
+                             IsVisible="{Binding Backdrop.IsSeeThrough}" />
+                </StackPanel>
               </Border>
 
               <Border Theme="{StaticResource Row}">

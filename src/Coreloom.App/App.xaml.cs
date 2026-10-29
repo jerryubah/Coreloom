@@ -225,6 +225,7 @@ public partial class App : Application
         // Optional render of the user's PC for the Overview header (see assets/pc/README.md).
         PcImages.Configure(paths.SettingsDirectory);
 
+        Services.Backdrop.Initialize(paths.BackdropDirectory);
         var theme = new ThemeService(Resources);
         theme.Initialize(settings.Appearance);
 

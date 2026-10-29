@@ -180,7 +180,6 @@ public partial class MainWindow : Window
     private void ApplyTranslucency(Themes.ThemeService theme)
     {
         TransparencyLevelHint = theme.IsTranslucent ? [WindowTransparencyLevel.AcrylicBlur, WindowTransparencyLevel.None] : [WindowTransparencyLevel.None];
-        Backdrop.SeeThroughGlass = theme.IsTranslucent;
     }
 
     public bool IsCompactSidebar

@@ -41,6 +41,10 @@ public sealed class AdaptiveGrid : Panel
         nameof(MaxColumnWidth), typeof(double), typeof(AdaptiveGrid),
         new FrameworkPropertyMetadata(double.PositiveInfinity, FrameworkPropertyMetadataOptions.AffectsMeasure));
 
+    public static readonly DependencyProperty FillHeightProperty = DependencyProperty.Register(
+        nameof(FillHeight), typeof(bool), typeof(AdaptiveGrid),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsMeasure));
+
     public static readonly DependencyProperty FillLastRowProperty = DependencyProperty.Register(
         nameof(FillLastRow), typeof(bool), typeof(AdaptiveGrid),
         new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsMeasure));
@@ -111,6 +115,16 @@ public sealed class AdaptiveGrid : Panel
         set => SetValue(FillLastRowProperty, value);
     }
 
+    /// <summary>
+    /// Given more height than its items need (a card stretched beside a taller one), use fewer columns, down to one, as
+    /// long as they still fit: the items spread out to fill the height instead of leaving it empty.
+    /// </summary>
+    public bool FillHeight
+    {
+        get => (bool)GetValue(FillHeightProperty);
+        set => SetValue(FillHeightProperty, value);
+    }
+
     /// <summary>The first item of an unfull last row (when it fills its row), else the item count.</summary>
     private static int LastRowStart(int count, int columns, bool fill) =>
         fill && columns > 1 && count % columns != 0 ? count - (count % columns) : count;
@@ -130,9 +144,32 @@ public sealed class AdaptiveGrid : Panel
         double spacing = Spacing;
 
         var (columns, columnWidth) = CardColumns.Fit(width, spacing, MinColumnWidth, MaxColumnWidth, MaxColumns, visible.Count);
+        double height = MeasureAt(visible, columns, columnWidth, spacing);
+        if (FillHeight && double.IsFinite(availableSize.Height) && height < availableSize.Height && columns > 1)
+        {
+            int best = columns;
+            for (int c = columns - 1; c >= 1; c--)
+            {
+                if (MeasureAt(visible, c, CardColumns.ColumnWidth(width, spacing, c, MaxColumnWidth), spacing) > availableSize.Height)
+                {
+                    break;
+                }
+
+                best = c;
+            }
+
+            columnWidth = CardColumns.ColumnWidth(width, spacing, best, MaxColumnWidth);
+            height = MeasureAt(visible, best, columnWidth, spacing);
+        }
+
+        return new Size(width, height);
+    }
+
+    /// <summary>Measures the items in <paramref name="columns"/> columns; returns the height they take.</summary>
+    private double MeasureAt(List<UIElement> visible, int columns, double columnWidth, double spacing)
+    {
         _columns = columns;
         _columnWidth = columnWidth;
-
         int lastRow = LastRowStart(visible.Count, columns, FillLastRow);
         double lastWidth = LastRowWidth(visible.Count, columns, _columnWidth, spacing);
         int visibleIndex = 0;
@@ -156,8 +193,7 @@ public sealed class AdaptiveGrid : Panel
             Array.Fill(_rowHeights, max);
         }
 
-        double height = _rowHeights.Sum() + (EffectiveRowSpacing * Math.Max(0, rows - 1));
-        return new Size(width, height);
+        return _rowHeights.Sum() + (EffectiveRowSpacing * Math.Max(0, rows - 1));
     }
 
     protected override Size ArrangeOverride(Size finalSize)

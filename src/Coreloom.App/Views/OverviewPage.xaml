@@ -123,7 +123,7 @@
          The parts' content is capped so a narrow window doesn't make every dashboard row taller; drag the card taller to
          see more. -->
     <DataTemplate DataType="{x:Type pages:HealthPanelViewModel}">
-      <c:SquircleBorder Style="{StaticResource Card.Glow}" Padding="18,14,18,12" GlowStrength="0.7"
+      <c:SquircleBorder Style="{StaticResource Card.Glow}" Padding="18,14,18,14" GlowStrength="0.7"
                         GlowKey="{Binding Health.OverallKey, Converter={StaticResource StatusToGlowKey}}">
         <Grid>
           <Grid.RowDefinitions>
@@ -142,11 +142,13 @@
             <TextBlock Text="{Binding Health.OverallSummary}" Style="{StaticResource Text.Caption}" HorizontalAlignment="Right" VerticalAlignment="Center"
                        TextTrimming="CharacterEllipsis" Margin="200,0,0,0" />
           </Grid>
-          <c:HeightCap Grid.Row="1" Cap="140" Margin="0,12,0,0" ClipToBounds="True">
+          <!-- As tall as what it says when it has its rows to itself; beside a taller card it takes that card's height and
+               its parts spread into fewer columns to fill it (DashboardGrid.FitsContent, AdaptiveGrid.FillHeight). -->
+          <Grid Grid.Row="1" Margin="0,12,0,0" ClipToBounds="True">
             <ItemsControl ItemsSource="{Binding Health.Parts}" Focusable="False">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                  <c:AdaptiveGrid MinColumnWidth="150" MaxColumns="4" Spacing="24" RowSpacing="12" />
+                  <c:AdaptiveGrid MinColumnWidth="150" MaxColumns="4" Spacing="24" RowSpacing="12" FillHeight="True" />
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
@@ -174,7 +176,7 @@
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
-          </c:HeightCap>
+          </Grid>
         </Grid>
       </c:SquircleBorder>
       <DataTemplate.Triggers>
@@ -398,6 +400,7 @@
               <Setter Property="c:DashboardGrid.RowSpan" Value="{Binding RowSpan}" />
               <Setter Property="c:DashboardGrid.MinColumns" Value="{Binding MinColumns}" />
               <Setter Property="c:DashboardGrid.MinRows" Value="{Binding MinRows}" />
+              <Setter Property="c:DashboardGrid.FitsContent" Value="{Binding FitsContent}" />
             </Style>
           </ItemsControl.ItemContainerStyle>
         </ItemsControl>

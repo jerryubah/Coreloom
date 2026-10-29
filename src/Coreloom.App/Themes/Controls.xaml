@@ -138,14 +138,17 @@
   <!-- ================================================================================= -->
   <!-- Cards are c:SquircleBorder (smooth "squircle" corners, the same everywhere); the styles target Border so they also
        fit a plain Border. A card's top rim catches a little light (Sheen), like the edge of a pane of glass. -->
+  <!-- Cards: the same frosted glass as the sidebar (since 1.8.2): the window's background blurred behind them, a faint
+       fill, a bevelled rim and a top rim that catches the light. -->
   <Style x:Key="Card" TargetType="Border">
     <Setter Property="RenderOptions.ClearTypeHint" Value="Enabled" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Card}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.CardBorder}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.GlassFill}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.GlassRim}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="18" />
     <Setter Property="Padding" Value="18,16" />
-    <Setter Property="c:SquircleBorder.Sheen" Value="0.55" />
+    <Setter Property="c:SquircleBorder.Sheen" Value="0.6" />
+    <Setter Property="c:SquircleBorder.Frosted" Value="True" />
   </Style>
 
   <!-- A card with data that glows in its own color (set GlowKey), lit from below, its rim lighting up under the pointer. -->

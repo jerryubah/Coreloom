@@ -178,6 +178,7 @@ public partial class App : Application
 
         BrandLogos.Configure(paths.VendorLogoDirectory);
         DesktopPicture.Initialize(paths.LocalDirectory);
+        Backdrop.Initialize(paths.BackdropDirectory);
         var theme = new ThemeService(Resources);
         theme.Initialize(settings.Appearance);
 

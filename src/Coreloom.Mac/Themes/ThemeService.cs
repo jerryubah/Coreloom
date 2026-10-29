@@ -7,6 +7,7 @@ using Avalonia.Styling;
 using Avalonia.Threading;
 using Coreloom.Core.Settings;
 using Coreloom.Mac.Behaviors;
+using Coreloom.Mac.Services;
 using Coreloom.ViewModels.Services;
 
 namespace Coreloom.Mac.Themes;
@@ -60,8 +61,11 @@ public sealed class ThemeService : IThemeService
     /// <summary>The translucent sidebar (macOS vibrancy) is always available.</summary>
     public bool IsMicaSupported => true;
 
-    /// <summary>True when the sidebar lets the desktop show through (the "translucent sidebar" setting).</summary>
+    /// <summary>True when the desktop shows through the whole window (Background › Translucent).</summary>
     public bool IsTranslucent { get; private set; }
+
+    /// <summary>Where a copy of your own background picture is kept.</summary>
+    public string? BackdropFolder => Backdrop.Folder;
 
     public Color AccentColor { get; private set; } = ThemePalette.Hex(AccentPalette.Default);
 
@@ -105,14 +109,16 @@ public sealed class ThemeService : IThemeService
         SetColor("Brush.ElevatedSoft", ThemePalette.WithAlpha(palette["Elevated"], soft), animate);
         SetColor("Brush.CriticalSoft", ThemePalette.WithAlpha(palette["Critical"], soft), animate);
 
-        IsTranslucent = appearance.UseMica;
+        var backdrop = appearance.Backdrop ?? new BackdropSettings();
+        IsTranslucent = backdrop.Kind == BackdropKind.SeeThrough;
         var background = palette["Background"];
-        // The pages sit on an opaque layer; the sidebar column is the backdrop the glass sidebar floats over. When it's
-        // translucent, macOS's vibrancy (behind the window) shows through it, darkened to the theme.
+        // One background spans the window (Settings › Appearance › Background, drawn by Backdrop); until it's drawn, and
+        // see-through, the theme's color shows (mostly clear over the desktop's vibrancy when see-through).
+        var tint = IsTranslucent ? ThemePalette.WithAlpha(background, (byte)(_isDark ? 0x80 : 0x5C)) : background;
         SetColor("Brush.WindowBackground", IsTranslucent ? Colors.Transparent : background, animate: false);
-        SetColor("Brush.Sidebar", IsTranslucent ? ThemePalette.WithAlpha(background, (byte)(_isDark ? 0x8C : 0x66)) : background, animate);
-        SetColor("Brush.ContentLayer", background, animate);
-        SetColor("Brush.TitleBar", background, animate);
+        SetColor("Brush.Sidebar", tint, animate);
+        SetColor("Brush.ContentLayer", tint, animate);
+        SetColor("Brush.TitleBar", Colors.Transparent, animate: false);
 
         // The Fluent theme's own controls (text boxes, menus, scroll bars) take the accent and the text colors too.
         _resources["SystemAccentColor"] = AccentColor;
@@ -120,6 +126,7 @@ public sealed class ThemeService : IThemeService
         _resources["SystemAccentColorDark1"] = Blend(AccentColor, Colors.Black, 0.12);
         PublishGlass();
         PublishAppIcon();
+        Backdrop.Apply(backdrop, _isDark, background, AccentColor);
 
         AnimatedText.IsGloballyEnabled = appearance.AnimateValues && !appearance.ReducedMotion;
         Motion.ReducedMotion = appearance.ReducedMotion;
@@ -146,7 +153,11 @@ public sealed class ThemeService : IThemeService
             (cool, 0), (accent, 0.5), (warm, 1));
     }
 
-    /// <summary>The floating sidebar's liquid glass: a faint fill, a bevelled rim and two soft lights behind it.</summary>
+    /// <summary>
+    /// The glass every card and the sidebar are made of (since 1.8.2): over the frosted background behind it, a faint
+    /// fill (a little of the accent where the light enters, top left), a bevelled rim bright along the top-left and
+    /// bottom-right edges, and two soft lights for the see-through window.
+    /// </summary>
     private void PublishGlass()
     {
         var accent = AccentColor;
@@ -157,17 +168,17 @@ public sealed class ThemeService : IThemeService
 
         if (_isDark)
         {
-            _resources["Brush.GlassFill"] = Linear(start, new RelativePoint(0.7, 1, RelativeUnit.Relative),
-                (ThemePalette.WithAlpha(accent, 0x14), 0), (White(0x0B), 0.35), (White(0x07), 0.75), (White(0x0A), 1));
+            _resources["Brush.GlassFill"] = Linear(start, new RelativePoint(0.8, 1, RelativeUnit.Relative),
+                (ThemePalette.WithAlpha(Blend(accent, Colors.White, 0.35), 0x18), 0), (White(0x0E), 0.3), (White(0x09), 0.75), (White(0x0C), 1));
             _resources["Brush.GlassRim"] = Linear(start, new RelativePoint(1, 1, RelativeUnit.Relative),
-                (White(0x5C), 0), (White(0x16), 0.28), (White(0x08), 0.62), (White(0x30), 1));
+                (White(0x52), 0), (White(0x18), 0.3), (White(0x0A), 0.62), (White(0x26), 1));
         }
         else
         {
-            _resources["Brush.GlassFill"] = Linear(start, new RelativePoint(0.7, 1, RelativeUnit.Relative),
-                (White(0xD8), 0), (White(0xB4), 0.5), (White(0xA4), 1));
+            _resources["Brush.GlassFill"] = Linear(start, new RelativePoint(0.8, 1, RelativeUnit.Relative),
+                (White(0xC8), 0), (White(0xA8), 0.5), (White(0x9A), 1));
             _resources["Brush.GlassRim"] = Linear(start, new RelativePoint(1, 1, RelativeUnit.Relative),
-                (White(0xFF), 0), (White(0x80), 0.35), (Black(0x0C), 0.7), (Black(0x16), 1));
+                (White(0xFF), 0), (White(0x90), 0.35), (Black(0x0E), 0.7), (Black(0x18), 1));
         }
 
         _resources["Brush.GlassLightA"] = Glow(accent, _isDark ? (byte)0x46 : (byte)0x30);

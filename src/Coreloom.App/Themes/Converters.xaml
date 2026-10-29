@@ -16,4 +16,7 @@
   <conv:IntToDoubleConverter x:Key="IntToDouble" />
   <conv:MultiEqualsToVisibilityConverter x:Key="MultiEqualsToVisibility" />
   <conv:StatusToGlowKeyConverter x:Key="StatusToGlowKey" />
+  <conv:BackdropGradientPreviewConverter x:Key="BackdropGradientPreview" />
+  <conv:BackdropThumbnailConverter x:Key="BackdropThumbnail" />
+  <conv:MultiEqualsToBoolConverter x:Key="MultiEqualsToBool" />
 </ResourceDictionary>

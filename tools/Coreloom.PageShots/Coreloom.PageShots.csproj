@@ -31,6 +31,7 @@
     <Resource Include="..\..\assets\vendors\*.png" Link="Assets\Vendors\%(Filename)%(Extension)" />
     <Resource Include="..\..\assets\pc\*.png" Link="Assets\PC\%(Filename)%(Extension)" />
     <Resource Include="..\..\src\Coreloom.App\Assets\PcRender\*.png" Link="Assets\PcRender\%(Filename)%(Extension)" />
+    <Resource Include="..\..\assets\backdrops\*.jpg" Link="Assets\Backdrops\%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

@@ -4,6 +4,7 @@ using System.Windows.Media.Animation;
 using Microsoft.Win32;
 using Coreloom.App.Behaviors;
 using Coreloom.App.Interop;
+using Coreloom.App.Services;
 using Coreloom.Core.Settings;
 using Coreloom.ViewModels.Services;
 
@@ -60,8 +61,11 @@ public sealed class ThemeService : IThemeService
 
     public bool IsMicaSupported => NativeWindow.IsMicaSupported;
 
-    /// <summary>True when Mica is active for the main window (transparent surfaces).</summary>
+    /// <summary>True when Mica is active for the main window (Background › Mica: the desktop's tint through it).</summary>
     public bool IsMicaActive { get; private set; }
+
+    /// <summary>Where a copy of your own background picture is kept.</summary>
+    public string? BackdropFolder => Backdrop.Folder;
 
     public Color AccentColor { get; private set; } = ThemePalette.Hex(AccentPalette.Default);
 
@@ -102,16 +106,19 @@ public sealed class ThemeService : IThemeService
         SetColor("Brush.ElevatedSoft", ThemePalette.WithAlpha(palette["Elevated"], soft), duration);
         SetColor("Brush.CriticalSoft", ThemePalette.WithAlpha(palette["Critical"], soft), duration);
 
-        IsMicaActive = appearance.UseMica && IsMicaSupported;
+        var backdrop = appearance.Backdrop ?? new BackdropSettings();
+        IsMicaActive = backdrop.Kind == BackdropKind.SeeThrough && IsMicaSupported;
         var background = palette["Background"];
-        // The pages sit on an opaque layer (crisp ClearType text, and the darkest surface stays dark). The sidebar column is
-        // the backdrop the glass sidebar floats over: with Mica it lets the desktop's tint through, darkened to the theme.
+        // One background spans the window (Settings › Appearance › Background, drawn by Backdrop); until it's drawn, and
+        // with Mica, the theme's color shows (mostly clear over the desktop's tint with Mica).
+        var tint = IsMicaActive ? ThemePalette.WithAlpha(background, (byte)(_isDark ? 0x8C : 0x66)) : background;
         SetColor("Brush.WindowBackground", IsMicaActive ? Colors.Transparent : background, TimeSpan.Zero);
-        SetColor("Brush.Sidebar", IsMicaActive ? ThemePalette.WithAlpha(background, (byte)(_isDark ? 0x8C : 0x66)) : background, duration);
-        SetColor("Brush.ContentLayer", background, duration);
-        SetColor("Brush.TitleBar", background, duration);
+        SetColor("Brush.Sidebar", tint, duration);
+        SetColor("Brush.ContentLayer", tint, duration);
+        SetColor("Brush.TitleBar", Colors.Transparent, TimeSpan.Zero);
         PublishGlass();
         PublishAppIcon();
+        Backdrop.Apply(backdrop, _isDark, background, AccentColor, IsMicaActive);
 
         AnimatedText.IsGloballyEnabled = appearance.AnimateValues && !appearance.ReducedMotion;
         Motion.ReducedMotion = appearance.ReducedMotion;
@@ -169,8 +176,9 @@ public sealed class ThemeService : IThemeService
     }
 
     /// <summary>
-    /// The floating sidebar's liquid glass: a faint fill tinted by the accent where light enters (top left), a rim that is
-    /// bright along the top-left and bottom-right edges like the bevel of thick glass, and two soft lights behind it.
+    /// The glass every card and the sidebar are made of (since 1.8.2): over the frosted background behind it, a faint
+    /// fill (a little of the accent where the light enters, top left), a bevelled rim bright along the top-left and
+    /// bottom-right edges, and two soft lights.
     /// </summary>
     private void PublishGlass()
     {
@@ -181,17 +189,17 @@ public sealed class ThemeService : IThemeService
 
         if (_isDark)
         {
-            Publish("Brush.GlassFill", Gradient(new Point(0, 0), new Point(0.7, 1),
-                (ThemePalette.WithAlpha(accent, 0x14), 0), (White(0x0B), 0.35), (White(0x07), 0.75), (White(0x0A), 1)));
+            Publish("Brush.GlassFill", Gradient(new Point(0, 0), new Point(0.8, 1),
+                (ThemePalette.WithAlpha(Blend(accent, Colors.White, 0.35), 0x18), 0), (White(0x0E), 0.3), (White(0x09), 0.75), (White(0x0C), 1)));
             Publish("Brush.GlassRim", Gradient(new Point(0, 0), new Point(1, 1),
-                (White(0x5C), 0), (White(0x16), 0.28), (White(0x08), 0.62), (White(0x30), 1)));
+                (White(0x52), 0), (White(0x18), 0.3), (White(0x0A), 0.62), (White(0x26), 1)));
         }
         else
         {
-            Publish("Brush.GlassFill", Gradient(new Point(0, 0), new Point(0.7, 1),
-                (White(0xD8), 0), (White(0xB4), 0.5), (White(0xA4), 1)));
+            Publish("Brush.GlassFill", Gradient(new Point(0, 0), new Point(0.8, 1),
+                (White(0xC8), 0), (White(0xA8), 0.5), (White(0x9A), 1)));
             Publish("Brush.GlassRim", Gradient(new Point(0, 0), new Point(1, 1),
-                (White(0xFF), 0), (White(0x80), 0.35), (Black(0x0C), 0.7), (Black(0x16), 1)));
+                (White(0xFF), 0), (White(0x90), 0.35), (Black(0x0E), 0.7), (Black(0x18), 1)));
         }
 
         Publish("Brush.GlassLightA", Glow(accent, _isDark ? (byte)0x46 : (byte)0x30));

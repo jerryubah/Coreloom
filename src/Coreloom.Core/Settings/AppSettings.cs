@@ -84,6 +84,9 @@ public sealed class AppSettings
             Appearance.Accent = AccentPalette.Default;
         }
 
+        Appearance.Backdrop ??= new BackdropSettings();
+        Appearance.Backdrop.Normalize();
+
         Monitoring.PollingIntervalMs = Math.Clamp(Monitoring.PollingIntervalMs, (int)TelemetryEngine.MinimumInterval.TotalMilliseconds, (int)TelemetryEngine.MaximumInterval.TotalMilliseconds);
         Monitoring.GamingIntervalMs = AdaptiveMonitoring.NormalizeGamingInterval(Monitoring.GamingIntervalMs);
         if (!Enum.IsDefined(Monitoring.DefaultWindow))
@@ -136,10 +139,16 @@ public sealed class AppearanceSettings
     /// <summary>Animate numbers, gauges and donuts when values change.</summary>
     public bool AnimateValues { get; set; } = true;
 
-    /// <summary>Use the Windows 11 Mica backdrop for the navigation pane when supported.</summary>
+    /// <summary>
+    /// Before 1.8.2: Mica (Windows 11) or vibrancy (macOS) in the sidebar. Kept so older files load; the window's
+    /// background is now <see cref="Backdrop"/> (see-through is <see cref="BackdropKind.SeeThrough"/>).
+    /// </summary>
     public bool UseMica { get; set; } = true;
 
     public bool SidebarCollapsed { get; set; }
+
+    /// <summary>The window's background behind the glass (since 1.8.2).</summary>
+    public BackdropSettings Backdrop { get; set; } = new();
 }
 
 public sealed class MonitoringSettings

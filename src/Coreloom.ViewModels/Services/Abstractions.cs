@@ -30,7 +30,11 @@ public interface IThemeService
 {
     void Apply(AppearanceSettings appearance);
 
+    /// <summary>Whether the window can show the desktop through it (macOS vibrancy, Windows 11 Mica).</summary>
     bool IsMicaSupported { get; }
+
+    /// <summary>Where a copy of your own background picture is kept; null where backgrounds can't be changed.</summary>
+    string? BackdropFolder => null;
 }
 
 /// <summary>

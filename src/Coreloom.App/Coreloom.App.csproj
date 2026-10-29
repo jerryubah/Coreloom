@@ -57,6 +57,8 @@
     <Resource Include="..\..\assets\pc\*.png" Link="Assets\PC\%(Filename)%(Extension)" />
     <!-- The PC picture's layers, generated from assets/pc-render/render.png by build/pc-render.py. -->
     <Resource Include="Assets\PcRender\*.png" />
+    <!-- The suggested background pictures (build/backdrops/make-backdrops.py) and their swatches. -->
+    <Resource Include="..\..\assets\backdrops\*.jpg" Link="Assets\Backdrops\%(Filename)%(Extension)" />
     <!-- Inter and JetBrains Mono (SIL Open Font License 1.1); the license texts ship next to the app. -->
     <Resource Include="Fonts\*.ttf" />
     <None Include="Fonts\LICENSE-*.txt">

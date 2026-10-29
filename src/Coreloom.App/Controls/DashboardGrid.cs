@@ -69,6 +69,10 @@ public sealed class DashboardGrid : Panel
     public static readonly DependencyProperty HandleProperty = DependencyProperty.RegisterAttached(
         "Handle", typeof(DashboardHandle), typeof(DashboardGrid), new PropertyMetadata(DashboardHandle.None));
 
+    /// <summary>A card as tall as its content (System health; see <see cref="DashboardLayout.RowHeights"/>).</summary>
+    public static readonly DependencyProperty FitsContentProperty = DependencyProperty.RegisterAttached(
+        "FitsContent", typeof(bool), typeof(DashboardGrid), new FrameworkPropertyMetadata(false, OnCardLayoutChanged));
+
     private static readonly TimeSpan GlideDuration = TimeSpan.FromMilliseconds(220);
     private const double AutoScrollEdge = 56;
     private const double AutoScrollSpeed = 16;
@@ -79,6 +83,7 @@ public sealed class DashboardGrid : Panel
     private int _columns = 1;
     private double _columnWidth;
     private double _rowHeight = 40;
+    private double[] _rowHeights = [];
     private bool _animate;
 
     private Mode _mode;
@@ -158,6 +163,10 @@ public sealed class DashboardGrid : Panel
 
     public static void SetMinRows(DependencyObject d, int value) => d.SetValue(MinRowsProperty, value);
 
+    public static bool GetFitsContent(DependencyObject d) => (bool)d.GetValue(FitsContentProperty);
+
+    public static void SetFitsContent(DependencyObject d, bool value) => d.SetValue(FitsContentProperty, value);
+
     public static DashboardHandle GetHandle(DependencyObject d) => (DashboardHandle)d.GetValue(HandleProperty);
 
     public static void SetHandle(DependencyObject d, DashboardHandle value) => d.SetValue(HandleProperty, value);
@@ -184,26 +193,31 @@ public sealed class DashboardGrid : Panel
         }
 
         _ordered = Ordered();
-        var sizes = Sizes(_ordered);
+        var fits = _ordered.Select(GetFitsContent).ToArray();
+        var sizes = DashboardLayout.FitSizes(Sizes(_ordered), fits, _columns);
 
-        // First what each card needs at its width, which sets the row height; then each at the size it will get.
+        // First what each card needs at its width, which sets the row height (cards that fit their content have rows
+        // of their own sizes, so they don't count); then each at the size it will get.
         var needs = new (double Height, int MinRows)[_ordered.Count];
+        var heights = new double[_ordered.Count];
         for (int i = 0; i < _ordered.Count; i++)
         {
             var child = _ordered[i];
             child.Measure(new Size(DashboardLayout.Extent(Math.Min(sizes[i].Columns, _columns), _columnWidth, spacing), double.PositiveInfinity));
-            needs[i] = (child.DesiredSize.Height, Math.Max(1, GetMinRows(child)));
+            heights[i] = child.DesiredSize.Height;
+            needs[i] = fits[i] ? (0, 1) : (child.DesiredSize.Height, Math.Max(1, GetMinRows(child)));
         }
 
         _rowHeight = DashboardLayout.RowHeight(needs, spacing, MinRowHeight);
         _placements = DashboardLayout.Place(sizes, _columns);
+        _rowHeights = DashboardLayout.RowHeights(_placements, fits, heights, _rowHeight, spacing);
         for (int i = 0; i < _ordered.Count; i++)
         {
             var p = _placements[i];
-            _ordered[i].Measure(new Size(DashboardLayout.Extent(p.Columns, _columnWidth, spacing), DashboardLayout.Extent(p.Rows, _rowHeight, spacing)));
+            _ordered[i].Measure(new Size(DashboardLayout.Extent(p.Columns, _columnWidth, spacing), DashboardLayout.Extent(_rowHeights, p.Row, p.Rows, spacing)));
         }
 
-        return new Size(width, DashboardLayout.Extent(DashboardLayout.RowCount(_placements), _rowHeight, spacing));
+        return new Size(width, DashboardLayout.Extent(_rowHeights, 0, _rowHeights.Length, spacing));
     }
 
     protected override Size ArrangeOverride(Size finalSize)
@@ -219,9 +233,9 @@ public sealed class DashboardGrid : Panel
             var p = _placements[i];
             var slot = new Rect(
                 p.Column * (columnWidth + spacing),
-                p.Row * (_rowHeight + spacing),
+                DashboardLayout.Offset(_rowHeights, p.Row, spacing),
                 DashboardLayout.Extent(p.Columns, columnWidth, spacing),
-                DashboardLayout.Extent(p.Rows, _rowHeight, spacing));
+                DashboardLayout.Extent(_rowHeights, p.Row, p.Rows, spacing));
             child.Arrange(slot);
             arranged.Add(child);
 
@@ -539,8 +553,9 @@ public sealed class DashboardGrid : Panel
         if (_mode == Mode.Moving)
         {
             _floating = new Point(_startSlot.X + point.X - _pressPoint.X, _startSlot.Y + point.Y - _pressPoint.Y);
-            int index = DashboardLayout.DropIndex(Sizes(Ordered(preview: false)), _startIndex, _columns,
-                _floating.X / columnPitch, _floating.Y / rowPitch, columnPitch, rowPitch, _previewIndex);
+            var ordered = Ordered(preview: false);
+            int index = DashboardLayout.DropIndex(DashboardLayout.FitSizes(Sizes(ordered), ordered.Select(GetFitsContent).ToArray(), _columns), _startIndex, _columns,
+                _floating.X / columnPitch, DashboardLayout.RowAt(_rowHeights, _floating.Y, spacing, _rowHeight), columnPitch, rowPitch, _previewIndex);
             if (index != _previewIndex)
             {
                 _previewIndex = index;

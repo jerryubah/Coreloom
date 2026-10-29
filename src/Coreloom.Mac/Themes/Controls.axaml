@@ -28,6 +28,8 @@
   <conv:TextShadowConverter x:Key="TextShadow" />
   <conv:PositionToAlignmentConverter x:Key="PositionToAlignment" />
   <conv:ToValueConverter x:Key="ToValue" />
+  <conv:BackdropGradientPreviewConverter x:Key="BackdropGradientPreview" />
+  <conv:BackdropThumbnailConverter x:Key="BackdropThumbnail" />
 
   <!-- ================================================================================= -->
   <!-- Typography                                                                          -->
@@ -144,15 +146,17 @@
   <!-- ================================================================================= -->
   <!-- Cards and surfaces                                                                 -->
   <!-- ================================================================================= -->
-  <!-- Cards are c:SquircleBorder (smooth "squircle" corners, the same everywhere). A card's top rim catches a little
-       light (Sheen), like the edge of a pane of glass. -->
+  <!-- Cards are c:SquircleBorder (smooth "squircle" corners, the same everywhere), made of the same frosted glass as the
+       sidebar (since 1.8.2): the window's background blurred behind them, a faint fill, a bevelled rim and a top rim that
+       catches the light (Sheen). -->
   <ControlTheme x:Key="Card" TargetType="c:SquircleBorder">
-    <Setter Property="Background" Value="{DynamicResource Brush.Card}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.CardBorder}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.GlassFill}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.GlassRim}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="18" />
     <Setter Property="Padding" Value="18,16" />
-    <Setter Property="Sheen" Value="0.55" />
+    <Setter Property="Sheen" Value="0.6" />
+    <Setter Property="Frosted" Value="True" />
   </ControlTheme>
 
   <!-- A card with data that glows in its own color (set GlowKey), lit from below, its rim lighting up under the pointer. -->

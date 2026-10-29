@@ -97,15 +97,15 @@
 
   <Grid ColumnDefinitions="Auto,*">
     <!-- =========================== Sidebar =========================== -->
-    <!-- One background flows all around the window; the sidebar floats on it as a pane of liquid glass, inset from the
-         window's edges and lit along its rim. The window's own close, minimize and zoom buttons sit inside the glass, in
-         its top row (MainWindow.axaml.cs places them, left-aligned with the glass's inset and centred on the row), with
-         the collapse button on their line at the right. When the sidebar is translucent, the background leaves the glass's shape open so the
-         desktop's vibrancy shows through the glass alone. -->
-    <c:WindowBackdrop Name="Backdrop" Grid.ColumnSpan="2" Background="{DynamicResource Brush.ContentLayer}" Glass="{Binding #Sidebar}" />
+    <!-- One background spans the whole window (the color, gradient or picture chosen in Settings › Appearance); the
+         sidebar floats on it as a pane of frosted glass, inset from the window's edges and lit along its rim, the same
+         glass as every card. The window's own close, minimize and zoom buttons sit inside the glass, in its top row
+         (MainWindow.axaml.cs places them, left-aligned with the glass's inset and centred on the row), with the collapse
+         button on their line at the right. -->
+    <c:WindowBackdrop Name="Backdrop" Grid.ColumnSpan="2" Background="{DynamicResource Brush.ContentLayer}" />
     <c:SquircleBorder Name="Sidebar" Width="232" Margin="10" CornerRadius="22" Smoothing="0.7"
                       Background="{DynamicResource Brush.GlassFill}" BorderBrush="{DynamicResource Brush.GlassRim}" BorderThickness="1"
-                      Sheen="1" Shadow="1">
+                      Sheen="1" Shadow="1" Frosted="True">
       <Grid Margin="10,0,10,12" RowDefinitions="40,46,*,Auto">
         <!-- The window buttons' row: drag the window from here too; collapse on the right, on the buttons' centre line -->
         <Border Name="SidebarDrag" Margin="-10,0" Background="Transparent" />

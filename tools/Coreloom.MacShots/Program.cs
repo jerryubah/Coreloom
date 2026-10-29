@@ -47,6 +47,7 @@ internal static class Program
             .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
             .SetupWithoutStarting();
 
+        Coreloom.Mac.Services.Backdrop.Initialize(Path.Combine(Path.GetTempPath(), "coreloom-macshots-backdrops"));
         var theme = new ThemeService(Application.Current!.Resources);
         theme.Initialize(new AppearanceSettings { ReducedMotion = true, AnimateValues = false, UseMica = false });
 
@@ -118,6 +119,37 @@ internal static class Program
             }
         });
         var shell = data.Shell(theme);
+
+        // The window's background (--backdrop=gradient:aurora, image:silk, color:#0B1020, seethrough), and a picture's
+        // strength and blur (--opacity=60 --blur=25).
+        if (Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("--backdrop=", StringComparison.Ordinal)) is { } backdrop)
+        {
+            string[] parts = backdrop[11..].Split(':', 2);
+            data.Settings.Update("Appearance", s =>
+            {
+                var b = s.Appearance.Backdrop;
+                b.Kind = Enum.Parse<BackdropKind>(parts[0], ignoreCase: true);
+                if (parts.Length > 1)
+                {
+                    switch (b.Kind)
+                    {
+                        case BackdropKind.Color: b.Color = parts[1]; break;
+                        case BackdropKind.Gradient: b.Gradient = parts[1]; break;
+                        case BackdropKind.Image: b.Image = parts[1]; break;
+                    }
+                }
+
+                if (Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("--opacity=", StringComparison.Ordinal)) is { } opacity)
+                {
+                    b.ImageOpacity = int.Parse(opacity[10..], System.Globalization.CultureInfo.InvariantCulture);
+                }
+
+                if (Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("--blur=", StringComparison.Ordinal)) is { } blur)
+                {
+                    b.Blur = int.Parse(blur[7..], System.Globalization.CultureInfo.InvariantCulture);
+                }
+            });
+        }
 
         // The Mac picture's lighting color (--glow=Rainbow), and the desktop picture off (--no-wallpaper).
         if (Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("--glow=", StringComparison.Ordinal)) is { } glow)
@@ -319,6 +351,22 @@ internal static class Program
 
         Dispatcher.UIThread.RunJobs();
         AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+
+        // The window's background is drawn off the UI thread: wait for it (and draw what it changed).
+        var waited = System.Diagnostics.Stopwatch.StartNew();
+        bool drew = false;
+        while (Coreloom.Mac.Services.Backdrop.IsBusy && waited.Elapsed < TimeSpan.FromSeconds(10))
+        {
+            Dispatcher.UIThread.RunJobs();
+            Thread.Sleep(5);
+            drew = true;
+        }
+
+        if (drew)
+        {
+            Dispatcher.UIThread.RunJobs();
+            AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+        }
     }
 
     private static void Capture(Window window, string file)

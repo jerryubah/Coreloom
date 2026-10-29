@@ -6,6 +6,7 @@ using Avalonia.Media.Immutable;
 using Avalonia.Rendering;
 using Avalonia.Threading;
 using Coreloom.Mac.Behaviors;
+using Coreloom.Mac.Services;
 using Coreloom.Mac.Themes;
 
 namespace Coreloom.Mac.Controls;
@@ -210,6 +211,9 @@ public class SquircleBorder : Decorator, ICustomHitTest
     public static readonly StyledProperty<double> SheenProperty =
         AvaloniaProperty.Register<SquircleBorder, double>(nameof(Sheen));
 
+    public static readonly StyledProperty<bool> FrostedProperty =
+        AvaloniaProperty.Register<SquircleBorder, bool>(nameof(Frosted));
+
     /// <summary>How far the edge glow spreads outside the card.</summary>
     private const double OuterReach = 14;
 
@@ -234,20 +238,26 @@ public class SquircleBorder : Decorator, ICustomHitTest
     private Color? _glowFrom;
     private double _glowFade = 1;
     private Color? _glowShown;
+    private bool _frostHooked;
 
     static SquircleBorder()
     {
         AffectsRender<SquircleBorder>(BackgroundProperty, BorderBrushProperty, BorderThicknessProperty, CornerRadiusProperty, SmoothingProperty,
-            GlowKeyProperty, GlowStrengthProperty, ShadowProperty, SheenProperty);
+            GlowKeyProperty, GlowStrengthProperty, ShadowProperty, SheenProperty, FrostedProperty);
         AffectsMeasure<SquircleBorder>(BorderThicknessProperty);
     }
 
     public SquircleBorder()
     {
-        Loaded += (_, _) => HookTheme(GlowKey is not null || EdgeGlow || Shadow > 0 || Sheen > 0);
+        Loaded += (_, _) =>
+        {
+            HookTheme(GlowKey is not null || EdgeGlow || Shadow > 0 || Sheen > 0);
+            HookFrost(Frosted);
+        };
         Unloaded += (_, _) =>
         {
             HookTheme(false);
+            HookFrost(false);
             StopMotion();
             _hovering = false;
             _hover = 0;
@@ -329,6 +339,16 @@ public class SquircleBorder : Decorator, ICustomHitTest
         set => SetValue(SheenProperty, value);
     }
 
+    /// <summary>
+    /// Frosted glass: the card shows a blurred copy of the window's background behind it (the part right behind it,
+    /// following it as the page scrolls), under its own <see cref="Background"/> tint. Off for a card inside another.
+    /// </summary>
+    public bool Frosted
+    {
+        get => GetValue(FrostedProperty);
+        set => SetValue(FrostedProperty, value);
+    }
+
     private static bool IsDark => ThemeService.Instance?.IsDark ?? true;
 
     /// <summary>The color for a glow key: a status, "Accent", a temperature ("Temp.Cool" … "Temp.Hot"), or a series.</summary>
@@ -353,6 +373,10 @@ public class SquircleBorder : Decorator, ICustomHitTest
         else if (change.Property == ClipContentProperty)
         {
             UpdateClip();
+        }
+        else if (change.Property == FrostedProperty && IsLoaded)
+        {
+            HookFrost(change.NewValue is true);
         }
         else if (change.Property == GlowKeyProperty)
         {
@@ -475,6 +499,11 @@ public class SquircleBorder : Decorator, ICustomHitTest
             DrawShadow(dc, size, dark);
         }
 
+        if (Frosted)
+        {
+            DrawFrost(dc, outer, size);
+        }
+
         if (Background is { } background)
         {
             dc.DrawGeometry(background, null, outer);
@@ -509,6 +538,47 @@ public class SquircleBorder : Decorator, ICustomHitTest
     }
 
     private static RelativePoint Abs(double x, double y) => new(x, y, RelativeUnit.Absolute);
+
+    /// <summary>The frosted part of the window's background that's behind the card (the whole frost, placed so it lines up).</summary>
+    private void DrawFrost(DrawingContext dc, Geometry outer, Size size)
+    {
+        if (Backdrop.IsSeeThrough || Backdrop.Frost is not { } frost || Backdrop.Host is not { } host || this.TranslatePoint(default, host) is not { } at)
+        {
+            return;
+        }
+
+        var hostSize = host.Bounds.Size;
+        using (dc.PushGeometryClip(outer))
+        {
+            dc.DrawImage(frost, new Rect(frost.Size), new Rect(-at.X, -at.Y, hostSize.Width, hostSize.Height));
+        }
+    }
+
+    /// <summary>Draws again when the frost changes, or when the card moves over the background (scrolling, layout).</summary>
+    private void HookFrost(bool hook)
+    {
+        if (hook == _frostHooked)
+        {
+            return;
+        }
+
+        _frostHooked = hook;
+        if (hook)
+        {
+            Backdrop.Changed += OnFrostChanged;
+            EffectiveViewportChanged += OnViewportChanged;
+            RenderOptions.SetBitmapInterpolationMode(this, Avalonia.Media.Imaging.BitmapInterpolationMode.HighQuality);
+        }
+        else
+        {
+            Backdrop.Changed -= OnFrostChanged;
+            EffectiveViewportChanged -= OnViewportChanged;
+        }
+    }
+
+    private void OnFrostChanged(object? sender, EventArgs e) => InvalidateVisual();
+
+    private void OnViewportChanged(object? sender, Avalonia.Layout.EffectiveViewportChangedEventArgs e) => InvalidateVisual();
 
     /// <summary>A soft light rising from below the card's bottom edge.</summary>
     private void DrawLamp(DrawingContext dc, Geometry outer, Size size, Color color, bool dark)

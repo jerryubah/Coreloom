@@ -83,6 +83,9 @@ public sealed class AppPaths
 
     public string DownloadDirectory => Path.Combine(LocalDirectory, "Updates");
 
+    /// <summary>Your own background picture (a copy, so it stays put if the original moves).</summary>
+    public string BackdropDirectory => Path.Combine(SettingsDirectory, "Backdrops");
+
     /// <summary>True when the app was installed by the Inno Setup installer (an uninstaller sits next to it).</summary>
     public bool IsInstalled => File.Exists(Path.Combine(BaseDirectory, "unins000.exe"));
 

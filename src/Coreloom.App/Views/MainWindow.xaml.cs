@@ -237,18 +237,18 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// With Mica the glass sidebar is see-through to the desktop, and ClearType can't be blended onto see-through pixels
-    /// (it fringes), so its text is smoothed in grayscale there; everywhere else, and without Mica, text uses ClearType.
+    /// With Mica the whole window is see-through to the desktop, and ClearType can't be blended onto see-through pixels
+    /// (it fringes), so text is smoothed in grayscale then; on Coreloom's own backgrounds (opaque) text uses ClearType.
     /// </summary>
     private void UpdateSidebarText()
     {
         if (ThemeService.Instance?.IsMicaActive == true)
         {
-            TextOptions.SetTextRenderingMode(Sidebar, TextRenderingMode.Grayscale);
+            TextOptions.SetTextRenderingMode(RootBorder, TextRenderingMode.Grayscale);
         }
         else
         {
-            Sidebar.ClearValue(TextOptions.TextRenderingModeProperty); // the window's (ClearType unless Windows has it off)
+            RootBorder.ClearValue(TextOptions.TextRenderingModeProperty); // the window's (ClearType unless Windows has it off)
         }
     }
 

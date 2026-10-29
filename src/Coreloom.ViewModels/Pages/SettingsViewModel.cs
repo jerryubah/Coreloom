@@ -250,6 +250,7 @@ public sealed class SettingsViewModel : PageViewModel
 
         ThemeOptions = [new(ThemePreference.Dark, "Dark"), new(ThemePreference.Light, "Light"), new(ThemePreference.System, IsMac ? "Use macOS setting" : "Use Windows setting")];
         AccentOptions = AccentPalette.Presets.Select(p => new AccentOption(p.Name, p.Hex)).ToArray();
+        Backdrop = new BackdropViewModel(context.Settings, deps.Shell, deps.Theme, IsMac);
         PollingOptions = [new(250, "0.25 s"), new(500, "0.5 s"), new(1000, "1 s (recommended)"), new(2000, "2 s (lighter)"), new(5000, "5 s (lightest)")];
         WindowOptions = Enum.GetValues<HistoryWindow>().Select(w => new Option<HistoryWindow>(w, w.ToLongLabel())).ToArray();
         TemperatureOptions = [new(TemperatureUnit.Celsius, "Celsius (°C)"), new(TemperatureUnit.Fahrenheit, "Fahrenheit (°F)")];
@@ -402,13 +403,8 @@ public sealed class SettingsViewModel : PageViewModel
         set => Change("Appearance", s => s.Appearance.AnimateValues = value);
     }
 
-    public bool UseMica
-    {
-        get => Settings.Current.Appearance.UseMica;
-        set => Change("Appearance", s => s.Appearance.UseMica = value);
-    }
-
-    public bool IsMicaSupported => _deps.Theme.IsMicaSupported;
+    /// <summary>The window's background behind the glass (Settings › Appearance › Background).</summary>
+    public BackdropViewModel Backdrop { get; }
 
     // ---- Monitoring ------------------------------------------------------------------------------
 
@@ -927,6 +923,7 @@ public sealed class SettingsViewModel : PageViewModel
         {
             LoadRules();
             MenuBar?.Reload();
+            Backdrop.Refresh();
             OnPropertyChanged(string.Empty);
         }
     }

@@ -54,6 +54,9 @@ public sealed class DashboardTileViewModel : ObservableObject
 
     public int MinRows { get; }
 
+    /// <summary>As tall as its content (System health): see <see cref="DashboardCatalog.FitsContent"/>.</summary>
+    public bool FitsContent => DashboardCatalog.FitsContent(Id);
+
     public int MaxColumns => DashboardCatalog.MaxColumns;
 
     public int MaxRows => DashboardCatalog.MaxRows;

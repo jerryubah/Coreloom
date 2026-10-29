@@ -48,6 +48,12 @@ public static class DashboardCatalog
     public static bool IsSummary(string id) => All.FirstOrDefault(c => c.Id == id).IsSummaryCard;
 
     /// <summary>
+    /// Cards as tall as their content (since 1.8.2: System health): on rows of their own they wrap what they say, and
+    /// beside a taller card they stretch to its height and spread their content out.
+    /// </summary>
+    public static bool FitsContent(string id) => id == Health;
+
+    /// <summary>
     /// Summary cards are one column by two rows and panels (charts, memory, storage, network) two columns by three, so six
     /// cards fill a wide row and three panels each row under them. A row is about half a summary card tall.
     /// </summary>

@@ -29,6 +29,8 @@ internal static class Program
             app.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri($"pack://application:,,,/Coreloom;component/Themes/{name}.xaml") });
         }
 
+        Coreloom.App.Services.Backdrop.Initialize(Path.Combine(Path.GetTempPath(), "coreloom-pageshots-backdrops"));
+        Coreloom.App.Services.Backdrop.ScaleOverride = 2; // the pictures are drawn at 192 dpi
         new ThemeService(app.Resources).Initialize(new AppearanceSettings { ReducedMotion = true });
 
         int exitCode = 0;
@@ -229,16 +231,24 @@ internal static class Program
 
         // The build machine isn't an administrator: the note about it isn't part of the picture.
         shell.DismissBannerCommand.Execute(null);
-        var shots = new (string Name, ThemePreference Theme, PageViewModel Page)[]
+        static BackdropSettings Picture(string id) => new() { Kind = BackdropKind.Image, Image = id };
+        var shots = new (string Name, ThemePreference Theme, PageViewModel Page, BackdropSettings Backdrop)[]
         {
-            ("windows-overview", ThemePreference.Dark, shell.Overview),
-            ("windows-overview-light", ThemePreference.Light, shell.Overview),
-            ("windows-gaming", ThemePreference.Dark, shell.Gaming),
-            ("windows-optimize", ThemePreference.Dark, shell.Optimize),
+            ("windows-overview", ThemePreference.Dark, shell.Overview, new BackdropSettings()),
+            ("windows-overview-light", ThemePreference.Light, shell.Overview, new BackdropSettings()),
+            ("windows-gaming", ThemePreference.Dark, shell.Gaming, new BackdropSettings()),
+            ("windows-optimize", ThemePreference.Dark, shell.Optimize, new BackdropSettings()),
+            ("windows-overview-aurora", ThemePreference.Dark, shell.Overview, Picture("aurora")),
+            ("windows-overview-dunes", ThemePreference.Dark, shell.Overview, Picture("dunes")),
+            ("windows-overview-midnight", ThemePreference.Dark, shell.Overview, new BackdropSettings { Gradient = "midnight" }),
+            ("windows-settings-appearance", ThemePreference.Dark, shell.Settings, Picture("bloom")),
         };
-        foreach (var (name, preference, page) in shots)
+        foreach (var (name, preference, page, backdrop) in shots)
         {
-            ThemeService.Instance?.Apply(new AppearanceSettings { Theme = preference, ReducedMotion = true });
+            ThemeService.Instance?.Apply(new AppearanceSettings { Theme = preference, ReducedMotion = true, Backdrop = backdrop });
+            data.Settings.Current.Appearance.Backdrop = backdrop; // what Settings › Appearance shows
+            shell.Settings.Backdrop.Refresh();
+            shell.Settings.SelectedSection = "Appearance";
             shell.Navigate(page);
             for (int i = 0; i < 40; i++)
             {

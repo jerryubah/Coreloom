@@ -43,6 +43,8 @@
     <AvaloniaResource Include="..\..\assets\branding\dark\png\coreloom-dark-256.png" Link="Assets\coreloom-dark-256.png" />
     <AvaloniaResource Include="Assets\*.png" />
     <AvaloniaResource Include="Assets\MacBook\*.png" />
+    <!-- The suggested background pictures (build/backdrops/make-backdrops.py) and their swatches. -->
+    <AvaloniaResource Include="..\..\assets\backdrops\*.jpg" Link="Assets\Backdrops\%(Filename)%(Extension)" />
     <None Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

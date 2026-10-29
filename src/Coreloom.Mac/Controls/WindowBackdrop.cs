@@ -1,91 +1,77 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Coreloom.Mac.Services;
 
 namespace Coreloom.Mac.Controls;
 
 /// <summary>
-/// The window's one background, flowing all around the floating sidebar. When the sidebar is translucent, it leaves a
-/// hole the exact shape of the sidebar's glass, so the desktop's vibrancy (behind the window) shows through the glass
-/// only, and nowhere else.
+/// The window's one background, behind everything and flowing all around the floating sidebar: the color, gradient or
+/// picture chosen in Settings › Appearance (<see cref="Backdrop"/>), stretched to the window. The glass sidebar and cards
+/// measure their place against this control to show the frosted part of it that's behind them. See-through, it draws
+/// only <see cref="Background"/> (the theme's color, mostly clear) over the desktop macOS shows through the window.
 /// </summary>
 public sealed class WindowBackdrop : Control
 {
     public static readonly StyledProperty<IBrush?> BackgroundProperty = Border.BackgroundProperty.AddOwner<WindowBackdrop>();
 
-    public static readonly StyledProperty<SquircleBorder?> GlassProperty = AvaloniaProperty.Register<WindowBackdrop, SquircleBorder?>(nameof(Glass));
-
-    public static readonly StyledProperty<bool> SeeThroughGlassProperty = AvaloniaProperty.Register<WindowBackdrop, bool>(nameof(SeeThroughGlass));
-
     static WindowBackdrop()
     {
-        AffectsRender<WindowBackdrop>(BackgroundProperty, SeeThroughGlassProperty);
-        GlassProperty.Changed.AddClassHandler<WindowBackdrop>((backdrop, e) => backdrop.Follow(e.OldValue as SquircleBorder, e.NewValue as SquircleBorder));
+        AffectsRender<WindowBackdrop>(BackgroundProperty);
     }
 
     public WindowBackdrop()
     {
         IsHitTestVisible = false;
+        RenderOptions.SetBitmapInterpolationMode(this, Avalonia.Media.Imaging.BitmapInterpolationMode.HighQuality);
     }
 
+    /// <summary>What shows until the background is drawn, and the tint over the desktop when see-through.</summary>
     public IBrush? Background
     {
         get => GetValue(BackgroundProperty);
         set => SetValue(BackgroundProperty, value);
     }
 
-    /// <summary>The sidebar's glass, whose shape the hole takes.</summary>
-    public SquircleBorder? Glass
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        get => GetValue(GlassProperty);
-        set => SetValue(GlassProperty, value);
+        base.OnAttachedToVisualTree(e);
+        Backdrop.Changed += OnBackdropChanged;
+        Backdrop.Attach(this);
     }
 
-    /// <summary>Leave the glass's shape open (the translucent sidebar).</summary>
-    public bool SeeThroughGlass
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        get => GetValue(SeeThroughGlassProperty);
-        set => SetValue(SeeThroughGlassProperty, value);
+        base.OnDetachedFromVisualTree(e);
+        Backdrop.Changed -= OnBackdropChanged;
+        Backdrop.Detach(this);
     }
+
+    protected override void OnSizeChanged(SizeChangedEventArgs e)
+    {
+        base.OnSizeChanged(e);
+        Backdrop.HostResized();
+    }
+
+    private void OnBackdropChanged(object? sender, EventArgs e) => InvalidateVisual();
 
     public override void Render(DrawingContext context)
     {
         var bounds = new Rect(Bounds.Size);
-        if (Background is not { } background || bounds.Width <= 0 || bounds.Height <= 0)
+        if (bounds.Width <= 0 || bounds.Height <= 0)
         {
             return;
         }
 
-        if (SeeThroughGlass && Glass is { IsVisible: true } glass && glass.TranslatePoint(default, this) is { } origin && glass.Bounds.Width > 0)
+        if (!Backdrop.IsSeeThrough && Backdrop.Background is { } picture)
         {
-            var shape = Squircle.Create(new Rect(origin, glass.Bounds.Size), glass.CornerRadius, glass.Smoothing);
-            context.DrawGeometry(background, null, new CombinedGeometry(GeometryCombineMode.Exclude, new RectangleGeometry(bounds), shape));
+            context.DrawImage(picture, new Rect(picture.Size), bounds);
             return;
         }
 
-        context.DrawRectangle(background, null, bounds);
-    }
-
-    private void Follow(SquircleBorder? old, SquircleBorder? glass)
-    {
-        if (old is not null)
+        if (Background is { } background)
         {
-            old.LayoutUpdated -= OnGlassLayoutUpdated;
-        }
-
-        if (glass is not null)
-        {
-            glass.LayoutUpdated += OnGlassLayoutUpdated;
-        }
-
-        InvalidateVisual();
-    }
-
-    private void OnGlassLayoutUpdated(object? sender, EventArgs e)
-    {
-        if (SeeThroughGlass)
-        {
-            InvalidateVisual();
+            context.DrawRectangle(background, null, bounds);
         }
     }
 }

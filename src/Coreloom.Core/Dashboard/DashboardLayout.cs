@@ -165,6 +165,153 @@ public static class DashboardLayout
         return Math.Ceiling(height);
     }
 
+    /// <summary>
+    /// Sizes for cards that fit their content (the System health strip, <paramref name="fits"/>): where one shares rows
+    /// with other cards, it grows down to the bottom of the tallest of them, so it lines up with the card beside it and
+    /// its content spreads out to fill the height; on rows of its own it keeps its size (<see cref="RowHeights"/> then
+    /// makes those rows as tall as its content).
+    /// </summary>
+    public static TileSize[] FitSizes(IReadOnlyList<TileSize> tiles, IReadOnlyList<bool> fits, int columns)
+    {
+        var sizes = tiles.ToArray();
+        if (!fits.Any(f => f))
+        {
+            return sizes;
+        }
+
+        for (int round = 0; round < 3; round++)
+        {
+            var placements = Place(sizes, columns);
+            bool changed = false;
+            for (int i = 0; i < sizes.Length; i++)
+            {
+                if (!fits[i])
+                {
+                    continue;
+                }
+
+                var p = placements[i];
+                int bottom = p.Bottom;
+                for (int j = 0; j < placements.Length; j++)
+                {
+                    var q = placements[j];
+                    if (j != i && !fits[j] && q.Row < p.Bottom && q.Bottom > p.Row)
+                    {
+                        bottom = Math.Max(bottom, q.Bottom);
+                    }
+                }
+
+                if (bottom > p.Bottom)
+                {
+                    sizes[i] = sizes[i] with { Rows = bottom - p.Row };
+                    changed = true;
+                }
+            }
+
+            if (!changed)
+            {
+                break;
+            }
+        }
+
+        return sizes;
+    }
+
+    /// <summary>
+    /// The height of each row: <paramref name="rowHeight"/>, except rows that only cards fitting their content cover
+    /// (<paramref name="fits"/>), which are as tall as the tallest of those cards needs (<paramref name="needs"/>, at
+    /// their width), shared out over its rows. So the System health strip is exactly as tall as what it says when it has
+    /// its rows to itself, and as tall as the cards beside it when it doesn't.
+    /// </summary>
+    public static double[] RowHeights(IReadOnlyList<TilePlacement> placements, IReadOnlyList<bool> fits, IReadOnlyList<double> needs,
+        double rowHeight, double spacing)
+    {
+        int rows = RowCount(placements);
+        var heights = Enumerable.Repeat(rowHeight, rows).ToArray();
+        var shared = new bool[rows];
+        for (int i = 0; i < placements.Count; i++)
+        {
+            if (i >= fits.Count || !fits[i])
+            {
+                for (int r = placements[i].Row; r < placements[i].Bottom; r++)
+                {
+                    shared[r] = true;
+                }
+            }
+        }
+
+        var wanted = new double[rows];
+        for (int i = 0; i < placements.Count && i < fits.Count; i++)
+        {
+            var p = placements[i];
+            if (!fits[i] || Enumerable.Range(p.Row, p.Rows).Any(r => shared[r]))
+            {
+                continue;
+            }
+
+            double need = i < needs.Count && double.IsFinite(needs[i]) ? needs[i] : rowHeight * p.Rows;
+            double perRow = Math.Max(1, (need - ((p.Rows - 1) * spacing)) / p.Rows);
+            for (int r = p.Row; r < p.Bottom; r++)
+            {
+                wanted[r] = Math.Max(wanted[r], perRow);
+            }
+        }
+
+        for (int r = 0; r < rows; r++)
+        {
+            if (wanted[r] > 0)
+            {
+                heights[r] = Math.Ceiling(wanted[r]);
+            }
+        }
+
+        return heights;
+    }
+
+    /// <summary>Where a row starts (pixels from the top), with rows of their own heights.</summary>
+    public static double Offset(IReadOnlyList<double> heights, int row, double spacing)
+    {
+        double y = 0;
+        for (int r = 0; r < row && r < heights.Count; r++)
+        {
+            y += heights[r] + spacing;
+        }
+
+        return y;
+    }
+
+    /// <summary>Pixels covered by <paramref name="rows"/> rows from <paramref name="row"/>, and the gaps between them.</summary>
+    public static double Extent(IReadOnlyList<double> heights, int row, int rows, double spacing)
+    {
+        double total = 0;
+        int counted = 0;
+        for (int r = row; r < row + rows && r < heights.Count; r++)
+        {
+            total += heights[r];
+            counted++;
+        }
+
+        return counted == 0 ? 0 : total + ((counted - 1) * spacing);
+    }
+
+    /// <summary>The (fractional) row a height from the top falls in, for dragging over rows of their own heights.</summary>
+    public static double RowAt(IReadOnlyList<double> heights, double y, double spacing, double fallbackHeight)
+    {
+        double top = 0;
+        for (int r = 0; r < heights.Count; r++)
+        {
+            double pitch = heights[r] + spacing;
+            if (y < top + pitch)
+            {
+                return r + ((y - top) / Math.Max(1, pitch));
+            }
+
+            top += pitch;
+        }
+
+        return heights.Count + ((y - top) / Math.Max(1, fallbackHeight + spacing));
+    }
+
     /// <summary>Pixels covered by a number of cells and the gaps between them.</summary>
     public static double Extent(int cells, double cell, double spacing) => cells <= 0 ? 0 : (cells * cell) + ((cells - 1) * spacing);
 

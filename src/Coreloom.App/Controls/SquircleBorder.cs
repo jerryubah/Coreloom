@@ -4,6 +4,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Coreloom.App.Behaviors;
+using Coreloom.App.Services;
 using Coreloom.App.Themes;
 
 namespace Coreloom.App.Controls;
@@ -207,6 +208,15 @@ public class SquircleBorder : Border
         nameof(Sheen), typeof(double), typeof(SquircleBorder),
         new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    public static readonly DependencyProperty FrostedProperty = DependencyProperty.Register(
+        nameof(Frosted), typeof(bool), typeof(SquircleBorder),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender, OnFrostedChanged));
+
+    // Where the window's frosted background sits relative to this card: moved as the card scrolls or is laid out again,
+    // without drawing the card again.
+    private readonly TranslateTransform _frostShift = new();
+    private bool _frostHooked;
+
     private Geometry? _outer;
     private Geometry? _stroke;
     private Geometry? _outside;       // everything around the card (for the glow outside its edge)
@@ -225,10 +235,15 @@ public class SquircleBorder : Border
 
     public SquircleBorder()
     {
-        Loaded += (_, _) => HookTheme(GlowKey is not null || EdgeGlow);
+        Loaded += (_, _) =>
+        {
+            HookTheme(GlowKey is not null || EdgeGlow);
+            HookFrost(Frosted);
+        };
         Unloaded += (_, _) =>
         {
             HookTheme(false);
+            HookFrost(false);
             HookRendering(false);
             _hovering = false;
             _hover = 0;
@@ -286,7 +301,93 @@ public class SquircleBorder : Border
         set => SetValue(SheenProperty, value);
     }
 
+    /// <summary>
+    /// Frosted glass: the card shows a blurred copy of the window's background behind it (the part right behind it,
+    /// following it as the page scrolls), under its own background tint.
+    /// </summary>
+    public bool Frosted
+    {
+        get => (bool)GetValue(FrostedProperty);
+        set => SetValue(FrostedProperty, value);
+    }
+
     private static bool IsDark => ThemeService.Instance?.IsDark ?? true;
+
+    private static void OnFrostedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var border = (SquircleBorder)d;
+        if (border.IsLoaded)
+        {
+            border.HookFrost((bool)e.NewValue);
+        }
+    }
+
+    /// <summary>Follows the frost (redraws when it changes) and the card's place over the background (moves it along).</summary>
+    private void HookFrost(bool hook)
+    {
+        if (hook == _frostHooked)
+        {
+            return;
+        }
+
+        _frostHooked = hook;
+        if (hook)
+        {
+            Backdrop.Changed += OnFrostChanged;
+            LayoutUpdated += OnLayoutUpdated;
+            RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.HighQuality);
+            PlaceFrost();
+        }
+        else
+        {
+            Backdrop.Changed -= OnFrostChanged;
+            LayoutUpdated -= OnLayoutUpdated;
+        }
+    }
+
+    private void OnFrostChanged(object? sender, EventArgs e) => InvalidateVisual();
+
+    private void OnLayoutUpdated(object? sender, EventArgs e) => PlaceFrost();
+
+    /// <summary>Lines the frost up with the window's background: shifted by where the card is over it.</summary>
+    private void PlaceFrost()
+    {
+        if (Backdrop.Host is not { } host || PresentationSource.FromVisual(this) is not { RootVisual: Visual root } || PresentationSource.FromVisual(host)?.RootVisual != root)
+        {
+            return;
+        }
+
+        try
+        {
+            var at = TransformToAncestor(root).Transform(default);
+            var origin = host.TransformToAncestor(root).Transform(default);
+            double x = origin.X - at.X, y = origin.Y - at.Y;
+            if (Math.Abs(_frostShift.X - x) > 0.01 || Math.Abs(_frostShift.Y - y) > 0.01)
+            {
+                _frostShift.X = x;
+                _frostShift.Y = y;
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            // Not connected to the window right now.
+        }
+    }
+
+    /// <summary>The frosted part of the window's background behind the card (the whole frost, shifted to line up).</summary>
+    private void DrawFrost(DrawingContext dc, Geometry outer)
+    {
+        if (Backdrop.IsSeeThrough || Backdrop.Frost is not { } frost || Backdrop.Host is not { } host)
+        {
+            return;
+        }
+
+        dc.PushClip(outer);
+        dc.PushTransform(_frostShift);
+        dc.DrawImage(frost, new Rect(0, 0, host.ActualWidth, host.ActualHeight));
+        dc.Pop();
+        dc.Pop();
+    }
 
     private static void OnShapeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((SquircleBorder)d)._outer = null;
 
@@ -415,6 +516,11 @@ public class SquircleBorder : Border
         if (Shadow > 0)
         {
             DrawShadow(dc, size, dark);
+        }
+
+        if (Frosted)
+        {
+            DrawFrost(dc, outer);
         }
 
         if (Background is { } background)

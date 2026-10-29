@@ -3,9 +3,48 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:c="clr-namespace:Coreloom.App.Controls"
              xmlns:b="clr-namespace:Coreloom.App.Behaviors"
-             xmlns:pages="clr-namespace:Coreloom.ViewModels.Pages;assembly=Coreloom.ViewModels">
+             xmlns:pages="clr-namespace:Coreloom.ViewModels.Pages;assembly=Coreloom.ViewModels"
+             xmlns:ap="clr-namespace:Coreloom.Core.Appearance;assembly=Coreloom.Core">
 
   <UserControl.Resources>
+    <!-- A background's swatch (a gradient or a picture): a small rounded window onto it, ringed in the accent when chosen
+         (Tag true). -->
+    <Style x:Key="BackdropTile" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Width" Value="120" />
+      <Setter Property="Height" Value="76" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Grid Background="Transparent">
+              <c:SquircleBorder x:Name="Face" CornerRadius="12" ClipContent="True" Margin="3" Background="{DynamicResource Brush.Surface}"
+                                BorderBrush="{DynamicResource Brush.GlassRim}" BorderThickness="1">
+                <ContentPresenter />
+              </c:SquircleBorder>
+              <c:SquircleBorder x:Name="Ring" CornerRadius="15" BorderBrush="{DynamicResource Brush.Accent}" BorderThickness="2" IsHitTestVisible="False"
+                                Visibility="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BoolToVisibility}}" />
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Face" Property="Margin" Value="1" />
+              </Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter TargetName="Ring" Property="Visibility" Value="Visible" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- A swatch's name under it. -->
+    <Style x:Key="Backdrop.Caption" TargetType="TextBlock" BasedOn="{StaticResource Text.Caption}">
+      <Setter Property="HorizontalAlignment" Value="Center" />
+      <Setter Property="Margin" Value="0,4,0,0" />
+      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+      <Setter Property="MaxWidth" Value="116" />
+    </Style>
+
     <!-- One settings row: bottom hairline, comfortable vertical rhythm. -->
     <Style x:Key="Row" TargetType="Border">
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.Divider}" />
@@ -373,13 +412,181 @@
                 </StackPanel>
               </Border>
 
+              <!-- Background: what fills the window behind the glass sidebar and cards. -->
               <Border Style="{StaticResource Row}">
-                <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding UseMica}" IsEnabled="{Binding IsMicaSupported}">
-                  <StackPanel>
-                    <TextBlock Style="{StaticResource Row.Title}" Text="Mica window material" />
-                    <TextBlock Style="{StaticResource Row.Description}" Text="Lets your desktop color tint the sidebar. Requires Windows 11 22H2 or later; turned off automatically when unavailable." />
+                <StackPanel>
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                      <TextBlock Style="{StaticResource Row.Title}" Text="Background" />
+                      <TextBlock Style="{StaticResource Row.Description}" Text="Fills the whole window. The sidebar and every card are frosted glass on it." />
+                    </StackPanel>
+                    <ListBox Grid.Column="1" Style="{StaticResource Segmented}" Margin="16,0,0,0" VerticalAlignment="Center"
+                             ItemsSource="{Binding Backdrop.Kinds}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                             SelectedValue="{Binding Backdrop.Kind}" AutomationProperties.Name="Background" />
+                  </Grid>
+
+                  <!-- Gradients -->
+                  <ItemsControl Margin="-3,14,0,0" ItemsSource="{Binding Backdrop.Gradients}" Focusable="False"
+                                Visibility="{Binding Backdrop.IsGradient, Converter={StaticResource BoolToVisibility}}">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <WrapPanel />
+                      </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate DataType="{x:Type ap:BackdropGradient}">
+                        <StackPanel Margin="0,0,10,10">
+                          <Button Style="{StaticResource BackdropTile}" ToolTip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
+                                  Command="{Binding DataContext.Backdrop.SelectGradientCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding Id}">
+                            <Button.Tag>
+                              <MultiBinding Converter="{StaticResource MultiEqualsToBool}">
+                                <Binding Path="Id" />
+                                <Binding Path="DataContext.Backdrop.Gradient" RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                              </MultiBinding>
+                            </Button.Tag>
+                            <Image Source="{Binding Converter={StaticResource BackdropGradientPreview}}" Stretch="UniformToFill" />
+                          </Button>
+                          <TextBlock Style="{StaticResource Backdrop.Caption}" Text="{Binding Name}" />
+                        </StackPanel>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+
+                  <!-- Colors -->
+                  <Grid Margin="0,14,0,0" Visibility="{Binding Backdrop.IsColor, Converter={StaticResource BoolToVisibility}}">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ItemsControl ItemsSource="{Binding Backdrop.Colors}" Focusable="False">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                          <WrapPanel />
+                        </ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type ap:BackdropColor}">
+                          <Button Width="38" Height="38" Margin="0,0,8,8" Cursor="Hand" ToolTip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
+                                  Command="{Binding DataContext.Backdrop.SelectColorCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                  CommandParameter="{Binding Hex}">
+                            <Button.Template>
+                              <ControlTemplate TargetType="Button">
+                                <Grid Background="Transparent">
+                                  <Ellipse x:Name="Ring" StrokeThickness="2" Stroke="{DynamicResource Brush.Text}">
+                                    <Ellipse.Visibility>
+                                      <MultiBinding Converter="{StaticResource MultiEqualsToVisibility}">
+                                        <Binding Path="Hex" />
+                                        <Binding Path="DataContext.Backdrop.Color" RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                                      </MultiBinding>
+                                    </Ellipse.Visibility>
+                                  </Ellipse>
+                                  <Ellipse x:Name="Swatch" Margin="5" Fill="{Binding Hex, Converter={StaticResource HexToBrush}}"
+                                           Stroke="{DynamicResource Brush.GlassRim}" StrokeThickness="1" />
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                  <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Swatch" Property="Margin" Value="3" />
+                                  </Trigger>
+                                </ControlTemplate.Triggers>
+                              </ControlTemplate>
+                            </Button.Template>
+                          </Button>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="16,0,0,0">
+                      <Border Width="38" Height="38" CornerRadius="19" Background="{Binding Backdrop.Color, Converter={StaticResource HexToBrush}}"
+                              BorderBrush="{DynamicResource Brush.GlassRim}" BorderThickness="1" />
+                      <TextBox Style="{StaticResource TextBox.Default}" Width="110" Margin="10,0,0,0" Text="{Binding Backdrop.CustomColor}" VerticalAlignment="Center"
+                               ToolTip="Any color as #RRGGBB. Dark colors suit the dark theme; the light theme shows a pale tint of it. Press Enter or Tab to apply."
+                               AutomationProperties.Name="Custom background color" KeyDown="OnCommitOnEnter" />
+                    </StackPanel>
+                  </Grid>
+
+                  <!-- Pictures -->
+                  <StackPanel Margin="0,14,0,0" Visibility="{Binding Backdrop.IsImage, Converter={StaticResource BoolToVisibility}}">
+                    <WrapPanel Margin="-3,0,0,0">
+                      <ItemsControl ItemsSource="{Binding Backdrop.Images}" Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <WrapPanel />
+                          </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate DataType="{x:Type ap:BackdropPicture}">
+                            <StackPanel Margin="0,0,10,10">
+                              <Button Style="{StaticResource BackdropTile}" ToolTip="{Binding Name}" AutomationProperties.Name="{Binding Name}"
+                                      Command="{Binding DataContext.Backdrop.SelectImageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding Id}">
+                                <Button.Tag>
+                                  <MultiBinding Converter="{StaticResource MultiEqualsToBool}">
+                                    <Binding Path="Id" />
+                                    <Binding Path="DataContext.Backdrop.Image" RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                                  </MultiBinding>
+                                </Button.Tag>
+                                <Image Source="{Binding Id, Converter={StaticResource BackdropThumbnail}}" Stretch="UniformToFill" />
+                              </Button>
+                              <TextBlock Style="{StaticResource Backdrop.Caption}" Text="{Binding Name}" />
+                            </StackPanel>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+
+                      <!-- Your own picture, once chosen -->
+                      <StackPanel Margin="0,0,10,10" Visibility="{Binding Backdrop.HasCustomImage, Converter={StaticResource BoolToVisibility}}">
+                        <Button Style="{StaticResource BackdropTile}" ToolTip="Your picture" AutomationProperties.Name="Your picture"
+                                Command="{Binding Backdrop.SelectImageCommand}" CommandParameter="custom"
+                                Tag="{Binding Backdrop.Image, Converter={StaticResource EqualsToBool}, ConverterParameter=custom}">
+                          <Image Source="{Binding Backdrop.CustomImagePath, Converter={StaticResource BackdropThumbnail}}" Stretch="UniformToFill" />
+                        </Button>
+                        <TextBlock Style="{StaticResource Backdrop.Caption}" Text="Your picture" />
+                      </StackPanel>
+
+                      <!-- Choose one -->
+                      <StackPanel Margin="0,0,10,10" Visibility="{Binding Backdrop.CanChooseImage, Converter={StaticResource BoolToVisibility}}">
+                        <Button Style="{StaticResource BackdropTile}" Command="{Binding Backdrop.ChooseImageCommand}"
+                                ToolTip="Choose a picture from your PC (a copy is kept in Coreloom's folder)" AutomationProperties.Name="Choose a picture">
+                          <Path Style="{StaticResource IconPath}" Width="20" Height="20" Data="M12,5 L12,19 M5,12 L19,12" Stroke="{DynamicResource Brush.TextSecondary}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Button>
+                        <TextBlock Style="{StaticResource Backdrop.Caption}" Text="Choose…" />
+                      </StackPanel>
+                    </WrapPanel>
+                    <TextBlock Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Elevated}" Margin="0,0,0,8" TextWrapping="Wrap"
+                               Text="{Binding Backdrop.Message}" Visibility="{Binding Backdrop.HasMessage, Converter={StaticResource BoolToVisibility}}" />
+
+                    <Grid Margin="0,4,0,0">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                      </Grid.RowDefinitions>
+                      <TextBlock Text="Picture strength" FontSize="12.5" VerticalAlignment="Center" Margin="0,0,16,0"
+                                 ToolTip="How strongly the picture shows through. Lower keeps the cards and text easier to read." />
+                      <Slider Grid.Column="1" Style="{StaticResource Slider.Default}" Minimum="10" Maximum="100" SmallChange="5" LargeChange="10"
+                              Value="{Binding Backdrop.ImageOpacity}" AutomationProperties.Name="Picture strength" />
+                      <TextBlock Grid.Column="2" Text="{Binding Backdrop.ImageOpacityText}" Style="{StaticResource Text.Caption}" MinWidth="44"
+                                 TextAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0" />
+                      <TextBlock Grid.Row="1" Text="Frosted glass" FontSize="12.5" VerticalAlignment="Center" Margin="0,10,16,0"
+                                 ToolTip="How much the frosted layer over the picture blurs it. The cards always frost what's behind them." />
+                      <Slider Grid.Row="1" Grid.Column="1" Style="{StaticResource Slider.Default}" Minimum="0" Maximum="100" SmallChange="5" LargeChange="10" Margin="0,10,0,0"
+                              Value="{Binding Backdrop.Blur}" AutomationProperties.Name="Frosted glass blur" />
+                      <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Backdrop.BlurText}" Style="{StaticResource Text.Caption}" MinWidth="44"
+                                 TextAlignment="Right" VerticalAlignment="Center" Margin="12,10,0,0" />
+                    </Grid>
                   </StackPanel>
-                </CheckBox>
+
+                  <!-- See-through (Mica) -->
+                  <TextBlock Style="{StaticResource Row.Description}" Margin="0,12,0,0" Text="{Binding Backdrop.SeeThroughText}" TextWrapping="Wrap"
+                             Visibility="{Binding Backdrop.IsSeeThrough, Converter={StaticResource BoolToVisibility}}" />
+                </StackPanel>
               </Border>
 
               <Border Style="{StaticResource Row}">
