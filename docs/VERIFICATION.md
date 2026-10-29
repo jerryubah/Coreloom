@@ -902,6 +902,13 @@ unchanged.
 | No outline around the overlay on Windows | The cause, found in the code: whenever the theme, accent or background changed, `ThemeService.Apply` asked Windows for round corners (and Mica) on every Coreloom window, the overlay and splash included, and Windows 11 draws a 1-pixel grey border with round corners. The overlay and splash are now left out, and both overlays (the WPF window and the layered window) tell Windows: no non-client drawing, no round corners, border color "none". Page shots photograph the overlay on the screen both ways | ⚠️ The code path is fixed, but GitHub's Windows Server machines draw no border either way (`overlay-on-screen.txt`: the same pixels with and without round corners asked for), so the outline itself couldn't be seen there |
 | Website and README | The website's Mac and Windows pictures and the README's two pictures redrawn from these shots; Playwright as a Mac, a Windows and a phone visitor: the right pictures, the background swatches switch, no horizontal scrolling at 390 px, no console errors | ✅ |
 
+### Updating to 1.8.3 on a Mac
+
+| Run | Result |
+|---|---|
+| The published 1.8.2 app (downloaded from its release) → the published 1.8.3, run 40823399051 (`macupdatetest-183`) | Intel ✅ (found and verified in about 25 s, replaced after quitting, 1.8.3 running with "Coreloom was updated to 1.8.3"). Apple silicon: ❌ the first time (its update check got GitHub's "rate limit reached" twice, ten minutes apart, on the shared runner, so nothing was downloaded; the same runner trouble as 1.8.1's first run), ✅ on the re-run |
+| 0.9.0 (built from 1.8.3's code) → the published 1.8.3, same run | ✅ Apple silicon and Intel both times |
+
 ### Not verified yet
 
 - **The overlay's outline on a real Windows 11 PC.** See above: the fix removes what asked Windows for the border, but only a Windows 11 desktop can show that it's gone.
