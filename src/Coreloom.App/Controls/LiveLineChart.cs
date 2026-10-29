@@ -34,7 +34,7 @@ public sealed class LiveLineChart : FrameworkElement
         nameof(StrokeThickness), typeof(double), typeof(LiveLineChart), new PropertyMetadata(1.8, OnAppearanceChanged));
 
     public static readonly DependencyProperty FillOpacityProperty = DependencyProperty.Register(
-        nameof(FillOpacity), typeof(double), typeof(LiveLineChart), new PropertyMetadata(0.32, OnAppearanceChanged));
+        nameof(FillOpacity), typeof(double), typeof(LiveLineChart), new PropertyMetadata(0.38, OnAppearanceChanged));
 
     public static readonly DependencyProperty ShowTooltipProperty = DependencyProperty.Register(
         nameof(ShowTooltip), typeof(bool), typeof(LiveLineChart), new PropertyMetadata(true));

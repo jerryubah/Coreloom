@@ -33,34 +33,27 @@
   </Window.DataTemplates>
 
   <Window.Resources>
-    <!-- The sidebar's update button: the accent gradient (as on the banners' buttons), a lit rim, and a soft glow beneath
-         it in the same colors that brightens under the pointer. -->
+    <!-- The sidebar's update button (since 1.8.3): charcoal glass like the banners' buttons, its rim lit along the top and
+         toward a soft light of the accent in the lower right corner, which grows under the pointer. White text. -->
     <ControlTheme x:Key="Button.Update" TargetType="Button">
       <Setter Property="Cursor" Value="Hand" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}" />
-      <Setter Property="Background" Value="{DynamicResource Brush.AccentGradient}" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.OnGlow}" />
+      <Setter Property="Background" Value="{DynamicResource Brush.GlowButtonFill}" />
       <Setter Property="RenderTransformOrigin" Value="50%,50%" />
       <Setter Property="Template">
         <ControlTemplate>
-          <Panel>
-            <Border Name="Glow" CornerRadius="16" Background="{TemplateBinding Background}" Opacity="0.5" Margin="8,10,8,-2" IsHitTestVisible="False">
-              <Border.Effect>
-                <BlurEffect Radius="16" />
-              </Border.Effect>
-            </Border>
-            <c:SquircleBorder Name="Root" CornerRadius="14" Background="{TemplateBinding Background}" BorderBrush="#38FFFFFF" BorderThickness="1" Sheen="1">
+          <c:SquircleBorder Name="Root" CornerRadius="14" Background="{TemplateBinding Background}" BorderBrush="{DynamicResource Brush.GlowButtonRim}"
+                            BorderThickness="1" ClipContent="True">
+            <Panel>
+              <Border Name="Light" Background="{DynamicResource Brush.GlowButtonLight}" Opacity="0.85" IsHitTestVisible="False" />
               <ContentPresenter Margin="{TemplateBinding Padding}" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
                                 HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
-            </c:SquircleBorder>
-            <c:SquircleBorder Name="Sheen" CornerRadius="14" Background="White" Opacity="0" IsHitTestVisible="False" />
-          </Panel>
+            </Panel>
+          </c:SquircleBorder>
         </ControlTemplate>
       </Setter>
-      <Style Selector="^:pointerover /template/ c|SquircleBorder#Sheen">
-        <Setter Property="Opacity" Value="0.08" />
-      </Style>
-      <Style Selector="^:pointerover /template/ Border#Glow">
-        <Setter Property="Opacity" Value="0.85" />
+      <Style Selector="^:pointerover /template/ Border#Light">
+        <Setter Property="Opacity" Value="1" />
       </Style>
       <Style Selector="^:pressed">
         <Setter Property="RenderTransform" Value="scale(0.98)" />
@@ -143,12 +136,12 @@
                   HorizontalContentAlignment="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter=Center|Left}"
                   Padding="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0,7|9,8,12,8'}">
             <StackPanel Orientation="Horizontal">
-              <Border Width="28" Height="28" CornerRadius="9" Background="#30FFFFFF" VerticalAlignment="Center">
-                <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
+              <Border Width="28" Height="28" CornerRadius="9" Background="#1FFFFFFF" VerticalAlignment="Center">
+                <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnGlow}" />
               </Border>
               <StackPanel Margin="10,0,0,0" VerticalAlignment="Center" IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
-                <TextBlock Text="{Binding Updates.BadgeText}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.OnAccent}" TextTrimming="CharacterEllipsis" />
-                <TextBlock Text="{Binding Updates.BadgeDetail}" FontSize="11" Margin="0,1,0,0" Foreground="{DynamicResource Brush.OnAccent}" Opacity="0.8" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding Updates.BadgeText}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.OnGlow}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding Updates.BadgeDetail}" FontSize="11" Margin="0,1,0,0" Foreground="{DynamicResource Brush.OnGlow}" Opacity="0.75" TextTrimming="CharacterEllipsis" />
               </StackPanel>
             </StackPanel>
           </Button>

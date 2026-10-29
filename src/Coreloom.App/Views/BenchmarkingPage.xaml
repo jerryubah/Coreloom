@@ -270,7 +270,7 @@
           <Button Style="{StaticResource Button.AccentGradient}" Padding="18,9" Command="{Binding RunBothCommand}" VerticalAlignment="Center"
                   ToolTip="Runs the CPU benchmark, then the GPU benchmark (about two minutes)">
             <StackPanel Orientation="Horizontal">
-              <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Benchmark}" Stroke="{DynamicResource Brush.OnAccent}" />
+              <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Benchmark}" Stroke="{DynamicResource Brush.OnGlow}" />
               <TextBlock Text="Run both" Margin="8,0,0,0" />
             </StackPanel>
           </Button>

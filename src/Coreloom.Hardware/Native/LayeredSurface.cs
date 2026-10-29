@@ -78,6 +78,7 @@ public sealed unsafe partial class LayeredSurface : IDisposable
             throw new Win32Exception(Marshal.GetLastPInvokeError(), "Couldn't create the layered window.");
         }
 
+        MakeFrameless(hwnd);
         return new LayeredSurface(hwnd);
     }
 
@@ -332,6 +333,27 @@ public sealed unsafe partial class LayeredSurface : IDisposable
         public char* ClassName;
         public IntPtr IconSmall;
     }
+
+    /// <summary>No border, round corners or non-client drawing from DWM (Windows 11 may otherwise frame the window).</summary>
+    private static void MakeFrameless(IntPtr hwnd)
+    {
+        try
+        {
+            int value = 1; // DWMNCRP_DISABLED
+            DwmSetWindowAttribute(hwnd, 2, ref value, sizeof(int));
+            value = 1; // DWMWCP_DONOTROUND
+            DwmSetWindowAttribute(hwnd, 33, ref value, sizeof(int));
+            value = unchecked((int)0xFFFFFFFE); // DWMWA_COLOR_NONE
+            DwmSetWindowAttribute(hwnd, 34, ref value, sizeof(int));
+        }
+        catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
+        {
+            // Cosmetic only (older Windows).
+        }
+    }
+
+    [LibraryImport("dwmapi.dll")]
+    private static partial int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
 
     [LibraryImport("kernel32.dll")]
     private static partial IntPtr GetModuleHandleW(IntPtr name);

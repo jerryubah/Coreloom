@@ -149,8 +149,65 @@ public sealed class ThemeService : IThemeService
         _resources["Brush.AccentBloom"] = Radial((A(accent, 0x52, 0x34), 0), (A(accent, 0x2A, 0x1C), 0.4), (A(warm, 0x10, 0x0A), 0.72), (A(warm, 0, 0), 1));
         _resources["Brush.AccentEdge"] = Linear(new RelativePoint(0, 0, RelativeUnit.Relative), new RelativePoint(1, 0.7, RelativeUnit.Relative),
             (A(cool, 0xA0, 0x90), 0), (A(accent, 0x50, 0x40), 0.3), (palette["CardBorder"], 0.7));
+        // Since 1.8.3 one hue, a lighter shade to a deeper one (no longer sky to violet, which white text got lost in).
+        var deep = ThemePalette.Shift(accent, 0, -0.10);
+        var lighter = Blend(accent, Colors.White, 0.32);
         _resources["Brush.AccentGradient"] = Linear(new RelativePoint(0, 0, RelativeUnit.Relative), new RelativePoint(1, 0.4, RelativeUnit.Relative),
-            (cool, 0), (accent, 0.5), (warm, 1));
+            (lighter, 0), (accent, 0.55), (deep, 1));
+        PublishHeroLooks(accent, deep, lighter);
+    }
+
+    /// <summary>
+    /// The banners' look (since 1.8.3): a light from the top edge in the accent that fades out well before the content,
+    /// a bright line where it meets the edge, a dark tile for the dial, and the dark glass buttons with a soft light in
+    /// one corner (white text on charcoal, not on the accent).
+    /// </summary>
+    private void PublishHeroLooks(Color accent, Color deep, Color lighter)
+    {
+        Color A(Color c, int dark, int light) => ThemePalette.WithAlpha(c, (byte)(_isDark ? dark : light));
+        static Color Rgb(byte a, byte r, byte g, byte b) => Color.FromArgb(a, r, g, b);
+        var top = new RelativePoint(0.5, 0, RelativeUnit.Relative);
+
+        _resources["Brush.HeroGlow"] = new RadialGradientBrush
+        {
+            Center = top,
+            GradientOrigin = top,
+            RadiusX = new RelativeScalar(0.6, RelativeUnit.Relative),
+            RadiusY = new RelativeScalar(0.9, RelativeUnit.Relative),
+            GradientStops =
+            {
+                new GradientStop(A(lighter, 0x80, 0x52), 0),
+                new GradientStop(A(accent, 0x46, 0x2C), 0.25),
+                new GradientStop(A(deep, 0x18, 0x10), 0.55),
+                new GradientStop(A(deep, 0, 0), 1),
+            },
+        };
+        _resources["Brush.HeroLine"] = Linear(new RelativePoint(0, 0, RelativeUnit.Relative), new RelativePoint(1, 0, RelativeUnit.Relative),
+            (A(lighter, 0, 0), 0.12), (A(Blend(lighter, Colors.White, 0.5), 0xB0, 0x90), 0.5), (A(lighter, 0, 0), 0.88));
+        _resources["Brush.DialTile"] = Linear(new RelativePoint(0, 0, RelativeUnit.Relative), new RelativePoint(0, 1, RelativeUnit.Relative),
+            (_isDark ? Rgb(0x30, 0, 0, 0) : Rgb(0x8C, 255, 255, 255), 0), (_isDark ? Rgb(0x58, 0, 0, 0) : Rgb(0xB8, 255, 255, 255), 1));
+        _resources["Brush.DialTileRim"] = Linear(new RelativePoint(0, 0, RelativeUnit.Relative), new RelativePoint(0, 1, RelativeUnit.Relative),
+            (_isDark ? Rgb(0x2C, 255, 255, 255) : Rgb(0x20, 0, 0, 0), 0), (_isDark ? Rgb(0x0C, 255, 255, 255) : Rgb(0x0C, 0, 0, 0), 0.6), (A(lighter, 0x40, 0x30), 1));
+
+        // The buttons: charcoal glass whichever the theme, a rim lit along the top and toward the light, and the light.
+        _resources["Brush.GlowButtonFill"] = Linear(new RelativePoint(0, 0, RelativeUnit.Relative), new RelativePoint(0, 1, RelativeUnit.Relative),
+            (Rgb(0xF2, 0x34, 0x36, 0x3E), 0), (Rgb(0xF6, 0x1C, 0x1D, 0x22), 1));
+        _resources["Brush.GlowButtonRim"] = Linear(new RelativePoint(0, 0, RelativeUnit.Relative), new RelativePoint(1, 1, RelativeUnit.Relative),
+            (Rgb(0x5C, 255, 255, 255), 0), (Rgb(0x16, 255, 255, 255), 0.42), (ThemePalette.WithAlpha(lighter, 0xA8), 1));
+        _resources["Brush.GlowButtonLight"] = new RadialGradientBrush
+        {
+            Center = new RelativePoint(0.92, 1.05, RelativeUnit.Relative),
+            GradientOrigin = new RelativePoint(0.92, 1.05, RelativeUnit.Relative),
+            RadiusX = new RelativeScalar(0.75, RelativeUnit.Relative),
+            RadiusY = new RelativeScalar(1.5, RelativeUnit.Relative),
+            GradientStops =
+            {
+                new GradientStop(ThemePalette.WithAlpha(lighter, 0xA0), 0),
+                new GradientStop(ThemePalette.WithAlpha(accent, 0x38), 0.45),
+                new GradientStop(ThemePalette.WithAlpha(accent, 0), 1),
+            },
+        };
+        _resources["Brush.OnGlow"] = new SolidColorBrush(Rgb(0xFF, 0xF5, 0xF7, 0xFB));
     }
 
     /// <summary>

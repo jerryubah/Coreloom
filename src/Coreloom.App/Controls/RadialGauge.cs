@@ -592,7 +592,7 @@ public sealed class RadialGauge : FrameworkElement
         _ => "Critical",
     });
 
-    private static Color Lerp(Color a, Color b, double t)
+    internal static Color Lerp(Color a, Color b, double t)
     {
         if (t <= 0)
         {

@@ -1389,6 +1389,8 @@ public sealed class OptimizeViewModel : PageViewModel
             if (SetProperty(ref _stage, value))
             {
                 OnPropertyChanged(nameof(StageKey));
+                OnPropertyChanged(nameof(DialValue));
+                OnPropertyChanged(nameof(DialTone));
                 OnPropertyChanged(nameof(StageText));
                 OnPropertyChanged(nameof(IsWorking));
                 OnPropertyChanged(nameof(IsReady));
@@ -1442,15 +1444,33 @@ public sealed class OptimizeViewModel : PageViewModel
     public double RingProgress
     {
         get => _ringProgress;
-        private set => SetProperty(ref _ringProgress, value);
+        private set
+        {
+            if (SetProperty(ref _ringProgress, value))
+            {
+                OnPropertyChanged(nameof(DialValue));
+            }
+        }
     }
 
     /// <summary>The ring's color: blue while working, green when all is well, orange or red when something needs attention.</summary>
     public double RingTone
     {
         get => _ringTone;
-        private set => SetProperty(ref _ringTone, value);
+        private set
+        {
+            if (SetProperty(ref _ringTone, value))
+            {
+                OnPropertyChanged(nameof(DialTone));
+            }
+        }
     }
+
+    /// <summary>The banner's dial (since 1.8.3): full before the first scan, then the progress of the scan or run.</summary>
+    public double DialValue => _stage == OptimizeStage.Idle ? 1 : _ringProgress;
+
+    /// <summary>The dial's color: the accent (NaN) before and during a scan or run, the result's color once there is one.</summary>
+    public double DialTone => _stage is OptimizeStage.Ready or OptimizeStage.Done ? _ringTone : double.NaN;
 
     /// <summary>After a run: what it did, line by line.</summary>
     public string? ResultText

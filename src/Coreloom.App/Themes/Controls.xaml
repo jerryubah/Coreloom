@@ -287,23 +287,36 @@
     </Setter>
   </Style>
 
-  <!-- A banner's main button: the accent as a gradient (Brush.AccentGradient), brightening on hover. -->
-  <Style x:Key="Button.AccentGradient" TargetType="Button" BasedOn="{StaticResource Button.Primary}">
-    <Setter Property="Background" Value="{DynamicResource Brush.AccentGradient}" />
+  <!-- A banner's main button (since 1.8.3): charcoal glass with white text, its rim lit along the top and toward a soft
+       light of the accent in its lower right corner, which grows on hover. Replaces the accent gradient fill, which white
+       text and icons got lost in. The key stays so every banner button picks it up. -->
+  <Style x:Key="Button.AccentGradient" TargetType="Button" BasedOn="{StaticResource Button.Subtle}">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.OnGlow}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.GlowButtonFill}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.GlowButtonRim}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Button">
           <Grid>
-            <c:SquircleBorder x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="10" />
-            <c:SquircleBorder x:Name="Sheen" Background="{DynamicResource Brush.OnAccent}" CornerRadius="10" Opacity="0" />
+            <c:SquircleBorder x:Name="Root" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                              CornerRadius="11" ClipContent="True">
+              <Border x:Name="Light" Background="{DynamicResource Brush.GlowButtonLight}" Opacity="0.85" IsHitTestVisible="False" />
+            </c:SquircleBorder>
             <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
           </Grid>
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-              <Setter TargetName="Sheen" Property="Opacity" Value="0.1" />
+              <Setter TargetName="Light" Property="Opacity" Value="1" />
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
-              <Setter TargetName="Root" Property="Opacity" Value="0.85" />
+              <Setter TargetName="Light" Property="Opacity" Value="0.6" />
+              <Setter Property="RenderTransform">
+                <Setter.Value>
+                  <ScaleTransform ScaleX="0.98" ScaleY="0.98" />
+                </Setter.Value>
+              </Setter>
             </Trigger>
             <Trigger Property="IsEnabled" Value="False">
               <Setter Property="Opacity" Value="0.45" />
@@ -313,6 +326,10 @@
       </Setter.Value>
     </Setter>
   </Style>
+
+  <!-- The banners' grain (assets/textures/grain.png, tiled), laid a few percent strong over their light so it doesn't band. -->
+  <ImageBrush x:Key="GrainTexture" ImageSource="pack://application:,,,/Coreloom;component/Assets/grain.png" TileMode="Tile" Stretch="None"
+              AlignmentX="Left" AlignmentY="Top" ViewportUnits="Absolute" Viewport="0,0,160,160" />
 
   <Style x:Key="Button.Icon" TargetType="Button" BasedOn="{StaticResource Button.Subtle}">
     <Setter Property="Width" Value="34" />

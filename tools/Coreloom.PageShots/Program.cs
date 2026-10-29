@@ -8,6 +8,7 @@ using Coreloom.App.Themes;
 using Coreloom.App.Views;
 using Coreloom.Core.Benchmarks;
 using Coreloom.Core.Settings;
+using Coreloom.ViewModels;
 using Coreloom.ViewModels.Pages;
 
 namespace Coreloom.PageShots;
@@ -277,8 +278,72 @@ internal static class Program
         Save(root, Path.Combine(output, "windows-settings-update.png"));
 
         ThemeService.Instance?.Apply(new AppearanceSettings { Theme = ThemePreference.Dark, ReducedMotion = true });
+        try
+        {
+            await ShootOverlayOnScreenAsync(output, shell, data);
+        }
+        catch (Exception e)
+        {
+            File.WriteAllText(Path.Combine(output, "overlay-on-screen-error.txt"), e.ToString());
+        }
+
         window.AllowClose = true;
         window.Close();
+    }
+
+    /// <summary>
+    /// The in-game overlay on the real screen (since 1.8.3), over a black window, after the theme has been applied again
+    /// (as when the background or accent changes, which used to ask Windows for round corners on every window and gave
+    /// the overlay a grey border on Windows 11): overlay-on-screen.png and the pixels at its window's edge in
+    /// overlay-on-screen.txt. Then once more with round corners asked for, as before, for comparison
+    /// (overlay-on-screen-rounded.png).
+    /// </summary>
+    private static async Task ShootOverlayOnScreenAsync(string output, ShellViewModel shell, SampleData data)
+    {
+        var black = new Window
+        {
+            WindowStyle = WindowStyle.None,
+            ResizeMode = ResizeMode.NoResize,
+            Background = Brushes.Black,
+            Left = 0,
+            Top = 0,
+            Width = 640,
+            Height = 400,
+            ShowInTaskbar = false,
+            ShowActivated = false,
+        };
+        black.Show();
+        data.Settings.Update("Overlay", s => s.Overlay.Enabled = true);
+        var overlay = new OverlayWindow(shell.Overlay) { Left = 80, Top = 60 };
+        overlay.Show();
+        for (int i = 0; i < 12; i++)
+        {
+            shell.OnFrame(data.Poll());
+            await Task.Delay(120);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        }
+
+        ThemeService.Instance?.Apply(new AppearanceSettings { Theme = ThemePreference.Dark, ReducedMotion = true });
+        await Task.Delay(800);
+        await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        var report = new System.Text.StringBuilder();
+        IntPtr hwnd = overlay.Handle;
+        ScreenCapture.Save(new Int32Rect(0, 0, 640, 400), Path.Combine(output, "overlay-on-screen.png"));
+        report.AppendLine("After the theme was applied again (1.8.3: the overlay is left out, and asks for no border or round corners):");
+        report.AppendLine(ScreenCapture.DescribeEdge(hwnd));
+
+        // The old behaviour for comparison: round corners asked for, as the theme did before 1.8.3.
+        ScreenCapture.AskForRoundCorners(hwnd);
+        await Task.Delay(800);
+        await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        ScreenCapture.Save(new Int32Rect(0, 0, 640, 400), Path.Combine(output, "overlay-on-screen-rounded.png"));
+        report.AppendLine("With round corners asked for (before 1.8.3):");
+        report.AppendLine(ScreenCapture.DescribeEdge(hwnd));
+        File.WriteAllText(Path.Combine(output, "overlay-on-screen.txt"), report.ToString());
+
+        overlay.Close();
+        black.Close();
+        data.Settings.Update("Overlay", s => s.Overlay.Enabled = false);
     }
 
     /// <summary>Draws an element at twice its size over the window's background into a PNG.</summary>

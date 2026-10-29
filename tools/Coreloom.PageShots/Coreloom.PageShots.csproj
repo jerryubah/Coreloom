@@ -9,6 +9,8 @@
     <UseWPF>true</UseWPF>
     <IsPackable>false</IsPackable>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- LibraryImport (ScreenCapture) generates unsafe marshalling code. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <!-- The app's fonts at the same pack://application:,,,/Fonts/ address the app's styles use. -->

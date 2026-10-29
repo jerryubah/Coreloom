@@ -7,16 +7,6 @@
 
   <UserControl.Resources>
     <!-- A small spinning arc for "working". -->
-    <!-- The banner ring: the accent as a sweep gradient while ready or working; the result's color (green, orange or
-         red, a shade lighter at the start) once a scan or a clean-up is done. Full while nothing has run yet. -->
-    <ControlTheme x:Key="HeroRing" TargetType="c:RadialGauge">
-      <Setter Property="Thickness" Value="14" />
-      <Setter Property="SweepAngle" Value="359" />
-      <Setter Property="TrackBrush" Value="Transparent" />
-      <Setter Property="Gradient" Value="Accent" />
-      <Setter Property="Tone" Value="{Binding RingTone}" />
-    </ControlTheme>
-
     <ControlTheme x:Key="Spinner" TargetType="c:RadialGauge">
       <Setter Property="Width" Value="16" />
       <Setter Property="Height" Value="16" />
@@ -161,61 +151,35 @@
       <!-- ============================================================ -->
       <!-- Smart Scan                                                   -->
       <!-- ============================================================ -->
-      <c:SquircleBorder Theme="{StaticResource Card.Glow}" GlowKey="Accent" GlowStrength="0.9" Sheen="0.8" Padding="0" BorderBrush="{DynamicResource Brush.AccentEdge}">
+      <c:SquircleBorder Theme="{StaticResource Card}" Padding="0" Sheen="0.8">
         <Grid ClipToBounds="True">
-          <!-- The accent washing in from the top left and turning toward its warmer neighbour as it fades -->
-          <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.AccentWash}" IsHitTestVisible="False" />
+          <!-- The banner's light: from the top edge in the accent, fading out well before the content; a bright line where
+               it meets the edge; a little grain so the dark gradient stays smooth. -->
+          <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.HeroGlow}" IsHitTestVisible="False" />
+          <c:SquircleBorder CornerRadius="17" Background="{StaticResource GrainTexture}" Opacity="0.045" IsHitTestVisible="False" />
+          <Border Height="1" VerticalAlignment="Top" Margin="56,0" Background="{DynamicResource Brush.HeroLine}" IsHitTestVisible="False" />
 
-          <c:AdaptiveGrid MinColumnWidth="330" MaxColumns="2" Spacing="12" Margin="28,26">
-            <!-- The ring -->
-            <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,4,0,8">
-              <!-- a bloom of the accent behind it (wider than the ring; negative margins keep the layout the ring's size) -->
-              <Ellipse Width="320" Height="320" Margin="-42" Fill="{DynamicResource Brush.AccentBloom}" IsHitTestVisible="False" />
-              <Grid Width="236" Height="236">
-                <!-- the face: a darker disc so the text stays easy to read on the bloom -->
-                <Ellipse Margin="22" Fill="{DynamicResource Brush.Card}" Opacity="0.7" Stroke="{DynamicResource Brush.AccentTrack}" StrokeThickness="1" />
-                <!-- the track, tinted with the accent so the ring reads even when empty -->
-                <c:RadialGauge Thickness="14" SweepAngle="359" Value="0" TrackBrush="{DynamicResource Brush.AccentTrack}" />
-                <!-- a soft glow under the arc; full before the first scan, the result's colors once there is one -->
-                <c:RadialGauge Theme="{StaticResource HeroRing}" Opacity="0.75" Value="1" IsVisible="{Binding StageKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Idle}">
-                  <c:RadialGauge.Effect>
-                    <BlurEffect Radius="16" />
-                  </c:RadialGauge.Effect>
-                </c:RadialGauge>
-                <c:RadialGauge Theme="{StaticResource HeroRing}" Opacity="0.75" Value="{Binding RingProgress}"
-                               IsVisible="{Binding StageKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Scanning|Running}">
-                  <c:RadialGauge.Effect>
-                    <BlurEffect Radius="16" />
-                  </c:RadialGauge.Effect>
-                </c:RadialGauge>
-                <c:RadialGauge Theme="{StaticResource HeroRing}" Opacity="0.75" Value="{Binding RingProgress}" Gradient="Shade" ToneScale="True"
-                               IsVisible="{Binding StageKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Ready|Done}">
-                  <c:RadialGauge.Effect>
-                    <BlurEffect Radius="16" />
-                  </c:RadialGauge.Effect>
-                </c:RadialGauge>
-                <c:RadialGauge Theme="{StaticResource HeroRing}" Value="1" IsVisible="{Binding StageKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Idle}" />
-                <c:RadialGauge Theme="{StaticResource HeroRing}" Value="{Binding RingProgress}"
-                               IsVisible="{Binding StageKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Scanning|Running}" />
-                <c:RadialGauge Theme="{StaticResource HeroRing}" Value="{Binding RingProgress}" Gradient="Shade" ToneScale="True"
-                               IsVisible="{Binding StageKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Ready|Done}" />
-                <!-- a bright comet that circles while scanning or cleaning -->
-                <c:RadialGauge Thickness="14" SweepAngle="359" Value="0.2" TrackBrush="Transparent" Fill="{DynamicResource Brush.Text}" FadeTail="True" Opacity="0.6"
-                               b:Spin.IsSpinning="{Binding IsWorking}" IsVisible="{Binding IsWorking}" />
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="170">
+          <c:AdaptiveGrid MinColumnWidth="330" MaxColumns="2" Spacing="28" Margin="18,18,28,18">
+            <!-- The dial in its own tile: full before the first scan, the progress while scanning or cleaning (with a comet
+                 running along it), the result's color once there is one. It centres itself between the tile's walls. -->
+            <c:SquircleBorder CornerRadius="15" Background="{DynamicResource Brush.DialTile}" BorderBrush="{DynamicResource Brush.DialTileRim}" BorderThickness="1"
+                              ClipContent="True" MinHeight="300">
+              <Panel>
+                <c:HeroDial Value="{Binding DialValue}" Tone="{Binding DialTone}" IsSpinning="{Binding IsWorking}" DialSize="236" />
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="160">
                   <Grid HorizontalAlignment="Center" Width="30" Height="30">
                     <Path Theme="{StaticResource IconPath}" Width="26" Height="26" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.Accent}"
                           IsVisible="{Binding !IsDone}" b:Pulse.IsPulsing="{Binding IsWorking}" />
                     <Path Theme="{StaticResource IconPath}" Width="28" Height="28" Data="{StaticResource Icon.Check}" Stroke="{DynamicResource Brush.Success}"
                           IsVisible="{Binding IsDone}" b:Pop.Trigger="{Binding IsDone}" />
                   </Grid>
-                  <TextBlock Text="{Binding Headline}" FontSize="23" FontWeight="SemiBold" HorizontalAlignment="Center" TextAlignment="Center"
+                  <TextBlock Text="{Binding Headline}" FontSize="22" FontWeight="SemiBold" HorizontalAlignment="Center" TextAlignment="Center"
                              TextWrapping="Wrap" Margin="0,8,0,0" Foreground="{DynamicResource Brush.Text}" />
                   <TextBlock Text="{Binding StageText}" Theme="{StaticResource Text.Label}" HorizontalAlignment="Center" Margin="0,4,0,0" Opacity="0.8"
                              IsVisible="{Binding StageText, Converter={StaticResource HasValue}}" />
                 </StackPanel>
-              </Grid>
-            </Grid>
+              </Panel>
+            </c:SquircleBorder>
 
             <!-- What it found, the buttons and the four parts -->
             <StackPanel VerticalAlignment="Center">
@@ -233,7 +197,7 @@
                 <Button Theme="{StaticResource Button.AccentGradient}" Padding="20,9" Margin="0,0,10,8" Command="{Binding RunCommand}"
                         IsVisible="{Binding IsReady}">
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Optimize}" Stroke="{DynamicResource Brush.OnAccent}" />
+                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Optimize}" Stroke="{DynamicResource Brush.OnGlow}" />
                     <TextBlock Text="Clean up and optimize" Margin="8,0,0,0" />
                   </StackPanel>
                 </Button>
@@ -246,7 +210,7 @@
                     </MultiBinding>
                   </Button.IsVisible>
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
+                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnGlow}" />
                     <TextBlock Text="{Binding ScanText}" Margin="8,0,0,0" />
                   </StackPanel>
                 </Button>
@@ -414,7 +378,7 @@
                 <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                   <Button Theme="{StaticResource Button.Primary}" Padding="16,7" Command="{Binding FreeUpCommand}">
                     <StackPanel Orientation="Horizontal">
-                      <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
+                      <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnGlow}" />
                       <TextBlock Text="Free up memory" Margin="7,0,0,0" />
                     </StackPanel>
                   </Button>

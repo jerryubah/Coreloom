@@ -43,7 +43,7 @@ public sealed class LiveLineChart : Control
 
     public static readonly StyledProperty<double> StrokeThicknessProperty = AvaloniaProperty.Register<LiveLineChart, double>(nameof(StrokeThickness), 1.8);
 
-    public static readonly StyledProperty<double> FillOpacityProperty = AvaloniaProperty.Register<LiveLineChart, double>(nameof(FillOpacity), 0.32);
+    public static readonly StyledProperty<double> FillOpacityProperty = AvaloniaProperty.Register<LiveLineChart, double>(nameof(FillOpacity), 0.38);
 
     public static readonly StyledProperty<bool> ShowTooltipProperty = AvaloniaProperty.Register<LiveLineChart, bool>(nameof(ShowTooltip), true);
 

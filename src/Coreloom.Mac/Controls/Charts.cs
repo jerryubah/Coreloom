@@ -28,7 +28,7 @@ public sealed class Sparkline : Control
 
     public static readonly StyledProperty<double> SecondsProperty = AvaloniaProperty.Register<Sparkline, double>(nameof(Seconds), 60.0);
 
-    public static readonly StyledProperty<double> FillOpacityProperty = AvaloniaProperty.Register<Sparkline, double>(nameof(FillOpacity), 0.28);
+    public static readonly StyledProperty<double> FillOpacityProperty = AvaloniaProperty.Register<Sparkline, double>(nameof(FillOpacity), 0.36);
 
     public static readonly StyledProperty<double> StrokeThicknessProperty = AvaloniaProperty.Register<Sparkline, double>(nameof(StrokeThickness), 1.5);
 
@@ -210,7 +210,11 @@ public sealed class Sparkline : Control
                     ctx.EndFigure(true);
                 }
 
-                dc.DrawGeometry(ChartColors.AreaFill(color, FillOpacity), null, area);
+                // The fill fades out at both ends, so it has no hard left and right edges on the card.
+                using (dc.PushOpacityMask(ChartColors.EdgeFade, new Rect(0, 0, width, height)))
+                {
+                    dc.DrawGeometry(ChartColors.AreaFill(color, FillOpacity), null, area);
+                }
             }
 
             dc.DrawGeometry(null, ChartColors.Pen(color, stroke), line);

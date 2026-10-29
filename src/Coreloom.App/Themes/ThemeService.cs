@@ -127,6 +127,13 @@ public sealed class ThemeService : IThemeService
         {
             foreach (Window window in app.Windows)
             {
+                // Not the in-game overlay or the splash: they're drawn to their edges with no frame, and asking DWM for
+                // round corners there gave the overlay a grey system border (fixed in 1.8.3).
+                if (window is Views.OverlayWindow or Views.SplashWindow)
+                {
+                    continue;
+                }
+
                 NativeWindow.ApplyBackdrop(window, _isDark, IsMicaActive);
             }
         }
@@ -160,8 +167,12 @@ public sealed class ThemeService : IThemeService
         }));
         Publish("Brush.AccentEdge", Linear(new Point(0, 0), new Point(1, 0.7),
             (A(cool, 0xA0, 0x90), 0), (A(accent, 0x50, 0x40), 0.3), (palette["CardBorder"], 0.7)));
+        // Since 1.8.3 one hue, a lighter shade to a deeper one (no longer sky to violet, which white text got lost in).
+        var deep = ThemePalette.Shift(accent, 0, -0.10);
+        var lighter = Blend(accent, Colors.White, 0.32);
         Publish("Brush.AccentGradient", Linear(new Point(0, 0), new Point(1, 0.4),
-            (cool, 0), (accent, 0.5), (warm, 1)));
+            (lighter, 0), (accent, 0.55), (deep, 1)));
+        PublishHeroLooks(accent, deep, lighter);
 
         static LinearGradientBrush Linear(Point start, Point end, params (Color Color, double Offset)[] stops)
         {
@@ -173,6 +184,42 @@ public sealed class ThemeService : IThemeService
 
             return brush;
         }
+    }
+
+    /// <summary>
+    /// The banners' look (since 1.8.3): a light from the top edge in the accent that fades out well before the content,
+    /// a bright line where it meets the edge, a dark tile for the dial, and the dark glass buttons with a soft light in
+    /// one corner (white text on charcoal, not on the accent).
+    /// </summary>
+    private void PublishHeroLooks(Color accent, Color deep, Color lighter)
+    {
+        Color A(Color c, int dark, int light) => ThemePalette.WithAlpha(c, (byte)(_isDark ? dark : light));
+        static Color Rgb(byte a, byte r, byte g, byte b) => Color.FromArgb(a, r, g, b);
+
+        var glow = new RadialGradientBrush { Center = new Point(0.5, 0), GradientOrigin = new Point(0.5, 0), RadiusX = 0.6, RadiusY = 0.9 };
+        glow.GradientStops.Add(new GradientStop(A(lighter, 0x80, 0x52), 0));
+        glow.GradientStops.Add(new GradientStop(A(accent, 0x46, 0x2C), 0.25));
+        glow.GradientStops.Add(new GradientStop(A(deep, 0x18, 0x10), 0.55));
+        glow.GradientStops.Add(new GradientStop(A(deep, 0, 0), 1));
+        Publish("Brush.HeroGlow", glow);
+        Publish("Brush.HeroLine", Gradient(new Point(0, 0), new Point(1, 0),
+            (A(lighter, 0, 0), 0.12), (A(Blend(lighter, Colors.White, 0.5), 0xB0, 0x90), 0.5), (A(lighter, 0, 0), 0.88)));
+        Publish("Brush.DialTile", Gradient(new Point(0, 0), new Point(0, 1),
+            (_isDark ? Rgb(0x30, 0, 0, 0) : Rgb(0x8C, 255, 255, 255), 0), (_isDark ? Rgb(0x58, 0, 0, 0) : Rgb(0xB8, 255, 255, 255), 1)));
+        Publish("Brush.DialTileRim", Gradient(new Point(0, 0), new Point(0, 1),
+            (_isDark ? Rgb(0x2C, 255, 255, 255) : Rgb(0x20, 0, 0, 0), 0), (_isDark ? Rgb(0x0C, 255, 255, 255) : Rgb(0x0C, 0, 0, 0), 0.6), (A(lighter, 0x40, 0x30), 1)));
+
+        // The buttons: charcoal glass whichever the theme, a rim lit along the top and toward the light, and the light.
+        Publish("Brush.GlowButtonFill", Gradient(new Point(0, 0), new Point(0, 1),
+            (Rgb(0xF2, 0x34, 0x36, 0x3E), 0), (Rgb(0xF6, 0x1C, 0x1D, 0x22), 1)));
+        Publish("Brush.GlowButtonRim", Gradient(new Point(0, 0), new Point(1, 1),
+            (Rgb(0x5C, 255, 255, 255), 0), (Rgb(0x16, 255, 255, 255), 0.42), (ThemePalette.WithAlpha(lighter, 0xA8), 1)));
+        var light = new RadialGradientBrush { Center = new Point(0.92, 1.05), GradientOrigin = new Point(0.92, 1.05), RadiusX = 0.75, RadiusY = 1.5 };
+        light.GradientStops.Add(new GradientStop(ThemePalette.WithAlpha(lighter, 0xA0), 0));
+        light.GradientStops.Add(new GradientStop(ThemePalette.WithAlpha(accent, 0x38), 0.45));
+        light.GradientStops.Add(new GradientStop(ThemePalette.WithAlpha(accent, 0), 1));
+        Publish("Brush.GlowButtonLight", light);
+        Publish("Brush.OnGlow", new SolidColorBrush(Rgb(0xFF, 0xF5, 0xF7, 0xFB)));
     }
 
     /// <summary>

@@ -29,7 +29,7 @@ public sealed class Sparkline : FrameworkElement
         nameof(Seconds), typeof(double), typeof(Sparkline), new FrameworkPropertyMetadata(60.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
     public static readonly DependencyProperty FillOpacityProperty = DependencyProperty.Register(
-        nameof(FillOpacity), typeof(double), typeof(Sparkline), new FrameworkPropertyMetadata(0.28, FrameworkPropertyMetadataOptions.AffectsRender));
+        nameof(FillOpacity), typeof(double), typeof(Sparkline), new FrameworkPropertyMetadata(0.36, FrameworkPropertyMetadataOptions.AffectsRender));
 
     public static readonly DependencyProperty StrokeThicknessProperty = DependencyProperty.Register(
         nameof(StrokeThickness), typeof(double), typeof(Sparkline), new FrameworkPropertyMetadata(1.5, FrameworkPropertyMetadataOptions.AffectsRender));
@@ -206,7 +206,10 @@ public sealed class Sparkline : FrameworkElement
 
             area.Freeze();
             dc.PushClip(new RectangleGeometry(new Rect(0, 0, width, height)));
+            // The fill fades out at both ends, so it has no hard left and right edges on the card.
+            dc.PushOpacityMask(ChartColors.EdgeFade);
             dc.DrawGeometry(ChartColors.AreaFill(color, FillOpacity), null, area);
+            dc.Pop();
             dc.DrawGeometry(null, ChartColors.Pen(color, stroke), line);
             dc.Pop();
         }

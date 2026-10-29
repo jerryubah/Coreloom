@@ -22,15 +22,6 @@
       <Setter Property="Fill" Value="{DynamicResource Brush.Accent}" />
     </ControlTheme>
 
-    <!-- The readiness ring in the banner: the accent as a sweep gradient. -->
-    <ControlTheme x:Key="BoostRing" TargetType="c:RadialGauge">
-      <Setter Property="Thickness" Value="14" />
-      <Setter Property="SweepAngle" Value="359" />
-      <Setter Property="TrackBrush" Value="Transparent" />
-      <Setter Property="Gradient" Value="Accent" />
-      <Setter Property="Value" Value="{Binding Readiness}" />
-    </ControlTheme>
-
     <!-- A small tile's value in the banner. -->
     <ControlTheme x:Key="StatValue" TargetType="TextBlock">
       <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
@@ -315,31 +306,29 @@
       <!-- ============================================================ -->
       <!-- Game Boost                                                   -->
       <!-- ============================================================ -->
-      <c:SquircleBorder Theme="{StaticResource Card.Glow}" GlowKey="Accent" GlowStrength="0.9" Sheen="0.8" Padding="0" BorderBrush="{DynamicResource Brush.AccentEdge}">
+      <c:SquircleBorder Theme="{StaticResource Card}" Padding="0" Sheen="0.8">
         <Grid ClipToBounds="True">
-          <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.AccentWash}" IsHitTestVisible="False" />
+          <!-- The banner's light: from the top edge in the accent, fading out well before the content; a bright line where
+               it meets the edge; a little grain so the dark gradient stays smooth. -->
+          <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.HeroGlow}" IsHitTestVisible="False" />
+          <c:SquircleBorder CornerRadius="17" Background="{StaticResource GrainTexture}" Opacity="0.045" IsHitTestVisible="False" />
+          <Border Height="1" VerticalAlignment="Top" Margin="56,0" Background="{DynamicResource Brush.HeroLine}" IsHitTestVisible="False" />
 
-          <c:AdaptiveGrid MinColumnWidth="330" MaxColumns="2" Spacing="12" Margin="28,24">
-            <!-- The ring: how many boosts are on -->
-            <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,4,0,8">
-              <Ellipse Width="300" Height="300" Margin="-40" Fill="{DynamicResource Brush.AccentBloom}" IsHitTestVisible="False" />
-              <Grid Width="220" Height="220">
-                <Ellipse Margin="21" Fill="{DynamicResource Brush.Card}" Opacity="0.7" Stroke="{DynamicResource Brush.AccentTrack}" StrokeThickness="1" />
-                <c:RadialGauge Thickness="14" SweepAngle="359" Value="0" TrackBrush="{DynamicResource Brush.AccentTrack}" />
-                <c:RadialGauge Theme="{StaticResource BoostRing}" Opacity="0.75">
-                  <c:RadialGauge.Effect>
-                    <BlurEffect Radius="16" />
-                  </c:RadialGauge.Effect>
-                </c:RadialGauge>
-                <c:RadialGauge Theme="{StaticResource BoostRing}" />
+          <c:AdaptiveGrid MinColumnWidth="330" MaxColumns="2" Spacing="28" Margin="18,18,28,18">
+            <!-- The dial: how many boosts are on, in its own tile; the dial fills the tile and centres itself, so the
+                 tile's left and right walls are the same distance away. -->
+            <c:SquircleBorder CornerRadius="15" Background="{DynamicResource Brush.DialTile}" BorderBrush="{DynamicResource Brush.DialTileRim}" BorderThickness="1"
+                              ClipContent="True" MinHeight="292">
+              <Panel>
+                <c:HeroDial Value="{Binding Readiness}" StartLabel="0" EndLabel="{Binding BoostsAvailable}" DialSize="228" />
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                  <Path Theme="{StaticResource IconPath}" Width="28" Height="28" Data="{StaticResource Icon.Controller}" Stroke="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" />
-                  <TextBlock Text="{Binding ReadinessText}" FontFamily="{StaticResource MonoFont}" FontSize="30" FontWeight="SemiBold" HorizontalAlignment="Center"
-                             Margin="0,6,0,0" Foreground="{DynamicResource Brush.Text}" />
+                  <Path Theme="{StaticResource IconPath}" Width="26" Height="26" Data="{StaticResource Icon.Controller}" Stroke="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" />
+                  <TextBlock Text="{Binding ReadinessText}" FontSize="34" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,6,0,0"
+                             Foreground="{DynamicResource Brush.Text}" TextElement.FontFeatures="+tnum" />
                   <TextBlock Text="boosts on" Theme="{StaticResource Text.Label}" HorizontalAlignment="Center" Opacity="0.85" />
                 </StackPanel>
-              </Grid>
-            </Grid>
+              </Panel>
+            </c:SquircleBorder>
 
             <!-- What to do, Boost now, and the Mac at a glance -->
             <StackPanel VerticalAlignment="Center">
@@ -357,7 +346,7 @@
               <WrapPanel Margin="0,14,0,0">
                 <Button Theme="{StaticResource Button.AccentGradient}" Padding="20,9" Margin="0,0,10,8" Command="{Binding ApplyAllCommand}" IsVisible="{Binding !AllBoostsOn}">
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Rocket}" Stroke="{DynamicResource Brush.OnAccent}" />
+                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Rocket}" Stroke="{DynamicResource Brush.OnGlow}" />
                     <TextBlock Text="Boost now" Margin="8,0,0,0" />
                   </StackPanel>
                 </Button>

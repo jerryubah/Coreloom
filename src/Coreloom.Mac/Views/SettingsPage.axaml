@@ -298,10 +298,6 @@
     <Style Selector="ItemsControl.whatsNew > ContentPresenter:nth-child(1) Border.rule">
       <Setter Property="IsVisible" Value="False" />
     </Style>
-    <!-- "What's new": the install button's glow brightens with it. -->
-    <Style Selector="Panel.glowButton:pointerover > Border.glow">
-      <Setter Property="Opacity" Value="0.9" />
-    </Style>
     <!-- A menu bar module's icon: the accent while it's in the menu bar. -->
     <Style Selector="c|SquircleBorder.moduleIcon">
       <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
@@ -1083,24 +1079,23 @@
               </StackPanel>
             </c:SquircleBorder>
 
-            <!-- What's new in the version that is available / downloading / ready: the release as a hero, its version in
-                 the brand gradient over a soft bloom, then its changes and the way to install it. -->
-            <c:SquircleBorder Theme="{StaticResource Card.Glow}" GlowKey="Accent" GlowStrength="1" Sheen="0.8" Padding="0" Margin="0,12,0,0"
-                              BorderBrush="{DynamicResource Brush.AccentEdge}" IsVisible="{Binding ShowUpdateSummary}">
+            <!-- What's new in the version that is available / downloading / ready: the release as a hero (the banners' light
+                 from the top, a glass tile with the sparkle), its version in the accent, then its changes and the way to install it. -->
+            <c:SquircleBorder Theme="{StaticResource Card}" Sheen="0.8" Padding="0" Margin="0,12,0,0" IsVisible="{Binding ShowUpdateSummary}">
               <Grid ClipToBounds="True">
-                <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.AccentWash}" IsHitTestVisible="False" />
-                <Ellipse Width="440" Height="440" Margin="0,-230,-170,0" HorizontalAlignment="Right" VerticalAlignment="Top"
-                         Fill="{DynamicResource Brush.AccentBloom}" IsHitTestVisible="False" />
+                <!-- the banners' light from the top edge, its bright line and grain (as on Gaming and Smart Optimize) -->
+                <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.HeroGlow}" IsHitTestVisible="False" />
+                <c:SquircleBorder CornerRadius="17" Background="{StaticResource GrainTexture}" Opacity="0.045" IsHitTestVisible="False" />
+                <Border Height="1" VerticalAlignment="Top" Margin="56,0" Background="{DynamicResource Brush.HeroLine}" IsHitTestVisible="False" />
                 <StackPanel Margin="26,24,26,24">
                   <Grid ColumnDefinitions="Auto,*">
                     <Panel Width="52" Height="52" VerticalAlignment="Top">
-                      <Border CornerRadius="18" Background="{DynamicResource Brush.AccentGradient}" Opacity="0.55" Margin="4,8,4,-4" IsHitTestVisible="False">
-                        <Border.Effect>
-                          <BlurEffect Radius="14" />
-                        </Border.Effect>
-                      </Border>
-                      <c:SquircleBorder CornerRadius="16" Background="{DynamicResource Brush.AccentGradient}" BorderBrush="#40FFFFFF" BorderThickness="1" Sheen="1">
-                        <Path Theme="{StaticResource IconPath}" Width="24" Height="24" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
+                      <c:SquircleBorder CornerRadius="16" Background="{DynamicResource Brush.GlowButtonFill}" BorderBrush="{DynamicResource Brush.GlowButtonRim}"
+                                        BorderThickness="1" ClipContent="True">
+                        <Panel>
+                          <Border Background="{DynamicResource Brush.GlowButtonLight}" IsHitTestVisible="False" />
+                          <Path Theme="{StaticResource IconPath}" Width="24" Height="24" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnGlow}" />
+                        </Panel>
                       </c:SquircleBorder>
                     </Panel>
                     <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
@@ -1116,20 +1111,13 @@
 
                   <Grid Margin="0,20,0,0" ColumnDefinitions="*,Auto">
                     <WrapPanel>
-                      <Panel Classes="glowButton" Margin="0,0,10,0" IsVisible="{Binding ShowInstallButton}">
-                        <Border Classes="glow" CornerRadius="14" Background="{DynamicResource Brush.AccentGradient}" Opacity="0.55" Margin="10,10,10,-4" IsHitTestVisible="False">
-                          <Border.Effect>
-                            <BlurEffect Radius="16" />
-                          </Border.Effect>
-                        </Border>
-                        <Button Theme="{StaticResource Button.AccentGradient}" Padding="20,10" Command="{Binding InstallCommand}"
-                                ToolTip.Tip="Downloads the update if needed, quits Coreloom, replaces the app and opens it again.">
-                          <StackPanel Orientation="Horizontal">
-                            <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Download}" Stroke="{DynamicResource Brush.OnAccent}" />
-                            <TextBlock Text="Install update" Margin="8,0,0,0" FontWeight="SemiBold" />
-                          </StackPanel>
-                        </Button>
-                      </Panel>
+                      <Button Theme="{StaticResource Button.AccentGradient}" Padding="20,10" Margin="0,0,10,0" Command="{Binding InstallCommand}" IsVisible="{Binding ShowInstallButton}"
+                              ToolTip.Tip="Downloads the update if needed, quits Coreloom, replaces the app and opens it again.">
+                        <StackPanel Orientation="Horizontal">
+                          <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Download}" Stroke="{DynamicResource Brush.OnGlow}" />
+                          <TextBlock Text="Install update" Margin="8,0,0,0" FontWeight="SemiBold" />
+                        </StackPanel>
+                      </Button>
                       <Button Theme="{StaticResource Button.Subtle}" Content="Skip this version" Command="{Binding SkipCommand}" Padding="14,10"
                               ToolTip.Tip="Don't install this version. You'll hear about the next one." />
                     </WrapPanel>
@@ -1145,15 +1133,13 @@
             </c:SquircleBorder>
 
             <!-- What's new in the running version (after Coreloom updated itself): the same card, quieter, with no install -->
-            <c:SquircleBorder Theme="{StaticResource Card.Glow}" GlowKey="Accent" GlowStrength="0.6" Sheen="0.6" Padding="0" Margin="0,12,0,0"
-                              BorderBrush="{DynamicResource Brush.AccentEdge}" IsVisible="{Binding ShowInstalledSummary}">
+            <c:SquircleBorder Theme="{StaticResource Card}" Sheen="0.6" Padding="0" Margin="0,12,0,0" IsVisible="{Binding ShowInstalledSummary}">
               <Grid ClipToBounds="True">
-                <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.AccentWash}" IsHitTestVisible="False" />
-                <Ellipse Width="400" Height="400" Margin="0,-220,-170,0" HorizontalAlignment="Right" VerticalAlignment="Top"
-                         Fill="{DynamicResource Brush.AccentBloom}" Opacity="0.75" IsHitTestVisible="False" />
+                <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.HeroGlow}" Opacity="0.7" IsHitTestVisible="False" />
+                <c:SquircleBorder CornerRadius="17" Background="{StaticResource GrainTexture}" Opacity="0.045" IsHitTestVisible="False" />
                 <StackPanel Margin="26,24,26,24">
                   <Grid ColumnDefinitions="Auto,*">
-                    <c:SquircleBorder Width="52" Height="52" CornerRadius="16" Background="{DynamicResource Brush.AccentSoft}" BorderBrush="{DynamicResource Brush.AccentEdge}"
+                    <c:SquircleBorder Width="52" Height="52" CornerRadius="16" Background="{DynamicResource Brush.DialTile}" BorderBrush="{DynamicResource Brush.DialTileRim}"
                                       BorderThickness="1" VerticalAlignment="Top">
                       <Path Theme="{StaticResource IconPath}" Width="24" Height="24" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.Accent}" />
                     </c:SquircleBorder>

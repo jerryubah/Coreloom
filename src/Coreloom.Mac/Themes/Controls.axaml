@@ -259,26 +259,50 @@
     </Style>
   </ControlTheme>
 
-  <!-- A banner's main button: the accent as a gradient, brightening on hover. -->
-  <ControlTheme x:Key="Button.AccentGradient" TargetType="Button" BasedOn="{StaticResource Button.Primary}">
-    <Setter Property="Background" Value="{DynamicResource Brush.AccentGradient}" />
+  <!-- A banner's main button (since 1.8.3): charcoal glass with white text, its rim lit along the top and toward a soft
+       light of the accent in its lower right corner, which grows on hover. Replaces the accent gradient fill, which white
+       text and icons got lost in. The key stays so every banner button picks it up. -->
+  <ControlTheme x:Key="Button.AccentGradient" TargetType="Button">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.OnGlow}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.GlowButtonFill}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.GlowButtonRim}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Padding" Value="12,7" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="RenderTransformOrigin" Value="50%,50%" />
     <Setter Property="Template">
       <ControlTemplate>
         <Panel>
-          <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" CornerRadius="10" />
-          <c:SquircleBorder Name="Sheen" Background="{DynamicResource Brush.OnAccent}" CornerRadius="10" Opacity="0" />
+          <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                            CornerRadius="11" ClipContent="True">
+            <Border Name="Light" Background="{DynamicResource Brush.GlowButtonLight}" Opacity="0.85" IsHitTestVisible="False" />
+          </c:SquircleBorder>
           <ContentPresenter Name="PART_ContentPresenter" Margin="{TemplateBinding Padding}" Content="{TemplateBinding Content}"
-                            ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}"
+                            HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
         </Panel>
       </ControlTemplate>
     </Setter>
-    <Style Selector="^:pointerover /template/ c|SquircleBorder#Sheen">
-      <Setter Property="Opacity" Value="0.1" />
+    <Style Selector="^:pointerover /template/ Border#Light">
+      <Setter Property="Opacity" Value="1" />
     </Style>
-    <Style Selector="^:pointerover /template/ c|SquircleBorder#Root">
-      <Setter Property="Background" Value="{TemplateBinding Background}" />
+    <Style Selector="^:pressed">
+      <Setter Property="RenderTransform" Value="scale(0.98)" />
+    </Style>
+    <Style Selector="^:pressed /template/ Border#Light">
+      <Setter Property="Opacity" Value="0.6" />
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.45" />
     </Style>
   </ControlTheme>
+
+  <!-- The banners' grain (assets/textures/grain.png, tiled), laid a few percent strong over their light so it doesn't band. -->
+  <ImageBrush x:Key="GrainTexture" Source="avares://Coreloom/Assets/grain.png" TileMode="Tile" Stretch="None"
+              AlignmentX="Left" AlignmentY="Top" DestinationRect="0,0,160,160" />
 
   <ControlTheme x:Key="Button.Icon" TargetType="Button" BasedOn="{StaticResource Button.Subtle}">
     <Setter Property="Width" Value="34" />

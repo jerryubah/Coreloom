@@ -88,6 +88,9 @@ public partial class OverlayWindow : Window
         {
             target.RenderMode = RenderMode.SoftwareOnly;
         }
+
+        // No border or round corners from Windows around it: the overlay is its own squircle (1.8.3).
+        Interop.NativeWindow.MakeFrameless(hwnd);
     }
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)

@@ -25,7 +25,12 @@ internal static partial class NativeWindow
     private const int DwmwaUseImmersiveDarkModeLegacy = 19;
     private const int DwmwaWindowCornerPreference = 33;
     private const int DwmwaSystemBackdropType = 38;
+    private const int DwmwaNcRenderingPolicy = 2;
+    private const int DwmwaBorderColor = 34;
+    private const int DwmwcpDoNotRound = 1;
     private const int DwmwcpRound = 2;
+    private const int DwmncrpDisabled = 1;
+    private const int DwmwaColorNone = unchecked((int)0xFFFFFFFE);
     private const int DwmsbtNone = 1;
     private const int DwmsbtMainWindow = 2; // Mica
 
@@ -129,6 +134,36 @@ internal static partial class NativeWindow
         catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
         {
             // DWM attributes are cosmetic; ignore on unsupported systems.
+        }
+    }
+
+    /// <summary>
+    /// Asks DWM to draw nothing of its own around a window that is drawn to its edges, such as the in-game overlay: no
+    /// border (Windows 11 draws a thin one, grey in the dark theme, around windows with round corners), no round
+    /// corners, and no non-client rendering. Ignored where these attributes don't exist (Windows 10).
+    /// </summary>
+    public static void MakeFrameless(IntPtr hwnd)
+    {
+        if (hwnd == IntPtr.Zero)
+        {
+            return;
+        }
+
+        try
+        {
+            int policy = DwmncrpDisabled;
+            DwmSetWindowAttribute(hwnd, DwmwaNcRenderingPolicy, ref policy, sizeof(int));
+            if (IsWindows11)
+            {
+                int corner = DwmwcpDoNotRound;
+                DwmSetWindowAttribute(hwnd, DwmwaWindowCornerPreference, ref corner, sizeof(int));
+                int none = DwmwaColorNone;
+                DwmSetWindowAttribute(hwnd, DwmwaBorderColor, ref none, sizeof(int));
+            }
+        }
+        catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
+        {
+            // Cosmetic only.
         }
     }
 

@@ -72,7 +72,10 @@ internal static class ChartColors
     public static IPen DashedPen(Color color, double thickness) =>
         new ImmutablePen(Solid(color), thickness, new ImmutableDashStyle([4, 4], 0), PenLineCap.Flat);
 
-    /// <summary>Vertical gradient from <paramref name="opacity"/> at the top to transparent at the bottom.</summary>
+    /// <summary>
+    /// The fill under a line: <paramref name="opacity"/> at the line, easing away to nothing at the bottom (since 1.8.3
+    /// along a curve rather than a straight ramp, so it reads deep near the line and ends without a visible edge).
+    /// </summary>
     public static IBrush AreaFill(Color color, double opacity)
     {
         var key = (color.ToUInt32(), (int)(opacity * 100));
@@ -83,10 +86,14 @@ internal static class ChartColors
                 Fills.Clear();
             }
 
-            var top = Color.FromArgb((byte)Math.Clamp(opacity * 255, 0, 255), color.R, color.G, color.B);
-            var bottom = Color.FromArgb(0, color.R, color.G, color.B);
-            brush = new ImmutableLinearGradientBrush(
-                [new ImmutableGradientStop(0, top), new ImmutableGradientStop(1, bottom)],
+            var stops = new ImmutableGradientStop[FillCurve.Length];
+            for (int i = 0; i < FillCurve.Length; i++)
+            {
+                var (offset, share) = FillCurve[i];
+                stops[i] = new ImmutableGradientStop(offset, Color.FromArgb((byte)Math.Clamp(opacity * share * 255, 0, 255), color.R, color.G, color.B));
+            }
+
+            brush = new ImmutableLinearGradientBrush(stops,
                 startPoint: new Avalonia.RelativePoint(0, 0, Avalonia.RelativeUnit.Relative),
                 endPoint: new Avalonia.RelativePoint(0, 1, Avalonia.RelativeUnit.Relative));
             Fills[key] = brush;
@@ -94,6 +101,24 @@ internal static class ChartColors
 
         return brush;
     }
+
+    /// <summary>How much of the fill's strength is left down the area (an ease-out curve ending at nothing).</summary>
+    internal static readonly (double Offset, double Share)[] FillCurve =
+        [(0, 1), (0.18, 0.72), (0.38, 0.45), (0.58, 0.24), (0.78, 0.09), (0.92, 0.025), (1, 0)];
+
+    /// <summary>
+    /// A mask that fades a sparkline's fill in over the first few percent and out over the last few, so the fill has no
+    /// hard left and right edges (the line itself isn't masked).
+    /// </summary>
+    public static IBrush EdgeFade { get; } = new ImmutableLinearGradientBrush(
+        [
+            new ImmutableGradientStop(0, Color.FromArgb(0, 0, 0, 0)),
+            new ImmutableGradientStop(0.07, Color.FromArgb(255, 0, 0, 0)),
+            new ImmutableGradientStop(0.93, Color.FromArgb(255, 0, 0, 0)),
+            new ImmutableGradientStop(1, Color.FromArgb(0, 0, 0, 0)),
+        ],
+        startPoint: new Avalonia.RelativePoint(0, 0, Avalonia.RelativeUnit.Relative),
+        endPoint: new Avalonia.RelativePoint(1, 0, Avalonia.RelativeUnit.Relative));
 
     public static Color WithAlpha(Color color, byte alpha) => Color.FromArgb(alpha, color.R, color.G, color.B);
 }

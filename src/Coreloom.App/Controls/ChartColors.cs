@@ -83,7 +83,10 @@ internal static class ChartColors
         return pen;
     }
 
-    /// <summary>Vertical gradient from <paramref name="opacity"/> at the top to transparent at the bottom.</summary>
+    /// <summary>
+    /// The fill under a line: <paramref name="opacity"/> at the line, easing away to nothing at the bottom (since 1.8.3
+    /// along a curve rather than a straight ramp, so it reads deep near the line and ends without a visible edge).
+    /// </summary>
     public static Brush AreaFill(Color color, double opacity)
     {
         var key = (Pack(color), (int)(opacity * 100));
@@ -94,15 +97,39 @@ internal static class ChartColors
                 Fills.Clear();
             }
 
-            var top = Color.FromArgb((byte)Math.Clamp(opacity * 255, 0, 255), color.R, color.G, color.B);
-            var bottom = Color.FromArgb(0, color.R, color.G, color.B);
-            var gradient = new LinearGradientBrush(top, bottom, 90);
+            var gradient = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(0, 1) };
+            foreach (var (offset, share) in FillCurve)
+            {
+                gradient.GradientStops.Add(new GradientStop(Color.FromArgb((byte)Math.Clamp(opacity * share * 255, 0, 255), color.R, color.G, color.B), offset));
+            }
+
             gradient.Freeze();
             Fills[key] = gradient;
             brush = gradient;
         }
 
         return brush;
+    }
+
+    /// <summary>How much of the fill's strength is left down the area (an ease-out curve ending at nothing).</summary>
+    internal static readonly (double Offset, double Share)[] FillCurve =
+        [(0, 1), (0.18, 0.72), (0.38, 0.45), (0.58, 0.24), (0.78, 0.09), (0.92, 0.025), (1, 0)];
+
+    /// <summary>
+    /// A mask that fades a sparkline's fill in over the first few percent and out over the last few, so the fill has no
+    /// hard left and right edges (the line itself isn't masked).
+    /// </summary>
+    public static Brush EdgeFade { get; } = CreateEdgeFade();
+
+    private static Brush CreateEdgeFade()
+    {
+        var mask = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(1, 0) };
+        mask.GradientStops.Add(new GradientStop(Color.FromArgb(0, 0, 0, 0), 0));
+        mask.GradientStops.Add(new GradientStop(Color.FromArgb(255, 0, 0, 0), 0.07));
+        mask.GradientStops.Add(new GradientStop(Color.FromArgb(255, 0, 0, 0), 0.93));
+        mask.GradientStops.Add(new GradientStop(Color.FromArgb(0, 0, 0, 0), 1));
+        mask.Freeze();
+        return mask;
     }
 
     private static uint Pack(Color c) => ((uint)c.A << 24) | ((uint)c.R << 16) | ((uint)c.G << 8) | c.B;
