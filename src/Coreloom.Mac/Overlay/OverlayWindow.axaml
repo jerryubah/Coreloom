@@ -6,12 +6,16 @@
         x:DataType="overlay:OverlayViewModel"
         Title="Coreloom readings"
         SystemDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent"
-        CanResize="False" ShowActivated="False" ShowInTaskbar="False" SizeToContent="WidthAndHeight"
+        CanResize="False" ShowActivated="False" ShowInTaskbar="False" SizeToContent="Manual" Width="40" Height="40"
         UseLayoutRounding="True" c:OverlayHost.IsLive="True">
   <!-- Click-through and never focused (see OverlayNative). The content is the same template as the preview on the
        Graphics page. While it is being moved (Shift + the hotkey, or Move on screen) it takes clicks: drag it anywhere,
-       drag the round handle to resize it, S/M/L resize a line, Done finishes. -->
-  <Grid RowDefinitions="Auto,Auto">
+       drag the round handle to resize it, S/M/L resize a line, Done finishes.
+       Since 1.8.3 the readings sit at the top left of a window the service sizes itself (MacOverlayService.Place): it
+       only grows, in steps, while it's shown, so turning readings on and off redraws the readings without resizing the
+       window. (Resizing it to fit each time made macOS show the last picture stretched or squeezed while it caught up.) -->
+  <Canvas>
+  <Grid Name="Stack" RowDefinitions="Auto,Auto">
     <Panel Margin="6">
       <Rectangle Margin="-4" RadiusX="12" RadiusY="12" Stroke="#FF5B8CFF" StrokeThickness="1.5" StrokeDashArray="4,3" Fill="#01000000" Cursor="SizeAll"
                  IsVisible="{Binding IsMoving}" />
@@ -43,4 +47,5 @@
       </StackPanel>
     </Border>
   </Grid>
+  </Canvas>
 </Window>

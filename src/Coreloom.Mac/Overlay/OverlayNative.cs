@@ -48,6 +48,7 @@ internal static partial class OverlayNative
 
         ObjC.SendVoidBool(window, ObjC.Sel("setHasShadow:"), false);
         ObjC.SendVoidBool(window, ObjC.Sel("setIgnoresMouseEvents:"), clickThrough);
+        AnchorPicture(window);
     }
 
     /// <summary>Puts the level back if something lowered it (it is checked every tick, so it costs one call).</summary>
@@ -98,6 +99,42 @@ internal static partial class OverlayNative
         }
     }
 
+    /// <summary>Moves and sizes the window in one step (Cocoa's bottom-left origin) and redraws it at once.</summary>
+    public static void SetFrame(nint window, double x, double y, double width, double height)
+    {
+        if (window != 0)
+        {
+            SendSetFrame(window, ObjC.Sel("setFrame:display:"), new NSRect { X = x, Y = y, Width = width, Height = height }, true);
+        }
+    }
+
+    /// <summary>
+    /// While a resize is catching up, keeps the last picture where it was (at the top left, where the readings sit)
+    /// rather than stretching it to the new size.
+    /// </summary>
+    private static void AnchorPicture(nint window)
+    {
+        nint view = ObjC.Send(window, ObjC.Sel("contentView"));
+        nint layer = view == 0 ? 0 : ObjC.Send(view, ObjC.Sel("layer"));
+        if (layer == 0)
+        {
+            return;
+        }
+
+        nint gravity = ObjC.NSString("topLeft"); // kCAGravityTopLeft
+        ObjC.SendVoid(layer, ObjC.Sel("setContentsGravity:"), gravity);
+        nint sublayers = ObjC.Send(layer, ObjC.Sel("sublayers"));
+        long count = sublayers == 0 ? 0 : (long)ObjC.SendULong(sublayers, ObjC.Sel("count"));
+        for (long i = 0; i < count; i++)
+        {
+            nint sublayer = ObjC.SendLong(sublayers, ObjC.Sel("objectAtIndex:"), i);
+            if (sublayer != 0)
+            {
+                ObjC.SendVoid(sublayer, ObjC.Sel("setContentsGravity:"), gravity);
+            }
+        }
+    }
+
     // A struct of four doubles comes back in registers on Apple silicon; on Intel it is written through a hidden pointer,
     // which objc_msgSend_stret expects.
     private static NSRect Rect(nint receiver, string selector) =>
@@ -113,4 +150,7 @@ internal static partial class OverlayNative
 
     [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
     private static partial void SendPoint(nint receiver, nint selector, NSPoint point);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial void SendSetFrame(nint receiver, nint selector, NSRect rect, [MarshalAs(UnmanagedType.U1)] bool display);
 }

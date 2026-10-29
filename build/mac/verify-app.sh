@@ -260,6 +260,41 @@ PY
   fi
 done
 
+# ---- The readings window (the Mac's in-game overlay, 1.8.3): turned on, shown at its place, photographed ------------
+{ echo; echo "## Readings window"; } >> "$OUT/app.md"
+[[ -f "$settings" ]] && python3 - "$settings" <<'PY'
+import json, sys
+path = sys.argv[1]
+with open(path) as f:
+    settings = json.load(f)
+overlay = settings.setdefault("overlay", {})
+overlay["enabled"] = True
+overlay["hasBeenEnabled"] = True
+settings.setdefault("appearance", {}).setdefault("backdrop", {})["kind"] = "Gradient"
+with open(path, "w") as f:
+    json.dump(settings, f, indent=2)
+PY
+open "$APP" || fail "open (readings window)"
+pid=""
+for _ in $(seq 1 60); do
+  pid="$(pgrep -x Coreloom | head -1)"
+  [[ -n "$pid" ]] && break
+  sleep 1
+done
+sleep 10
+screencapture -x -R0,0,420,240 "$OUT/95-readings-window.png" 2> /dev/null || true
+if grep -q "Readings window shown" "$HOME/Library/Logs/Coreloom/"*.log 2> /dev/null; then
+  echo "- Shown (log); picture: 95-readings-window.png" >> "$OUT/app.md"
+else
+  fail "the readings window wasn't shown"
+fi
+kill -TERM "$pid" 2> /dev/null
+for _ in $(seq 1 20); do kill -0 "$pid" 2> /dev/null || break; sleep 0.5; done
+if kill -0 "$pid" 2> /dev/null; then
+  fail "Coreloom didn't quit within 10 s of SIGTERM (readings window)"
+  kill -KILL "$pid" 2> /dev/null
+fi
+
 # ---- What it wrote ---------------------------------------------------------------------------------------------
 mkdir -p "$OUT/logs"
 cp -R "$HOME/Library/Logs/Coreloom/." "$OUT/logs/" 2> /dev/null || true

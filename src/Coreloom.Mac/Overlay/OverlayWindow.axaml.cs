@@ -34,11 +34,18 @@ public partial class OverlayWindow : Window
         ResizeGrip.PointerPressed += OnGripPressed;
         ResizeGrip.PointerMoved += OnGripMoved;
         ResizeGrip.PointerReleased += OnGripReleased;
+        Stack.SizeChanged += (_, _) => ContentSizeChanged?.Invoke(this, EventArgs.Empty);
         Opened += (_, _) => OverlayNative.Configure(NativeHandle, clickThrough: !_movable);
     }
 
     /// <summary>The overlay was dragged or resized: the service saves its new place (and size).</summary>
     public event EventHandler? Adjusted;
+
+    /// <summary>The readings took a new size (lines turned on or off, a new scale): the service sizes and places the window.</summary>
+    public event EventHandler? ContentSizeChanged;
+
+    /// <summary>The readings' own size (at the window's top left), whatever the window's size.</summary>
+    public Size ContentSize => Stack.Bounds.Size is { Width: > 0 } arranged ? arranged : Stack.DesiredSize;
 
     /// <summary>The NSWindow, or 0 before it is shown.</summary>
     public nint NativeHandle => TryGetPlatformHandle() is { HandleDescriptor: "NSWindow" } handle ? handle.Handle : 0;
@@ -89,7 +96,7 @@ public partial class OverlayWindow : Window
         _resizing = true;
         _resizeStartX = ScreenX(e);
         _resizeStartScale = _overlay.LiveScale ?? _overlay.OwnScale;
-        _resizeStartWidth = Math.Max(40, Bounds.Width);
+        _resizeStartWidth = Math.Max(40, ContentSize.Width);
         e.Pointer.Capture((IInputElement)sender!);
         e.Handled = true;
     }

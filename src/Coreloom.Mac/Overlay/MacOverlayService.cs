@@ -27,6 +27,7 @@ internal sealed class MacOverlayService : IDisposable
     private readonly DispatcherTimer _timer;
     private readonly int _ownProcessId = Environment.ProcessId;
     private OverlayWindow? _window;
+    private Avalonia.Size _grown; // the window's size while it's shown: it only grows (see Place)
     private bool _disposed;
 
     public MacOverlayService(ShellViewModel shell, SettingsService settings)
@@ -84,6 +85,7 @@ internal sealed class MacOverlayService : IDisposable
         {
             _window?.SetMovable(_overlay.IsMoving);
             Log.Info(LogCategory, _overlay.IsMoving ? "Readings window can be moved and resized." : "Readings window placed.");
+            _grown = default;
             Place();
         }
     }
@@ -142,13 +144,14 @@ internal sealed class MacOverlayService : IDisposable
             if (_window is null)
             {
                 _window = new OverlayWindow(_overlay);
-                _window.SizeChanged += (_, _) => Place();
+                _window.ContentSizeChanged += (_, _) => Place();
                 _window.Adjusted += (_, _) => SaveAdjusted();
                 _window.SetMovable(_overlay.IsMoving);
             }
 
             if (!_window.IsVisible)
             {
+                _grown = default;
                 _window.Show();
                 Log.Info(LogCategory, "Readings window shown.");
             }
@@ -192,8 +195,15 @@ internal sealed class MacOverlayService : IDisposable
     }
 
     /// <summary>
-    /// Puts the window in its place on the screen of the app in front (on its own screen while it is being moved), never off
-    /// the screen, and tells the readings how big that screen is (for auto-scaling). Not while it is being dragged or resized.
+    /// Puts the readings in their place on the screen of the app in front (on its own screen while they're being moved),
+    /// never off the screen, and tells them how big that screen is (for auto-scaling). Not while being dragged or resized.
+    /// <para>
+    /// The readings sit at the window's top left. While they're being moved the window is exactly their size (it takes
+    /// the clicks); otherwise it is at least their size, in steps of 64 points, and only grows while it's shown. So
+    /// turning readings on and off, or a value getting wider, redraws the readings in a window that stays the same size:
+    /// macOS showed the last picture stretched or squeezed while a resized window caught up (1.8.3). When it does grow,
+    /// it is moved and sized in one step.
+    /// </para>
     /// </summary>
     private void Place()
     {
@@ -204,24 +214,45 @@ internal sealed class MacOverlayService : IDisposable
         }
 
         nint handle = window.NativeHandle;
-        if ((_overlay.IsMoving ? OverlayNative.ScreenOf(handle) : OverlayNative.FrontScreen()) is not { } screen)
+        var content = window.ContentSize;
+        if (content.Width < 1 || content.Height < 1
+            || (_overlay.IsMoving ? OverlayNative.ScreenOf(handle) : OverlayNative.FrontScreen()) is not { } screen)
         {
             return;
         }
 
-        var frame = OverlayNative.Frame(handle);
         _overlay.ScreenScale = OverlayPlacements.ScreenScale(screen.Height);
+        double contentWidth = Math.Ceiling(content.Width), contentHeight = Math.Ceiling(content.Height);
         var (position, offsetX, offsetY) = _overlay.Placement;
-        var (x, y) = OverlayPlacements.Locate(0, 0, (int)screen.Width, (int)screen.Height, (int)Math.Ceiling(frame.Width), (int)Math.Ceiling(frame.Height),
+        var (x, y) = OverlayPlacements.Locate(0, 0, (int)screen.Width, (int)screen.Height, (int)contentWidth, (int)contentHeight,
             position, Options.EdgeMargin, offsetX, offsetY);
 
-        // Cocoa measures from the bottom left of the screen.
+        double width, height;
+        if (_overlay.IsMoving)
+        {
+            (width, height) = (contentWidth, contentHeight);
+        }
+        else
+        {
+            width = Math.Max(_grown.Width, Step(contentWidth));
+            height = Math.Max(_grown.Height, Step(contentHeight));
+            _grown = new Avalonia.Size(width, height);
+        }
+
+        // Cocoa measures from the bottom left of the screen; the readings' top left is the window's.
         double left = screen.X + x;
-        double bottom = screen.Y + screen.Height - y - frame.Height;
-        if (Math.Abs(left - frame.X) > 0.5 || Math.Abs(bottom - frame.Y) > 0.5)
+        double bottom = screen.Y + screen.Height - y - height;
+        var frame = OverlayNative.Frame(handle);
+        if (Math.Abs(width - frame.Width) > 0.5 || Math.Abs(height - frame.Height) > 0.5)
+        {
+            OverlayNative.SetFrame(handle, left, bottom, width, height);
+        }
+        else if (Math.Abs(left - frame.X) > 0.5 || Math.Abs(bottom - frame.Y) > 0.5)
         {
             OverlayNative.SetOrigin(handle, left, bottom);
         }
+
+        static double Step(double size) => Math.Ceiling((size + 16) / 64) * 64;
     }
 
     /// <summary>Saves where the window was dropped or resized: the nearest of the nine places and the offset from it.</summary>
