@@ -16,6 +16,23 @@
     <Resource Include="..\..\src\Coreloom.App\Fonts\*.ttf" Link="Fonts\%(Filename)%(Extension)" />
   </ItemGroup>
 
+  <!-- ...and its pictures (the window's icon, the PC render on the Overview) at the app's addresses too. -->
+  <ItemGroup>
+    <Resource Include="..\..\assets\branding\coreloom.ico" Link="Assets\coreloom.ico" />
+    <Resource Include="..\..\assets\branding\png\coreloom-16.png" Link="Assets\coreloom-16.png" />
+    <Resource Include="..\..\assets\branding\png\coreloom-24.png" Link="Assets\coreloom-24.png" />
+    <Resource Include="..\..\assets\branding\png\coreloom-32.png" Link="Assets\coreloom-32.png" />
+    <Resource Include="..\..\assets\branding\png\coreloom-48.png" Link="Assets\coreloom-48.png" />
+    <Resource Include="..\..\assets\branding\png\coreloom-64.png" Link="Assets\coreloom-64.png" />
+    <Resource Include="..\..\assets\branding\png\coreloom-128.png" Link="Assets\coreloom-128.png" />
+    <Resource Include="..\..\assets\branding\png\coreloom-512.png" Link="Assets\coreloom-512.png" />
+    <Resource Include="..\..\assets\branding\dark\coreloom-dark.ico" Link="Assets\coreloom-dark.ico" />
+    <Resource Include="..\..\assets\branding\dark\png\coreloom-dark-*.png" Link="Assets\%(Filename)%(Extension)" />
+    <Resource Include="..\..\assets\vendors\*.png" Link="Assets\Vendors\%(Filename)%(Extension)" />
+    <Resource Include="..\..\assets\pc\*.png" Link="Assets\PC\%(Filename)%(Extension)" />
+    <Resource Include="..\..\src\Coreloom.App\Assets\PcRender\*.png" Link="Assets\PcRender\%(Filename)%(Extension)" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\Coreloom.App\Coreloom.App.csproj" />
   </ItemGroup>
