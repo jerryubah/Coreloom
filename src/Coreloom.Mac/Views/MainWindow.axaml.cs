@@ -30,6 +30,8 @@ public partial class MainWindow : Window
     private Animator.Tween? _sidebarTween;
     private PixelPoint _lastPosition;
     private Size _lastSize = new(1360, 880);
+    private Avalonia.Threading.DispatcherTimer? _buttonsTimer;
+    private bool _buttonsPlaceable = true;
 
     public MainWindow()
     {
@@ -56,6 +58,12 @@ public partial class MainWindow : Window
         Loaded += (_, _) =>
         {
             UpdateSidebar(animate: false);
+            PlaceWindowButtons();
+
+            // macOS lays the title bar out again now and then (resizing, full screen, becoming active): put the buttons
+            // back inside the glass whenever it has (a quick check when they're in place).
+            _buttonsTimer = new Avalonia.Threading.DispatcherTimer(TimeSpan.FromMilliseconds(250), Avalonia.Threading.DispatcherPriority.Background, (_, _) => PlaceWindowButtons());
+            _buttonsTimer.Start();
             // Once laid out: where macOS put the window buttons, and that clicks near the top reach Coreloom (logged).
             Avalonia.Threading.DispatcherTimer.RunOnce(CheckTitleBar, TimeSpan.FromSeconds(2));
         };
@@ -74,6 +82,7 @@ public partial class MainWindow : Window
             }
 
             UpdateSidebar(animate: true);
+            PlaceWindowButtons();
         };
         PropertyChanged += (_, e) =>
         {
@@ -90,6 +99,31 @@ public partial class MainWindow : Window
         {
             ApplyTranslucency(theme);
             theme.ThemeChanged += (_, _) => ApplyTranslucency(theme);
+        }
+    }
+
+    /// <summary>
+    /// Puts the close, minimize and zoom buttons inside the sidebar's glass: centred on its top row and left-aligned with
+    /// its inset (centred across the narrow sidebar). Not in full screen, where macOS shows them in its own bar.
+    /// </summary>
+    private void PlaceWindowButtons()
+    {
+        if (!_buttonsPlaceable || WindowState == WindowState.FullScreen || !IsVisible || Sidebar.Bounds.Width <= 0
+            || TryGetPlatformHandle() is not { HandleDescriptor: "NSWindow" } handle || Sidebar.TranslatePoint(default, this) is not { } glass)
+        {
+            return;
+        }
+
+        const double ButtonsWidth = 54; // three 14-point buttons, 20 points apart
+        double inset = IsCompactSidebar ? Math.Max(6, (Sidebar.Bounds.Width - ButtonsWidth) / 2) : 16;
+        try
+        {
+            _buttonsPlaceable = Native.WindowChrome.PlaceButtons(handle.Handle, glass.X + inset, glass.Y + 20);
+        }
+        catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException or InvalidOperationException)
+        {
+            _buttonsPlaceable = false;
+            Coreloom.Core.Diagnostics.Log.Warn("Window", "Couldn't place the window buttons inside the sidebar.", e);
         }
     }
 
@@ -116,6 +150,7 @@ public partial class MainWindow : Window
             }
 
             Add("collapse", CollapseButton);
+            Add("first page", NavList.ContainerFromIndex(0) as Control);
             Add("range", RangePicker);
             Add("freeze", FreezeButton);
             if (Sidebar.TranslatePoint(default, this) is { } glass)

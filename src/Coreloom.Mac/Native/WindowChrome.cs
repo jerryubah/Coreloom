@@ -4,7 +4,8 @@ using Coreloom.Hardware.Mac.Native;
 namespace Coreloom.Mac.Native;
 
 /// <summary>
-/// A look at the window's title bar from AppKit's side: where macOS put the close, minimize and zoom buttons, and which
+/// The window's title bar from AppKit's side: placing the close, minimize and zoom buttons inside the sidebar's glass,
+/// and a look at it: where macOS put the close, minimize and zoom buttons, and which
 /// view a click at a given point would go to (Coreloom's own view, or the title bar's). Logged once after the window
 /// opens, so a Mac's log shows the buttons sit inside the sidebar's glass and that the controls near the top still get
 /// their clicks.
@@ -74,6 +75,74 @@ internal static partial class WindowChrome
 
         return (string.Join("; ", parts), reach);
     }
+
+    /// <summary>
+    /// Puts the close, minimize and zoom buttons where Coreloom wants them: the close button's left edge at
+    /// <paramref name="left"/> and their centres <paramref name="centerFromTop"/> points below the window's top (inside
+    /// the sidebar's glass). macOS keeps them in a title bar strip across the top of the window; the strip is made just
+    /// big enough to hold them there (so the rest of the top edge stays Coreloom's, and clicks on its controls reach them).
+    /// macOS lays the strip out again now and then (a resize, full screen), so this is called again whenever that may have
+    /// happened; it changes nothing when the buttons are already in place. Returns false when there are no buttons.
+    /// </summary>
+    public static bool PlaceButtons(nint window, double left, double centerFromTop, double spacing = 20)
+    {
+        if (window == 0)
+        {
+            return false;
+        }
+
+        using var pool = new ObjC.Pool();
+        nint close = ObjC.SendLong(window, ObjC.Sel("standardWindowButton:"), 0);
+        nint titlebar = close == 0 ? 0 : ObjC.Send(close, ObjC.Sel("superview"));
+        nint container = titlebar == 0 ? 0 : ObjC.Send(titlebar, ObjC.Sel("superview"));
+        nint theme = container == 0 ? 0 : ObjC.Send(container, ObjC.Sel("superview"));
+        if (theme == 0)
+        {
+            return false;
+        }
+
+        var themeBounds = Rect(theme, "bounds");
+        var button = Rect(close, "frame");
+        double height = Math.Ceiling(centerFromTop + (button.Height / 2) + 8);
+        double width = Math.Ceiling(left + (2 * spacing) + button.Width + 14);
+        var strip = new NSRect { X = 0, Y = themeBounds.Height - height, Width = width, Height = height };
+        var current = Rect(container, "frame");
+        if (Math.Abs(current.Y - strip.Y) > 0.5 || Math.Abs(current.Height - strip.Height) > 0.5 || Math.Abs(current.Width - strip.Width) > 0.5)
+        {
+            SendSetRect(container, ObjC.Sel("setFrame:"), strip);
+            SendSetRect(titlebar, ObjC.Sel("setFrame:"), new NSRect { X = 0, Y = 0, Width = width, Height = height });
+        }
+
+        bool flipped = SendBool(titlebar, ObjC.Sel("isFlipped"));
+        double y = flipped ? centerFromTop - (button.Height / 2) : height - centerFromTop - (button.Height / 2);
+        for (int i = 0; i < 3; i++)
+        {
+            nint view = ObjC.SendLong(window, ObjC.Sel("standardWindowButton:"), i);
+            if (view == 0)
+            {
+                continue;
+            }
+
+            var frame = Rect(view, "frame");
+            var origin = new NSPoint { X = left + (i * spacing), Y = y };
+            if (Math.Abs(frame.X - origin.X) > 0.25 || Math.Abs(frame.Y - origin.Y) > 0.25)
+            {
+                SendSetPoint(view, ObjC.Sel("setFrameOrigin:"), origin);
+            }
+        }
+
+        return true;
+    }
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial void SendSetRect(nint receiver, nint selector, NSRect rect);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    private static partial void SendSetPoint(nint receiver, nint selector, NSPoint point);
+
+    [LibraryImport(ObjCLibrary, EntryPoint = "objc_msgSend")]
+    [return: MarshalAs(UnmanagedType.U1)]
+    private static partial bool SendBool(nint receiver, nint selector);
 
     private static NSPoint Convert(nint view, NSPoint point) => SendConvert(view, ObjC.Sel("convertPoint:toView:"), point, 0);
 
