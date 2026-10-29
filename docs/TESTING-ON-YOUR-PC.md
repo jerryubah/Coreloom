@@ -132,6 +132,14 @@ Work through each area and tick what works.
       the part of the background behind each card (it doesn't scroll with the card). Resize and maximize the window: the
       background fills it again within a moment. *Mica* (Windows 11 22H2 or later) shows the desktop's tint through the
       whole window, with smooth text. The light theme shows a pale version of each. Restart: the choice is kept.
+- [ ] (1.8.3) Gaming and Smart Optimize: the banner is lit softly from its top edge and the light stays behind the
+      text; the dial sits exactly in the middle of its tile, its numbers under the arc's ends, its light rising from
+      the tile's bottom. *Smart Scan* runs a comet along the dial and colors it with the result. *Boost now*, *Smart
+      Scan*, *Clean up and optimize*, *Run both*, *Install update* and the sidebar's *New update available* are charcoal
+      glass with white text, brighter on hover. The cards' graph fills fade out at the bottom and at both ends, with no
+      hard edge.
+- [ ] (1.8.3) Turn the in-game overlay on, then change the background, accent or theme in *Settings → Appearance*:
+      the overlay keeps no outline or grey border (before, Windows 11 drew one after such a change).
 
 **Overview**
 
@@ -799,13 +807,18 @@ GitHub's Macs check every build of Coreloom for Mac, but they are virtual machin
    name, Esc cancels, an empty name goes back to the device's own, and macOS's Bluetooth settings keep its name.
 7. **Gaming.** Your Steam and Epic games appear with pictures; *Play* starts one through its launcher. Turn on the
    Metal HUD and start a Metal game: Apple's overlay shows. *Full power on the charger* asks for your password.
-8. **The in-game overlay.** ⌥⌘O over a full-screen app or game; Customize on the Graphics page.
+8. **The in-game overlay.** ⌥⌘O over a full-screen app or game; Customize on the Graphics page. With the overlay on,
+   turn readings on and off on the Graphics page (1.8.3): the readings change in place, never stretched or squeezed,
+   and stay in their corner; try each corner, a bigger size and *Move on screen*.
 9. **Benchmarks.** Run the CPU and GPU benchmarks and a 1-minute stress test. Compute scores are ten times what
    1.8.0 showed, and results saved before are converted (1.8.1).
 10. **Backgrounds (1.8.2).** *Settings › Appearance › Background*: a gradient, a color, each picture and one of your
    own (a HEIC from Photos too); the sidebar and cards frost what's behind them as you scroll. *Translucent* shows the
    desktop through the whole window. Resize the window and switch to full screen: the background fills it again.
-11. **Updates.** When a newer version is out, Settings has a red dot and the sidebar's *New update available* button
+11. **Banners and buttons (1.8.3).** Gaming and Smart Optimize: the light from the top edge stays behind the text, the
+   dial sits in the middle of its tile, and *Smart Scan* runs a comet along the dial. Every main button (*Boost now*,
+   *Smart Scan*, *Install update*, *New update available*) reads clearly: white text on charcoal glass.
+12. **Updates.** When a newer version is out, Settings has a red dot and the sidebar's *New update available* button
    opens *Settings › Updates*. Once a newer version is out, *Coreloom › Check for Updates…* downloads it; *Install update* quits
    Coreloom, replaces it and opens the new version (`~/Library/Logs/Coreloom/update.log` says what happened).
 

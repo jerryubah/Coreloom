@@ -7,6 +7,30 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.8.3] - 2026-10-29
+
+Banners lit from above, new dials, dark glass buttons you can read, graph fills without edges, no outline around the overlay on Windows, and a Mac readings window that keeps its shape.
+
+### Highlights
+
+- **Banners, reimagined.** The Gaming and Smart Optimize banners are dark glass lit by a soft light from their top edge, which fades out well before the text. A faint grain keeps the light smooth, with no visible steps.
+- **New dials.** Each banner's dial now sits in its own tile, centred exactly between the tile's walls. It's a three-quarter arc that brightens from a deeper shade to a lighter one as it fills, with a fine scale inside it, its numbers at both ends, and its light rising from the bottom of the tile. On Smart Optimize a comet runs along it while a scan or clean-up works, and it takes the result's color when that's done.
+- **Buttons you can read.** *Boost now*, *Smart Scan*, *Clean up and optimize*, *Run both*, *Install update* and the sidebar's *New update available* are charcoal glass with white text and a soft light of your accent in one corner, instead of the light blue-to-violet gradient that white text got lost in.
+- **What's new, in the same light.** The update card in *Settings › Updates* has the banners' light and a glass tile, and shows the version in your accent.
+- **Graph fills without edges.** The color under each card's graph now eases away to nothing and fades out at both ends, so it runs into the card's glow instead of stopping at a hard line.
+- **Windows: no outline around the in-game overlay.** Changing the theme, accent or background asked Windows for round corners on every Coreloom window, the overlay included, and Windows 11 drew its grey border around it. The overlay is left out now, and tells Windows to draw no border at all.
+- **Mac: a readings window that keeps its shape.** Turning readings on and off resized the window each time, and macOS showed the old picture stretched or squeezed while it caught up. The window now only grows, in steps, while it's shown, so it works like the overlay on Windows.
+
+### In detail
+
+- Your accent's gradient is one hue now, from a lighter shade to a deeper one, wherever it still appears (the dots in *What's new*, the version number).
+- The dial's numbers: 0 to the number of boosts on Gaming. Smart Optimize's dial is full before the first scan and shows the scan's progress after that.
+- Have 1.8.2? Choose *Check for Updates* (the Coreloom menu on a Mac, *Settings › Updates* on Windows), then *Install update*.
+
+### Feedback
+
+Something still looks off in the new banners? [Open an issue](https://github.com/jerryubah/Coreloom/issues) with a screenshot.
+
 ## [1.8.2] - 2026-10-29
 
 A background of your own behind frosted glass: dark colors, gradients and pictures, yours too, with the sidebar and every card made of the same glass and a softer shadow. And System health is exactly as tall as what it says.

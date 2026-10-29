@@ -342,6 +342,31 @@ One background spans each app's main window; the sidebar and the cards are frost
   the previous copy deleted, at most 60 MB) and the two sliders, each change saved through `SettingsService` and applied
   by the theme at once.
 
+## Banners, dials and glass buttons (1.8.3)
+
+- **Banners.** The Gaming and Smart Optimize banners and the *What's new* card are `Card` glass with three layers on
+  top: `Brush.HeroGlow` (a radial light at the top centre in the accent, from a lighter shade to a deeper one, gone by
+  about 60 % of the height), `GrainTexture` (`assets/textures/grain.png` from `build/textures/make-grain.py`, tiled at
+  4.5 %, so the dark gradient doesn't show steps on 8-bit screens) and `Brush.HeroLine` (a bright hairline along the
+  top edge, fading at both ends). All from `ThemeService.PublishHeroLooks`, rebuilt with the theme and accent.
+- **The dial.** `HeroDial` (both apps, drawn in code): a 270° arc open at the bottom, its track faint, its value from a
+  deeper shade of its color to a lighter one in short pieces with round ends and a halo at the head, over eight wider,
+  fainter copies for a glow without a blur effect; a 46-tick scale inside it lit up to the value; `StartLabel` and
+  `EndLabel` under the arc's ends; a faint face; and its light, a radial glow rising from the bottom of the space it
+  fills. It fills its tile (`Brush.DialTile`, `Brush.DialTileRim`) and centres itself, so the tile's walls are always the
+  same distance away; `DialSize` caps it. The value eases over 650 ms, `Tone` (0–3 on the green … red scale, NaN for
+  the accent) over 450 ms; while `IsSpinning` a comet with a fading tail runs along the arc every 1.6 s (not with
+  *Reduce motion*). Gaming binds `Readiness` and `BoostsAvailable`; Smart Optimize binds `DialValue` (full before the
+  first scan, then `RingProgress`) and `DialTone` (the result's `RingTone` once ready or done).
+- **Glass buttons.** `Button.AccentGradient` (the key kept, so every banner button follows) and the sidebar's
+  `Button.Update`: `Brush.GlowButtonFill` (charcoal in either theme), `Brush.GlowButtonRim` (lit along the top and toward
+  the light) and `Brush.GlowButtonLight` (a radial light of the accent in the lower right corner, fuller on hover), with
+  `Brush.OnGlow` (near white) for text and icons. `Brush.AccentGradient` is one hue now (a lighter shade, the accent, a
+  deeper shade).
+- **Graph fills.** `ChartColors.AreaFill` eases from the fill's strength at the line to nothing at the bottom along
+  `FillCurve`; sparklines also fade their fill in and out at the ends (`ChartColors.EdgeFade` as an opacity mask), so
+  no hard edge shows on the card.
+
 ## Overview header
 
 `SystemSummaryViewModel` (owned by `OverviewViewModel`) holds the board name (title), the graphics card (subtitle), two
@@ -597,6 +622,18 @@ In the app, `OverlayService` owns the pieces:
 - `OverlayWindow`: a topmost, layered, transparent window with `WS_EX_TRANSPARENT` (clicks pass through),
   `WS_EX_NOACTIVATE` and `WS_EX_TOOLWINDOW` (no focus, no taskbar or Alt+Tab). Every tick it is placed on the monitor
   of the foreground window (`MonitorFromWindow`, per-monitor DPI for the margin) and re-asserted topmost every 2 s.
+  Since 1.8.3 it (and the graph's `LayeredSurface`) asks DWM for no border, no round corners and no non-client drawing
+  (`NativeWindow.MakeFrameless`), and `ThemeService.Apply` leaves it and the splash out when it gives Coreloom's windows
+  the dark title bar and round corners: asking for round corners on the overlay made Windows 11 draw its grey border
+  around it (GitHub's Windows Server runners draw no such borders, so the page shots' on-screen picture of the overlay
+  can't show the difference).
+- On a Mac, the readings window (`Overlay/OverlayWindow`, an Avalonia window at the status-window level, click-through
+  and shadowless) holds the readings at its top left on a `Canvas`. `MacOverlayService.Place` places the readings with
+  `OverlayPlacements.Locate` from their own size and sizes the window itself: exactly the readings while they're being
+  moved; otherwise at least their size in 64-point steps, growing only while the window is shown, set with
+  `setFrame:display:` in one step, with the content layer's gravity at the top left. So turning readings on and off
+  redraws them without resizing the window (before 1.8.3 it sized to its content, and macOS showed the last picture
+  stretched or squeezed while the resized window caught up).
 - `EtwFrameRateSource`: a real-time ETW session ("Coreloom-FrameRate", performance-counter timestamps, one set of
   buffers, 100 ms flush) with the Microsoft-Windows-DXGI (Present start, events 42 and 55) and Microsoft-Windows-D3D9
   (event 1) providers. A background thread runs `ProcessTrace`; the callback hands each present's process id and

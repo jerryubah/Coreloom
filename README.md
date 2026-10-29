@@ -51,7 +51,8 @@ Each button downloads the newest version. Once installed, Coreloom keeps itself 
 </p>
 
 - **Design.** One background across the whole window, with the sidebar and every card made of frosted glass that
-  shows a soft copy of what's behind it (1.8.2); smooth squircle corners on every card and control; cards with data glow
+  shows a soft copy of what's behind it (1.8.2); banners lit softly from their top edge, with a dial in its own tile
+  and dark glass buttons with white text (1.8.3); smooth squircle corners on every card and control; cards with data glow
   in their own color, and their edge glows in that color under the pointer; temperatures shown like a thermometer (blue
   when cool through to red when hot); a near-black dark mode; tick-ring gauges; liquid toggles; quick search with live
   results (Ctrl+K); eased scrolling everywhere; and a dark-mode app icon, on Coreloom's shortcuts too.
