@@ -887,6 +887,27 @@ unchanged.
 - **Cost on a real high-resolution screen**: the background is drawn once per window size off the screen's work and each card copies its part; scrolling and resizing on a 4K or Retina display haven't been timed.
 - The light theme's pale version of each background has only been seen in MacShots and on the runners' light menu bar setting.
 
+## 1.8.3: banners lit from above, new dials, dark glass buttons, fills without edges, the overlays
+
+### Verified
+
+| What | How | Result |
+|---|---|---|
+| Tests | View models (`Release183ViewModelTests`: Smart Optimize's dial is full before the first scan, follows the scan's progress and takes the result's color, and its properties are raised when the stage, progress or color change) plus every earlier test | ✅ in the container (Core 750, view models 214) and on GitHub (CI run 40820701467: Windows Core 750, view models 214, Hardware 82 + 1 skipped timer test; Linux Core 750, view models 214, Mac tests 180 + 8 skipped; macOS 188 on Intel, 187 + 1 skipped on Apple silicon) |
+| Banners, dials and glass buttons on the Mac | MacShots (0 binding errors) of Gaming, Smart Optimize and *Settings › Updates* with an update waiting, dark and light, over Coreloom's gradient and the pictures: the light comes from the banner's top edge and is gone before the text; the dial is centred in its tile (measured on Smart Optimize's full dial at 3×: 289 pixels from each wall on the Mac, 284 and 285 on Windows); the buttons are charcoal with white text; the *What's new* card and the sidebar's update button use the same glass | ✅ |
+| The same on Windows | Page shots runs 40818078880 and 40819652807 (the WPF window at 1440 × 960, 2×): Gaming, Smart Optimize, Overview dark and light, *Settings › Updates* with an update waiting. They match the Mac's | ✅ |
+| The real Mac app | Mac verify run 40820703638: every page, Connect, menu bar readings, the background picture and a clean quit on Apple silicon and Intel; the new banners and dials in the screenshots (the Intel shot of Gaming caught the page while it was still fading in, as 1.8.2's did once) | ✅ Apple silicon and Intel |
+| Graph fills | MacShots and page shots of the Overview: each card's fill eases to nothing below the line and fades in and out at its ends, with no hard top or side edge against the card's glow | ✅ |
+| Mac readings window keeps its shape | Probe runs 40818384906 and 40819647738 turned readings on and off while it was shown and photographed it each time from the script (not from inside the app, which made macOS ask for Screen Recording). Before the fix the window followed every change in size; after it, the window stayed 192 × 128 points while its readings went from 94 × 43 to 116 × 60 to 112 × 77, and all 20 pictures show crisp text at its normal size. Mac verify now has a permanent *Readings window* step: it turns the window on, opens Coreloom, photographs the top-left corner and checks the log for "Readings window shown" | ✅ Apple silicon and Intel, at the runners' 1× scale |
+| No outline around the overlay on Windows | The cause, found in the code: whenever the theme, accent or background changed, `ThemeService.Apply` asked Windows for round corners (and Mica) on every Coreloom window, the overlay and splash included, and Windows 11 draws a 1-pixel grey border with round corners. The overlay and splash are now left out, and both overlays (the WPF window and the layered window) tell Windows: no non-client drawing, no round corners, border color "none". Page shots photograph the overlay on the screen both ways | ⚠️ The code path is fixed, but GitHub's Windows Server machines draw no border either way (`overlay-on-screen.txt`: the same pixels with and without round corners asked for), so the outline itself couldn't be seen there |
+| Website and README | The website's Mac and Windows pictures and the README's two pictures redrawn from these shots; Playwright as a Mac, a Windows and a phone visitor: the right pictures, the background swatches switch, no horizontal scrolling at 390 px, no console errors | ✅ |
+
+### Not verified yet
+
+- **The overlay's outline on a real Windows 11 PC.** See above: the fix removes what asked Windows for the border, but only a Windows 11 desktop can show that it's gone.
+- **The Mac readings window on a Retina screen and while a game is full screen.** GitHub's Macs run at 1×; at 2× the picture macOS keeps while the window grows should still be pinned to the top-left corner.
+- **The banners' light and the grain at other scales** (125 %, 150 %, 175 % on Windows) and on a real 4K or Retina display; the shots are at 2×.
+
 ## How to re-run the checks that can run anywhere
 
 ```bash
