@@ -196,7 +196,12 @@ internal static class Program
     /// </summary>
     private static async Task ShootWindowAsync(string output)
     {
-        var data = new SampleData();
+        var data = new SampleData(sampleClock: true);
+        for (int i = 0; i < 120; i++)
+        {
+            data.Poll(); // two minutes of readings, so the charts are full
+        }
+
         var shell = SampleSettings.Shell(data);
         var window = new MainWindow(shell)
         {

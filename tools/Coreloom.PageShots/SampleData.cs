@@ -18,9 +18,13 @@ internal sealed class SampleData
 {
     private readonly SampleProvider _provider = new();
 
-    public SampleData()
+    private readonly SampleClock? _clock;
+
+    /// <param name="sampleClock">Readings a second apart however fast they're taken (so a few minutes of charts take no time).</param>
+    public SampleData(bool sampleClock = false)
     {
-        Engine = new TelemetryEngine([_provider], new MetricCatalog(), new DeviceRegistry(), new HistoryStore(256), SystemCapabilities.Unknown);
+        _clock = sampleClock ? new SampleClock() : null;
+        Engine = new TelemetryEngine([_provider], new MetricCatalog(), new DeviceRegistry(), new HistoryStore(256), SystemCapabilities.Unknown, clock: _clock);
         Engine.InitializeAll();
         Engine.Devices.Upsert(new DeviceInfo(MetricIds.CpuDeviceId, MetricCategory.Cpu, "AMD Ryzen 9 9950X3D 16-Core Processor")
         {
@@ -92,8 +96,23 @@ internal sealed class SampleData
     /// <summary>The sample tools (games, core scheduling, clean-up, benchmarks).</summary>
     public ToolServices Tools => new() { Gaming = new SampleGaming(), CoreScheduling = new SampleCores(), Optimizer = new SampleOptimize(), Benchmarks = new SampleBenchmarks() };
 
-    /// <summary>Takes a new reading (the sample values drift a little each time).</summary>
-    public TelemetryFrame Poll() => Engine.PollOnce();
+    /// <summary>Takes a new reading (the sample values drift a little each time), a second after the last with the sample clock.</summary>
+    public TelemetryFrame Poll()
+    {
+        _clock?.Advance(1000);
+        return Engine.PollOnce();
+    }
+
+    private sealed class SampleClock : IMonotonicClock
+    {
+        private readonly DateTime _start = DateTime.Now.AddMinutes(-5);
+
+        public long NowMilliseconds { get; private set; } = 1_000_000;
+
+        public DateTime LocalNow => _start.AddMilliseconds(NowMilliseconds - 1_000_000);
+
+        public void Advance(long milliseconds) => NowMilliseconds += milliseconds;
+    }
 
     private PageContext Context() => new()
     {
