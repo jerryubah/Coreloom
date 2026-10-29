@@ -1,5 +1,6 @@
 using Coreloom.Core.Appearance;
 using Coreloom.Core.Settings;
+using Coreloom.Core.Telemetry;
 using Coreloom.ViewModels.Pages;
 using Coreloom.ViewModels.Services;
 
@@ -29,6 +30,14 @@ public sealed class Release182ViewModelTests : IDisposable
         catch (DirectoryNotFoundException)
         {
         }
+    }
+
+    [Fact]
+    public void StoragePanel_ChartsReadingAndWriting_ToFillTheCardBesideNetwork()
+    {
+        var storage = new StoragePanelViewModel();
+        Assert.Equal(new[] { MetricIds.DiskTotalRead, MetricIds.DiskTotalWrite }, storage.Chart.Series.Select(s => s.MetricId));
+        Assert.Equal(new[] { "Read", "Write" }, storage.Chart.Series.Select(s => s.Label));
     }
 
     [Fact]

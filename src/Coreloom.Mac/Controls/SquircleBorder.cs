@@ -496,7 +496,7 @@ public class SquircleBorder : Decorator, ICustomHitTest
 
         if (Shadow > 0)
         {
-            DrawShadow(dc, size, dark);
+            DrawShadow(dc, outer, size, dark);
         }
 
         if (Frosted)
@@ -631,18 +631,25 @@ public class SquircleBorder : Decorator, ICustomHitTest
         dc.DrawGeometry(null, new ImmutablePen(sheen, thickness, lineJoin: PenLineJoin.Round), stroke);
     }
 
-    /// <summary>A shadow made of a few widening, faint outlines.</summary>
-    private void DrawShadow(DrawingContext dc, Size size, bool dark)
+    /// <summary>
+    /// A subtle shadow under a floating surface: many faint, widening outlines (no blur effect),
+    /// nudged a little down and kept outside the shape, so it never darkens the glass itself. At most about 15 % black
+    /// right at the edge in dark mode (half that in light), fading out over 15 points.
+    /// </summary>
+    private void DrawShadow(DrawingContext dc, Geometry outer, Size size, bool dark)
     {
-        const int Layers = 6;
+        const int Layers = 8;
         double depth = Math.Clamp(Shadow, 0, 3);
-        byte alpha = (byte)Math.Clamp((dark ? 0x12 : 0x07) * depth, 0, 255);
+        byte alpha = (byte)Math.Clamp((dark ? 0x05 : 0x03) * depth, 0, 255);
         var brush = ChartColors.Solid(Color.FromArgb(alpha, 0, 0, 0));
-        for (int i = Layers; i >= 1; i--)
+        using (dc.PushGeometryClip(Outside(size, outer)))
         {
-            double grow = i * 2.2 * depth;
-            var rect = new Rect(-grow, -grow + (i * 1.2 * depth), size.Width + (2 * grow), size.Height + (2 * grow));
-            dc.DrawGeometry(brush, null, Squircle.Create(rect, Squircle.Grow(CornerRadius, grow), Smoothing));
+            for (int i = Layers; i >= 1; i--)
+            {
+                double grow = i * 1.75 * Math.Min(depth, 1);
+                var rect = new Rect(-grow, -grow + (i * 0.25 * Math.Min(depth, 1)), size.Width + (2 * grow), size.Height + (2 * grow));
+                dc.DrawGeometry(brush, null, Squircle.Create(rect, Squircle.Grow(CornerRadius, grow), Smoothing));
+            }
         }
     }
 

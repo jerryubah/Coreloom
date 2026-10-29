@@ -515,7 +515,7 @@ public sealed class DashboardGrid : Panel
             _previewIndex = _startIndex;
             _floating = _startSlot.TopLeft;
             Panel.SetZIndex(_active, 1);
-            _active.Effect = new DropShadowEffect { BlurRadius = 30, ShadowDepth = 10, Direction = 270, Opacity = 0.38, Color = Colors.Black };
+            _active.Effect = new DropShadowEffect { BlurRadius = 28, ShadowDepth = 8, Direction = 270, Opacity = 0.24, Color = Colors.Black };
             Mouse.OverrideCursor = Cursors.SizeAll;
         }
         else

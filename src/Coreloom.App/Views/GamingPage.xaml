@@ -892,7 +892,7 @@
     <c:SquircleBorder Style="{StaticResource Card}" Width="600" Margin="32" Padding="22,18,22,18" HorizontalAlignment="Center" VerticalAlignment="Center"
                       AutomationProperties.Name="Intelligent CPU core scheduling">
       <c:SquircleBorder.Effect>
-        <DropShadowEffect BlurRadius="40" ShadowDepth="10" Direction="270" Opacity="0.35" Color="#000000" />
+        <DropShadowEffect BlurRadius="36" ShadowDepth="6" Direction="270" Opacity="0.2" Color="#000000" />
       </c:SquircleBorder.Effect>
       <c:SquircleBorder.InputBindings>
         <KeyBinding Key="Escape" Command="{Binding CloseDetailsCommand}" />
@@ -1066,7 +1066,7 @@
     <c:SquircleBorder Style="{StaticResource Card}" Width="520" Margin="32" Padding="22,18,22,18" HorizontalAlignment="Center" VerticalAlignment="Center"
                       AutomationProperties.Name="{Binding Title}">
       <c:SquircleBorder.Effect>
-        <DropShadowEffect BlurRadius="40" ShadowDepth="10" Direction="270" Opacity="0.35" Color="#000000" />
+        <DropShadowEffect BlurRadius="36" ShadowDepth="6" Direction="270" Opacity="0.2" Color="#000000" />
       </c:SquircleBorder.Effect>
       <c:SquircleBorder.InputBindings>
         <KeyBinding Key="Escape" Command="{Binding CancelCommand}" />

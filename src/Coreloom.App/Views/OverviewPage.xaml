@@ -53,6 +53,7 @@
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
           </Grid.RowDefinitions>
           <Grid>
@@ -71,6 +72,9 @@
               <ItemsControl ItemsSource="{Binding Volumes}" ItemTemplate="{StaticResource VolumeRow}" Focusable="False" />
             </ScrollViewer>
           </c:HeightCap>
+          <!-- Reading and writing over time fills what the drives leave, so the card has no empty space beside Network. -->
+          <c:LiveLineChart Grid.Row="2" Margin="0,12,0,0" MinHeight="80" Chart="{Binding Chart}"
+                           Timeline="{Binding DataContext.Timeline, RelativeSource={RelativeSource AncestorType=UserControl}}" />
         </Grid>
       </c:SquircleBorder>
     </DataTemplate>
@@ -435,7 +439,7 @@
       <c:SquircleBorder Style="{StaticResource Card}" Width="540" Margin="32" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center"
               AutomationProperties.Name="Customize dashboard">
         <c:SquircleBorder.Effect>
-          <DropShadowEffect BlurRadius="40" ShadowDepth="10" Direction="270" Opacity="0.35" Color="#000000" />
+          <DropShadowEffect BlurRadius="36" ShadowDepth="6" Direction="270" Opacity="0.2" Color="#000000" />
         </c:SquircleBorder.Effect>
         <Grid>
           <Grid.RowDefinitions>

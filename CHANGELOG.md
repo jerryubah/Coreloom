@@ -9,7 +9,7 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [1.8.2] - 2026-10-29
 
-A background of your own behind frosted glass: dark colors, gradients and pictures, yours too, with the sidebar and every card made of the same glass. And System health is exactly as tall as what it says.
+A background of your own behind frosted glass: dark colors, gradients and pictures, yours too, with the sidebar and every card made of the same glass and a softer shadow. And System health is exactly as tall as what it says.
 
 ### Highlights
 
@@ -17,6 +17,8 @@ A background of your own behind frosted glass: dark colors, gradients and pictur
 - **Frosted glass, the same everywhere.** The sidebar and every card are now one material: frosted glass that shows a blurred copy of the background right behind it. Cards take on the colors of the picture or gradient they sit on, and the look is the same from the sidebar to the last card.
 - **Pictures under a frosted layer.** A picture sits under a frosted layer so it never drowns out your readings. *Picture opacity* sets how strongly it shows through, *Frosted glass blur* how much the layer blurs it.
 - **System health fits its content.** With its rows to itself, the card is exactly as tall as what it says. Placed beside a taller card, it takes that card's height and spreads its parts out to fill it.
+- **A softer shadow.** The glass casts a subtle shadow now, light and close, and only around its edge, so it never darkens the glass itself. Dialogs and a card being dragged lift with a softer shadow too.
+- **Storage fills its card.** Under the drives, the Overview's Storage card now graphs reading and writing over time, so it no longer has empty space beside the taller Network card.
 - **Translucent (Mac) and Mica (Windows).** Seeing the desktop through the window is now one of the backgrounds, for the whole window rather than the sidebar alone.
 
 ### In detail

@@ -420,7 +420,7 @@
     <c:SquircleBorder Style="{StaticResource Card}" MaxWidth="920" Margin="32" Padding="24,20,24,20" HorizontalAlignment="Stretch" VerticalAlignment="Center"
                       AutomationProperties.Name="Result details">
       <c:SquircleBorder.Effect>
-        <DropShadowEffect BlurRadius="40" ShadowDepth="10" Direction="270" Opacity="0.35" Color="#000000" />
+        <DropShadowEffect BlurRadius="36" ShadowDepth="6" Direction="270" Opacity="0.2" Color="#000000" />
       </c:SquircleBorder.Effect>
       <c:SquircleBorder.InputBindings>
         <KeyBinding Key="Escape" Command="{Binding CloseDetailsCommand}" />

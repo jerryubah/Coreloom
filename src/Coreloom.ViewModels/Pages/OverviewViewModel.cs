@@ -182,7 +182,13 @@ public sealed class StoragePanelViewModel : DashboardPanelViewModel
     public StoragePanelViewModel()
         : base(DashboardCatalog.StorageDonut, "Storage")
     {
+        // Reading and writing over time, under the drives: fills the card when it sits beside the taller Network card.
+        Chart = new ChartViewModel("Storage", ChartScale.Auto,
+            new ChartSeriesViewModel(MetricIds.DiskTotalRead, "Read", ColorKeys.Read, ValueStyle.DiskRate),
+            new ChartSeriesViewModel(MetricIds.DiskTotalWrite, "Write", ColorKeys.Write, ValueStyle.DiskRate));
     }
+
+    public ChartViewModel Chart { get; }
 
     public ObservableCollection<VolumeViewModel> Volumes { get; } = [];
 
@@ -588,6 +594,7 @@ public sealed class OverviewViewModel : PageViewModel
                     }
 
                     UpdateMetrics(frame, false, storage.Read, storage.Write);
+                    storage.Chart.Update(frame, f);
                     break;
                 case NetworkPanelViewModel network:
                     UpdateMetrics(frame, false, network.Download, network.Upload);
