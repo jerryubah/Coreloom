@@ -21,6 +21,7 @@ public static class MenuBarModuleRenderer
     private const double ValueSize = 12.5;
     private const double SmallSize = 9;
     private const double Gap = 3;
+    private const double LabelGap = 4;
     private const double GaugeWidth = 4.5;
     private const double GaugeHeight = 15;
 
@@ -46,7 +47,7 @@ public static class MenuBarModuleRenderer
                 top += letter.Height * 0.86;
             }
 
-            x += layout.LabelWidth + 2;
+            x += layout.LabelWidth + LabelGap;
         }
 
         if (layout.Second is { } second)
@@ -129,7 +130,7 @@ public static class MenuBarModuleRenderer
         var value = Text(reading.Value, face, size);
         var second = twoLines ? Text(reading.SecondLine!, Regular, SmallSize) : null;
         double valueWidth = Math.Max(Math.Max(value.Width, second?.Width ?? 0), Text(Widest(reading.Id), face, size).Width);
-        double width = 1 + (letters is null ? 0 : labelWidth + 2) + valueWidth + (reading.Fraction is null ? 0 : Gap + GaugeWidth);
+        double width = 1 + (letters is null ? 0 : labelWidth + LabelGap) + valueWidth + (reading.Fraction is null ? 0 : Gap + GaugeWidth);
         return new Measured(letters, labelWidth, value, second, valueWidth, width);
     }
 }

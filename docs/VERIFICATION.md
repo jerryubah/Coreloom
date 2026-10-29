@@ -830,6 +830,28 @@ unchanged.
 - The five-second messages on real Windows and Mac windows: the timer is tested, and each page's view model, but
   nobody has watched them leave in the apps yet.
 
+## 1.8.1: menu bar readings, the MacBook with your wallpaper, the window buttons in the glass, renaming, the update button
+
+### Verified
+
+| What | How | Result |
+|---|---|---|
+| Tests | Core (`Release181Tests`: Bluetooth names kept, trimmed and capped; menu bar modules in order, none shown at first, repaired when edited; the Mac's compute scores ×10 with older results converted once) and view models (`Release181ViewModelTests`: rename, Enter/Esc/empty/reset, re-sorting and search by either name, the low-battery line with the given name; menu bar readings in Settings' order with bars and names as chosen, the fastest fan, only new readings published; the desktop picture choice; *What's new* chips and "Released … · N changes"; `UpdatesViewModelTests` for *New update available*) | ✅ in the container and on GitHub (CI run 40793590164: Windows Core 741, view models 205, Hardware 82 + 1 skipped timer test; Linux; macOS 188 on Intel, 187 + 1 skipped on Apple silicon) |
+| The window buttons inside the sidebar's glass | The real app on GitHub's Macs (Mac verify run 40793593475): the log line two seconds after launch gives the buttons' frames and what a click near the top reaches. Narrow sidebar (Apple silicon, 1024 × 768): glass at 10,10, close/minimize/zoom at 21/41/61, 22 from the top (centred across the glass, 30 below the window's top); wide (Intel, 1920 × 1080): 26/46/66, 22, with the collapse button's centre at (220, 31) on their line. The collapse button, the first page, the range picker and Freeze all reach Coreloom's view (AvnView), and so does the glass's top edge. Screenshots show the lights inside the glass, left-aligned, in light mode | ✅ Apple silicon and Intel |
+| Menu bar readings | Mac verify run 40793593475 turns on Processor, Memory and Network in the saved settings and reopens Coreloom: the log says "Readings in the menu bar: cpu, memory, network", and the screenshot shows three items of their own beside Spotlight and the clock (CPU with its bar, MEM with its bar, NET with ↓/↑ on two lines), drawn black on the light menu bar as template images | ✅ Apple silicon and Intel |
+| Settings › Menu bar, the Overview's MacBook, rename, *What's new*, Customize | MacShots (0 binding errors): the module list with live values and "Not on this Mac", the preview strip; the MacBook at 204 points centred in its column with a sample desktop picture (`--wallpaper`) and with Coreloom's picture (Blue and Rainbow), dark and light; the Customize toggle and the conic rainbow swatch; a Bluetooth card being renamed and one with a given name; Settings › Updates with 1.8.1's notes as the update | ✅ |
+| Windows window | Page shots run 40794081756 now draw the whole WPF window (sidebar and page, 1440 × 960 at 2×): Overview dark and light, Gaming, Smart Optimize, and Settings › Updates with an update waiting: the red dot on Settings, the gradient *New update available · Coreloom 1.8.1* button with its glow, and the new *What's new* card | ✅ |
+| Website | Playwright (Chromium) against the page served locally, as a Mac and a Windows visitor (user agent), dark and light, 1440 and 390 px wide: the right hero picture, download, wording and install steps for each; "See it on…" switches; no horizontal scrolling at 390 px; the phones in their mockups; no console errors | ✅ |
+
+### Not verified yet
+
+- **Liquid Glass.** Not used: Apple's `NSGlassEffectView` needs macOS 26, and GitHub's Macs run macOS 15, so it couldn't be tried. The sidebar stays Coreloom's own glass (with the desktop's vibrancy through it when translucent).
+- **Your desktop picture on a real Mac.** The runners' default picture isn't photographed (GitHub's Macs show a black desktop), so the MacBook's screen has only shown a sample picture in MacShots. Dynamic and Aerial wallpapers, a picture in Downloads (*Show it* and macOS's question) and changing the picture while Coreloom runs haven't been tried.
+- **The window buttons over time.** Placed again every 250 ms when AppKit moves them back; resizing, full screen and switching Spaces on a real Mac haven't been watched.
+- **Menu bar readings on a dark menu bar, ⌘-drag ordering and the items' menu** (the menu's actions are wired to *Open Coreloom*, *Menu Bar Settings…* and *Quit*; not clicked on a runner).
+- **Bluetooth renaming on real devices** (the names are Coreloom's; the system's Bluetooth settings keep theirs) and clicking out of search boxes in the real apps.
+- **The Mac's GPU compute scores** on real Apple silicon: ten times what 1.8.0 showed; how they compare with the graphics scores on a real M-series GPU isn't known yet.
+
 ## How to re-run the checks that can run anywhere
 
 ```bash
