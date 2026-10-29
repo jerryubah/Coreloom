@@ -60,11 +60,14 @@ internal static class SampleSettings
         return (page, host!);
     }
 
-    /// <summary>The whole app (sidebar and Overview) with no update waiting, for the website's picture of Coreloom on Windows.</summary>
+    /// <summary>
+    /// The whole app (sidebar and Overview) as 1.8.0, with no update waiting until <paramref name="releases"/> offers the
+    /// newest version in CHANGELOG.md, for the website's pictures of Coreloom on Windows.
+    /// </summary>
     public static ShellViewModel Shell(SampleData data, SampleReleases releases)
     {
         var stubs = new Stubs();
-        var app = new AppVersionInfo(SemanticVersion.Parse("1.8.1"), "1.8.1", "jerryubah/Coreloom", null);
+        var app = new AppVersionInfo(SemanticVersion.Parse("1.8.0"), "1.8.0", "jerryubah/Coreloom", null);
         return new ShellViewModel(new ShellDependencies
         {
             Monitor = data.Monitor,

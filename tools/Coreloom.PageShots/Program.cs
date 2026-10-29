@@ -251,6 +251,7 @@ internal static class Program
         }
 
         // A newer version out: the sidebar's update button, the red dot on Settings and Settings › Updates.
+        ThemeService.Instance?.Apply(new AppearanceSettings { Theme = ThemePreference.Dark, ReducedMotion = true });
         releases.None = false;
         data.Settings.Update("Updates", u => u.Updates.AutoInstall = false);
         await shell.Updates.CheckCommand.ExecuteAsync(null);
