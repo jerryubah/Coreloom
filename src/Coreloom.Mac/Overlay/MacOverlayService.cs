@@ -48,7 +48,11 @@ internal sealed class MacOverlayService : IDisposable
 
     private OverlaySettings Options => _settings.Current.Overlay;
 
-    public void Start() => Apply();
+    public void Start()
+    {
+        Apply();
+        OverlayProbe.Start(_settings, () => _window); // TEMPORARY PROBE (probe-183 only)
+    }
 
     public void Dispose()
     {

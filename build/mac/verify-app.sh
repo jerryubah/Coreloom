@@ -295,6 +295,28 @@ if kill -0 "$pid" 2> /dev/null; then
   kill -KILL "$pid" 2> /dev/null
 fi
 
+# ---- TEMPORARY PROBE (probe-183 only): the readings window while its readings are turned on and off -------------
+{ echo; echo "## Readings window probe"; } >> "$OUT/app.md"
+touch "$HOME/Library/Application Support/Coreloom/overlay-probe"
+open "$APP" || fail "open (overlay probe)"
+pid=""
+for _ in $(seq 1 60); do
+  pid="$(pgrep -x Coreloom | head -1)"
+  [[ -n "$pid" ]] && break
+  sleep 1
+done
+sleep 3
+for n in $(seq -w 1 20); do
+  screencapture -x -R0,0,420,240 "$OUT/probe-$n.png" 2> /dev/null || true
+  echo "    shot $n at $(date '+%H:%M:%S.%N' | cut -c1-12)" >> "$OUT/app.md"
+  sleep 1.6
+done
+grep -h "\[Probe\]\|\[Overlay\]" "$HOME/Library/Logs/Coreloom/"*.log 2> /dev/null | tail -60 | sed 's/^/    /' >> "$OUT/app.md" || true
+kill -TERM "$pid" 2> /dev/null
+for _ in $(seq 1 20); do kill -0 "$pid" 2> /dev/null || break; sleep 0.5; done
+kill -0 "$pid" 2> /dev/null && kill -KILL "$pid" 2> /dev/null
+rm -f "$HOME/Library/Application Support/Coreloom/overlay-probe"
+
 # ---- What it wrote ---------------------------------------------------------------------------------------------
 mkdir -p "$OUT/logs"
 cp -R "$HOME/Library/Logs/Coreloom/." "$OUT/logs/" 2> /dev/null || true
