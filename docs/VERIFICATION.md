@@ -873,6 +873,13 @@ unchanged.
 | Storage fills its card | MacShots of the whole Overview: the read/write chart under the drives ends level with the Network card's chart | ✅ on the Mac; Windows compiled and drew the window (page shots), but the shots don't scroll down to that card |
 | Website and README | The website's Mac and Windows pictures and the README's two pictures redrawn from these shots; Playwright against the page as a Mac and a Windows visitor, 1440 and 390 px: the new "New in 1.8.2" section switches the window between backgrounds, no horizontal scrolling | ✅ |
 
+### Updating to 1.8.2 on a Mac
+
+| Run | Result |
+|---|---|
+| The published 1.8.1 app (downloaded from its release) → the published 1.8.2, run 40812435039 (`macupdatetest-182`) | ✅ Apple silicon and Intel: found and verified in about 25 s, replaced after quitting, 1.8.2 running with "Coreloom was updated to 1.8.2" over the new glass |
+| 0.9.0 (built from 1.8.2's code) → the published 1.8.2, same run | ✅ Apple silicon and Intel |
+
 ### Not verified yet
 
 - **Your own picture on a real computer**: the file dialogs, a HEIC picture converted by macOS's `sips`, very large pictures. The tests choose a picture through a stand-in for the dialog.
