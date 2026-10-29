@@ -118,7 +118,7 @@ public partial class MainWindow : Window
         double inset = IsCompactSidebar ? Math.Max(6, (Sidebar.Bounds.Width - ButtonsWidth) / 2) : 16;
         try
         {
-            _buttonsPlaceable = Native.WindowChrome.PlaceButtons(handle.Handle, glass.X + inset, glass.Y + 20);
+            Native.WindowChrome.PlaceButtons(handle.Handle, glass.X + inset, glass.Y + 20); // false: no buttons right now
         }
         catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException or InvalidOperationException)
         {
