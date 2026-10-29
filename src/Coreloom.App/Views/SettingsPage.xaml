@@ -11,6 +11,7 @@
          (Tag true). -->
     <Style x:Key="BackdropTile" TargetType="Button">
       <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Tag" Value="False" />
       <Setter Property="Width" Value="120" />
       <Setter Property="Height" Value="76" />
       <Setter Property="Template">

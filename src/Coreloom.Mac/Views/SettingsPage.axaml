@@ -146,6 +146,9 @@
     <!-- A background's swatch (a gradient or a picture): a small rounded window onto it, ringed in the accent when chosen. -->
     <ControlTheme x:Key="BackdropTile" TargetType="Button">
       <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Tag">
+        <x:Boolean>False</x:Boolean>
+      </Setter>
       <Setter Property="Width" Value="120" />
       <Setter Property="Height" Value="76" />
       <Setter Property="Template">
