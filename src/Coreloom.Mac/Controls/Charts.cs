@@ -28,7 +28,7 @@ public sealed class Sparkline : Control
 
     public static readonly StyledProperty<double> SecondsProperty = AvaloniaProperty.Register<Sparkline, double>(nameof(Seconds), 60.0);
 
-    public static readonly StyledProperty<double> FillOpacityProperty = AvaloniaProperty.Register<Sparkline, double>(nameof(FillOpacity), 0.36);
+    public static readonly StyledProperty<double> FillOpacityProperty = AvaloniaProperty.Register<Sparkline, double>(nameof(FillOpacity), 0.42);
 
     public static readonly StyledProperty<double> StrokeThicknessProperty = AvaloniaProperty.Register<Sparkline, double>(nameof(StrokeThickness), 1.5);
 

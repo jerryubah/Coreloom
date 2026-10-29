@@ -29,7 +29,7 @@ public sealed class Sparkline : FrameworkElement
         nameof(Seconds), typeof(double), typeof(Sparkline), new FrameworkPropertyMetadata(60.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
     public static readonly DependencyProperty FillOpacityProperty = DependencyProperty.Register(
-        nameof(FillOpacity), typeof(double), typeof(Sparkline), new FrameworkPropertyMetadata(0.36, FrameworkPropertyMetadataOptions.AffectsRender));
+        nameof(FillOpacity), typeof(double), typeof(Sparkline), new FrameworkPropertyMetadata(0.42, FrameworkPropertyMetadataOptions.AffectsRender));
 
     public static readonly DependencyProperty StrokeThicknessProperty = DependencyProperty.Register(
         nameof(StrokeThickness), typeof(double), typeof(Sparkline), new FrameworkPropertyMetadata(1.5, FrameworkPropertyMetadataOptions.AffectsRender));
