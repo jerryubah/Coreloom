@@ -142,6 +142,16 @@ path = sys.argv[1]
 with open(path) as f:
     settings = json.load(f)
 settings.setdefault("connect", {})["enabled"] = True
+# A few readings in the menu bar too (1.8.1): they show as items of their own, photographed below.
+menu_bar = settings.setdefault("menuBar", {})
+modules = menu_bar.get("modules") or []
+for module in modules:
+    if module.get("id") in ("cpu", "memory", "network"):
+        module["shown"] = True
+for wanted in ("cpu", "memory", "network"):
+    if all(m.get("id") != wanted for m in modules):
+        modules.append({"id": wanted, "shown": True, "showName": True, "showGauge": True})
+menu_bar["modules"] = modules
 with open(path, "w") as f:
     json.dump(settings, f, indent=2)
 PY
@@ -175,6 +185,15 @@ then
   if [[ -n "$lan" ]]; then
     code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 "http://$lan:47101/api/info" 2> /dev/null || true)"
     echo "- From this Mac's network address $lan: ${code:-no answer} (answered only when the address is a private one)" >> "$OUT/app.md"
+  fi
+
+  # The menu bar with Coreloom's readings in it (its top strip, cropped from the whole screen).
+  screencapture -x "$OUT/91-menubar.png" 2> /dev/null || true
+  if grep -q "Readings in the menu bar: cpu, memory, network" "$HOME/Library/Logs/Coreloom/coreloom.log" 2> /dev/null \
+     || grep -rq "Readings in the menu bar: cpu, memory, network" "$HOME/Library/Logs/Coreloom" 2> /dev/null; then
+    echo "- Menu bar readings: cpu, memory, network shown (log)" >> "$OUT/app.md"
+  else
+    echo "- Menu bar readings: not in the log" >> "$OUT/app.md"
   fi
 
   # Settings › Connect: pairing opens while it shows (the QR code and the code are in the picture).

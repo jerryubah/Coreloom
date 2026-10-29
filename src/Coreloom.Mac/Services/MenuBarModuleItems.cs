@@ -27,6 +27,7 @@ public sealed unsafe partial class MenuBarModuleItems : IDisposable
     private readonly Dictionary<string, Item> _items = new(StringComparer.Ordinal);
     private nint _target;
     private bool _failed;
+    private string _shown = string.Empty;
 
     public MenuBarModuleItems(MenuBarModulesViewModel modules, Action open, Action openSettings, Action quit)
     {
@@ -79,6 +80,13 @@ public sealed unsafe partial class MenuBarModuleItems : IDisposable
         try
         {
             var readings = _modules.Readings;
+            string shown = string.Join(", ", readings.Select(r => r.Id));
+            if (shown != _shown)
+            {
+                _shown = shown;
+                Log.Info("MenuBar", shown.Length == 0 ? "No readings in the menu bar." : $"Readings in the menu bar: {shown}.");
+            }
+
             foreach (string id in _items.Keys.Where(id => readings.All(r => r.Id != id)).ToList())
             {
                 Remove(id);
