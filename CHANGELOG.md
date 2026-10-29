@@ -15,7 +15,7 @@ A background of your own behind frosted glass: dark colors, gradients and pictur
 
 - **Your background, all around.** *Settings › Appearance › Background* fills the whole window, behind the sidebar too, with a dark color (eight to pick from, or any other), a dark gradient (Coreloom's own follows your accent color) or a picture: six of Coreloom's own (Silk, Aurora, Nebula, Dunes, Bloom and Light trails) or one of yours.
 - **Frosted glass, the same everywhere.** The sidebar and every card are now one material: frosted glass that shows a blurred copy of the background right behind it. Cards take on the colors of the picture or gradient they sit on, and the look is the same from the sidebar to the last card.
-- **Pictures under a frosted layer.** A picture sits under a frosted layer so it never drowns out your readings. *Picture strength* sets how strongly it shows through, *Frosted glass* how much the layer blurs it.
+- **Pictures under a frosted layer.** A picture sits under a frosted layer so it never drowns out your readings. *Picture opacity* sets how strongly it shows through, *Frosted glass blur* how much the layer blurs it.
 - **System health fits its content.** With its rows to itself, the card is exactly as tall as what it says. Placed beside a taller card, it takes that card's height and spreads its parts out to fill it.
 - **Translucent (Mac) and Mica (Windows).** Seeing the desktop through the window is now one of the backgrounds, for the whole window rather than the sidebar alone.
 

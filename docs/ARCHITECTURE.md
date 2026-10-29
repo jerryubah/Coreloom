@@ -322,9 +322,9 @@ One background spans each app's main window; the sidebar and the cards are frost
 - **Drawing.** `BackdropRenderer` (Core, pure pixel work, unit-tested) draws the window's background at its size in
   device pixels: gradients rasterized with dithering (below one 8-bit step, so long dark ramps don't band), pictures
   scaled to cover the window (blocks averaged first when shrinking a lot) and laid over the theme's background at the
-  picture's strength, then blurred (three box-blur passes, done at a reduced size when the blur is large). The *frost*
+  picture's opacity, then blurred (three box-blur passes, done at a reduced size when the blur is large). The *frost*
   is the same background a few times smaller and blurred by `FrostPoints`, with a little more color. The light theme
-  pales colors and gradients toward its background and halves a picture's strength.
+  pales colors and gradients toward its background and halves a picture's opacity.
 - **The apps.** `Services/Backdrop` (one per app) takes the settings and theme from `ThemeService.Apply` and the size
   from the window's `WindowBackdrop`, debounces (30 ms after a change, 140 ms after a resize), decodes the picture once
   (macOS's sips converts HEIC), renders on the thread pool, turns the pixels into two bitmaps on the UI thread and raises

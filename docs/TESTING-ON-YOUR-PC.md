@@ -128,7 +128,7 @@ Work through each area and tick what works.
       `#FF5C8A` apply everywhere. *Reduce motion* stops the animations.
 - [ ] *Settings → Appearance → Background* (1.8.2): each gradient, color and picture fills the whole window at once,
       and the cards' glass takes on its colors. *Coreloom* follows the accent. *Choose…* takes a picture of yours (try a
-      large photo); *Picture strength* and *Frosted glass* change it as you drag. Scroll a page: the glass keeps showing
+      large photo); *Picture opacity* and *Frosted glass blur* change it as you drag. Scroll a page: the glass keeps showing
       the part of the background behind each card (it doesn't scroll with the card). Resize and maximize the window: the
       background fills it again within a moment. *Mica* (Windows 11 22H2 or later) shows the desktop's tint through the
       whole window, with smooth text. The light theme shows a pale version of each. Restart: the choice is kept.

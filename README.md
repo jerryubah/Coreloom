@@ -57,7 +57,7 @@ Each button downloads the newest version. Once installed, Coreloom keeps itself 
   results (Ctrl+K); eased scrolling everywhere; and a dark-mode app icon, on Coreloom's shortcuts too.
 - **Your background (1.8.2).** *Settings › Appearance › Background*: eight dark colors (or any color), eight dark
   gradients (Coreloom's own follows your accent color), six pictures drawn for Coreloom (Silk, Aurora, Nebula, Dunes,
-  Bloom, Light trails) or a picture of your own, under a frosted layer with *Picture strength* and *Frosted glass*
+  Bloom, Light trails) or a picture of your own, under a frosted layer with *Picture opacity* and *Frosted glass blur*
   sliders; or the desktop through the window (Mica on Windows 11, Translucent on a Mac).
 - **Overview dashboard.** A header for your PC: motherboard, graphics card and key specs next to a rendered PC whose
   lighting color you choose (blue, purple, red, green, rainbow or your accent) and whose fans turn with your real fan
