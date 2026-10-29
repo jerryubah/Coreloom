@@ -111,6 +111,13 @@ The Mac app's MacBook picture (`src/Coreloom.Mac/Assets/MacBook`, made by `build
 `build/site/make-phone-mockups.py` from `assets/site-render/iphone-mockup.png`) come from device mockups supplied by
 the repository owner, who is responsible for their licenses. No Apple logo appears on them.
 
+## Background pictures
+
+The six suggested background pictures (`assets/backdrops`, since 1.8.2) are Coreloom's own: they are computed by
+`build/backdrops/make-backdrops.py` from noise, light and shading, with no photographs or other works in them, and
+are covered by Coreloom's license. A picture you choose yourself stays on your computer (a copy in Coreloom's settings
+folder) and isn't distributed.
+
 ## Inter on the website
 
 The website (`site/`) uses Inter, the app's typeface, from `site/assets/fonts` (SIL Open Font License 1.1, license

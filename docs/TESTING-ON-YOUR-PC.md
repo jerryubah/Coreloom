@@ -119,12 +119,19 @@ Work through each area and tick what works.
 
 **Window and appearance**
 
-- [ ] The window opens with dark Mica (or the solid dark background if Mica is off).
+- [ ] The window opens on Coreloom's gradient (dark blue and violet lights), behind the sidebar too; the sidebar and
+      every card are frosted glass that shows the blurred part of the background behind it (1.8.2).
 - [ ] Minimize, maximize and close work. Hovering maximize shows the Windows 11 Snap Layouts flyout.
 - [ ] A maximized window has no clipped edges.
 - [ ] The sidebar collapses with its button, and on its own below about 980 px window width.
 - [ ] *Settings → Appearance*: light/dark/system themes animate. Accent swatches and a custom hex like
       `#FF5C8A` apply everywhere. *Reduce motion* stops the animations.
+- [ ] *Settings → Appearance → Background* (1.8.2): each gradient, color and picture fills the whole window at once,
+      and the cards' glass takes on its colors. *Coreloom* follows the accent. *Choose…* takes a picture of yours (try a
+      large photo); *Picture strength* and *Frosted glass* change it as you drag. Scroll a page: the glass keeps showing
+      the part of the background behind each card (it doesn't scroll with the card). Resize and maximize the window: the
+      background fills it again within a moment. *Mica* (Windows 11 22H2 or later) shows the desktop's tint through the
+      whole window, with smooth text. The light theme shows a pale version of each. Restart: the choice is kept.
 
 **Overview**
 
@@ -270,9 +277,10 @@ Work through each area and tick what works.
       and benchmark cards, the Smart Optimize, Gaming and Devices banners and the frame limiter glow faintly in their
       color from the bottom. Moving the pointer over them lights the edge near the pointer in that color, following it
       smoothly, brighter near the edge, fading out when the pointer leaves; the content never glows, and nothing lags.
-- [ ] The sidebar floats with a gap all round, rounded and glassy with a bright rim; collapsing it (button or a
-      narrow window) still works. With Mica on (Windows 11), the desktop tint shows through the sidebar; text there is
-      smooth (no colored fringes). With Mica off, it shows the two soft lights.
+- [ ] The sidebar floats with a gap all round, rounded and glassy with a bright rim, on the same background as the
+      pages; collapsing it (button or a narrow window) still works.
+- [ ] System health (1.8.2) is as tall as what it says, with no empty space under it. Make it narrower (right-click ›
+      Narrower) and put it beside a chart: it takes the chart's height and its parts spread into fewer columns.
 - [ ] Gauges are tick rings: lit ticks brighten toward a glowing head, colors still green/blue/orange/red, values
       glide. The page gauge cards and speed gauges have a soft orb inside. Spinners are still smooth arcs.
 - [ ] Every switch: pressing swells the knob into a glass lens; releasing slides it across with a little overshoot.
@@ -794,7 +802,10 @@ GitHub's Macs check every build of Coreloom for Mac, but they are virtual machin
 8. **The in-game overlay.** ⌥⌘O over a full-screen app or game; Customize on the Graphics page.
 9. **Benchmarks.** Run the CPU and GPU benchmarks and a 1-minute stress test. Compute scores are ten times what
    1.8.0 showed, and results saved before are converted (1.8.1).
-10. **Updates.** When a newer version is out, Settings has a red dot and the sidebar's *New update available* button
+10. **Backgrounds (1.8.2).** *Settings › Appearance › Background*: a gradient, a color, each picture and one of your
+   own (a HEIC from Photos too); the sidebar and cards frost what's behind them as you scroll. *Translucent* shows the
+   desktop through the whole window. Resize the window and switch to full screen: the background fills it again.
+11. **Updates.** When a newer version is out, Settings has a red dot and the sidebar's *New update available* button
    opens *Settings › Updates*. Once a newer version is out, *Coreloom › Check for Updates…* downloads it; *Install update* quits
    Coreloom, replaces it and opens the new version (`~/Library/Logs/Coreloom/update.log` says what happened).
 

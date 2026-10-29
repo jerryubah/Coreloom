@@ -7,6 +7,31 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.8.2] - 2026-10-29
+
+A background of your own behind frosted glass: dark colors, gradients and pictures, yours too, with the sidebar and every card made of the same glass. And System health is exactly as tall as what it says.
+
+### Highlights
+
+- **Your background, all around.** *Settings › Appearance › Background* fills the whole window, behind the sidebar too, with a dark color (eight to pick from, or any other), a dark gradient (Coreloom's own follows your accent color) or a picture: six of Coreloom's own (Silk, Aurora, Nebula, Dunes, Bloom and Light trails) or one of yours.
+- **Frosted glass, the same everywhere.** The sidebar and every card are now one material: frosted glass that shows a blurred copy of the background right behind it. Cards take on the colors of the picture or gradient they sit on, and the look is the same from the sidebar to the last card.
+- **Pictures under a frosted layer.** A picture sits under a frosted layer so it never drowns out your readings. *Picture strength* sets how strongly it shows through, *Frosted glass* how much the layer blurs it.
+- **System health fits its content.** With its rows to itself, the card is exactly as tall as what it says. Placed beside a taller card, it takes that card's height and spreads its parts out to fill it.
+- **Translucent (Mac) and Mica (Windows).** Seeing the desktop through the window is now one of the backgrounds, for the whole window rather than the sidebar alone.
+
+### In detail
+
+- Your own picture is copied into Coreloom's settings folder, so it stays when the original moves. On a Mac, HEIC pictures are converted with macOS's own sips. Nothing is sent anywhere.
+- The light theme shows a pale version of the background you chose, so it stays light.
+- The background is drawn once for the window's size, away from the screen's work, and each card shows its part of it, so scrolling and live charts cost no more than before.
+- Insets, text boxes and gauge tracks inside the cards are see-through too, so they sit in the glass instead of on it.
+- The website and the README show the new look.
+- Have 1.8.1? Choose *Check for Updates* (the Coreloom menu on a Mac, *Settings › Updates* on Windows), then *Install update*.
+
+### Feedback
+
+Tried your own picture behind the glass? [Open an issue](https://github.com/jerryubah/Coreloom/issues) with a screenshot if something looks off.
+
 ## [1.8.1] - 2026-10-28
 
 Readings in your Mac's menu bar, your own wallpaper on the Overview's MacBook, Bluetooth devices you can rename, and an update that's hard to miss.

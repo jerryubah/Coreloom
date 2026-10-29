@@ -1,7 +1,7 @@
 # Coreloom
 
 <p align="center">
-  <img src="assets/readme/coreloom-film.avif" width="100%" alt="Coreloom 1.4.5 product film: the PC lighting up, the Overview dashboard, live gauges, Make it yours, Game Boost, the frame limiter, the game library, the in-game overlay, honest numbers, Smart Optimize, devices and speed tests, and what Coreloom never does">
+  <img src="assets/readme/coreloom-hero.webp" width="100%" alt="Coreloom 1.8.2 on Windows and, in front, on a Mac: one background across the window, the sidebar and every card frosted glass on it, with the Overview's gauges, charts and System health">
 </p>
 
 A native hardware monitor for **Windows 11 and macOS** with a calm, modern dashboard: live GPU, CPU, memory,
@@ -9,8 +9,10 @@ storage and network telemetry, animated charts with up to an hour of history, a 
 clean-up, threshold alerts, a tray or menu bar icon and verified in-app updates.
 
 Coreloom only **reads** sensors. It never changes clocks, voltages, fan curves or firmware settings, never
-installs drivers or services, and never sends your data to the internet. New in 1.7.0: see your computer's readings
-live on your phone, over your own network ([Coreloom on your phone](#coreloom-on-your-phone)).
+installs drivers or services, and never sends your data to the internet. New in 1.8.2: your own background behind
+frosted glass, a dark color, a gradient or a picture, with the sidebar and every card made of the same glass. And
+since 1.7.0, your computer's readings live on your phone, over your own network
+([Coreloom on your phone](#coreloom-on-your-phone)).
 
 ## Download
 
@@ -44,10 +46,19 @@ Each button downloads the newest version. Once installed, Coreloom keeps itself 
 
 ## Features
 
-- **Design.** Smooth squircle corners on every card and control; cards with data glow in their own color, and their
-  edge glows in that color under the pointer; temperatures shown like a thermometer (blue when cool through to red when
-  hot); a near-black dark mode; a floating liquid-glass sidebar; tick-ring gauges; liquid toggles; quick search with
-  live results (Ctrl+K); eased scrolling everywhere; and a dark-mode app icon, on Coreloom's shortcuts too.
+<p align="center">
+  <img src="assets/readme/coreloom-backgrounds.webp" width="100%" alt="The same Coreloom window over three backgrounds, side by side: Coreloom's gradient, the Aurora picture and the Dunes picture, each showing through the frosted cards">
+</p>
+
+- **Design.** One background across the whole window, with the sidebar and every card made of frosted glass that
+  shows a soft copy of what's behind it (1.8.2); smooth squircle corners on every card and control; cards with data glow
+  in their own color, and their edge glows in that color under the pointer; temperatures shown like a thermometer (blue
+  when cool through to red when hot); a near-black dark mode; tick-ring gauges; liquid toggles; quick search with live
+  results (Ctrl+K); eased scrolling everywhere; and a dark-mode app icon, on Coreloom's shortcuts too.
+- **Your background (1.8.2).** *Settings › Appearance › Background*: eight dark colors (or any color), eight dark
+  gradients (Coreloom's own follows your accent color), six pictures drawn for Coreloom (Silk, Aurora, Nebula, Dunes,
+  Bloom, Light trails) or a picture of your own, under a frosted layer with *Picture strength* and *Frosted glass*
+  sliders; or the desktop through the window (Mica on Windows 11, Translucent on a Mac).
 - **Overview dashboard.** A header for your PC: motherboard, graphics card and key specs next to a rendered PC whose
   lighting color you choose (blue, purple, red, green, rainbow or your accent) and whose fans turn with your real fan
   speeds; or a render of your own build. Six summary cards (GPU utilization, GPU
@@ -157,6 +168,14 @@ Each button downloads the newest version. Once installed, Coreloom keeps itself 
   frame counter.
 - **Logs.** *Settings › Logs* (or *Open logs* on the memory card) shows Coreloom's log with timestamps, search, a
   level and category filter, and copy and open-folder buttons.
+
+### The product film
+
+<p align="center">
+  <img src="assets/readme/coreloom-film.avif" width="100%" alt="Coreloom 1.4.5 product film: the PC lighting up, the Overview dashboard, live gauges, Make it yours, Game Boost, the frame limiter, the game library, the in-game overlay, honest numbers, Smart Optimize, devices and speed tests, and what Coreloom never does">
+</p>
+
+Made with Coreloom 1.4.5 on Windows, before the frosted-glass design and the Mac app.
 
 ## Coreloom for Mac
 
@@ -466,7 +485,9 @@ tests/                 xUnit v3 tests for Core, Hardware (Windows and Mac) and V
 tools/                 PageShots (Windows) and MacShots (Mac): every page drawn with sample data; ConnectDemo:
                        Coreloom Connect with sample readings, to try the phone app
 installer/Coreloom.iss    Inno Setup script
-build/                 build.ps1 (Windows), mac/bundle.sh and mac/verify-app.sh (Mac), release notes, checks
+build/                 build.ps1 (Windows), mac/bundle.sh and mac/verify-app.sh (Mac), release notes, checks;
+                       backdrops/ draws the suggested background pictures; site/ and readme/ make the pictures of the app
+assets/                icons, the suggested background pictures (backdrops/), device pictures, README pictures
 site/                  the download page (GitHub Pages)
 docs/                  architecture, testing, releasing, troubleshooting, verification report
 ```

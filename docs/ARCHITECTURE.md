@@ -270,10 +270,10 @@ Phones see a computer's readings through a small server inside Coreloom, on the 
   `RadialGauge.TemperatureScale` colors the lit ticks from tail to head along the lit part, the pair blended between
   bands at the scale position (`GaugeTone.At`), and the head, orb and halo in the head color. The gauge cards and the
   dashboard's summary cards bind their glow, gauge, sparkline and icon to it.
-- **Palette and glass.** The dark palette is near-black (`Background` #0A0B0E, cards #15171C). `ThemeService` publishes
-  the sidebar's glass (`Brush.GlassFill`, `Brush.GlassRim`, `Brush.GlassLightA/B`) from the accent; the sidebar column is
-  the backdrop (Mica shows through it when on), the pages sit on an opaque layer, and the sidebar's text switches to
-  grayscale smoothing under Mica (ClearType can't be blended onto see-through pixels).
+- **Palette and glass.** The dark palette is near-black (`Background` #0A0B0E). Since 1.8.2 the sidebar and every card
+  are one material (see *Backgrounds and frosted glass* below): `ThemeService` publishes the glass (`Brush.GlassFill`,
+  `Brush.GlassRim`) from the accent, and what sits inside cards (`Surface`, `Input`, `Track`) is see-through so it takes
+  on the glass; `Brush.Card` stays solid for menus, pop-ups and the message over the page.
 - **Gauges.** `RadialGauge.Look` (Auto: ticks from 40 px, an arc for spinners and comets) draws a tick ring: unlit
   ticks in one geometry, lit ones per tick with alpha rising toward the head, the last ticks longer and lighter, a
   radial halo at the head, and a partial head tick so values glide. `Orb` adds a sphere of light inside.
@@ -306,6 +306,41 @@ Phones see a computer's readings through a small server inside Coreloom, on the 
   this exe sets the icon by `ShortcutIcons.Desired` (Core: dark icon over the usual one in the dark theme, the exe's icon
   again in the light theme, a custom icon left alone), then `SHChangeNotify` (each file, then the icon association) so
   Explorer redraws them.
+
+## Backgrounds and frosted glass (1.8.2)
+
+One background spans each app's main window; the sidebar and the cards are frosted glass on it.
+
+- **Settings.** `AppearanceSettings.Backdrop` (`BackdropSettings`, Core): `Kind` (Color, Gradient, Image, SeeThrough),
+  the color, the gradient's id, the picture's id or `custom` with `CustomImage` (a file name in `AppPaths.BackdropDirectory`,
+  the settings folder's *Backdrops*), `ImageOpacity` (10–100 %) and `Blur` (0–100 %, 0–48 pt). `FrostPoints` (30 pt plus
+  half the blur) is how much the glass blurs. `Normalize` repairs unknown ids and keeps only a plain file name.
+- **Presets.** `BackdropPresets` (Core): eight dark colors, eight gradients (a linear sweep and two or three soft
+  lights; *Coreloom*'s lights are the accent and its cooler and warmer neighbours) and six pictures. The pictures are
+  Coreloom's own, computed by `build/backdrops/make-backdrops.py` (noise, light and shading; no photographs) into
+  `assets/backdrops/<id>.jpg` (2560 × 1600) and `<id>-thumb.jpg`, embedded in both apps.
+- **Drawing.** `BackdropRenderer` (Core, pure pixel work, unit-tested) draws the window's background at its size in
+  device pixels: gradients rasterized with dithering (below one 8-bit step, so long dark ramps don't band), pictures
+  scaled to cover the window (blocks averaged first when shrinking a lot) and laid over the theme's background at the
+  picture's strength, then blurred (three box-blur passes, done at a reduced size when the blur is large). The *frost*
+  is the same background a few times smaller and blurred by `FrostPoints`, with a little more color. The light theme
+  pales colors and gradients toward its background and halves a picture's strength.
+- **The apps.** `Services/Backdrop` (one per app) takes the settings and theme from `ThemeService.Apply` and the size
+  from the window's `WindowBackdrop`, debounces (30 ms after a change, 140 ms after a resize), decodes the picture once
+  (macOS's sips converts HEIC), renders on the thread pool, turns the pixels into two bitmaps on the UI thread and raises
+  `Changed`; a newer request supersedes one in flight. `WindowBackdrop` (behind everything, spanning the window) draws
+  the background stretched to the window. `SquircleBorder.Frosted` (on the `Card` style and the sidebar) draws the
+  whole frost clipped to the card's shape and offset by where the card sits over the window, under its glass fill, rim
+  and sheen: on a Mac it draws again on `EffectiveViewportChanged` (scrolling and layout); on Windows a
+  `TranslateTransform` inside the drawing is moved on `LayoutUpdated`, so scrolling doesn't redraw the card.
+- **See-through.** `Kind = SeeThrough` is macOS's vibrancy (`AcrylicBlur`) or Windows 11's Mica for the whole window;
+  `Brush.ContentLayer` is then the theme's background at about half strength, the glass only tints, and on Windows text
+  is smoothed in grayscale (ClearType can't be blended onto see-through pixels). Where Mica isn't available the
+  setting falls back to the *Coreloom* gradient. `AppearanceSettings.UseMica` (before 1.8.2) is no longer read.
+- **Settings › Appearance › Background.** `BackdropViewModel` (ViewModels): the kinds, swatches (gradient previews
+  drawn by `BackdropRenderer`, the pictures' thumbnails), *Choose…* (`IShellService.PickOpenFile`; the picture is copied,
+  the previous copy deleted, at most 60 MB) and the two sliders, each change saved through `SettingsService` and applied
+  by the theme at once.
 
 ## Overview header
 
@@ -365,7 +400,11 @@ running). Sizes are saved per card in `Dashboard.Cards[].Columns`/`Rows`, only w
 - snapping a resize to whole cells.
 
 `DashboardGrid` (App) measures each card at its width to set the row height, then at its final size; this is why
-the storage list sits in a `HeightCap`. It arranges the cards and glides them to new places with a translate
+the storage list sits in a `HeightCap`. Since 1.8.2 rows can differ in height: a card that fits its content
+(`DashboardCatalog.FitsContent`: System health; `DashboardGrid.FitsContent`) doesn't count toward the row height;
+`DashboardLayout.FitSizes` grows it down to the bottom of any card sharing its rows, and `DashboardLayout.RowHeights`
+makes rows that only such cards cover exactly as tall as their content (shared out over their rows). Inside, the
+parts' `AdaptiveGrid.FillHeight` drops to fewer columns while they still fit, so a stretched card fills its height. It arranges the cards and glides them to new places with a translate
 animation (none with Reduce motion or when only the window size changed). Dragging starts after the system drag
 distance from anywhere in a card that isn't a control (buttons, toggles and scroll bars keep working), or from the
 grip (`DashboardGrid.Handle="Move"`); the corner (`Handle="Resize"`) resizes. During a drag the panel holds the

@@ -843,6 +843,13 @@ unchanged.
 | Windows window | Page shots run 40794081756 now draw the whole WPF window (sidebar and page, 1440 × 960 at 2×): Overview dark and light, Gaming, Smart Optimize, and Settings › Updates with an update waiting: the red dot on Settings, the gradient *New update available · Coreloom 1.8.1* button with its glow, and the new *What's new* card | ✅ |
 | Website | Playwright (Chromium) against the page served locally, as a Mac and a Windows visitor (user agent), dark and light, 1440 and 390 px wide: the right hero picture, download, wording and install steps for each; "See it on…" switches; no horizontal scrolling at 390 px; the phones in their mockups; no console errors | ✅ |
 
+### Updating to 1.8.1 on a Mac
+
+| Run | Result |
+|---|---|
+| The published 1.8.0 app (downloaded from its release) → the published 1.8.1, runs 40797004700 and 40803975371 (`macupdatetest-181`, `-181-b`) | ✅ Apple silicon and Intel both times: found and verified in about 25 s, replaced after quitting, 1.8.1 running with "Coreloom was updated to 1.8.1" |
+| 0.9.0 (built from 1.8.1's code) → the published 1.8.1, same runs | Intel ✅ both times. Apple silicon: ❌ the first time (its update check failed twice, ten minutes apart, so nothing was downloaded; the same shared-runner trouble with GitHub's API as 1.8.0's first Intel run), ✅ on the re-run |
+
 ### Not verified yet
 
 - **Liquid Glass.** Not used: Apple's `NSGlassEffectView` needs macOS 26, and GitHub's Macs run macOS 15, so it couldn't be tried. The sidebar stays Coreloom's own glass (with the desktop's vibrancy through it when translucent).

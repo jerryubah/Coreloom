@@ -31,6 +31,7 @@ public static class Backdrop
     private static bool _pending;
     private static (string Key, PixelImage Image)? _picture;
     private static string? _lastKey;
+    private static string? _logged;
 
     /// <summary>The window's background, stretched to the window (null until drawn, or when see-through).</summary>
     public static BitmapSource? Background { get; private set; }
@@ -190,6 +191,7 @@ public static class Backdrop
                 return;
             }
 
+            var timer = System.Diagnostics.Stopwatch.StartNew();
             var layers = await Task.Run(() =>
             {
                 if (picture is not null)
@@ -208,6 +210,21 @@ public static class Backdrop
             Background = layers is null ? null : ToBitmap(layers.Background);
             Frost = layers is null ? null : ToBitmap(layers.Frost);
             _lastKey = key;
+            string what = request.Kind switch
+            {
+                BackdropKind.Color => $"Color {settings.Color}",
+                BackdropKind.Gradient => $"Gradient {settings.Gradient}",
+                BackdropKind.Image => $"Image {(settings.Image == BackdropSettings.CustomImageId ? "of your own" : settings.Image)}{(request.Image is null ? " (unreadable)" : string.Empty)}",
+                _ => "Mica",
+            };
+            if (what != _logged)
+            {
+                _logged = what;
+                Log.Info("Appearance", layers is null
+                    ? $"Background: {what}."
+                    : $"Background: {what} drawn at {layers.Background.Width}×{layers.Background.Height} (frost {layers.Frost.Width}×{layers.Frost.Height}) in {timer.ElapsedMilliseconds} ms.");
+            }
+
             Changed?.Invoke(null, EventArgs.Empty);
         }
         catch (Exception e)

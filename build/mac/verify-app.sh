@@ -221,6 +221,45 @@ else
   fail "Connect: no settings file"
 fi
 
+# ---- Backgrounds (1.8.2): a picture behind the frosted glass, then the desktop through the window --------------------
+{ echo; echo "## Backgrounds"; } >> "$OUT/app.md"
+for backdrop in "Image:aurora" "SeeThrough:"; do
+  kind="${backdrop%%:*}"; image="${backdrop#*:}"
+  [[ -f "$settings" ]] && python3 - "$settings" "$kind" "$image" <<'PY'
+import json, sys
+path, kind, image = sys.argv[1:4]
+with open(path) as f:
+    settings = json.load(f)
+backdrop = settings.setdefault("appearance", {}).setdefault("backdrop", {})
+backdrop["kind"] = kind
+if image:
+    backdrop["image"] = image
+with open(path, "w") as f:
+    json.dump(settings, f, indent=2)
+PY
+  open "$APP" || fail "open (background $kind)"
+  pid=""
+  for _ in $(seq 1 60); do
+    pid="$(pgrep -x Coreloom | head -1)"
+    [[ -n "$pid" ]] && break
+    sleep 1
+  done
+  sleep 12
+  shot="$( [[ "$kind" == Image ]] && echo 92-background-aurora || echo 93-background-translucent )"
+  screencapture -x "$OUT/$shot.png" 2> /dev/null || true
+  line="$(grep -h "Background:" "$HOME/Library/Logs/Coreloom/"*.log 2> /dev/null | tail -1 || true)"
+  echo "- $kind${image:+ ($image)}: ${line:-no log line}" >> "$OUT/app.md"
+  if [[ "$kind" == Image && "$line" != *"Image aurora"* ]]; then
+    fail "the Aurora background wasn't drawn"
+  fi
+  kill -TERM "$pid" 2> /dev/null
+  for _ in $(seq 1 20); do kill -0 "$pid" 2> /dev/null || break; sleep 0.5; done
+  if kill -0 "$pid" 2> /dev/null; then
+    fail "Coreloom didn't quit within 10 s of SIGTERM (background $kind)"
+    kill -KILL "$pid" 2> /dev/null
+  fi
+done
+
 # ---- What it wrote ---------------------------------------------------------------------------------------------
 mkdir -p "$OUT/logs"
 cp -R "$HOME/Library/Logs/Coreloom/." "$OUT/logs/" 2> /dev/null || true
