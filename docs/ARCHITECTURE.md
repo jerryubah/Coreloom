@@ -59,6 +59,22 @@ On a Mac the top and bottom layers are swapped for their macOS counterparts and 
   is the composition root: telemetry host, settings, updates, the menu bar item (`MenuBarService`), the app menus
   (`AppMenus`), the in-game overlay (`MacOverlayService`, an `NSWindow` at the status level that ignores the mouse,
   with a Carbon global hotkey), wake detection, the game watcher and quitting on log-out (SIGTERM).
+- **Window chrome (1.8.1).** The window draws one background all around (`WindowBackdrop`, which leaves the
+  sidebar's squircle open when the sidebar is translucent) and the sidebar floats on it as glass.
+  `WindowChrome.PlaceButtons` moves macOS's close, minimize and zoom buttons into the glass: it shrinks the title
+  bar's container (`NSTitlebarContainerView`) to a strip just big enough for them, so the rest of the top edge stays
+  Avalonia's, and sets each button's origin; a 250 ms check puts them back whenever AppKit lays the title bar out
+  again (resizing, becoming active), except in full screen. A log line two seconds after launch records where the
+  buttons are and which view a click on the controls near the top reaches.
+- **Menu bar modules (1.8.1).** `MenuBarModulesViewModel` (shared) works out each module's reading from every frame;
+  `MenuBarModuleRenderer` draws one as a template image (stacked label, value, slim bar) and `MenuBarModuleItems`
+  shows each as its own `NSStatusItem` (variable length, so ⌘-drag ordering works), with a small menu whose actions
+  come back through a runtime Objective-C class.
+- **Desktop picture (1.8.1).** `DesktopPicture` asks `NSWorkspace` for the main screen's picture, converts it once
+  with `sips` to a 960-pixel PNG in Coreloom's local folder (keyed by path, size and date), and keeps a 36 × 24 copy
+  that `MacIllustration` draws mirrored on the MacBook's keyboard deck with screen blending. The MacBook itself is
+  `Assets/MacBook/body.png` (made from the supplied mockup by `build/mac/make-macbook.py`, screen cut out) and
+  `deck.png`, the deck's mask.
 - **Permissions.** Coreloom asks macOS for nothing at launch. Bluetooth is requested from the Devices page when the
   person clicks *Allow Bluetooth* (through CoreBluetooth, which doesn't block); the power mode, `purge` and the DNS
   cache use `osascript`'s administrator prompt, on a click.

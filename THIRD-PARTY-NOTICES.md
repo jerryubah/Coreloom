@@ -104,6 +104,18 @@ The Windows installer is built with Inno Setup (© Jordan Russell and Martijn La
 https://jrsoftware.org/isinfo.php), under the Inno Setup License. Only the generated setup program is
 distributed.
 
+## Device pictures (MacBook and iPhone mockups)
+
+The Mac app's MacBook picture (`src/Coreloom.Mac/Assets/MacBook`, made by `build/mac/make-macbook.py` from
+`assets/mac-render/macbook-mockup.png`) and the website's iPhone pictures (`site/assets/phone-*.webp`, made by
+`build/site/make-phone-mockups.py` from `assets/site-render/iphone-mockup.png`) come from device mockups supplied by
+the repository owner, who is responsible for their licenses. No Apple logo appears on them.
+
+## Inter on the website
+
+The website (`site/`) uses Inter, the app's typeface, from `site/assets/fonts` (SIL Open Font License 1.1, license
+text beside the fonts).
+
 ## Vendor logos
 
 Coreloom does **not** include NVIDIA, AMD or Intel logos. The GPU and CPU pages show a plain-text vendor badge

@@ -775,16 +775,27 @@ GitHub's Macs check every build of Coreloom for Mac, but they are virtual machin
    all have values. Compare utilization with Activity Monitor and memory with its Memory tab (binary units).
    Run `sudo powermetrics --samplers cpu_power,gpu_power -n 1` to compare the power figures. Make the window
    narrow and wide: the Overview's top card should always show every spec, in one or two columns (fixed in 1.6.1).
-3. **Window, menu bar and Dock.** The close, minimize and zoom buttons sit above the sidebar, clear of it, with the
-   sidebar wide and narrow (1.8.0). The menu bar item's readings, *Pause*, *Settings…*, *Quit*; closing the window keeps
-   Coreloom in the menu bar (and hides its Dock icon if that's on); clicking the Dock icon brings the window back.
-4. **Devices.** *Allow Bluetooth…* should bring up macOS's prompt; after *Allow*, your accessories and (for Apple's
-   own) their batteries appear. Connect and disconnect one.
-5. **Gaming.** Your Steam and Epic games appear with pictures; *Play* starts one through its launcher. Turn on the
+3. **Window, menu bar and Dock.** The close, minimize and zoom buttons sit inside the sidebar's glass at its top
+   left, with the collapse button on their line at the right (1.8.1); they still close, minimize and zoom, with the
+   sidebar wide and narrow, after resizing the window and after full screen. The menu bar item's readings, *Pause*,
+   *Settings…*, *Quit*; closing the window keeps Coreloom in the menu bar (and hides its Dock icon if that's on);
+   clicking the Dock icon brings the window back.
+4. **Menu bar readings (1.8.1).** *Settings › Menu bar*: turn on a few modules. Each should appear in the menu bar as
+   its own item, white on a dark menu bar and black on a light one, keep its width as the reading changes, and
+   update every second. ⌘-drag one to move it; click one for *Open Coreloom*, *Menu Bar Settings…* and *Quit*.
+5. **Your desktop picture (1.8.1).** On a MacBook or iMac, the Overview's picture shows your own desktop picture.
+   Change the wallpaper: the picture follows within half a minute. With a wallpaper kept in Downloads, Customize
+   says so and offers *Show it*; macOS may then ask once. *Show my desktop picture* off brings back Coreloom's.
+6. **Devices.** *Allow Bluetooth…* should bring up macOS's prompt; after *Allow*, your accessories and (for Apple's
+   own) their batteries appear. Connect and disconnect one. Rename one with the pencil (1.8.1): Enter keeps the
+   name, Esc cancels, an empty name goes back to the device's own, and macOS's Bluetooth settings keep its name.
+7. **Gaming.** Your Steam and Epic games appear with pictures; *Play* starts one through its launcher. Turn on the
    Metal HUD and start a Metal game: Apple's overlay shows. *Full power on the charger* asks for your password.
-6. **The in-game overlay.** ⌥⌘O over a full-screen app or game; Customize on the Graphics page.
-7. **Benchmarks.** Run the CPU and GPU benchmarks and a 1-minute stress test.
-8. **Updates.** Once a newer version is out, *Coreloom › Check for Updates…* downloads it; *Install update* quits
+8. **The in-game overlay.** ⌥⌘O over a full-screen app or game; Customize on the Graphics page.
+9. **Benchmarks.** Run the CPU and GPU benchmarks and a 1-minute stress test. Compute scores are ten times what
+   1.8.0 showed, and results saved before are converted (1.8.1).
+10. **Updates.** When a newer version is out, Settings has a red dot and the sidebar's *New update available* button
+   opens *Settings › Updates*. Once a newer version is out, *Coreloom › Check for Updates…* downloads it; *Install update* quits
    Coreloom, replaces it and opens the new version (`~/Library/Logs/Coreloom/update.log` says what happened).
 
 Send back screenshots of anything that reads wrong, with the report from *Settings › Diagnostics › Export

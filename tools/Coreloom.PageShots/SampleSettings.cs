@@ -61,7 +61,7 @@ internal static class SampleSettings
     }
 
     /// <summary>The whole app (sidebar and Overview) with no update waiting, for the website's picture of Coreloom on Windows.</summary>
-    public static ShellViewModel Shell(SampleData data)
+    public static ShellViewModel Shell(SampleData data, SampleReleases releases)
     {
         var stubs = new Stubs();
         var app = new AppVersionInfo(SemanticVersion.Parse("1.8.1"), "1.8.1", "jerryubah/Coreloom", null);
@@ -76,7 +76,7 @@ internal static class SampleSettings
             Shell = stubs,
             Lifetime = stubs,
             Diagnostics = stubs,
-            Updates = new UpdatesViewModel(app, data.Settings, stubs, stubs, new HttpClient(new SampleReleases(none: true)), Path.GetTempPath()),
+            Updates = new UpdatesViewModel(app, data.Settings, stubs, stubs, new HttpClient(releases), Path.GetTempPath()),
             App = app,
             Tools = data.Tools,
             Platform = HostPlatform.Windows,
@@ -168,9 +168,12 @@ internal static class SampleSettings
 /// </summary>
 internal sealed class SampleReleases(bool none = false) : HttpMessageHandler
 {
+    /// <summary>No releases newer than the app (until set to false).</summary>
+    public bool None { get; set; } = none;
+
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        if (none)
+        if (None)
         {
             return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent("[]", System.Text.Encoding.UTF8, "application/json") });
         }

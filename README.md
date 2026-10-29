@@ -103,7 +103,8 @@ Each button downloads the newest version. Once installed, Coreloom keeps itself 
 - **Devices.** A page with your Bluetooth devices as cards (type icon, connected indicator, battery where reported,
   Connect and Disconnect, which also brings back headphones that switched to your phone) and the devices plugged in by
   USB or display cable, grouped by type on the same grid as the Bluetooth cards, with *Eject* for drives and driver problems flagged. Bluetooth can be turned
-  on and off there, and *Pair a new device* opens Windows' Bluetooth settings.
+  on and off there, and *Pair a new device* opens Windows' Bluetooth settings. Any Bluetooth device can be renamed
+  (the pencil on its card, or right-click); the name is kept in Coreloom, and Windows keeps the device's own.
 - **Drive speed test** on the Storage page: sequential and random read and write speeds (like CrystalDiskMark) on a
   temporary file that is deleted afterwards.
 - **Internet speed test** on the Network page: download, upload, ping and jitter against Cloudflare's speed test
@@ -168,9 +169,13 @@ macOS's own sources for every reading. What changes on a Mac:
   temperature sensors), memory pressure with app, wired and compressed memory and swap, batteries, drives and
   network. Memory is shown in binary units like Activity Monitor, storage in decimal units like Finder.
 - **A picture of your Mac** in the Overview header (MacBook, iMac, Mac mini, Mac Studio or Mac Pro), lit in the
-  color you choose. No Apple logo is drawn.
+  color you choose. A MacBook or iMac shows your own desktop picture on its screen (*Customize › Show my desktop
+  picture on the screen*), and a MacBook's keyboard catches the screen's light. No Apple logo is drawn.
 - **Menu bar and Dock.** A menu bar item with live readings, Pause, Settings and Quit; closing the window keeps
-  Coreloom in the menu bar (and, if you like, out of the Dock); *Open at login* is a standard login item. A full
+  Coreloom in the menu bar (and, if you like, out of the Dock); *Open at login* is a standard login item.
+  *Settings › Menu bar* also puts the readings you pick in the menu bar itself, each as its own item (processor and
+  graphics load, memory, temperatures, the fastest fan, network, storage, battery, power), with its name and a slim
+  bar if you like. A full
   app menu with the usual shortcuts (⌘, for Settings, ⌘1–⌘9 for the pages, ⌃⌘S for the sidebar) and a native
   About panel.
 - **Gaming.** Your Steam, Epic Games and Applications-folder games with Play, plus the switches that matter on a
@@ -185,8 +190,8 @@ macOS's own sources for every reading. What changes on a Mac:
 - **Smart Optimize** for macOS: app caches, logs, temporary files, Xcode's build files, shader caches, old
   installers in Downloads and the Trash; XProtect, Gatekeeper, System Integrity Protection, FileVault and the
   firewall; freeing inactive memory (macOS's `purge`); login items (launch agents); and refreshing the DNS cache.
-- **Devices.** Bluetooth accessories with their batteries (Apple's own report them), connect and disconnect, the
-  Bluetooth switch, and USB, Thunderbolt and display devices with *Eject* for drives. macOS asks once whether
+- **Devices.** Bluetooth accessories with their batteries (Apple's own report them), names you give them,
+  connect and disconnect, the Bluetooth switch, and USB, Thunderbolt and display devices with *Eject* for drives. macOS asks once whether
   Coreloom may use Bluetooth, when you click *Allow Bluetooth*.
 - **Updates.** The same verified updates: the new version is downloaded, checked against the release's
   SHA-256 checksums and its code signature, and swapped in after Coreloom quits (the old copy is put back if
@@ -264,6 +269,7 @@ On a Mac:
 | Bluetooth devices and batteries; USB, Thunderbolt and displays | IOBluetooth, the I/O registry and System Information (`system_profiler`) | No (macOS asks once for Bluetooth) |
 | Installed games and their pictures | Steam's and Epic's library files, apps in the Applications folder's Games category, and (for games without a picture) Steam's public store | No |
 | Game Mode, Low/High Power Mode, Metal HUD | macOS's own settings (`pmset`, `defaults`) | Changing the power mode: **your password**, asked by macOS |
+| The desktop picture on the Overview's MacBook | `NSWorkspace` (which picture is on the main screen), converted once to a PNG with macOS's `sips` and kept in Coreloom's own folder; never sent anywhere. A picture in Desktop, Documents, Downloads, iCloud Drive or another app's folder is read only after you choose *Show it* in Customize | No (macOS may ask once for those folders) |
 
 **About PawnIO.** Reading CPU temperature and motherboard sensors on modern Windows needs a kernel driver.
 LibreHardwareMonitor uses [PawnIO](https://pawnio.eu), a signed, open-source driver. Coreloom **never installs

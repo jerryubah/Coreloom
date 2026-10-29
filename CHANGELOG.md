@@ -26,6 +26,7 @@ Readings in your Mac's menu bar, your own wallpaper on the Overview's MacBook, B
 - The *Rainbow* lighting swatch shows the whole spectrum, and on a Mac the picture's glow is a rainbow too.
 - Mac: the menu bar readings use Coreloom's own readings and refresh with them; macOS colors them for light and dark menu bars, and ⌘-drag puts them in any order. Clicking one opens *Open Coreloom*, *Menu Bar Settings…* and *Quit Coreloom*.
 - Mac: the desktop picture is read on your Mac only. A picture kept in Desktop, Documents, Downloads or another app's folder shows once you choose *Show it* in Customize, since macOS asks before an app reads those folders.
+- The website shows Coreloom on the computer you're reading it on, Mac or Windows, with the right download first, and the phone app on an iPhone.
 - Have 1.8.0? Choose *Check for Updates* (the Coreloom menu on a Mac, *Settings › Updates* on Windows), then *Install update*.
 
 ### Feedback

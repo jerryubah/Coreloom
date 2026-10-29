@@ -202,7 +202,8 @@ internal static class Program
             data.Poll(); // two minutes of readings, so the charts are full
         }
 
-        var shell = SampleSettings.Shell(data);
+        var releases = new SampleReleases(none: true);
+        var shell = SampleSettings.Shell(data, releases);
         var window = new MainWindow(shell)
         {
             Width = 1440,
@@ -246,30 +247,51 @@ internal static class Program
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             }
 
-            root.UpdateLayout();
-            const double dpi = 192;
-            var background = new DrawingVisual();
-            using (var dc = background.RenderOpen())
-            {
-                dc.DrawRectangle(Application.Current.TryFindResource("Brush.WindowBackground") as Brush ?? Brushes.Black, null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
-            }
-
-            var bitmap = new RenderTargetBitmap((int)Math.Ceiling(root.ActualWidth * dpi / 96), (int)Math.Ceiling(root.ActualHeight * dpi / 96), dpi, dpi, PixelFormats.Pbgra32);
-            bitmap.Render(background);
-            bitmap.Render(root);
-            var encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(bitmap));
-            using (var stream = File.Create(Path.Combine(output, name + ".png")))
-            {
-                encoder.Save(stream);
-            }
-
-            Console.WriteLine($"{name}.png: {root.ActualWidth:0} × {root.ActualHeight:0}");
+            Save(root, Path.Combine(output, name + ".png"));
         }
+
+        // A newer version out: the sidebar's update button, the red dot on Settings and Settings › Updates.
+        releases.None = false;
+        data.Settings.Update("Updates", u => u.Updates.AutoInstall = false);
+        await shell.Updates.CheckCommand.ExecuteAsync(null);
+        shell.Settings.SelectedSection = "Updates";
+        shell.Navigate(shell.Settings);
+        for (int i = 0; i < 20; i++)
+        {
+            shell.OnFrame(data.Poll());
+            await Task.Delay(120);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        }
+
+        Save(root, Path.Combine(output, "windows-settings-update.png"));
 
         ThemeService.Instance?.Apply(new AppearanceSettings { Theme = ThemePreference.Dark, ReducedMotion = true });
         window.AllowClose = true;
         window.Close();
+    }
+
+    /// <summary>Draws an element at twice its size over the window's background into a PNG.</summary>
+    private static void Save(FrameworkElement root, string file)
+    {
+        root.UpdateLayout();
+        const double dpi = 192;
+        var background = new DrawingVisual();
+        using (var dc = background.RenderOpen())
+        {
+            dc.DrawRectangle(Application.Current.TryFindResource("Brush.WindowBackground") as Brush ?? Brushes.Black, null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
+        }
+
+        var bitmap = new RenderTargetBitmap((int)Math.Ceiling(root.ActualWidth * dpi / 96), (int)Math.Ceiling(root.ActualHeight * dpi / 96), dpi, dpi, PixelFormats.Pbgra32);
+        bitmap.Render(background);
+        bitmap.Render(root);
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using (var stream = File.Create(file))
+        {
+            encoder.Save(stream);
+        }
+
+        Console.WriteLine($"{Path.GetFileName(file)}: {root.ActualWidth:0} × {root.ActualHeight:0}");
     }
 
     private static async Task ShootAsync(string file, FrameworkElement page, double? height, Action tick, double width = PageWidth)
