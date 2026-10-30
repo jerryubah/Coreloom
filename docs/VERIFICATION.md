@@ -915,6 +915,25 @@ unchanged.
 - **The Mac readings window on a Retina screen and while a game is full screen.** GitHub's Macs run at 1×; at 2× the picture macOS keeps while the window grows should still be pinned to the top-left corner.
 - **The banners' light and the grain at other scales** (125 %, 150 %, 175 % on Windows) and on a real 4K or Retina display; the shots are at 2×.
 
+## 1.8.4: twelve Gaming boosts without the frame limiter, a VRR tile, plain speed tests, one glass button
+
+### Verified
+
+| What | How | Result |
+|---|---|---|
+| Tests | Core (`Release184Tests`: keeping shader caches from the cleanup handler's `Autorun` in both registry views; G-SYNC's recommendation without the frame limiter; DirectStorage ready, partly ready (SATA, hard drive, BypassIO blocked with the driver and Windows' reason) and not available, Windows 10 without BypassIO; finding `dstorage.dll` three folders deep in temporary game folders, the drives to check; VRAM sessions' peaks and time nearly full, records merged per card; *Fits*/*Tight*/*Too full* with their advice; records kept newest first, 40 at most, through the settings file), view models (`Release184ViewModelTests`: the twelve boosts in order with no frame limiter left; the NVIDIA shader cache's size under its boost; *Keep shader caches* switching; DirectStorage as a check counted when ready, left alone by *Boost now*, its Details; VRAM management watching only a library game, ending after 30 s away, keeping the record and recommendation, its note on the recommendation line; the VRR tile from G-SYNC (On, Off, *display can't*, a dash on AMD); adaptive pacing's limits removed once and the user's own kept) and Windows hardware tests (`GameStorageTests`: the BypassIO answer's layout, the system drive's kind and BypassIO, a Direct3D 12 shader model on the runner, the GPU Process Memory counters opened and read) | ✅ in the container (Core 758, view models 210) and on GitHub (CI runs 40996180548 and 40998580096: Windows Core 758, view models 210, Hardware 88, none skipped; Linux; macOS 188 on Intel, 187 + 1 skipped on Apple silicon) |
+| The Gaming page on Windows | Page shots runs 40996182595 and 40997417627: twelve boosts in four rows of three, the NVIDIA shader cache's size picker, *Keep shader caches* with 63.4 GB in 7 caches, DirectStorage *Ready* with its Details (graphics card, Windows 11, drive D: NVMe, BypassIO, one game), VRAM management with Cyberpunk 2077's result and its Details, the banner's tiles Games / Display / **VRR On** / Driver, and the window scrolled to the boosts (the website's picture) | ✅ |
+| Buttons and speed tests | Page shots (Windows, dark and light) and MacShots of every page (0 binding errors): every text button is the charcoal glass button with white text, icon buttons unchanged; the drive and internet speed tests are plain glass with no colored glow or orb | ✅ |
+| The real Mac app | Mac verify runs 40996185113 and 40998582252 (the release's code): every page, Connect, menu bar readings, backgrounds, the readings window and a clean quit on Apple silicon and Intel | ✅ Apple silicon and Intel |
+| Website and README | Every app picture on the website and in the README redrawn from this version, a new link preview (`og.png`); Playwright as a Mac, a Windows and a phone-sized visitor: *New in 1.8.4* shows the Mac or Windows picture, title and three points for each, the hero badge says what's new, the background swatches still switch, no horizontal scrolling, no failed requests or console errors | ✅ |
+
+### Not verified yet
+
+- **DirectStorage on a real gaming PC.** The runner has no graphics card (Direct3D 12 answered on Windows' software adapter) and a virtual disk, so a real card's shader model, an NVMe drive's bus type, BypassIO on it (and what a filter driver like an antivirus does to it) and finding real games' `dstorage.dll` haven't been seen. `fsutil bypassio state D:\` should agree with the Details.
+- **VRAM management in a real game.** The counters opened and read on the runner, for Coreloom's own process; a game's dedicated and shared memory while it plays, against Task Manager, hasn't been watched, and the thresholds are a first judgement to tune with real games.
+- **Keep shader caches** writes a documented Disk Cleanup value; whether Windows' maintenance then leaves the cache alone over weeks, and what Storage Sense does, can't be seen on a runner.
+- **Adaptive pacing's leftover limits** being removed from a real NVIDIA driver on the first visit (only the fake driver in the tests).
+
 ## How to re-run the checks that can run anywhere
 
 ```bash
