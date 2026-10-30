@@ -927,6 +927,13 @@ unchanged.
 | The real Mac app | Mac verify runs 40996185113 and 40998582252 (the release's code): every page, Connect, menu bar readings, backgrounds, the readings window and a clean quit on Apple silicon and Intel | ✅ Apple silicon and Intel |
 | Website and README | Every app picture on the website and in the README redrawn from this version, a new link preview (`og.png`); Playwright as a Mac, a Windows and a phone-sized visitor: *New in 1.8.4* shows the Mac or Windows picture, title and three points for each, the hero badge says what's new, the background swatches still switch, no horizontal scrolling, no failed requests or console errors | ✅ |
 
+### Updating to 1.8.4 on a Mac
+
+| Run | Result |
+|---|---|
+| The published 1.8.3 app (downloaded from its release) → the published 1.8.4, run 41000675771 (`macupdatetest-184`) | ✅ Apple silicon and Intel both times: found and verified in about 25 s, replaced after quitting, 1.8.4 running with "Coreloom was updated to 1.8.4" |
+| 0.9.0 (built from 1.8.4's code) → the published 1.8.4, same run | Intel ✅. Apple silicon: ❌ the first time (GitHub's "rate limit reached" on the shared runner; after ten minutes it found and verified 1.8.4, too late for the test), ✅ on the re-run |
+
 ### Not verified yet
 
 - **DirectStorage on a real gaming PC.** The runner has no graphics card (Direct3D 12 answered on Windows' software adapter) and a virtual disk, so a real card's shader model, an NVMe drive's bus type, BypassIO on it (and what a filter driver like an antivirus does to it) and finding real games' `dstorage.dll` haven't been seen. `fsutil bypassio state D:\` should agree with the Details.
