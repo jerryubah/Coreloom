@@ -65,37 +65,42 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
+          <!-- The header: icon, name, and the switch (with the choice it sets beside it) on one line; the pills below run
+               the full width, under the switch too, so a narrow card doesn't stack them one per line. -->
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto" />
               <ColumnDefinition Width="*" />
               <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Grid Width="36" Height="36" VerticalAlignment="Top">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid Grid.RowSpan="2" Width="36" Height="36" VerticalAlignment="Top">
               <c:SquircleBorder CornerRadius="10" Background="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" Opacity="0.16" />
               <Path x:Name="Glyph" Style="{StaticResource IconPath}" Width="17" Height="17" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
                     Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
             </Grid>
-            <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
-              <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
-              <WrapPanel Orientation="Horizontal" Margin="0,4,0,0">
-                <Border x:Name="StatusPill" CornerRadius="6" Padding="7,1" Margin="0,0,6,2" Background="{DynamicResource Brush.ControlHover}">
-                  <TextBlock x:Name="StatusText" Text="{Binding StatusText}" FontSize="10.5" FontWeight="SemiBold" Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
-                </Border>
-                <!-- what it helps with: green for smoothness, neutral for the rest -->
-                <Border x:Name="CategoryPill" CornerRadius="6" Padding="7,1" Margin="0,0,6,2" Background="{DynamicResource Brush.ControlHover}"
-                        Visibility="{Binding HasCategory, Converter={StaticResource BoolToVisibility}}">
-                  <TextBlock x:Name="CategoryText" Text="{Binding Category}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
-                </Border>
-                <Border Style="{StaticResource Badge}" Margin="0,0,6,2" Visibility="{Binding HasTag, Converter={StaticResource BoolToVisibility}}">
-                  <TextBlock Text="{Binding Tag}" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
-                </Border>
-                <!-- more about this boost (core scheduling: the cores, AMD's checks, the test and the games' profiles) -->
-                <Button Style="{StaticResource PillButton}" Margin="0,0,0,2" Command="{Binding DetailsCommand}" Content="Details"
-                        Visibility="{Binding HasDetails, Converter={StaticResource BoolToVisibility}}"
-                        AutomationProperties.Name="{Binding Title, StringFormat='Details for {0}'}" />
-              </WrapPanel>
-            </StackPanel>
+            <TextBlock Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center" Text="{Binding Title}" FontSize="13.5" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
+            <WrapPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="12,3,0,0">
+              <Border x:Name="StatusPill" CornerRadius="6" Padding="7,1" Margin="0,0,6,2" Background="{DynamicResource Brush.ControlHover}">
+                <TextBlock x:Name="StatusText" Text="{Binding StatusText}" FontSize="10.5" FontWeight="SemiBold" Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+              </Border>
+              <!-- what it helps with: green for smoothness, neutral for the rest -->
+              <Border x:Name="CategoryPill" CornerRadius="6" Padding="7,1" Margin="0,0,6,2" Background="{DynamicResource Brush.ControlHover}"
+                      Visibility="{Binding HasCategory, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock x:Name="CategoryText" Text="{Binding Category}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+              </Border>
+              <Border Style="{StaticResource Badge}" Margin="0,0,6,2" Visibility="{Binding HasTag, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="{Binding Tag}" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
+              </Border>
+              <!-- more about this boost (core scheduling: the cores, AMD's checks, the test and the games' profiles) -->
+              <Button Style="{StaticResource PillButton}" Margin="0,0,0,2" Command="{Binding DetailsCommand}" Content="Details"
+                      Visibility="{Binding HasDetails, Converter={StaticResource BoolToVisibility}}"
+                      AutomationProperties.Name="{Binding Title, StringFormat='Details for {0}'}" />
+            </WrapPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
               <!-- the choice it sets (the NVIDIA shader cache's size: applied at once while on); what's set now on its tooltip -->
               <!-- centred on the switch, which stays where the other cards' switches are (it's a little taller than the switch) -->
