@@ -1,5 +1,6 @@
 using System.IO;
 using Coreloom.Core.Benchmarks;
+using Coreloom.Core.Devices;
 using Coreloom.Core.Gaming;
 using Coreloom.Core.Hardware;
 using Coreloom.Core.History;
@@ -97,7 +98,7 @@ internal sealed class SampleData
     public GamingViewModel Gaming() => Page(c => new GamingViewModel(c));
 
     /// <summary>The sample tools (games, core scheduling, clean-up, benchmarks).</summary>
-    public ToolServices Tools => new() { Gaming = new SampleGaming(), CoreScheduling = new SampleCores(), Optimizer = new SampleOptimize(), Benchmarks = new SampleBenchmarks() };
+    public ToolServices Tools => new() { Gaming = new SampleGaming(), CoreScheduling = new SampleCores(), Optimizer = new SampleOptimize(), Benchmarks = new SampleBenchmarks(), Devices = new SampleDevices() };
 
     /// <summary>Takes a new reading (the sample values drift a little each time), a second after the last with the sample clock.</summary>
     public TelemetryFrame Poll()
@@ -307,6 +308,47 @@ internal sealed class SampleGaming : IGamingService
     }
 
     public Task<IReadOnlyList<GameEntry>> DownloadArtworkAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<GameEntry>>([]);
+}
+
+/// <summary>A PC's Bluetooth devices and what's plugged in, for the Devices page (since 1.8.5: Connect is the accent button again).</summary>
+internal sealed class SampleDevices : IDeviceService
+{
+    public bool IsSupported => true;
+
+    public event EventHandler? Changed
+    {
+        add { }
+        remove { }
+    }
+
+    public Task<BluetoothRadioInfo> RadioAsync(CancellationToken cancellationToken) => Task.FromResult(new BluetoothRadioInfo(true, true, true));
+
+    public Task<bool> SetRadioAsync(bool on, CancellationToken cancellationToken) => Task.FromResult(true);
+
+    public Task<IReadOnlyList<BluetoothDeviceInfo>> BluetoothDevicesAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<BluetoothDeviceInfo>>(
+    [
+        new("1", "WH-1000XM5", 0xAC_DE_48_00_11_22, BluetoothTransport.Classic, DeviceKind.Headphones, true) { Battery = 82 },
+        new("2", "MX Keys S", 0xAC_DE_48_00_11_23, BluetoothTransport.LowEnergy, DeviceKind.Keyboard, true) { Battery = 64 },
+        new("3", "Xbox Wireless Controller", 0xAC_DE_48_00_11_25, BluetoothTransport.LowEnergy, DeviceKind.Controller, false),
+        new("4", "Living Room Speaker", 0xAC_DE_48_00_11_26, BluetoothTransport.Classic, DeviceKind.Speaker, false),
+    ]);
+
+    public Task<DeviceActionResult> ConnectAsync(BluetoothDeviceInfo device, CancellationToken cancellationToken) => Task.FromResult(new DeviceActionResult(true, "Connected."));
+
+    public Task<DeviceActionResult> DisconnectAsync(BluetoothDeviceInfo device, CancellationToken cancellationToken) => Task.FromResult(new DeviceActionResult(true, "Disconnected."));
+
+    public Task<IReadOnlyList<WiredDevice>> WiredDevicesAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<WiredDevice>>(
+    [
+        new("d1", "Odyssey OLED G8", DeviceKind.Display, "DisplayPort") { Manufacturer = "Samsung" },
+        new("s1", "Samsung T7 Shield", DeviceKind.Storage, "USB 3.2 Gen 2") { EjectInstanceId = @"USBSTOR\Disk" },
+        new("a1", "Focusrite Scarlett 2i2", DeviceKind.Audio, "USB"),
+    ]);
+
+    public Task<DeviceActionResult> EjectAsync(WiredDevice device, CancellationToken cancellationToken) => Task.FromResult(new DeviceActionResult(true, "Ejected. It's safe to unplug."));
+
+    public void OpenBluetoothSettings()
+    {
+    }
 }
 
 internal sealed class SampleCores : ICoreSchedulingService

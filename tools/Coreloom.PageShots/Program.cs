@@ -111,6 +111,12 @@ internal static class Program
         var storage = data.Page(c => new StorageViewModel(c));
         await ShootAsync(Path.Combine(output, "storage.png"), new StoragePage { DataContext = storage }, null, () => storage.Refresh(data));
 
+        // 1.8.5: the internet speed test in the banner light, and Bluetooth's Connect in the accent again.
+        var network = data.Page(c => new NetworkViewModel(c));
+        await ShootAsync(Path.Combine(output, "network.png"), new NetworkPage { DataContext = network }, null, () => network.Refresh(data));
+        var devices = data.Page(c => new DevicesViewModel(c));
+        await ShootAsync(Path.Combine(output, "devices.png"), new DevicesPage { DataContext = devices }, null, () => devices.Refresh(data));
+
         await ShootBenchmarkingAsync(output, data);
         await CheckBenchmarksAsync(output);
     }

@@ -143,6 +143,11 @@ Work through each area and tick what works.
 - [ ] (1.8.4) Every text button on every page (*Check again*, *Choose automatically*, *Start test*, *Clear filters*,
       *Customize*, *Remove…*) is the same charcoal glass with white text, in dark and light themes; icon buttons (×,
       refresh) are unchanged. The drive and internet speed tests are plain glass with no colored glow.
+- [ ] (1.8.5) Main actions in cards are filled with your accent again: *Connect* on a Bluetooth card (its
+      *Disconnect* stays glass), *Pair a new device*, *Play*, *Clean selected*, *Free up memory*, *Run benchmark*,
+      *Save*, *Done*. Banner buttons (*Boost now*, *Smart Scan*, *Install update*) stay glass. The internet and drive
+      speed tests and the Memory page's top card (the memory ring) have the Gaming banner's light from the top edge,
+      and the speed tests' *Start test* is glass like *Boost now*.
 
 **Overview**
 
@@ -568,17 +573,24 @@ Work through each area and tick what works.
 
 **Gaming**
 
-- [ ] (1.8.4) No frame limiter section. Twelve boosts in four rows of three: … G-SYNC, NVIDIA shader cache (with its
-      size under it), *Keep shader caches*, *DirectStorage & GPU decompression*, *Intelligent VRAM management*,
-      *Intelligent CPU core scheduling*. The banner's tiles read Games, Display, **VRR** (On when G-SYNC is on) and
+- [ ] (1.8.4, 1.8.5) No frame limiter section. Twelve boosts in four rows of three, each with a switch: … G-SYNC,
+      NVIDIA shader cache (its size beside the switch, the driver's current limit when you point at it), *Keep shader
+      caches*, *CPU cache optimization*, *Intelligent VRAM management*, *Intelligent CPU core scheduling*. The cards in
+      a row end with their text (no empty space under the shorter ones). Nothing on a boost is yellow: notes, *Restart
+      to finish* and *Not available* are in the card's usual colors. The banner's tiles read Games, Display, **VRR** (On when G-SYNC is on) and
       Driver. If you had adaptive pacing on, its per-game limits are gone from the NVIDIA Control Panel after Gaming
       first opens; a limit you set yourself is still there (*Max Frame Rate*).
 - [ ] (1.8.4) *Keep shader caches*: switching it on sets `Autorun` to 0 under
       `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\D3D Shader Cache` (regedit), off sets it
       back to 1. Its line shows the caches' total; hover it for each cache.
-- [ ] (1.8.4) DirectStorage: *Details* lists your graphics card (Shader Model), each drive with games (NVMe or not,
-      BypassIO on Windows 11) and the games that use DirectStorage; compare BypassIO with `fsutil bypassio state D:\` in
-      an administrator terminal. Note anything it gets wrong.
+- [ ] (1.8.5) CPU cache optimization: on a processor with one L3 cache (most Intel chips, a one-CCD Ryzen) it says
+      *Not available* and why. On a two-CCD Ryzen, switch it on, open Chrome or Edge, Discord and Spotify, and play a
+      library game. With a non-X3D Ryzen (or an X3D on Ultimate / High Performance) the boost says *Keeping N
+      background apps off …* within a few seconds; in Task Manager › Details › right-click Chrome › *Set affinity*
+      only the other CCD's processors are ticked, and the game's are all ticked. On an X3D with AMD's driver and the
+      Balanced plan it says it leaves things to AMD and changes nothing. 30 seconds after you quit the game (or when
+      you switch it off, or close Coreloom) the apps have every processor again. *Details* lists each CCD with its L3,
+      which one the game has, and the apps moved. Note any app that kept fewer processors afterwards.
 - [ ] (1.8.4) VRAM management: switch it on and play a library game for a few minutes. The boost says *Watching
       game: x of y GB in use*, close to Task Manager's *Dedicated GPU memory*; after you quit, it shows the result and
       *Details* has the game's recommendation. A heavy game at its highest textures on a smaller card should say
@@ -602,8 +614,8 @@ Work through each area and tick what works.
       management mode*, *Shader Cache Size*, *Set up G-SYNC*). Flip each on and off and check it there.
 - [ ] HAGS shows *Restart to finish* after switching it, and *On*/*Off* correctly after the restart.
 - [ ] Ultimate Performance creates and activates the plan; switching it off goes back to the plan you had before.
-- [ ] *Boost now* turns on every switch that was off and says how many; DirectStorage counts only when it's ready,
-      so the ring shows 12/12 on a ready PC (11/12 when, say, games sit on a SATA drive).
+- [ ] *Boost now* turns on every switch that was off and says how many; the ring counts the boosts this PC can use
+      (12/12 on a two-CCD Ryzen with an NVIDIA card, 10/10 with one L3 and no core choice).
 - [ ] Shader cache: the switch matches *Shader Cache Size* (10 GB or more) in the NVIDIA Control Panel; the sizes look
       plausible next to `%LOCALAPPDATA%\NVIDIA\DXCache` and `D3DSCache`. After a driver update the notice appears once
       and *Got it* hides it.
@@ -829,8 +841,10 @@ GitHub's Macs check every build of Coreloom for Mac, but they are virtual machin
 11. **Banners and buttons (1.8.3).** Gaming and Smart Optimize: the light from the top edge stays behind the text, the
    dial sits in the middle of its tile, and *Smart Scan* runs a comet along the dial. Every main button (*Boost now*,
    *Smart Scan*, *Install update*, *New update available*) reads clearly: white text on charcoal glass.
-12. **Buttons and speed tests (1.8.4).** Every text button is the same charcoal glass with white text, in dark and
-   light; the drive and internet speed tests are plain glass with no colored glow.
+12. **Buttons and speed tests (1.8.4, 1.8.5).** *Connect* on a Bluetooth card, *Pair a new device*, *Play* and the
+   other main buttons in cards are filled with your accent; *Disconnect*, *Refresh* and the banners' buttons are
+   charcoal glass. The drive and internet speed tests and the Memory page's top card have the Gaming banner's light
+   from the top edge.
 13. **Updates.** When a newer version is out, Settings has a red dot and the sidebar's *New update available* button
    opens *Settings › Updates*. Once a newer version is out, *Coreloom › Check for Updates…* downloads it; *Install update* quits
    Coreloom, replaces it and opens the new version (`~/Library/Logs/Coreloom/update.log` says what happened).

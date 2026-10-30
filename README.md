@@ -77,15 +77,17 @@ Each button downloads the newest version. Once installed, Coreloom keeps itself 
   scheduling, the Ultimate Performance power plan, Game Mode, windowed-game optimizations, Game Bar background
   recording, the NVIDIA *Prefer maximum performance* mode, G-SYNC for fullscreen and windowed games, a 10 GB / 100 GB /
   unlimited NVIDIA shader cache, **keeping shader caches** (Windows' automatic maintenance stops deleting the DirectX
-  shader cache; the boost shows how much is cached and when a new driver resets it), **intelligent VRAM management**
-  (it watches the graphics memory of the game you play and recommends a texture setting per game) and **intelligent
-  CPU core scheduling**, plus a **DirectStorage & GPU decompression** check (a DirectX 12 card with Shader Model 6.0,
-  NVMe drives and Windows 11's BypassIO, and the games that use it), each saying what it helps with and how to use it
-  (or *Boost now* for all the switches); the banner shows whether variable refresh (VRR) is on; core scheduling knows which cores suit games (the 3D V-Cache CCD of a multi-CCD
+  shader cache; the boost shows how much is cached and when a new driver resets it), **CPU cache optimization**
+  (1.8.5: on a processor with more than one L3 cache, such as a two-CCD Ryzen, it keeps background apps like browsers,
+  chat and launchers' web helpers off the cores whose L3 cache your game uses, and gives them every core back when the
+  game closes), **intelligent VRAM management** (it watches the graphics memory of the game you play and recommends a
+  texture setting per game) and **intelligent CPU core scheduling**, each with its switch, saying what it helps with
+  and how to use it (or *Boost now* for all of them); the banner shows whether variable refresh (VRR) is on; core scheduling knows which cores suit games (the 3D V-Cache CCD of a multi-CCD
   Ryzen X3D such as the 9950X3D, or a hybrid processor's performance cores), shows where the game you're playing runs,
   checks AMD's chipset driver, Game Mode and the power plan it depends on, and keeps a game on chosen cores only after
   an A/B test in that game shows a clear gain and you keep it, never against AMD's own scheduling. (The frame limiter
-  and adaptive frame pacing were removed in 1.8.4; a limit already in the NVIDIA driver shows there as Max Frame Rate.)
+  and adaptive frame pacing were removed in 1.8.4; a limit already in the NVIDIA driver shows there as Max Frame Rate.
+  1.8.4's DirectStorage check made way for CPU cache optimization in 1.8.5.)
 - **Benchmarking.** A CPU benchmark (eight tests of everyday and demanding work — compression, text processing,
   cryptography, navigation, ray tracing, machine learning, a photo filter and physics — on one core and on every
   thread, for a single-core and a multi-core score) and a GPU benchmark (two graphics tests and three compute tests on
@@ -275,7 +277,7 @@ How it works is in [src/Coreloom.Phone/README.md](src/Coreloom.Phone/README.md).
 | GPU scheduling, power plan, Game Mode, windowed-game and Game Bar settings | Windows: the graphics kernel (D3DKMT), the registry values Windows Settings uses, `powercfg` | Changing GPU scheduling: **yes** |
 | NVIDIA frame limit (read only), shader cache size, power management mode, G-SYNC, driver version | **NVAPI** driver settings (the store the NVIDIA Control Panel uses) and display info | Changing them: **yes** |
 | Keeping the DirectX shader cache | The Disk Cleanup handler's `Autorun` value (`VolumeCaches\D3D Shader Cache`) | Changing it: **yes** |
-| DirectStorage readiness | Direct3D 12's shader model, the drives' bus type (storage IOCTLs), BypassIO (`FSCTL_MANAGE_BYPASS_IO`, as `fsutil bypassio state`), `dstorage.dll` in game folders | No |
+| The processor's cache layout, background apps' cores (CPU cache optimization) | `GetLogicalProcessorInformationEx` (each L3 cache and its cores); the process list by name; `SetProcessAffinityMask` on the listed background apps you run, as Task Manager's *Set affinity* | No |
 | A game's graphics memory (VRAM management) | Windows' *GPU Process Memory* performance counters (what Task Manager shows) | No |
 
 On a Mac:
@@ -436,7 +438,10 @@ LibreHardwareMonitor's own report. See [docs/TESTING-ON-YOUR-PC.md](docs/TESTING
 - **The Gaming page changes settings only when you flip a switch.** Each switch sets one documented Windows setting
   (the registry values and `powercfg` commands Windows' own Settings use) or one NVIDIA driver setting (as the NVIDIA
   Control Panel does), shows its state and can be turned off again. Intelligent VRAM management, once on, only reads
-  Windows' graphics-memory counters while one of your games is in front; the DirectStorage check only reads.
+  Windows' graphics-memory counters while one of your games is in front. CPU cache optimization, once on, changes only
+  the cores of the background apps on its list (browsers, chat, music, cloud sync, launchers' web helpers, live
+  wallpapers) while one of your games plays, never the game's, Windows' own processes or an app whose cores you chose,
+  and gives them every core back when the game closes, when you turn it off or when Coreloom closes.
   Intelligent CPU core scheduling, once on, only reads AMD's 3D
   V-Cache driver and its preferences (it never changes them or restarts its service) and changes a game's cores only
   for a test you start or a profile you kept, the way Task Manager's *Set affinity* does; turning it off or closing

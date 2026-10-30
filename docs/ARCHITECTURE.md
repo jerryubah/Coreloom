@@ -51,7 +51,7 @@ On a Mac the top and bottom layers are swapped for their macOS counterparts and 
   `src/Coreloom.Mac/Services`.
 - **Views.** Each WPF page was converted to Avalonia (`Views/*.axaml`): styles became `ControlTheme`s and
   `UserControl.Styles` selectors, triggers became classes bound to view-model flags or converters, and pieces
-  that only make sense on Windows (the AMD processor card, CPU core scheduling, DirectStorage, VRAM management) are left
+  that only make sense on Windows (the AMD processor card, CPU core scheduling, CPU cache optimization, VRAM management) are left
   out of the Mac pages rather than hidden at run time. `tools/Coreloom.MacShots` draws every page headlessly with
   sample Apple silicon readings and fails on any binding error.
 - **App shell.** `Program.Main` takes the single-instance lock (a `flock` and a Unix socket in Application Support)
@@ -362,13 +362,17 @@ One background spans each app's main window; the sidebar and the cards are frost
   `Button.Update`: `Brush.GlowButtonFill` (charcoal in either theme), `Brush.GlowButtonRim` (lit along the top and toward
   the light) and `Brush.GlowButtonLight` (a radial light of the accent in the lower right corner, fuller on hover), with
   `Brush.OnGlow` (near white) for text and icons. `Brush.AccentGradient` is one hue now (a lighter shade, the accent, a
-  deeper shade). Since 1.8.4 this is `Button.Glass`, and `Button.Primary`, `Button.Secondary`, `Button.Subtle` and
-  `Button.AccentGradient` are all based on it (Secondary and Subtle in normal weight), so every text button looks the
-  same in both themes; `Button.Plain` (the old transparent Subtle) stays the base of icon buttons, and links, window
-  buttons, pills and swatches keep their own looks. Icons in buttons follow the button's foreground (`IconPath`), and
-  the few that named `Brush.OnAccent` use `Brush.OnGlow`.
-- **Speed tests (1.8.4).** The drive and internet speed tests are plain `Card` glass (no `Card.Glow` lamp in the
-  network or storage color), and their gauges (`ToneGauge`) have no colored orb; the arc keeps its rating color.
+  deeper shade). Since 1.8.4 this is `Button.Glass`, and `Button.Secondary`, `Button.Subtle` and
+  `Button.AccentGradient` are based on it (Secondary and Subtle in normal weight); `Button.Plain` (the old transparent
+  Subtle) stays the base of icon buttons, and links, window buttons, pills and swatches keep their own looks. In 1.8.4
+  `Button.Primary` was glass too; 1.8.5 made it the accent-filled button again (`Brush.Accent`, `Brush.AccentHover`,
+  `Brush.OnAccent` text and icons), so a card's main action such as *Connect* doesn't look like the glass *Disconnect*
+  beside it. Banner buttons stay glass, and the speed tests' *Start test* is `Button.AccentGradient` since their cards
+  have the banner light.
+- **Speed tests (1.8.4, 1.8.5).** The drive and internet speed tests are `Card` glass without a `Card.Glow` lamp, and
+  their gauges (`ToneGauge`) have no colored orb; the arc keeps its rating color. Since 1.8.5 they carry the banners'
+  three layers (`Brush.HeroGlow`, `GrainTexture`, `Brush.HeroLine`, card padding 0 with the content's margin inside),
+  and so does the Memory page's top card with the memory ring, the page having no speed test.
 - **Graph fills.** `ChartColors.AreaFill` eases from the fill's strength at the line to nothing at the bottom along
   `FillCurve`; sparklines also fade their fill in and out at the ends (`ChartColors.EdgeFade` as an opacity mask), so
   no hard edge shows on the card.
@@ -778,19 +782,30 @@ management learned; `DownloadArtwork` and the frame limiter's fields are only ke
   writes `Autorun` = 0 in the 64- and 32-bit registry views, off writes Windows' default 1 (`ShaderCacheCleanup`,
   Core). The boost's recommendation line is the caches' summary (each cache and size on its tooltip) and its note the
   new-driver notice. The NVIDIA shader cache boost got the size picker (`GamingTweakViewModel.Choices`/`Choice`).
-- **DirectStorage & GPU decompression (1.8.4).** A check, not a switch (`GamingTweakViewModel.IsSwitch` false: no
-  toggle, *Boost now* leaves it, its pill says Ready / Partly ready, and it counts as on when ready).
-  `WindowsGamingService.DirectStorageAsync` gathers: the graphics card's highest Direct3D 12 shader model
-  (`Direct3D.HighestShaderModel`: `D3D12CreateDevice` at feature level 11.0 on the card with the most dedicated memory,
-  then `ID3D12Device::CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL)` asking 6.6 and stepping down), the bus type of
-  each drive holding games (`IOCTL_STORAGE_QUERY_PROPERTY` on the volume's disk), BypassIO on it
-  (`FSCTL_MANAGE_BYPASS_IO` 0x00090448 with `FS_BPIO_OP_QUERY` on the drive's root, the 352-byte `FS_BPIO_OUTPUT`:
-  OpStatus 0 is supported, else the failing driver and Windows' reason; `GameStorageProbe`), and the games whose folder
-  holds `dstorage.dll` or `dstoragecore.dll` within three folders. `DirectStorageCheck.Evaluate` (Core, unit-tested)
-  needs Shader Model 6.0 (GPU decompression, per Microsoft's DirectStorage 1.1 notes), wants NVMe for every drive with
-  games and, on Windows 11, BypassIO on them; the first problem becomes the boost's note, and every part a line in the
-  shared Details card (`BoostDetailsViewModel`). It runs after each library scan and at most every ten minutes on a
-  visit, and logs what it found.
+- **CPU cache optimization (1.8.5).** Coreloom's own switch (`GamingTweak.CacheOptimization`,
+  `GamingSettings.CacheOptimization`), in the place of 1.8.4's DirectStorage check (a check with no switch; its Core
+  check, `GameStorageProbe` and `Direct3D.HighestShaderModel` were removed). `CoreLayout.L3Caches` counts the separate
+  L3 caches; `CacheLocality.Applies` needs two or more, two or more core groups and masks in processor group 0.
+  `CacheOptimizationController` (view model) is fed by `CoreSchedulingTicker` (app), which now ticks while core
+  scheduling or cache optimization is on. It maps the program in front to a library game (`GameLibrary.FindRunning`),
+  feeds its own `CorePlacement`, and picks the game's cores once per session with `CacheLocality.Target` (Core,
+  unit-tested): the group the game's core profile keeps it on, when core scheduling applies one; none while AMD's 3D
+  V-Cache driver runs with a plan that lets it park cores (`Amd.IsActive && !CoreScheduling.StopsParking`), since
+  moving apps to the parked CCD would wake it; else an X3D's cache cores; else, after `CorePlacement.MinimumSamples`
+  readings, the group carrying most of the load. Every 5 s it asks `ICoreSchedulingService.RunningPrograms()` (on
+  Windows one `Process.GetProcesses()` snapshot filtered by name to `CacheLocality.BackgroundApps`: browsers, chat
+  and calls, music, cloud sync, launchers' web helpers, live wallpapers; no process is opened for the list) and
+  `CacheLocality.ToMove` picks the listed apps that aren't the game and still run on every core (an app whose cores
+  were chosen by hand is left alone; one already on the background mask started from an app it moved, so it's picked
+  to get its cores back too). They get `AllMask & ~game group` with `SetProcessAffinityMask`, and every core back
+  30 s after the game leaves, when the switch goes off, or when Coreloom closes (`RestoreAll` on dispose). Its note
+  (what it's doing) shows on the neutral recommendation line; its Details list each core group with its L3, which one
+  the game has, and the apps moved. Every move and restore is logged.
+- **No yellow on boosts (1.8.5).** `GamingTweakViewModel.ColorKey` is green when on, else neutral; the note line
+  (`Message`), a restart still to come and unavailable boosts use the card's text colors, and the details' *Tight* /
+  *Warn* states are neutral (red stays for a game that ran out of graphics memory or a check that failed). The NVIDIA
+  shader cache's size picker moved from a row at the bottom of the card to the header, beside the switch, with the
+  driver's current limit on its tooltip.
 - **Intelligent VRAM management (1.8.4).** Coreloom's own switch (`GamingSettings.VramManagement`). `VramWatchService`
   (app; it took `AdaptivePacingService`'s place) ticks every 2 s while it's on: the game in front from
   `GamingModeService`, its dedicated and shared graphics memory from the *GPU Process Memory* counters

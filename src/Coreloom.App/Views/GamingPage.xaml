@@ -98,11 +98,12 @@
             </StackPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
               <!-- the choice it sets (the NVIDIA shader cache's size: applied at once while on); what's set now on its tooltip -->
-              <ComboBox Style="{StaticResource ComboBox.Default}" MinWidth="104" Margin="0,0,10,0" VerticalAlignment="Center"
+              <!-- centred on the switch, which stays where the other cards' switches are (it's a little taller than the switch) -->
+              <ComboBox Style="{StaticResource ComboBox.Default}" MinWidth="104" Margin="0,-4,10,-4" VerticalAlignment="Top"
                         ItemsSource="{Binding Choices}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Choice}"
                         ToolTip="{Binding ChoiceNote}" AutomationProperties.Name="{Binding Title, StringFormat='{}{0} size'}"
                         Visibility="{Binding HasChoices, Converter={StaticResource BoolToVisibility}}" />
-              <Grid VerticalAlignment="Center" Visibility="{Binding IsSwitch, Converter={StaticResource BoolToVisibility}}">
+              <Grid VerticalAlignment="Top" Visibility="{Binding IsSwitch, Converter={StaticResource BoolToVisibility}}">
                 <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding IsOn, Mode=TwoWay}" IsEnabled="{Binding CanToggle}"
                           AutomationProperties.Name="{Binding Title}"
                           Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
@@ -445,7 +446,7 @@
       <!-- ============================================================ -->
       <StackPanel Margin="2,28,0,14">
         <TextBlock Text="Performance boosts" Style="{StaticResource Text.SectionTitle}" />
-        <TextBlock Text="Windows and graphics-driver settings that raise frame rates and steady frame times, and checks for what games need. Each switch can be turned off again." Style="{StaticResource Text.Secondary}"
+        <TextBlock Text="Windows, processor and graphics-driver settings that raise frame rates and steady frame times. Each switch can be turned off again." Style="{StaticResource Text.Secondary}"
                    TextWrapping="Wrap" TextTrimming="None" Margin="0,3,0,0" />
       </StackPanel>
       <ItemsControl ItemsSource="{Binding Boosts}" ItemTemplate="{StaticResource BoostCard}" Focusable="False">
