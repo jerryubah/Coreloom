@@ -560,7 +560,7 @@ public sealed class GameFrameCapTests
         Assert.False(GSyncSetup.IsOn(1, 1, 1)); // the driver's default: fullscreen only
         Assert.False(GSyncSetup.IsOn(0, 2, 2)); // the feature switched off
         Assert.False(GSyncSetup.IsOn(1, 2, 1));
-        Assert.Equal("Recommended: on for fullscreen and windowed games, keeping your 237 FPS limit for your 240 Hz display.", GSyncSetup.Recommendation(237, 240));
+        Assert.Equal("Recommended: on for fullscreen and windowed games, with your 237 FPS limit for your 240 Hz display.", GSyncSetup.Recommendation(237, 240));
         Assert.Contains("224 FPS for your 240 Hz", GSyncSetup.Recommendation(0, 240));
         Assert.Contains("a little under your refresh rate", GSyncSetup.Recommendation(0, 0));
     }

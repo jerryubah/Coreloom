@@ -157,7 +157,7 @@
                     ToolTip="What the overlay shows, where, and how it looks" AutomationProperties.Name="Customize the overlay">
               <StackPanel Orientation="Horizontal">
                 <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Edit}" />
-                <TextBlock Text="Customize" Margin="7,0,0,0" FontSize="12.5" Foreground="{DynamicResource Brush.TextSecondary}" />
+                <TextBlock Text="Customize" Margin="7,0,0,0" FontSize="12.5" />
               </StackPanel>
             </Button>
           </StackPanel>

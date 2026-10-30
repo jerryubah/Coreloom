@@ -300,7 +300,7 @@
                         Command="{Binding CustomizeCommand}" Padding="10,5" ToolTip.Tip="The Mac picture, its color and which cards the dashboard shows">
                   <StackPanel Orientation="Horizontal">
                     <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Edit}" />
-                    <TextBlock Text="Customize" Margin="8,0,0,0" Foreground="{DynamicResource Brush.TextSecondary}" />
+                    <TextBlock Text="Customize" Margin="8,0,0,0" />
                   </StackPanel>
                 </Button>
               </Grid>

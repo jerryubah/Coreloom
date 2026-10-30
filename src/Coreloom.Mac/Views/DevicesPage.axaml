@@ -101,9 +101,9 @@
             <Button Theme="{StaticResource Button.Primary}" Padding="12,6" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding ActionCommand}"
                     IsVisible="{Binding !IsConnected}">
               <StackPanel Orientation="Horizontal">
-                <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Link}" Stroke="{DynamicResource Brush.OnAccent}"
+                <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Link}" Stroke="{DynamicResource Brush.OnGlow}"
                       IsVisible="{Binding !IsBusy}" />
-                <c:RadialGauge Theme="{StaticResource DeviceSpinner}" Fill="{DynamicResource Brush.OnAccent}" b:Spin.IsSpinning="{Binding IsBusy}"
+                <c:RadialGauge Theme="{StaticResource DeviceSpinner}" Fill="{DynamicResource Brush.OnGlow}" b:Spin.IsSpinning="{Binding IsBusy}"
                                IsVisible="{Binding IsBusy}" />
                 <TextBlock Text="{Binding ActionText}" Margin="7,0,0,0" />
               </StackPanel>
@@ -257,14 +257,14 @@
                 <Button Theme="{StaticResource Button.Primary}" Padding="16,8" Margin="0,0,8,0" Command="{Binding AllowBluetoothCommand}"
                         IsVisible="{Binding NeedsBluetoothPermission}" ToolTip.Tip="macOS asks whether Coreloom may use Bluetooth">
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Wireless}" Stroke="{DynamicResource Brush.OnAccent}" />
+                    <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Wireless}" Stroke="{DynamicResource Brush.OnGlow}" />
                     <TextBlock Text="Allow Bluetooth…" Margin="7,0,0,0" />
                   </StackPanel>
                 </Button>
                 <Button Theme="{StaticResource Button.Primary}" Padding="16,8" Margin="0,0,8,0" Command="{Binding PairCommand}"
                         IsVisible="{Binding !NeedsBluetoothPermission}">
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Plus}" Stroke="{DynamicResource Brush.OnAccent}" />
+                    <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Plus}" Stroke="{DynamicResource Brush.OnGlow}" />
                     <TextBlock Text="Pair a new device" Margin="7,0,0,0" />
                   </StackPanel>
                 </Button>

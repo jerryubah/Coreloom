@@ -377,7 +377,7 @@
                       Command="{Binding CustomizeCommand}" Padding="10,5" ToolTip="PC picture, lighting and which cards the dashboard shows">
                 <StackPanel Orientation="Horizontal">
                   <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Edit}" />
-                  <TextBlock Text="Customize" Margin="8,0,0,0" Foreground="{DynamicResource Brush.TextSecondary}" />
+                  <TextBlock Text="Customize" Margin="8,0,0,0" />
                 </StackPanel>
               </Button>
 

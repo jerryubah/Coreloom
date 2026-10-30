@@ -366,7 +366,7 @@ public sealed class OverlayViewModel : ObservableObject
     /// <summary>The limiter's mark next to the FPS: the limit ("116").</summary>
     public string PacingText => _pacingCap > 0 ? _pacingCap.ToString(CultureInfo.CurrentCulture) : string.Empty;
 
-    public string PacingToolTip => _pacingCap > 0 ? $"Frame limiter on: limited to {_pacingCap.ToString(CultureInfo.CurrentCulture)} FPS" : string.Empty;
+    public string PacingToolTip => _pacingCap > 0 ? $"Frame limit: {_pacingCap.ToString(CultureInfo.CurrentCulture)} FPS" : string.Empty;
 
     /// <summary>The FPS number is a little bigger than the other values.</summary>
     public double HeadlineFontSize => Math.Round(FontSize * 1.3, 1);

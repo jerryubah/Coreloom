@@ -681,7 +681,7 @@
   <DataTemplate x:Key="ToneGauge" DataType="{x:Type pages:ToneValueViewModel}">
     <StackPanel HorizontalAlignment="Center">
       <Grid Width="164" Height="164">
-        <c:RadialGauge Thickness="15" Orb="True" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True"
+        <c:RadialGauge Thickness="15" Orb="False" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True"
                        Tone="{Binding Tone}" Value="{Binding Fraction}" />
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
           <Path Style="{StaticResource IconPath}" Width="16" Height="16" HorizontalAlignment="Center"

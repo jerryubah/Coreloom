@@ -176,7 +176,7 @@ public sealed class ShellViewModel : ObservableObject
 
     public OverviewViewModel Overview { get; }
 
-    /// <summary>Game library, boosts, frame limiter and shader caches (above Graphics).</summary>
+    /// <summary>Game library and boosts, the shader caches among them (above Graphics).</summary>
     public GamingViewModel Gaming { get; }
 
     public BenchmarkingViewModel Benchmarking { get; }

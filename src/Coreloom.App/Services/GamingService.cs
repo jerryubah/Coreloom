@@ -678,6 +678,37 @@ internal sealed class WindowsGamingService : IGamingService
         }
     }
 
+    // ---- DirectStorage (since 1.8.4) -----------------------------------------------------------------------
+
+    public Task<DirectStorageReport> DirectStorageAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken) => Task.Run(() =>
+    {
+        var started = Stopwatch.StartNew();
+        var card = Coreloom.Hardware.Gaming.GameStorageProbe.GraphicsCard();
+        string systemRoot = DirectStorageCheck.RootOf(Environment.GetFolderPath(Environment.SpecialFolder.Windows)) ?? @"C:\";
+        var drives = DirectStorageCheck.DriveRoots(games, systemRoot)
+            .Select(root =>
+            {
+                var (bus, ssd) = Coreloom.Hardware.Gaming.GameStorageProbe.DriveKind(root);
+                return new GameDrive(root, bus, ssd, Coreloom.Hardware.Gaming.GameStorageProbe.BypassIo(root));
+            })
+            .ToList();
+        var using_ = new List<DirectStorageGame>();
+        foreach (var game in games)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (DirectStorageCheck.RootOf(game.InstallPath) is { } root && DirectStorageCheck.UsesDirectStorage(game.InstallPath))
+            {
+                using_.Add(new DirectStorageGame(game.Id, game.Name, root));
+            }
+        }
+
+        var report = DirectStorageCheck.Evaluate(new DirectStorageInputs(Environment.OSVersion.Version.Build, card?.Name, card?.ShaderModel, drives, using_));
+        Log.Info(LogCategory, $"DirectStorage: {report.State} in {started.ElapsedMilliseconds} ms ({card?.Name ?? "no Direct3D 12 card"}, shader model {(card?.ShaderModel is int m ? DirectStorageCheck.ShaderModelText(m) : "none")}; " +
+            $"{string.Join(", ", drives.Select(d => $"{d.Root} {d.Bus}{(d.BypassIo is { } b ? b.Supported ? " BypassIO" : $" no BypassIO ({b.Driver ?? "?"}: {b.Reason ?? "?"})" : string.Empty)}"))}; " +
+            $"{using_.Count} of {games.Count} games use it).");
+        return report;
+    }, cancellationToken);
+
     // ---- Running game and frame rates ----------------------------------------------------------------------
 
     public Task<RunningGame?> FindRunningAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken) => Task.Run(() =>
@@ -714,6 +745,7 @@ internal sealed class WindowsGamingService : IGamingService
                 ? new(true, DirectXUserSettings.IsOn(Registry.CurrentUser.OpenSubKey(DirectXUserSettings.Key)?.GetValue(DirectXUserSettings.Value) as string, DirectXUserSettings.SwapEffectUpgrade))
                 : TweakStatus.Unsupported("Needs Windows 11."),
             [GamingTweak.NoBackgroundRecording] = new(true, (ReadDwordOrNull(Registry.CurrentUser, GameDvrKey, "HistoricalCaptureEnabled") ?? 0) != 1), // off unless turned on
+            [GamingTweak.KeepShaderCaches] = KeepShaderCachesStatus(),
         };
 
         bool nvidia = NvApi.IsAvailable;
@@ -773,6 +805,32 @@ internal sealed class WindowsGamingService : IGamingService
         }
 
         return new TweakStatus(true, GSyncSetup.IsOn(feature.Value, requested.Value, mode.Value));
+    }
+
+    /// <summary>"Keep shader caches": the DirectX shader cache's Disk Cleanup handler, in both registry views.</summary>
+    private static TweakStatus KeepShaderCachesStatus()
+    {
+        using var key64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64).OpenSubKey(ShaderCacheCleanup.Key);
+        using var key32 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32).OpenSubKey(ShaderCacheCleanup.Key);
+        return ShaderCacheCleanup.Status(key64 is not null, key64?.GetValue(ShaderCacheCleanup.Value) as int?, key32 is not null, key32?.GetValue(ShaderCacheCleanup.Value) as int?);
+    }
+
+    private static TweakResult SetKeepShaderCaches(bool keep)
+    {
+        int written = 0;
+        foreach (var view in new[] { RegistryView.Registry64, RegistryView.Registry32 })
+        {
+            using var key = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, view).OpenSubKey(ShaderCacheCleanup.Key, writable: true);
+            if (key is not null)
+            {
+                key.SetValue(ShaderCacheCleanup.Value, ShaderCacheCleanup.AutorunFor(keep), RegistryValueKind.DWord);
+                written++;
+            }
+        }
+
+        return written == 0
+            ? new TweakResult(false, "Windows here has no automatic cleanup for the DirectX shader cache.")
+            : new TweakResult(true, keep ? "Windows' maintenance leaves the DirectX shader cache alone now." : "Windows' maintenance may clear the DirectX shader cache again, as by default.");
     }
 
     private static TweakStatus GpuSchedulingStatus()
@@ -865,6 +923,7 @@ internal sealed class WindowsGamingService : IGamingService
                 GamingTweak.MaxGpuPerformance => SetNvidia(on ? NvApi.PreferMaximumPerformance : null, NvApi.PowerManagementMode, "Power management mode"),
                 GamingTweak.ShaderCache => SetNvidia(on ? ShaderCacheSize.Normalize(settings.ShaderCacheSize) : null, NvApi.ShaderCacheMaxSize, "Shader cache size"),
                 GamingTweak.GSync => SetGSync(on),
+                GamingTweak.KeepShaderCaches => SetKeepShaderCaches(on),
                 _ => new TweakResult(false, "Unknown setting."),
             };
             Log.Info(LogCategory, $"{tweak} {(on ? "on" : "off")}: {(result.Success ? "done" : "failed")} ({result.Message})");
@@ -1016,56 +1075,6 @@ internal sealed class WindowsGamingService : IGamingService
         bool ok = value is { } v ? NvApi.SetGlobal(setting, v) : NvApi.RestoreGlobal(setting);
         return ok ? new TweakResult(true, $"{name} changed in the NVIDIA driver.") : new TweakResult(false, "The NVIDIA driver didn't accept the change.");
     }
-
-    public Task<TweakResult> SetFrameCapAsync(int fps, CancellationToken cancellationToken) => Task.Run(() =>
-    {
-        if (!NvApi.IsAvailable)
-        {
-            return new TweakResult(false, "The frame limiter needs an NVIDIA graphics driver.");
-        }
-
-        int limit = FrameCap.Clamp(fps);
-        bool ok = limit > 0 ? NvApi.SetGlobal(NvApi.FrameRateLimiter, (uint)limit) : NvApi.RestoreGlobal(NvApi.FrameRateLimiter);
-        Log.Info(LogCategory, limit > 0 ? $"Frame limit set to {limit} FPS: {(ok ? "done" : "failed")}." : $"Frame limit removed: {(ok ? "done" : "failed")}.");
-        return ok
-            ? new TweakResult(true, limit > 0 ? $"Games you start now are limited to {limit} FPS." : "The frame limit is off.")
-            : new TweakResult(false, "The NVIDIA driver didn't accept the frame limit.");
-    }, cancellationToken);
-
-    public Task<IReadOnlyList<string>> FindExecutablesAsync(GameEntry game, CancellationToken cancellationToken) => Task.Run<IReadOnlyList<string>>(() =>
-    {
-        string? folder = GameLibrary.NormalizeFolder(game.InstallPath);
-        if (game.Store == GameStore.Custom && CustomGames.IsBroadFolder(folder))
-        {
-            folder = null; // a game added from Desktop or Downloads: only its own program, not everything beside it
-        }
-
-        var files = new List<(string Path, long Size)>();
-        if (folder is not null && folder.Length > 3 && Directory.Exists(folder))
-        {
-            try
-            {
-                var options = new EnumerationOptions { RecurseSubdirectories = true, MaxRecursionDepth = 4, IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint };
-                foreach (var file in new DirectoryInfo(folder).EnumerateFiles("*.exe", options).Take(600))
-                {
-                    files.Add((file.FullName, file.Length));
-                }
-            }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException)
-            {
-                Log.Warn(LogCategory, $"Couldn't look through {folder}: {e.Message}");
-            }
-        }
-
-        // The game's program running now is the surest answer.
-        string? running = folder is null ? null : GamingNative.RunningPrograms()
-            .Where(p => p.Path.StartsWith(folder.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase) && !GameLibrary.IsNotGame(Path.GetFileName(p.Path)))
-            .Select(p => p.Path)
-            .FirstOrDefault();
-        var picked = GameExecutables.Pick(game, files, running);
-        Log.Info(LogCategory, $"Programs of {game.Name}: {(picked.Count == 0 ? "none found" : string.Join(", ", picked))}.");
-        return picked;
-    }, cancellationToken);
 
     public Task<TweakResult> SetGameFrameCapAsync(string gameName, IReadOnlyList<string> executables, int fps, CancellationToken cancellationToken) => Task.Run(() =>
     {

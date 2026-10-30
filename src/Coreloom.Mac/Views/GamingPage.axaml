@@ -119,7 +119,7 @@
             <Button Theme="{StaticResource Button.Primary}" Padding="14,7" Command="{Binding PlayCommand}" IsEnabled="{Binding CanPlay}"
                     AutomationProperties.Name="{Binding Name, StringFormat='Play {0}'}">
               <StackPanel Orientation="Horizontal">
-                <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
+                <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnGlow}" />
                 <TextBlock Text="Play" Margin="7,0,0,0" />
               </StackPanel>
             </Button>
@@ -165,7 +165,7 @@
           <Button Classes="reveal" Theme="{StaticResource Button.Primary}" Padding="16,7" Margin="0,0,0,14" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                   Command="{Binding PlayCommand}" IsEnabled="{Binding CanPlay}" AutomationProperties.Name="{Binding Name, StringFormat='Play {0}'}">
             <StackPanel Orientation="Horizontal">
-              <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
+              <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnGlow}" />
               <TextBlock Text="Play" Margin="7,0,0,0" />
             </StackPanel>
           </Button>

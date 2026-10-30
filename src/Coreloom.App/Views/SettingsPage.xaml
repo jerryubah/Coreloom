@@ -1112,7 +1112,7 @@
                             Visibility="{Binding ShowStatusInstallButton, Converter={StaticResource BoolToVisibility}}"
                             ToolTip="Downloads the update if needed, closes Coreloom, installs it and opens Coreloom again.">
                       <StackPanel Orientation="Horizontal">
-                        <Path Style="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Download}" Stroke="{DynamicResource Brush.OnAccent}" />
+                        <Path Style="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Download}" Stroke="{DynamicResource Brush.OnGlow}" />
                         <TextBlock Text="Install update" Margin="6,0,0,0" />
                       </StackPanel>
                     </Button>

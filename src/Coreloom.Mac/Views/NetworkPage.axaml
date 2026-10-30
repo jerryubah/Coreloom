@@ -18,7 +18,7 @@
       <ContentControl Content="{Binding Chart}" ContentTemplate="{StaticResource ChartCard}" Height="300" Margin="0,16,0,0" />
 
       <!-- Internet speed test -->
-      <c:SquircleBorder Theme="{StaticResource Card.Glow}" GlowKey="NetworkDown" GlowStrength="0.8" Margin="0,16,0,0" DataContext="{Binding SpeedTest}" Padding="20,18">
+      <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,16,0,0" DataContext="{Binding SpeedTest}" Padding="20,18">
         <StackPanel>
           <Grid ColumnDefinitions="Auto,*,Auto">
             <c:SquircleBorder Width="38" Height="38" CornerRadius="11" Background="{DynamicResource Brush.AccentSoft}" VerticalAlignment="Top">
@@ -32,7 +32,7 @@
               <Button Theme="{StaticResource Button.Primary}" Padding="18,8" Command="{Binding RunCommand}"
                       IsVisible="{Binding IsIdle}">
                 <StackPanel Orientation="Horizontal">
-                  <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
+                  <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnGlow}" />
                   <TextBlock Text="{Binding RunText}" Margin="7,0,0,0" />
                 </StackPanel>
               </Button>

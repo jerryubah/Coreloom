@@ -182,7 +182,7 @@ public sealed class UnsupportedDeviceService : IDeviceService
 
 /// <summary>
 /// The Gaming page's view of Windows: installed games from every launcher, the Windows and graphics-driver settings
-/// that help games, the driver's frame limiter, shader caches and the game that is running.
+/// that help games, the driver's frame limit (read only since 1.8.4), shader caches, DirectStorage and the game that is running.
 /// </summary>
 public interface IGamingService
 {
@@ -192,20 +192,24 @@ public interface IGamingService
     /// <summary>Installed games from Steam, Epic, GOG, Xbox, Ubisoft, EA, Battle.net and Riot, with the pictures found on this PC.</summary>
     Task<IReadOnlyList<GameEntry>> ScanLibraryAsync(CancellationToken cancellationToken);
 
-    /// <summary>The state of every tweak, the frame limit, the display and the shader caches.</summary>
+    /// <summary>The state of every tweak, the driver's frame limit, the display and the shader caches.</summary>
     Task<GamingStatus> StatusAsync(GamingSettings settings, CancellationToken cancellationToken);
 
     /// <summary>Turns a tweak on or off. May record what to restore later in <paramref name="settings"/> (the power plans).</summary>
     Task<TweakResult> SetTweakAsync(GamingTweak tweak, bool on, GamingSettings settings, CancellationToken cancellationToken);
 
-    /// <summary>Sets the graphics driver's frame-rate limit for all games (0 turns it off).</summary>
-    Task<TweakResult> SetFrameCapAsync(int fps, CancellationToken cancellationToken);
-
-    /// <summary>The game's program files the driver should match (see <see cref="GameExecutables.Pick"/>).</summary>
-    Task<IReadOnlyList<string>> FindExecutablesAsync(GameEntry game, CancellationToken cancellationToken);
-
-    /// <summary>Sets the driver's frame-rate limit for these programs only (0 removes it, so the all-games limit applies again).</summary>
+    /// <summary>
+    /// Sets the driver's frame-rate limit for these programs only (0 removes it, so the all-games limit applies again).
+    /// Since 1.8.4 only used to remove limits Coreloom set earlier (adaptive pacing's, or a removed game's).
+    /// </summary>
     Task<TweakResult> SetGameFrameCapAsync(string gameName, IReadOnlyList<string> executables, int fps, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Whether DirectStorage and GPU decompression can work here for these games: the graphics card, Windows, the drives
+    /// the games are on (NVMe, BypassIO) and which games ship DirectStorage (since 1.8.4; Windows only).
+    /// </summary>
+    Task<DirectStorageReport> DirectStorageAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken) =>
+        Task.FromResult(DirectStorageReport.Unknown);
 
     /// <summary>The library game that is running now, if any.</summary>
     Task<RunningGame?> FindRunningAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken);
@@ -252,10 +256,6 @@ public sealed class UnsupportedGamingService : IGamingService
     public Task<GamingStatus> StatusAsync(GamingSettings settings, CancellationToken cancellationToken) => Task.FromResult(GamingStatus.Unavailable);
 
     public Task<TweakResult> SetTweakAsync(GamingTweak tweak, bool on, GamingSettings settings, CancellationToken cancellationToken) => Unavailable();
-
-    public Task<TweakResult> SetFrameCapAsync(int fps, CancellationToken cancellationToken) => Unavailable();
-
-    public Task<IReadOnlyList<string>> FindExecutablesAsync(GameEntry game, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<string>>([]);
 
     public Task<TweakResult> SetGameFrameCapAsync(string gameName, IReadOnlyList<string> executables, int fps, CancellationToken cancellationToken) => Unavailable();
 

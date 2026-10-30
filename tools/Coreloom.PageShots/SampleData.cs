@@ -57,8 +57,9 @@ internal sealed class SampleData
         Settings.Update("Gaming", s =>
         {
             s.Gaming.CoreScheduling = true;
-            s.Gaming.FramePacerTarget = 237;
-            s.Gaming.AdaptivePacing = true;
+            s.Gaming.VramManagement = true;
+            s.Gaming.KeepVram(new VramRecord { GameId = "epic:Dodo", Name = "Alan Wake 2", TotalMb = 32607, PeakGameMb = 17100, PeakInUseMb = 19400, PeakSharedMb = 310, Minutes = 95, Sessions = 2, LastPlayed = DateTime.UtcNow.AddDays(-2) });
+            s.Gaming.KeepVram(new VramRecord { GameId = "steam:1091500", Name = "Cyberpunk 2077", TotalMb = 32607, PeakGameMb = 13900, PeakInUseMb = 15800, PeakSharedMb = 240, Minutes = 140, Sessions = 3, LastPlayed = DateTime.UtcNow.AddHours(-3) });
             s.Gaming.CoreProfiles.Add(new CoreProfile { Program = "Cyberpunk2077.exe", Name = "Cyberpunk 2077", FpsGain = 0.07, LowGain = 0.05 });
         });
         Monitor = new MonitorContext
@@ -250,15 +251,23 @@ internal sealed class SampleGaming : IGamingService
         [GamingTweak.MaxGpuPerformance] = new(true, true),
         [GamingTweak.GSync] = new(true, true),
         [GamingTweak.ShaderCache] = new(true, true),
+        [GamingTweak.KeepShaderCaches] = new(true, true),
     };
 
     public bool IsSupported => true;
+
+    /// <summary>Sample: the RTX 5090 (Shader Model 6.6, the highest Coreloom asks for), the games' drive NVMe with BypassIO, one game using it.</summary>
+    public Task<DirectStorageReport> DirectStorageAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken) =>
+        Task.FromResult(DirectStorageCheck.Evaluate(new DirectStorageInputs(26100, "NVIDIA GeForce RTX 5090", 0x66,
+            [new GameDrive(@"D:\", "NVMe", true, new BypassIoState(true))],
+            [new DirectStorageGame("steam:1895880", "Ratchet & Clank: Rift Apart", @"D:\")])));
 
     public Task<IReadOnlyList<GameEntry>> ScanLibraryAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<GameEntry>>(
     [
         new("steam:1091500", "Cyberpunk 2077", GameStore.Steam) { InstallPath = @"D:\Steam\steamapps\common\Cyberpunk 2077", SizeBytes = 92L << 30, LastPlayed = DateTimeOffset.Now.AddHours(-3) },
         new("epic:Dodo", "Alan Wake 2", GameStore.Epic) { InstallPath = @"D:\Epic\AlanWake2", SizeBytes = 90L << 30, LastPlayed = DateTimeOffset.Now.AddDays(-2) },
         new("steam:1245620", "Elden Ring", GameStore.Steam) { InstallPath = @"D:\Steam\steamapps\common\ELDEN RING", SizeBytes = 60L << 30, LastPlayed = DateTimeOffset.Now.AddDays(-6) },
+        new("steam:1895880", "Ratchet & Clank: Rift Apart", GameStore.Steam) { InstallPath = @"D:\Steam\steamapps\common\Ratchet & Clank - Rift Apart", SizeBytes = 75L << 30, LastPlayed = DateTimeOffset.Now.AddDays(-9) },
     ]);
 
     public Task<GamingStatus> StatusAsync(GamingSettings settings, CancellationToken cancellationToken) => Task.FromResult(new GamingStatus
@@ -284,10 +293,6 @@ internal sealed class SampleGaming : IGamingService
         _tweaks[tweak] = new TweakStatus(true, on);
         return Task.FromResult(new TweakResult(true, "Done."));
     }
-
-    public Task<TweakResult> SetFrameCapAsync(int fps, CancellationToken cancellationToken) => Task.FromResult(new TweakResult(true, "Done."));
-
-    public Task<IReadOnlyList<string>> FindExecutablesAsync(GameEntry game, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<string>>([]);
 
     public Task<TweakResult> SetGameFrameCapAsync(string gameName, IReadOnlyList<string> executables, int fps, CancellationToken cancellationToken) => Task.FromResult(new TweakResult(true, "Done."));
 

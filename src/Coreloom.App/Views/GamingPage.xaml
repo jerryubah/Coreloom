@@ -54,13 +54,15 @@
       </Setter>
     </Style>
 
-    <!-- A boost: icon (green when on), name and tag, what it does, its switch, and what happened. -->
+    <!-- A boost: icon (green when on), name and tag, what it does, its switch (a check such as DirectStorage has none), a
+         choice it sets (the NVIDIA shader cache's size), and what happened. -->
     <DataTemplate x:Key="BoostCard" DataType="{x:Type pages:GamingTweakViewModel}">
       <c:SquircleBorder x:Name="Card" Style="{StaticResource Card}" Padding="16,14,16,14" ToolTip="{Binding Advice}" ToolTipService.ShowDuration="30000">
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <Grid>
@@ -94,7 +96,7 @@
                         AutomationProperties.Name="{Binding Title, StringFormat='Details for {0}'}" />
               </WrapPanel>
             </StackPanel>
-            <Grid Grid.Column="2" VerticalAlignment="Top">
+            <Grid Grid.Column="2" VerticalAlignment="Top" Visibility="{Binding IsSwitch, Converter={StaticResource BoolToVisibility}}">
               <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding IsOn, Mode=TwoWay}" IsEnabled="{Binding CanToggle}"
                         AutomationProperties.Name="{Binding Title}"
                         Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
@@ -105,11 +107,22 @@
           <StackPanel Grid.Row="1" Margin="0,12,0,0">
             <TextBlock Text="{Binding Description}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" />
             <TextBlock Text="{Binding Recommendation}" FontSize="11.5" Foreground="{DynamicResource Brush.TextSecondary}" TextWrapping="Wrap" Margin="0,8,0,0"
+                       Background="Transparent" ToolTip="{Binding RecommendationToolTip}" ToolTipService.ShowDuration="30000"
                        Visibility="{Binding HasRecommendation, Converter={StaticResource BoolToVisibility}}" />
             <TextBlock Text="{Binding Caveat}" FontSize="11.5" Foreground="{DynamicResource Brush.TextTertiary}" TextWrapping="Wrap" Margin="0,4,0,0"
                        Visibility="{Binding HasCaveat, Converter={StaticResource BoolToVisibility}}" />
           </StackPanel>
-          <TextBlock Grid.Row="2" x:Name="Message" Text="{Binding Message}" FontSize="11.5" Foreground="{DynamicResource Brush.Elevated}" TextWrapping="Wrap" Margin="0,8,0,0"
+          <!-- the choice it sets (the NVIDIA shader cache's size: applied at once while on), at the bottom of the card -->
+          <Grid Grid.Row="2" Margin="0,12,0,0" Visibility="{Binding HasChoices, Converter={StaticResource BoolToVisibility}}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <ComboBox Style="{StaticResource ComboBox.Default}" MinWidth="130" ItemsSource="{Binding Choices}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                      SelectedValue="{Binding Choice}" AutomationProperties.Name="{Binding Title, StringFormat='{}{0} size'}" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" Text="{Binding ChoiceNote}" Style="{StaticResource Text.Caption}" Margin="12,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+          </Grid>
+          <TextBlock Grid.Row="3" x:Name="Message" Text="{Binding Message}" FontSize="11.5" Foreground="{DynamicResource Brush.Elevated}" TextWrapping="Wrap" Margin="0,8,0,0"
                      Visibility="{Binding HasMessage, Converter={StaticResource BoolToVisibility}}" />
         </Grid>
       </c:SquircleBorder>
@@ -121,6 +134,14 @@
         <DataTrigger Binding="{Binding IsOn}" Value="True">
           <Setter TargetName="StatusPill" Property="Background" Value="{DynamicResource Brush.SuccessSoft}" />
         </DataTrigger>
+        <MultiDataTrigger>
+          <MultiDataTrigger.Conditions>
+            <Condition Binding="{Binding IsSwitch}" Value="False" />
+            <Condition Binding="{Binding IsSupported}" Value="True" />
+            <Condition Binding="{Binding IsOn}" Value="False" />
+          </MultiDataTrigger.Conditions>
+          <Setter TargetName="StatusPill" Property="Background" Value="{DynamicResource Brush.ElevatedSoft}" />
+        </MultiDataTrigger>
         <DataTrigger Binding="{Binding IsSmoothness}" Value="True">
           <Setter TargetName="CategoryPill" Property="Background" Value="{DynamicResource Brush.SuccessSoft}" />
           <Setter TargetName="CategoryText" Property="Foreground" Value="{DynamicResource Brush.Success}" />
@@ -180,7 +201,7 @@
             <Button Style="{StaticResource Button.Primary}" Padding="14,7" Command="{Binding PlayCommand}" IsEnabled="{Binding CanPlay}"
                     AutomationProperties.Name="{Binding Name, StringFormat='Play {0}'}">
               <StackPanel Orientation="Horizontal">
-                <Path Style="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
+                <Path Style="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnGlow}" />
                 <TextBlock Text="Play" Margin="7,0,0,0" />
               </StackPanel>
             </Button>
@@ -237,7 +258,7 @@
           <Button x:Name="Play" Style="{StaticResource Button.Primary}" Padding="16,7" Margin="0,0,0,14" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                   Command="{Binding PlayCommand}" IsEnabled="{Binding CanPlay}" Opacity="0" AutomationProperties.Name="{Binding Name, StringFormat='Play {0}'}">
             <StackPanel Orientation="Horizontal">
-              <Path Style="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
+              <Path Style="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnGlow}" />
               <TextBlock Text="Play" Margin="7,0,0,0" />
             </StackPanel>
           </Button>
@@ -287,17 +308,6 @@
       </DataTemplate.Triggers>
     </DataTemplate>
 
-    <!-- A shader cache folder and its size. -->
-    <DataTemplate x:Key="ShaderCacheRow" DataType="{x:Type pages:ShaderCacheRow}">
-      <Grid Margin="0,3" ToolTip="{Binding Path}">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
-        <TextBlock Text="{Binding Name}" FontSize="12.5" Foreground="{DynamicResource Brush.TextSecondary}" TextTrimming="CharacterEllipsis" />
-        <TextBlock Grid.Column="1" Text="{Binding SizeText}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="12,0,0,0" />
-      </Grid>
-    </DataTemplate>
 
     <!-- The List / Grid switch: an icon and a word. -->
     <DataTemplate x:Key="ViewOption">
@@ -390,8 +400,8 @@
                   <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" b:Pulse.IsPulsing="{Binding IsPlaying}" />
                   <TextBlock Text="Now playing" Style="{StaticResource Text.Label}" Margin="8,0,0,0" VerticalAlignment="Center" />
                   <TextBlock Text="{Binding NowPlayingName}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="8,0,0,0" VerticalAlignment="Center" MaxWidth="260" TextTrimming="CharacterEllipsis" />
-                  <StackPanel Orientation="Horizontal" Margin="12,0,0,0" Visibility="{Binding FramePacer.HasLive, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="{Binding FramePacer.LiveFps}" FontFamily="{StaticResource MonoFont}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center" />
+                  <StackPanel Orientation="Horizontal" Margin="12,0,0,0" Visibility="{Binding HasLive, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="{Binding LiveFps}" FontFamily="{StaticResource MonoFont}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center" />
                     <TextBlock Text=" FPS" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" />
                   </StackPanel>
                 </StackPanel>
@@ -422,10 +432,10 @@
                   <StackPanel>
                     <StackPanel Orientation="Horizontal">
                       <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" />
-                      <TextBlock Text="Frame limit" Style="{StaticResource Text.Label}" Margin="7,0,0,0" />
+                      <TextBlock Text="VRR" Style="{StaticResource Text.Label}" Margin="7,0,0,0" />
                     </StackPanel>
-                    <TextBlock Text="{Binding FrameLimitText}" Style="{StaticResource StatValue}" />
-                    <TextBlock Text="frame limiter" Style="{StaticResource Text.Caption}" />
+                    <TextBlock Text="{Binding VrrText}" Style="{StaticResource StatValue}" />
+                    <TextBlock Text="{Binding VrrCaption}" Style="{StaticResource Text.Caption}" />
                   </StackPanel>
                 </c:SquircleBorder>
                 <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="13,11">
@@ -449,321 +459,18 @@
       <!-- ============================================================ -->
       <StackPanel Margin="2,28,0,14">
         <TextBlock Text="Performance boosts" Style="{StaticResource Text.SectionTitle}" />
-        <TextBlock Text="Windows and graphics-driver settings that raise frame rates and steady frame times. Each one can be turned off again." Style="{StaticResource Text.Secondary}"
+        <TextBlock Text="Windows and graphics-driver settings that raise frame rates and steady frame times, and checks for what games need. Each switch can be turned off again." Style="{StaticResource Text.Secondary}"
                    TextWrapping="Wrap" TextTrimming="None" Margin="0,3,0,0" />
       </StackPanel>
       <ItemsControl ItemsSource="{Binding Boosts}" ItemTemplate="{StaticResource BoostCard}" Focusable="False">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
-            <!-- rows of cards that start and end on one line: each row is as tall as its longest card (the short boosts
-                 share rows, the ones with a recommendation share the last), so every column ends on the same line; in two
-                 columns the ninth card spans the last row -->
+            <!-- rows of cards that start and end on one line: each row is as tall as its longest card, so every column
+                 ends on the same line; twelve boosts make four rows of three, or six of two -->
             <c:AdaptiveGrid MinColumnWidth="320" MaxColumns="3" Spacing="12" RowSpacing="12" FillLastRow="True" />
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
       </ItemsControl>
-
-      <!-- ============================================================ -->
-      <!-- Frame limiter and shader cache side by side, ending on one line: the frame limiter's pacing row and the cache  -->
-      <!-- list both reach the bottom of their cards. Stacked when narrow.                                                -->
-      <!-- ============================================================ -->
-      <c:AdaptiveGrid MinColumnWidth="440" MaxColumns="2" Spacing="16" Margin="0,16,0,0">
-
-        <!-- Frame limiter -->
-        <c:SquircleBorder Style="{StaticResource Card.Glow}" GlowKey="Accent" GlowStrength="0.7" DataContext="{Binding FramePacer}">
-          <Grid>
-            <Grid.RowDefinitions>
-              <RowDefinition Height="*" />
-              <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-          <StackPanel>
-            <Grid>
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-              </Grid.ColumnDefinitions>
-              <c:SquircleBorder Width="36" Height="36" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
-                <Path Style="{StaticResource IconPath}" Width="17" Height="17" Data="{StaticResource Icon.Gauge}" Stroke="{DynamicResource Brush.Accent}" />
-              </c:SquircleBorder>
-              <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
-                <StackPanel Orientation="Horizontal">
-                  <TextBlock Style="{StaticResource Text.CardTitle}" FontSize="14" Text="Frame limiter" />
-                  <Border Style="{StaticResource Badge}" Margin="8,0,0,0">
-                    <TextBlock Text="NVIDIA driver" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
-                  </Border>
-                  <Border Background="Transparent" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="{Binding HelpText}" ToolTipService.ShowDuration="60000">
-                    <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.TextTertiary}" />
-                  </Border>
-                </StackPanel>
-                <TextBlock Style="{StaticResource Text.Caption}" Text="A precise frame-rate limit for smooth, even frames on high-refresh displays" TextWrapping="Wrap" TextTrimming="None" Margin="0,2,0,0" />
-              </StackPanel>
-              <Grid Grid.Column="2" VerticalAlignment="Center">
-                <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding IsOn, Mode=TwoWay}" IsEnabled="{Binding CanToggle}" AutomationProperties.Name="Frame limiter"
-                          Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
-                <c:RadialGauge Style="{StaticResource GameSpinner}" Margin="0,0,10,0" b:Spin.IsSpinning="{Binding IsBusy}"
-                               Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
-              </Grid>
-            </Grid>
-
-            <!-- Adaptive frame pacing (top pick): learns each game's steady frame rate and sets its limit -->
-            <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,12" Margin="0,16,0,0" BorderBrush="{DynamicResource Brush.AccentEdge}" BorderThickness="1">
-              <StackPanel>
-                <Grid>
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                  </Grid.ColumnDefinitions>
-                  <StackPanel Margin="0,0,12,0">
-                    <WrapPanel>
-                      <TextBlock Text="Adaptive frame pacing" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                      <Border Style="{StaticResource Badge}" Background="{DynamicResource Brush.AccentSoft}" Padding="7,1">
-                        <TextBlock Text="Top pick" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
-                      </Border>
-                      <Border Background="Transparent" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="{Binding AdaptiveMethodText}" ToolTipService.ShowDuration="60000">
-                        <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.TextTertiary}" />
-                      </Border>
-                    </WrapPanel>
-                    <TextBlock Text="{Binding AdaptiveTags}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" Margin="0,3,0,0" TextWrapping="Wrap" />
-                  </StackPanel>
-                  <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Top" IsChecked="{Binding AdaptiveOn, Mode=TwoWay}" IsEnabled="{Binding CanToggleAdaptive}"
-                            AutomationProperties.Name="Adaptive frame pacing" />
-                </Grid>
-                <TextBlock Text="{Binding AdaptiveDescription}" Style="{StaticResource Text.Secondary}" TextWrapping="Wrap" TextTrimming="None" Margin="0,6,0,0" />
-                <Grid Margin="0,8,0,0">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                  </Grid.ColumnDefinitions>
-                  <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Pulse}" Stroke="{DynamicResource Brush.Accent}" VerticalAlignment="Top" Margin="0,1,8,0" />
-                  <TextBlock Grid.Column="1" Text="{Binding Adaptive.StatusText}" FontSize="12" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
-                </Grid>
-                <TextBlock Text="{Binding Adaptive.LastChangeText}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="22,4,0,0"
-                           Visibility="{Binding Adaptive.HasLastChange, Converter={StaticResource BoolToVisibility}}" />
-                <Grid Margin="0,10,0,0" Visibility="{Binding ShowFrameGeneration, Converter={StaticResource BoolToVisibility}}">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                  </Grid.ColumnDefinitions>
-                  <TextBlock Text="{Binding FrameGenerationLabel}" Style="{StaticResource Text.Label}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,12,0"
-                             ToolTip="As set in the game's options: limits stay in whole rendered frames, at least 40 a second." />
-                  <ComboBox Grid.Column="1" Style="{StaticResource ComboBox.Default}" MinWidth="200" ItemsSource="{Binding FrameGenerationOptions}" DisplayMemberPath="Label"
-                            SelectedValuePath="Value" SelectedValue="{Binding SelectedFrameGeneration}" AutomationProperties.Name="Frame generation" VerticalAlignment="Center" />
-                </Grid>
-              </StackPanel>
-            </c:SquircleBorder>
-
-            <!-- What the limit applies to: every game, or one game (its own driver profile) -->
-            <StackPanel Margin="0,16,0,0" Visibility="{Binding IsSupported, Converter={StaticResource BoolToVisibility}}">
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="Auto" />
-                  <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Text="Apply to" Style="{StaticResource Text.Label}" VerticalAlignment="Center" Margin="0,0,14,0" />
-                <ComboBox Grid.Column="1" Style="{StaticResource ComboBox.Default}" MinWidth="0" MaxDropDownHeight="380" ItemsSource="{Binding Scopes}"
-                          DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding SelectedScope}" AutomationProperties.Name="Apply the limit to"
-                          ToolTip="{Binding ScopeText}" />
-              </Grid>
-              <!-- Games with a limit of their own: click one to see it, × to remove its limit -->
-              <ItemsControl ItemsSource="{Binding GameCaps}" Margin="0,10,0,-8" Focusable="False" Visibility="{Binding HasGameCaps, Converter={StaticResource BoolToVisibility}}">
-                <ItemsControl.ItemsPanel>
-                  <ItemsPanelTemplate>
-                    <WrapPanel />
-                  </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate DataType="{x:Type pages:GameCapChip}">
-                    <c:SquircleBorder CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}" Padding="4,2,2,2" Margin="0,0,8,8">
-                      <StackPanel Orientation="Horizontal">
-                        <Button Style="{StaticResource Button.Subtle}" Padding="8,4" Command="{Binding SelectCommand}" ToolTip="Show this game's limit">
-                          <TextBlock FontSize="12">
-                            <Run Text="{Binding Name, Mode=OneWay}" Foreground="{DynamicResource Brush.Text}" /><Run Text="  " /><Run Text="{Binding LimitText, Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
-                          </TextBlock>
-                        </Button>
-                        <Button Style="{StaticResource Button.Icon}" Width="24" Height="24" Command="{Binding RemoveCommand}"
-                                ToolTip="Remove this game's own limit" AutomationProperties.Name="{Binding Name, StringFormat='Remove the limit for {0}'}">
-                          <Path Style="{StaticResource IconPath}" Width="9" Height="9" Data="{StaticResource Icon.Close}" />
-                        </Button>
-                      </StackPanel>
-                    </c:SquircleBorder>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-            </StackPanel>
-
-            <!-- No NVIDIA driver -->
-            <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,12" Margin="0,14,0,0"
-                    Visibility="{Binding IsSupported, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="Auto" />
-                  <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Path Style="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.TextTertiary}" VerticalAlignment="Top" Margin="0,1,10,0" />
-                <TextBlock Grid.Column="1" Text="{Binding UnsupportedText}" Style="{StaticResource Text.Secondary}" TextWrapping="Wrap" TextTrimming="None" />
-              </Grid>
-            </c:SquircleBorder>
-
-            <StackPanel Visibility="{Binding IsSupported, Converter={StaticResource BoolToVisibility}}">
-              <Grid Margin="0,16,0,0">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="Auto" />
-                  <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <StackPanel>
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock x:Name="Limit" Text="{Binding LimitText}" FontFamily="{StaticResource UiFont}" FontSize="42" FontWeight="Bold"
-                               Typography.NumeralAlignment="Tabular" TextOptions.TextFormattingMode="Ideal">
-                      <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                          <Setter Property="Foreground" Value="{DynamicResource Brush.TextTertiary}" />
-                          <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsOn}" Value="True">
-                              <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
-                            </DataTrigger>
-                          </Style.Triggers>
-                        </Style>
-                      </TextBlock.Style>
-                    </TextBlock>
-                    <TextBlock Text="FPS" Style="{StaticResource Text.Label}" Margin="6,0,0,9" VerticalAlignment="Bottom" />
-                  </StackPanel>
-                  <TextBlock Text="{Binding FrameTimeText}" Style="{StaticResource Text.Caption}" />
-                </StackPanel>
-                <StackPanel Grid.Column="1" Margin="20,4,0,0" VerticalAlignment="Center" HorizontalAlignment="Right">
-                  <TextBlock Text="Limit" Style="{StaticResource Text.Label}" Margin="2,0,0,5" />
-                  <ComboBox Style="{StaticResource ComboBox.Default}" MinWidth="190" ItemsSource="{Binding Options}" DisplayMemberPath="Label"
-                            SelectedValuePath="Value" SelectedValue="{Binding SelectedTarget}" AutomationProperties.Name="Frame limit" ToolTip="{Binding Explanation}" />
-                  <TextBlock Text="{Binding DisplayText}" Style="{StaticResource Text.Caption}" Margin="2,5,0,0" />
-                </StackPanel>
-              </Grid>
-              <TextBlock Text="{Binding ForeignLimitText}" FontSize="12" Foreground="{DynamicResource Brush.Elevated}" TextWrapping="Wrap" Margin="0,8,0,0"
-                         Visibility="{Binding ForeignLimitText, Converter={StaticResource HasValueToVisibility}}" />
-              <TextBlock Text="{Binding Message}" FontSize="12" Foreground="{DynamicResource Brush.Elevated}" TextWrapping="Wrap" Margin="0,8,0,0"
-                         Visibility="{Binding HasMessage, Converter={StaticResource BoolToVisibility}}" />
-            </StackPanel>
-
-          </StackPanel>
-
-            <!-- Pacing of the game running now, in one row (dashes until a game runs), at the bottom of the card -->
-            <c:SquircleBorder Grid.Row="1" Style="{StaticResource Card.Inset}" Padding="14,10" Margin="0,14,0,0"
-                              ToolTip="Start a game from your library to see how evenly its frames arrive.">
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="Auto" />
-                  <ColumnDefinition Width="Auto" />
-                  <ColumnDefinition Width="Auto" />
-                  <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Style="{StaticResource Text.Label}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Visibility="{Binding HasLive, Converter={StaticResource BoolToVisibility}}"
-                           Text="{Binding DataContext.NowPlayingName, RelativeSource={RelativeSource AncestorType=UserControl}, StringFormat='Pacing in {0}'}" />
-                <TextBlock Style="{StaticResource Text.Label}" Text="Pacing" VerticalAlignment="Center" Visibility="{Binding HasLive, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
-                <TextBlock Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                  <Run Text="{Binding LiveFps, Mode=OneWay}" FontFamily="{StaticResource MonoFont}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" /><Run Text=" FPS" FontSize="11" Foreground="{DynamicResource Brush.TextSecondary}" />
-                </TextBlock>
-                <TextBlock Grid.Column="2" Margin="14,0,0,0" VerticalAlignment="Center">
-                  <Run Text="{Binding LiveLow, Mode=OneWay}" FontFamily="{StaticResource MonoFont}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" /><Run Text=" 1% low" FontSize="11" Foreground="{DynamicResource Brush.TextSecondary}" />
-                </TextBlock>
-                <TextBlock Grid.Column="3" Margin="14,0,0,0" VerticalAlignment="Center" ToolTip="The 1% low as a share of the average: how evenly frames arrive">
-                  <Run Text="{Binding LiveConsistency, Mode=OneWay}" FontFamily="{StaticResource MonoFont}" FontSize="15" FontWeight="SemiBold" Foreground="{Binding PacingColorKey, Converter={StaticResource ColorKeyToBrush}}" /><Run Text=" even" FontSize="11" Foreground="{DynamicResource Brush.TextSecondary}" />
-                </TextBlock>
-                <Border Grid.Column="4" CornerRadius="6" Padding="8,1" Margin="14,0,0,0" Background="{DynamicResource Brush.ControlHover}" VerticalAlignment="Center">
-                  <TextBlock Text="{Binding PacingText}" FontSize="11" FontWeight="SemiBold" Foreground="{Binding PacingColorKey, Converter={StaticResource ColorKeyToBrush}}" />
-                </Border>
-              </Grid>
-            </c:SquircleBorder>
-          </Grid>
-        </c:SquircleBorder>
-
-        <!-- Shader cache -->
-        <c:SquircleBorder Style="{StaticResource Card}">
-          <Grid>
-            <Grid.RowDefinitions>
-              <RowDefinition Height="Auto" />
-              <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-          <StackPanel>
-            <Grid>
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-              </Grid.ColumnDefinitions>
-              <c:SquircleBorder Width="36" Height="36" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
-                <Path Style="{StaticResource IconPath}" Width="17" Height="17" Data="{StaticResource Icon.Layers}" Stroke="{DynamicResource Brush.Accent}" />
-              </c:SquircleBorder>
-              <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                <TextBlock Style="{StaticResource Text.CardTitle}" FontSize="14" Text="Shader cache" />
-                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding ShaderCacheSummary}" TextWrapping="Wrap" TextTrimming="None" Margin="0,2,0,0" />
-              </StackPanel>
-            </Grid>
-
-            <!-- The shader cache boost, with the size it sets -->
-            <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,12" Margin="0,14,0,0" DataContext="{Binding ShaderCache}">
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel Margin="0,0,12,0">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
-                    <Border Style="{StaticResource Badge}" Margin="8,0,0,0">
-                      <TextBlock Text="{Binding Tag}" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
-                    </Border>
-                  </StackPanel>
-                  <TextBlock Text="{Binding Description}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="0,4,0,0" />
-                  <!-- the size it sets: 10 GB, 100 GB or unlimited (applied at once while on) -->
-                  <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                    <TextBlock Text="Size" Style="{StaticResource Text.Label}" VerticalAlignment="Center" Margin="0,0,10,0" />
-                    <ComboBox Style="{StaticResource ComboBox.Default}" MinWidth="130" AutomationProperties.Name="Shader cache size"
-                              ItemsSource="{Binding DataContext.ShaderCacheSizes, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                              DisplayMemberPath="Label" SelectedValuePath="Value"
-                              SelectedValue="{Binding DataContext.ShaderCacheSize, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                    <TextBlock Text="{Binding DataContext.ShaderCacheLimitText, RelativeSource={RelativeSource AncestorType=UserControl}}" Style="{StaticResource Text.Caption}"
-                               VerticalAlignment="Center" Margin="12,0,0,0" />
-                  </StackPanel>
-                  <TextBlock Text="{Binding Message}" FontSize="11.5" Foreground="{DynamicResource Brush.Elevated}" TextWrapping="Wrap" Margin="0,6,0,0"
-                             Visibility="{Binding HasMessage, Converter={StaticResource BoolToVisibility}}" />
-                </StackPanel>
-                <Grid Grid.Column="1" VerticalAlignment="Top">
-                  <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding IsOn, Mode=TwoWay}" IsEnabled="{Binding CanToggle}" AutomationProperties.Name="{Binding Title}"
-                            Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
-                  <c:RadialGauge Style="{StaticResource GameSpinner}" Margin="0,4,10,0" b:Spin.IsSpinning="{Binding IsBusy}"
-                                 Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
-                </Grid>
-              </Grid>
-            </c:SquircleBorder>
-
-            <!-- A new driver: caches start over -->
-            <c:SquircleBorder CornerRadius="12" Padding="14,12" Margin="0,10,0,0" Background="{DynamicResource Brush.ElevatedSoft}"
-                    Visibility="{Binding HasDriverNotice, Converter={StaticResource BoolToVisibility}}">
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="Auto" />
-                  <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <Path Style="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.Elevated}" VerticalAlignment="Top" Margin="0,1,10,0" />
-                <TextBlock Grid.Column="1" Text="{Binding DriverNotice}" FontSize="12" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
-                <Button Grid.Column="2" Style="{StaticResource Button.Subtle}" Padding="10,4" Margin="10,-2,0,0" VerticalAlignment="Top" Content="Got it" Command="{Binding DismissDriverNoticeCommand}" />
-              </Grid>
-            </c:SquircleBorder>
-
-            <!-- The caches on this PC (what Smart Optimize does with them is on the label's tooltip) -->
-            <StackPanel Orientation="Horizontal" Margin="2,16,0,6" Background="Transparent" ToolTip="{Binding ShaderCacheNote}" ToolTipService.ShowDuration="30000"
-                        Visibility="{Binding HasShaderCaches, Converter={StaticResource BoolToVisibility}}">
-              <TextBlock Text="On this PC" Style="{StaticResource Text.Label}" VerticalAlignment="Center" />
-              <Path Style="{StaticResource IconPath}" Width="12" Height="12" Margin="6,0,0,0" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.TextTertiary}" VerticalAlignment="Center" />
-            </StackPanel>
-          </StackPanel>
-            <!-- the list reaches the bottom of the card, level with the frame limiter's pacing row -->
-            <c:SquircleBorder Grid.Row="1" Style="{StaticResource Card.Inset}" Padding="14,8" Visibility="{Binding HasShaderCaches, Converter={StaticResource BoolToVisibility}}">
-              <ItemsControl ItemsSource="{Binding ShaderCaches}" ItemTemplate="{StaticResource ShaderCacheRow}" Focusable="False" />
-            </c:SquircleBorder>
-          </Grid>
-        </c:SquircleBorder>
-      </c:AdaptiveGrid>
 
       <!-- ============================================================ -->
       <!-- Your games                                                   -->
@@ -869,6 +576,69 @@
                  Text="Play starts each game through its own launcher, as you rather than as administrator. Coreloom reads the launchers' library files and never adds anything to games." />
     </StackPanel>
   </ScrollViewer>
+
+  <!-- A boost's details (DirectStorage's checks, VRAM management's games), opened from its Details pill -->
+  <Grid DataContext="{Binding Details}" Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}}">
+    <Border Background="{DynamicResource Brush.Scrim}">
+      <Border.InputBindings>
+        <MouseBinding MouseAction="LeftClick" Command="{Binding CloseCommand}" />
+      </Border.InputBindings>
+    </Border>
+    <c:SquircleBorder Style="{StaticResource Card}" Width="600" Margin="32" Padding="22,18,22,18" HorizontalAlignment="Center" VerticalAlignment="Center"
+                      AutomationProperties.Name="{Binding Title}">
+      <c:SquircleBorder.Effect>
+        <DropShadowEffect BlurRadius="36" ShadowDepth="6" Direction="270" Opacity="0.2" Color="#000000" />
+      </c:SquircleBorder.Effect>
+      <c:SquircleBorder.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CloseCommand}" />
+      </c:SquircleBorder.InputBindings>
+      <ScrollViewer Style="{StaticResource ScrollViewer.Page}" VerticalScrollBarVisibility="Auto" MaxHeight="720">
+        <StackPanel>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Style="{StaticResource Text.CardTitle}" FontSize="16" Text="{Binding Title}" />
+              <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding Summary}" TextWrapping="Wrap" TextTrimming="None" Margin="0,3,0,0" />
+            </StackPanel>
+            <Button Grid.Column="1" Style="{StaticResource Button.Icon}" Width="32" Height="32" Margin="8,0,-6,0" VerticalAlignment="Top"
+                    Command="{Binding CloseCommand}" ToolTip="Close" AutomationProperties.Name="Close">
+              <Path Style="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Close}" />
+            </Button>
+          </Grid>
+          <TextBlock Text="{Binding EmptyText}" Style="{StaticResource Text.Secondary}" TextWrapping="Wrap" TextTrimming="None" Margin="0,16,0,0"
+                     Visibility="{Binding EmptyText, Converter={StaticResource HasValueToVisibility}}" />
+          <ItemsControl ItemsSource="{Binding Rows}" Focusable="False" Margin="0,12,0,0">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="{x:Type pages:DetailRow}">
+                <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,11" Margin="0,0,0,8">
+                  <StackPanel>
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                      <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
+                        <Ellipse Width="7" Height="7" Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding Value}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" Margin="7,0,0,0" />
+                      </StackPanel>
+                    </Grid>
+                    <TextBlock Text="{Binding Detail}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="0,4,0,0"
+                               Visibility="{Binding HasDetail, Converter={StaticResource BoolToVisibility}}" />
+                  </StackPanel>
+                </c:SquircleBorder>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock Text="{Binding Note}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="2,6,0,0"
+                     Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}" />
+        </StackPanel>
+      </ScrollViewer>
+    </c:SquircleBorder>
+  </Grid>
 
   <!-- Intelligent CPU core scheduling's details, opened from its boost: the cores and where the game runs, what AMD's
        scheduling needs, the A/B test and the games kept on chosen cores -->
@@ -1065,7 +835,7 @@
           <StackPanel Margin="0,0,40,0">
             <TextBlock Style="{StaticResource Text.CardTitle}" Text="{Binding Title}" FontSize="16" />
             <TextBlock Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,3,0,0"
-                       Text="It joins your games: Play, the in-game overlay, the frame limiter's own limit and adaptive pacing work with it." />
+                       Text="It joins your games: Play, the in-game overlay and VRAM management work with it." />
           </StackPanel>
           <Button Style="{StaticResource Button.Icon}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="32" Height="32"
                   Command="{Binding CancelCommand}" ToolTip="Close" AutomationProperties.Name="Close">

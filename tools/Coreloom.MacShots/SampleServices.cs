@@ -255,11 +255,6 @@ internal sealed class SampleGaming : IGamingService
     public Task<Coreloom.Core.Gaming.TweakResult> SetTweakAsync(Coreloom.Core.Gaming.GamingTweak tweak, bool on, Coreloom.Core.Settings.GamingSettings settings, CancellationToken cancellationToken) =>
         Task.FromResult(new Coreloom.Core.Gaming.TweakResult(true, on ? "Turned on." : "Turned off."));
 
-    public Task<Coreloom.Core.Gaming.TweakResult> SetFrameCapAsync(int fps, CancellationToken cancellationToken) =>
-        Task.FromResult(new Coreloom.Core.Gaming.TweakResult(false, "Not on a Mac."));
-
-    public Task<IReadOnlyList<string>> FindExecutablesAsync(Coreloom.Core.Gaming.GameEntry game, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<string>>([]);
-
     public Task<Coreloom.Core.Gaming.TweakResult> SetGameFrameCapAsync(string gameName, IReadOnlyList<string> executables, int fps, CancellationToken cancellationToken) =>
         Task.FromResult(new Coreloom.Core.Gaming.TweakResult(false, "Not on a Mac."));
 

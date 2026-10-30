@@ -85,6 +85,14 @@ internal static class Program
         await ShootAsync(Path.Combine(output, "gaming-narrow.png"), new GamingPage { DataContext = gaming }, null, () => gaming.Refresh(data), 1000);
         gaming.CoreScheduling.OpenDetailsCommand.Execute(null);
         await ShootAsync(Path.Combine(output, "gaming-core-scheduling.png"), new GamingPage { DataContext = gaming }, 1150, () => gaming.Refresh(data));
+        gaming.CoreScheduling.CloseDetailsCommand.Execute(null);
+
+        // 1.8.4: the details behind DirectStorage's check and VRAM management's games.
+        gaming.DirectStorageBoost.DetailsCommand!.Execute(null);
+        await ShootAsync(Path.Combine(output, "gaming-directstorage.png"), new GamingPage { DataContext = gaming }, 1000, () => gaming.Refresh(data));
+        gaming.VramBoost.DetailsCommand!.Execute(null);
+        await ShootAsync(Path.Combine(output, "gaming-vram.png"), new GamingPage { DataContext = gaming }, 1000, () => gaming.Refresh(data));
+        gaming.Details.CloseCommand.Execute(null);
 
         var memory = data.Page(c => new MemoryViewModel(c));
         await ShootAsync(Path.Combine(output, "memory.png"), new MemoryPage { DataContext = memory }, null, () => memory.Refresh(data));

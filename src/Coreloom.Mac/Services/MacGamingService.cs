@@ -774,11 +774,6 @@ public sealed class MacGamingService : IGamingService
 
     // ---- Frame limits (Windows drivers only) ---------------------------------------------------------------
 
-    public Task<TweakResult> SetFrameCapAsync(int fps, CancellationToken cancellationToken) =>
-        Task.FromResult(new TweakResult(false, "macOS has no frame-rate limit for all games; set one in the game's own settings."));
-
-    public Task<IReadOnlyList<string>> FindExecutablesAsync(GameEntry game, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<string>>([]);
-
     public Task<TweakResult> SetGameFrameCapAsync(string gameName, IReadOnlyList<string> executables, int fps, CancellationToken cancellationToken) =>
         Task.FromResult(new TweakResult(false, "macOS has no per-game frame-rate limit; set one in the game's own settings."));
 }

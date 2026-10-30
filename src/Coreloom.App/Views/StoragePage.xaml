@@ -19,7 +19,7 @@
       <ContentPresenter Content="{Binding TotalChart}" ContentTemplate="{StaticResource ChartCard}" Height="260" Margin="0,16,0,0" />
 
       <!-- Drive speed test -->
-      <c:SquircleBorder Style="{StaticResource Card.Glow}" GlowKey="Storage" GlowStrength="0.8" Margin="0,16,0,0" DataContext="{Binding Benchmark}" Padding="20,18">
+      <c:SquircleBorder Style="{StaticResource Card}" Margin="0,16,0,0" DataContext="{Binding Benchmark}" Padding="20,18">
         <StackPanel>
           <Grid>
             <Grid.ColumnDefinitions>
@@ -48,7 +48,7 @@
             <Button Style="{StaticResource Button.Primary}" Padding="18,8" Margin="0,0,10,8" Command="{Binding RunCommand}"
                     Visibility="{Binding IsIdle, Converter={StaticResource BoolToVisibility}}">
               <StackPanel Orientation="Horizontal">
-                <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
+                <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnGlow}" />
                 <TextBlock Text="Start test" Margin="7,0,0,0" />
               </StackPanel>
             </Button>

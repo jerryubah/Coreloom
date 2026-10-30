@@ -2,7 +2,11 @@ using Coreloom.Core.Gaming;
 
 namespace Coreloom.Core.Settings;
 
-/// <summary>The Gaming page: how the library is shown, the frame limiter, and what Coreloom remembers to undo its changes.</summary>
+/// <summary>
+/// The Gaming page: how the library is shown, what Coreloom remembers to undo its changes, and what it learned per game.
+/// The frame limiter's fields (removed from the page in 1.8.4) are kept so older settings files still read and so the
+/// limits it left in the driver can be found.
+/// </summary>
 public sealed class GamingSettings
 {
     public GameLibraryView LibraryView { get; set; } = GameLibraryView.List;
@@ -90,12 +94,34 @@ public sealed class GamingSettings
     /// <summary>The shader cache size the boost sets (MB): 10 GB, 100 GB or unlimited.</summary>
     public uint ShaderCacheSize { get; set; } = Gaming.ShaderCacheSize.Recommended;
 
+    /// <summary>
+    /// Intelligent VRAM management (since 1.8.4): Coreloom watches the graphics memory of the game in front and keeps a
+    /// recommendation per game. Off until turned on.
+    /// </summary>
+    public bool VramManagement { get; set; }
+
+    /// <summary>What VRAM management learned per game (newest first, at most <see cref="VramRecord.MaxGames"/>).</summary>
+    public List<VramRecord> VramGames { get; set; } = [];
+
+    /// <summary>The game's graphics-memory record, or null.</summary>
+    public VramRecord? VramFor(string gameId) =>
+        VramGames.FirstOrDefault(r => string.Equals(r.GameId, gameId, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Keeps a game's record (replacing the old one), newest first.</summary>
+    public void KeepVram(VramRecord record)
+    {
+        VramGames.RemoveAll(r => string.Equals(r.GameId, record.GameId, StringComparison.OrdinalIgnoreCase));
+        VramGames.Insert(0, record);
+        VramGames = VramRecord.Normalize(VramGames);
+    }
+
     public void Normalize()
     {
         ShaderCacheSize = Gaming.ShaderCacheSize.Normalize(ShaderCacheSize);
         CustomGames = Gaming.CustomGames.Normalize(CustomGames);
         AdaptivePacingGames = AdaptivePacingGame.Normalize(AdaptivePacingGames);
         CoreProfiles = CoreProfile.Normalize(CoreProfiles);
+        VramGames = VramRecord.Normalize(VramGames);
         if (!Enum.IsDefined(LibraryView))
         {
             LibraryView = GameLibraryView.List;

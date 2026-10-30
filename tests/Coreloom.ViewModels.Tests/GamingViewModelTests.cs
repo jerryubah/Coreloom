@@ -44,7 +44,20 @@ internal sealed class FakeGaming : IGamingService
         [GamingTweak.MaxGpuPerformance] = new(true, false),
         [GamingTweak.GSync] = new(true, false),
         [GamingTweak.ShaderCache] = new(true, false),
+        [GamingTweak.KeepShaderCaches] = new(true, false),
     };
+
+    /// <summary>What the DirectStorage check answers (asked after each scan).</summary>
+    public DirectStorageReport DirectStorage { get; set; } = DirectStorageCheck.Evaluate(new DirectStorageInputs(
+        26100, "NVIDIA GeForce RTX 5090", 0x66, [new GameDrive(@"D:\", "NVMe", true, new BypassIoState(true))], []));
+
+    public int DirectStorageChecks { get; private set; }
+
+    public Task<DirectStorageReport> DirectStorageAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken)
+    {
+        DirectStorageChecks++;
+        return Task.FromResult(DirectStorage);
+    }
 
     /// <summary>The shader cache size last set in the "driver" (MB), or null for its default.</summary>
     public uint? ShaderCacheLimit { get; set; }
@@ -119,28 +132,8 @@ internal sealed class FakeGaming : IGamingService
         return Task.FromResult(new TweakResult(true, "Done."));
     }
 
-    public Task<TweakResult> SetFrameCapAsync(int fps, CancellationToken cancellationToken)
-    {
-        if (!HasNvidia)
-        {
-            return Task.FromResult(new TweakResult(false, "No NVIDIA driver."));
-        }
-
-        FrameCap = fps;
-        return Task.FromResult(new TweakResult(true, "Done."));
-    }
-
     /// <summary>Per-program limits set in the "driver".</summary>
     public Dictionary<string, int> ProgramCaps { get; } = new(StringComparer.OrdinalIgnoreCase);
-
-    public Task<IReadOnlyList<string>> FindExecutablesAsync(GameEntry game, CancellationToken cancellationToken) =>
-        Task.FromResult<IReadOnlyList<string>>(game.Id switch
-        {
-            "steam:1091500" => ["Cyberpunk2077.exe"],
-            "gog:1207658924" => ["witcher3.exe"],
-            _ when game.Store == GameStore.Custom => GameExecutables.Pick(game, []),
-            _ => [],
-        });
 
     /// <summary>What the next "pick a program" dialog returns (null: cancelled).</summary>
     public string? NextProgram { get; set; }
@@ -357,22 +350,24 @@ public class GamingViewModelTests
     public async Task Boosts_ShowState_AndBoostNowTurnsOnTheRest()
     {
         var (page, fake, settings) = Create();
-        Assert.Equal(9, page.Boosts.Count);
-        Assert.Equal(8, page.BoostsAvailable); // core scheduling has no cores to choose between on this test PC
-        Assert.Equal(2, page.BoostsOn);
-        Assert.Equal("2/8", page.ReadinessText);
-        Assert.Contains("6 boosts can make", page.HeroTitle);
+        Assert.Equal(12, page.Boosts.Count);
+        Assert.Equal(11, page.BoostsAvailable); // core scheduling has no cores to choose between on this test PC
+        Assert.Equal(3, page.BoostsOn); // Game Mode, no background recording, and DirectStorage (ready)
+        Assert.Equal("3/11", page.ReadinessText);
+        Assert.Contains("8 boosts can make", page.HeroTitle);
         Assert.True(page.Boosts.Single(b => b.Tweak == GamingTweak.GameMode).IsOn);
 
         await page.ApplyAllCommand.ExecuteAsync(null);
 
         Assert.All(fake.Tweaks, t => Assert.True(t.Value.IsOn));
         Assert.False(page.CoreSchedulingBoost.IsOn); // not available here
-        Assert.Equal(8, page.BoostsOn);
+        Assert.True(page.VramBoost.IsOn);
+        Assert.True(settings.Current.Gaming.VramManagement);
+        Assert.Equal(11, page.BoostsOn);
         Assert.True(page.AllBoostsOn);
         Assert.True(page.RestartPending);
         Assert.Equal("Restart Windows to finish.", page.Boosts.Single(b => b.Tweak == GamingTweak.GpuScheduling).Message);
-        Assert.Contains("Turned on 6 boosts. Restart Windows to finish.", page.HeroMessage);
+        Assert.Contains("Turned on 8 boosts. Restart Windows to finish.", page.HeroMessage);
         Assert.Equal(PowerPlans.Balanced.ToString(), settings.Current.Gaming.PreviousPowerPlan); // saved to restore later
         Assert.False(page.ApplyAllCommand.CanExecute(null));
         settings.Dispose();
@@ -388,7 +383,7 @@ public class GamingViewModelTests
 
         Assert.Equal("Smoothness", gsync.Category);
         Assert.True(gsync.IsSmoothness);
-        Assert.Equal("Recommended: on for fullscreen and windowed games, keeping your 141 FPS limit for your 144 Hz display.", gsync.Recommendation);
+        Assert.Equal("Recommended: on for fullscreen and windowed games, with your 141 FPS limit for your 144 Hz display.", gsync.Recommendation);
         Assert.True(gsync.HasCaveat);
         Assert.Equal("Frame stability", cache.Category);
         Assert.False(cache.IsSmoothness);
@@ -402,15 +397,16 @@ public class GamingViewModelTests
         Assert.True(cores.HasDetails);
         Assert.DoesNotContain(page.Boosts, b => b.Title.Contains("HDR", StringComparison.Ordinal));
         Assert.All(page.Boosts, b => Assert.True(b.HasCategory));
-        Assert.Same(cache, page.ShaderCache); // the Shader cache card shows the same switch
+        Assert.Same(cache, page.ShaderCache); // its size is chosen under it (the Shader cache card is gone)
+        Assert.True(cache.HasChoices);
         settings.Dispose();
     }
 
     [Fact]
-    public void GSyncRecommendation_SuggestsTheAutomaticLimitWhenThereIsNone()
+    public void GSyncRecommendation_PointsToTheDriversMaxFrameRateWhenThereIsNoLimit()
     {
         var (page, _, settings) = Create();
-        Assert.Equal("Recommended: on for fullscreen and windowed games, with the frame limiter at 138 FPS for your 144 Hz display.",
+        Assert.Equal("Recommended: on for fullscreen and windowed games, with Max Frame Rate in NVIDIA's settings at about 138 FPS for your 144 Hz display.",
             page.Boosts.Single(b => b.Tweak == GamingTweak.GSync).Recommendation);
         settings.Dispose();
     }
@@ -482,86 +478,6 @@ public class GamingViewModelTests
     }
 
     [Fact]
-    public async Task FramePacer_UsesTheAutomaticLimit_AndFollowsTheChosenOne()
-    {
-        var (page, fake, settings) = Create();
-        var pacer = page.FramePacer;
-        Assert.True(pacer.IsSupported);
-        Assert.False(pacer.IsOn);
-        Assert.Equal(138, pacer.Target); // 144 Hz display
-        Assert.Equal("138", pacer.LimitText);
-        Assert.Equal("144 Hz display", pacer.DisplayText);
-        Assert.StartsWith("Automatic · 138 FPS", pacer.Options[0].Label);
-        Assert.Contains(pacer.Options, o => o.Label == "144 FPS · refresh rate");
-
-        pacer.IsOn = true;
-        await Task.Yield();
-        Assert.Equal(138, fake.FrameCap);
-        Assert.True(pacer.IsOn);
-        Assert.Equal("138 FPS", page.FrameLimitText);
-
-        pacer.SelectedTarget = 120;
-        await Task.Yield();
-        Assert.Equal(120, fake.FrameCap);
-        Assert.Equal(120, settings.Current.Gaming.FramePacerTarget);
-        Assert.Equal("120", pacer.LimitText);
-
-        pacer.IsOn = false;
-        await Task.Yield();
-        Assert.Equal(0, fake.FrameCap);
-        Assert.Equal("Off", page.FrameLimitText);
-        settings.Dispose();
-    }
-
-    [Fact]
-    public async Task FramePacer_SetsAGamesOwnLimit_ShowsIt_AndRemovesIt()
-    {
-        var (page, fake, settings) = Create();
-        var pacer = page.FramePacer;
-        Assert.Equal("All games", pacer.Scopes[0].Label);
-        Assert.Contains(pacer.Scopes, s => s.Value == "steam:1091500" && s.Label == "Cyberpunk 2077");
-        Assert.StartsWith("Applies to every game.", pacer.ScopeText);
-
-        pacer.SelectedScope = "steam:1091500";
-        Assert.True(pacer.IsGameScope);
-        Assert.False(pacer.IsOn);
-        Assert.Contains("Cyberpunk 2077 only", pacer.ScopeText);
-        pacer.SelectedTarget = 90;
-        Assert.Equal("90", pacer.LimitText);
-
-        pacer.IsOn = true;
-        await Task.Yield();
-        Assert.Equal(90, fake.ProgramCaps["Cyberpunk2077.exe"]);
-        Assert.Equal(0, fake.FrameCap); // every other game is untouched
-        var cap = Assert.Single(settings.Current.Gaming.GameFrameCaps);
-        Assert.Equal(("steam:1091500", 90, 90), (cap.GameId, cap.Choice, cap.Fps));
-        Assert.Equal(["Cyberpunk2077.exe"], cap.Executables);
-        Assert.True(pacer.IsOn);
-        Assert.Equal("Cyberpunk 2077 · 90 FPS", $"{Assert.Single(pacer.GameCaps).Name} · {pacer.GameCaps[0].LimitText}");
-        Assert.Contains(pacer.Scopes, s => s.Label == "Cyberpunk 2077 · own limit");
-
-        // The overlay knows the game is paced, and other programs follow the all-games limit (none here).
-        Assert.Equal(90, settings.Current.Gaming.ActiveFrameCap(@"D:\Steam\steamapps\common\Cyberpunk 2077\bin\x64\Cyberpunk2077.exe"));
-        Assert.Equal(0, settings.Current.Gaming.ActiveFrameCap("witcher3.exe"));
-
-        // Changing the limit while it's on sets it again.
-        pacer.SelectedTarget = 60;
-        await Task.Yield();
-        Assert.Equal(60, fake.ProgramCaps["Cyberpunk2077.exe"]);
-
-        // The all-games scope doesn't show the game's switch state.
-        pacer.SelectedScope = FramePacerViewModel.AllGames;
-        Assert.False(pacer.IsOn);
-        Assert.Contains("except the 1 with a limit of its own", pacer.ScopeText);
-
-        await pacer.GameCaps[0].RemoveCommand.ExecuteAsync(null);
-        Assert.Empty(fake.ProgramCaps);
-        Assert.Empty(settings.Current.Gaming.GameFrameCaps);
-        Assert.False(pacer.HasGameCaps);
-        settings.Dispose();
-    }
-
-    [Fact]
     public async Task AGameAddedByHand_JoinsTheLibrary_AndCanBeChangedAndRemoved()
     {
         var (page, fake, settings) = Create();
@@ -591,15 +507,11 @@ public class GamingViewModelTests
         Assert.True(game.HasIconOnly);
         Assert.Equal("Celeste is in your games.", page.HeroMessage);
 
-        // Play starts its program; the frame limiter can give it a limit of its own.
+        // Play starts its program. (A limit the frame limiter set for it before 1.8.4 is removed with the game.)
         game.PlayCommand.Execute(null);
         Assert.Equal([saved.Id], fake.Launched);
-        Assert.Contains(page.FramePacer.Scopes, s => s.Value == saved.Id);
-        page.FramePacer.SelectedScope = saved.Id;
-        page.FramePacer.SelectedTarget = 120;
-        page.FramePacer.IsOn = true;
-        await Task.Yield();
-        Assert.Equal(120, fake.ProgramCaps["Celeste.exe"]);
+        settings.Update("Gaming", s => s.Gaming.GameFrameCaps.Add(new GameFrameCap { GameId = saved.Id, Name = "Celeste", Fps = 120, Executables = ["Celeste.exe"] }));
+        fake.ProgramCaps["Celeste.exe"] = 120;
 
         // Change it.
         game.EditCommand.Execute(null);
@@ -651,7 +563,7 @@ public class GamingViewModelTests
     }
 
     [Fact]
-    public void FramePacer_RemembersTheAllGamesLimitForTheOverlay()
+    public void TheDriversAllGamesLimit_IsRememberedForTheOverlay()
     {
         var (_, _, settings) = Create(f => f.FrameCap = 141); // set elsewhere (the NVIDIA Control Panel)
         Assert.Equal(141, settings.Current.Gaming.GlobalFrameCap);
@@ -660,17 +572,7 @@ public class GamingViewModelTests
     }
 
     [Fact]
-    public void FramePacer_ExplainsWhenThereIsNoNvidiaDriver()
-    {
-        var (page, _, settings) = Create(f => f.HasNvidia = false);
-        Assert.False(page.FramePacer.IsSupported);
-        Assert.False(page.FramePacer.CanToggle);
-        Assert.Contains("NVIDIA", page.FramePacer.UnsupportedText);
-        settings.Dispose();
-    }
-
-    [Fact]
-    public void RunningGame_IsMarked_AndItsPacingMeasured()
+    public void RunningGame_IsMarked_AndItsFrameRateMeasured()
     {
         var (page, fake, settings) = Create(f =>
         {
@@ -682,16 +584,12 @@ public class GamingViewModelTests
         Assert.Equal("Cyberpunk 2077", page.NowPlayingName);
         Assert.True(page.Games[0].IsRunning);
         Assert.True(fake.Watching);
-        Assert.True(page.FramePacer.HasLive);
-        Assert.Equal("138", page.FramePacer.LiveFps);
-        Assert.Equal("124", page.FramePacer.LiveLow);
-        Assert.Equal("90 %", page.FramePacer.LiveConsistency);
-        Assert.Equal("Smooth", page.FramePacer.PacingText);
-        Assert.Equal(ColorKeys.ToneCool, page.FramePacer.PacingColorKey);
+        Assert.True(page.HasLive);
+        Assert.Equal("138", page.LiveFps);
 
         page.Deactivate();
         Assert.False(fake.Watching);
-        Assert.False(page.FramePacer.HasLive);
+        Assert.False(page.HasLive);
         settings.Dispose();
     }
 
@@ -702,6 +600,8 @@ public class GamingViewModelTests
         Assert.Equal(2, page.ShaderCaches.Count); // the empty AMD folder is left out
         Assert.Equal("NVIDIA DirectX", page.ShaderCaches[0].Name);
         Assert.Contains("in 2 caches", page.ShaderCacheSummary);
+        Assert.Contains("in 2 caches", page.KeepShaderCachesBoost.Recommendation); // the card's sizes, condensed into the boost
+        Assert.Contains("NVIDIA DirectX: 3", page.KeepShaderCachesBoost.RecommendationToolTip);
         Assert.Equal("581.57", settings.Current.Gaming.LastDriverVersion); // first look: remembered silently
         Assert.False(page.HasDriverNotice);
         settings.Dispose();
@@ -711,8 +611,10 @@ public class GamingViewModelTests
         changed.RefreshCommand.Execute(null);
         Assert.True(changed.HasDriverNotice);
         Assert.Contains("from 581.57 to 582.10", changed.DriverNotice);
+        Assert.Contains("from 581.57 to 582.10", changed.KeepShaderCachesBoost.Message); // shown under the boost
         changed.DismissDriverNoticeCommand.Execute(null);
         Assert.False(changed.HasDriverNotice);
+        Assert.Null(changed.KeepShaderCachesBoost.Message);
         Assert.Equal("582.10", settings2.Current.Gaming.LastDriverVersion);
         settings2.Dispose();
     }

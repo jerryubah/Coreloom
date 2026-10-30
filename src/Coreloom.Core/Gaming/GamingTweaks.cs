@@ -46,10 +46,29 @@ public enum GamingTweak
 
     /// <summary>macOS: full power on the charger — Low Power Mode off, and High Power Mode on Macs that have it (pmset).</summary>
     PowerMode,
+
+    /// <summary>
+    /// Windows (since 1.8.4): Windows' automatic maintenance stops deleting the DirectX shader cache (the Disk Cleanup
+    /// handler's <c>Autorun</c> value, see <see cref="ShaderCacheCleanup"/>). The Shader cache card became this boost.
+    /// </summary>
+    KeepShaderCaches,
+
+    /// <summary>
+    /// Windows (since 1.8.4): whether games can use DirectStorage and GPU decompression here — a check, not a switch
+    /// (see <see cref="DirectStorageCheck"/>); "on" when everything it needs is in place.
+    /// </summary>
+    DirectStorage,
+
+    /// <summary>
+    /// Windows (since 1.8.4): Coreloom watches the graphics memory of the game in front and gives each game a texture
+    /// and memory recommendation (see <see cref="VramAdvice"/>). Switched by Coreloom itself, not a Windows setting.
+    /// </summary>
+    VramManagement,
 }
 
 /// <summary>Whether a tweak can be used here, whether it is on, and whether a restart is still needed for it.</summary>
-public sealed record TweakStatus(bool IsSupported, bool IsOn, bool NeedsRestart = false, string? Note = null)
+/// <param name="Label">The status pill's word when it isn't On/Off (a check such as DirectStorage: "Ready", "Partly ready").</param>
+public sealed record TweakStatus(bool IsSupported, bool IsOn, bool NeedsRestart = false, string? Note = null, string? Label = null)
 {
     public static TweakStatus Unsupported(string note) => new(false, false, false, note);
 }
@@ -416,11 +435,49 @@ public static class GSyncSetup
     public static bool IsOn(uint feature, uint requestedState, uint mode) =>
         feature != 0 && requestedState == FullscreenAndWindowed && mode == FullscreenAndWindowed;
 
-    /// <summary>What to pair it with: the frame limit just under the refresh rate.</summary>
+    /// <summary>
+    /// What to pair it with: a frame limit a little under the refresh rate. Since 1.8.4 Coreloom has no frame limiter,
+    /// so it points to the driver's own Max Frame Rate (a limit already in the driver is named).
+    /// </summary>
     public static string Recommendation(int frameCap, int refreshHz) =>
         refreshHz <= 0
-            ? "Recommended: on for fullscreen and windowed games, with the frame limiter a little under your refresh rate."
+            ? "Recommended: on for fullscreen and windowed games, with a frame limit a little under your refresh rate (Max Frame Rate in NVIDIA's settings)."
             : frameCap > 0
-                ? $"Recommended: on for fullscreen and windowed games, keeping your {frameCap} FPS limit for your {refreshHz} Hz display."
-                : $"Recommended: on for fullscreen and windowed games, with the frame limiter at {FrameCap.AutoTarget(refreshHz)} FPS for your {refreshHz} Hz display.";
+                ? $"Recommended: on for fullscreen and windowed games, with your {frameCap} FPS limit for your {refreshHz} Hz display."
+                : $"Recommended: on for fullscreen and windowed games, with Max Frame Rate in NVIDIA's settings at about {FrameCap.AutoTarget(refreshHz)} FPS for your {refreshHz} Hz display.";
+}
+
+/// <summary>
+/// Windows' automatic maintenance runs Disk Cleanup (<c>cleanmgr /autoclean</c>, the SilentCleanup task) with every
+/// handler under <c>VolumeCaches</c> whose <c>Autorun</c> value is 1 — including the DirectX shader cache, so games compile
+/// their shaders again (and stutter) after a cleanup. Setting the handler's <c>Autorun</c> to 0 leaves the cache alone
+/// during maintenance; Disk Cleanup and Storage Sense still clear it when the user asks them to.
+/// </summary>
+public static class ShaderCacheCleanup
+{
+    /// <summary>The DirectX shader cache's Disk Cleanup handler (under HKLM; the 32-bit view has its own copy).</summary>
+    public const string Key = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\D3D Shader Cache";
+
+    public const string Value = "Autorun";
+
+    /// <summary>Windows' default: cleaned during automatic maintenance.</summary>
+    public const int WindowsDefault = 1;
+
+    /// <summary>
+    /// The boost's state from the handler's <c>Autorun</c> in the 64- and 32-bit registry views (null = the key or value
+    /// isn't there). Kept when every key that exists says 0; without the handler there's nothing to switch.
+    /// </summary>
+    public static TweakStatus Status(bool keyExists, int? autorun, bool key32Exists, int? autorun32)
+    {
+        if (!keyExists && !key32Exists)
+        {
+            return TweakStatus.Unsupported("Windows here has no automatic cleanup for the DirectX shader cache.");
+        }
+
+        bool kept = (!keyExists || autorun == 0) && (!key32Exists || autorun32 == 0);
+        return new TweakStatus(true, kept);
+    }
+
+    /// <summary>The <c>Autorun</c> value to write: 0 keeps the cache, Windows' default 1 lets maintenance clear it again.</summary>
+    public static int AutorunFor(bool keep) => keep ? 0 : WindowsDefault;
 }

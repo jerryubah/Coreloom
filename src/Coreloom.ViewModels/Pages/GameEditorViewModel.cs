@@ -9,7 +9,7 @@ namespace Coreloom.ViewModels.Pages;
 /// <summary>
 /// The card for adding a game by hand, or changing or removing one added before: its name, its program, launch options
 /// and a picture (the program's icon unless one is chosen). Saved games join the library like any other: Play, the
-/// overlay, the frame limiter's per-game limits and adaptive pacing all work with them.
+/// overlay and VRAM management work with them.
 /// </summary>
 public sealed class GameEditorViewModel : ObservableObject
 {

@@ -54,7 +54,7 @@ public partial class App : Application
     private WindowsDeviceService? _devices;
     private Overlay.EtwFrameRateSource? _frameRates;
     private Services.GamingModeService? _gamingMode;
-    private Services.AdaptivePacingService? _adaptivePacing;
+    private Services.VramWatchService? _vramWatch;
     private Services.CoreSchedulingTicker? _coreScheduling;
     private bool _telemetryThreadRegistered;
     private HttpClient? _http;
@@ -437,14 +437,15 @@ public partial class App : Application
         _gamingMode = new Services.GamingModeService(shell, () => _window, () => settingsService.Current.Monitoring.LighterWhileGaming, Dispatcher);
         _gamingMode.Start();
 
-        // Adaptive frame pacing (does nothing until turned on in Gaming › Frame limiter).
-        if (_frameRates is not null)
+        // Intelligent VRAM management (does nothing until turned on in Gaming › Performance boosts).
+        _vramWatch = new Services.VramWatchService(shell, _gamingMode, () => settingsService.Current.Gaming.VramManagement, () =>
         {
-            _adaptivePacing = new Services.AdaptivePacingService(shell, _gamingMode, _frameRates, () => settingsService.Current.Gaming.AdaptivePacing,
-                () => host.Engine.LatestFrame.TryGetValue(MetricIds.GpuLoad(settingsService.Current.Monitoring.PreferredGpuSlot ?? host.PrimaryGpuSlot), out double load) ? load : double.NaN,
-                Dispatcher);
-            _adaptivePacing.Start();
-        }
+            int slot = settingsService.Current.Monitoring.PreferredGpuSlot ?? host.PrimaryGpuSlot;
+            var frame = host.Engine.LatestFrame;
+            return (frame.TryGetValue(MetricIds.GpuMemoryUsed(slot), out double used) ? used : double.NaN,
+                    frame.TryGetValue(MetricIds.GpuMemoryTotal(slot), out double total) ? total : double.NaN);
+        }, Dispatcher);
+        _vramWatch.Start();
 
         // Intelligent CPU core scheduling (does nothing until turned on in Gaming › Performance boosts).
         _coreScheduling = new Services.CoreSchedulingTicker(shell, _gamingMode, _frameRates, () => settingsService.Current.Gaming.CoreScheduling, () =>
@@ -816,8 +817,8 @@ public partial class App : Application
                 connect.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(3)); // phones see the computer go away
             }
 
-            _adaptivePacing?.Dispose();
-            _adaptivePacing = null;
+            _vramWatch?.Dispose();
+            _vramWatch = null;
             _coreScheduling?.Dispose();
             _coreScheduling = null;
             _gamingMode?.Dispose();

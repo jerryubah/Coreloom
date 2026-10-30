@@ -149,6 +149,7 @@ public sealed class GamingTweakViewModel : ObservableObject
     private bool? _pending;
 
     private string? _recommendation;
+    private string? _recommendationToolTip;
 
     public GamingTweakViewModel(
         GamingTweak tweak,
@@ -160,9 +161,11 @@ public sealed class GamingTweakViewModel : ObservableObject
         string? category = null,
         string? recommendation = null,
         string? caveat = null,
-        bool countsAsBoost = true)
+        bool countsAsBoost = true,
+        bool isSwitch = true)
     {
         Tweak = tweak;
+        IsSwitch = isSwitch;
         Title = title;
         Description = description;
         IconKey = iconKey;
@@ -196,6 +199,53 @@ public sealed class GamingTweakViewModel : ObservableObject
     }
 
     public bool HasRecommendation => !string.IsNullOrEmpty(_recommendation);
+
+    /// <summary>More behind the recommendation line, shown when the pointer rests on it (the shader caches and their sizes).</summary>
+    public string? RecommendationToolTip
+    {
+        get => _recommendationToolTip;
+        internal set => SetProperty(ref _recommendationToolTip, value);
+    }
+
+    /// <summary>
+    /// A switch (the usual) or a check that can't be switched (DirectStorage since 1.8.4: its pill says "Ready" or
+    /// "Partly ready", it counts as on when ready, and "Boost now" leaves it alone).
+    /// </summary>
+    public bool IsSwitch { get; }
+
+    /// <summary>A choice the boost sets (the NVIDIA shader cache's size), shown under it; null when it has none.</summary>
+    public IReadOnlyList<Option<uint>>? Choices { get; internal set; }
+
+    public bool HasChoices => Choices is not null;
+
+    internal Func<uint>? ReadChoice { get; set; }
+
+    internal Action<uint>? WriteChoice { get; set; }
+
+    internal Func<string?>? ReadChoiceNote { get; set; }
+
+    /// <summary>The chosen value; changing it while the boost is on applies it at once.</summary>
+    public uint Choice
+    {
+        get => ReadChoice?.Invoke() ?? 0;
+        set
+        {
+            if (value != Choice)
+            {
+                WriteChoice?.Invoke(value);
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    /// <summary>What the setting is now ("Limit now: 10 GB").</summary>
+    public string? ChoiceNote => ReadChoiceNote?.Invoke();
+
+    internal void ChoiceChanged()
+    {
+        OnPropertyChanged(nameof(Choice));
+        OnPropertyChanged(nameof(ChoiceNote));
+    }
 
     /// <summary>What it doesn't do ("Improves how frames are shown, not the frame rate").</summary>
     public string? Caveat { get; }
@@ -265,7 +315,7 @@ public sealed class GamingTweakViewModel : ObservableObject
 
     public bool NeedsRestart => _status.NeedsRestart;
 
-    public bool CanToggle => _status.IsSupported && !_isBusy;
+    public bool CanToggle => IsSwitch && _status.IsSupported && !_isBusy;
 
     public bool IsBusy
     {
@@ -309,10 +359,18 @@ public sealed class GamingTweakViewModel : ObservableObject
 
     public bool HasMessage => !string.IsNullOrEmpty(_message);
 
-    public string? StatusText => !_status.IsSupported ? "Not available" : _status.NeedsRestart ? "Restart to finish" : _status.IsOn ? "On" : "Off";
+    public string? StatusText => _status.Label is { } label ? label
+        : !_status.IsSupported ? "Not available" : _status.NeedsRestart ? "Restart to finish" : _status.IsOn ? "On" : "Off";
 
-    /// <summary>"Tone.Cool" when on, "Tone.Warm" when a restart is pending, "Neutral" otherwise.</summary>
-    public string ColorKey => !_status.IsSupported ? ColorKeys.Neutral : _status.NeedsRestart ? ColorKeys.ToneWarm : _status.IsOn ? ColorKeys.ToneCool : ColorKeys.Neutral;
+    /// <summary>
+    /// "Tone.Cool" when on (or a check is ready), "Tone.Warm" when a restart is pending (or a check is only partly ready),
+    /// "Neutral" otherwise.
+    /// </summary>
+    public string ColorKey => !_status.IsSupported ? ColorKeys.Neutral
+        : _status.NeedsRestart ? ColorKeys.ToneWarm
+        : _status.IsOn ? ColorKeys.ToneCool
+        : !IsSwitch && _status.Label is not null ? ColorKeys.ToneWarm
+        : ColorKeys.Neutral;
 
     internal TweakStatus Status => _status;
 
@@ -338,485 +396,139 @@ public sealed class GamingTweakViewModel : ObservableObject
 /// <summary>A shader cache folder and its size.</summary>
 public sealed record ShaderCacheRow(string Name, string Path, string SizeText) : StaticRecord;
 
-/// <summary>A game with a frame limit of its own, shown as a chip under the frame limiter.</summary>
-public sealed record GameCapChip(string GameId, string Name, string LimitText, IRelayCommand SelectCommand, IAsyncRelayCommand RemoveCommand) : StaticRecord;
+/// <summary>
+/// One line of a boost's details: what it is, its state ("NVMe", "Too full"), the state's color and a sentence.</summary>
+public sealed record DetailRow(string Name, string Value, string ColorKey, string? Detail) : StaticRecord
+{
+    public bool HasDetail => !string.IsNullOrEmpty(Detail);
+
+    internal static string ColorFor(CheckTone tone) => tone switch
+    {
+        CheckTone.Good => ColorKeys.ToneCool,
+        CheckTone.Problem => ColorKeys.ToneWarm,
+        _ => ColorKeys.Neutral,
+    };
+}
 
 /// <summary>
-/// The frame limiter: a frame-rate limit set in the graphics driver (no injection, so it is safe with anti-cheat), for
-/// every game or for one game only (the driver's profile for that game's programs), automatically a little under the
-/// refresh rate so variable refresh stays engaged; plus how evenly frames arrive in the game that is running.
+/// The card a boost's Details pill opens (DirectStorage's checks, VRAM management's games): a title, a summary, its
+/// lines and a note at the bottom. One card serves every boost; opening it fills it with that boost's details.
 /// </summary>
-public sealed class FramePacerViewModel : ObservableObject
+public sealed class BoostDetailsViewModel : ObservableObject
 {
-    /// <summary>The scope that applies to every game.</summary>
-    public const string AllGames = "";
+    private bool _isOpen;
+    private string _title = string.Empty;
+    private string _summary = string.Empty;
+    private string? _note;
+    private string? _emptyText;
+    private IReadOnlyList<DetailRow> _rows = [];
+    private Func<(string Summary, IReadOnlyList<DetailRow> Rows, string? Note, string? Empty)>? _source;
 
-    private readonly GamingViewModel _page;
-    private bool _isBusy;
-    private string? _message;
-    private readonly Dismissal _messageDismissal = new();
-    private bool _hasLive;
-    private string _liveFps = "—";
-    private string _liveLow = "—";
-    private string _liveConsistency = "—";
-    private string _pacingText = "—";
-    private string _pacingColorKey = ColorKeys.Neutral;
-    private IReadOnlyList<Option<int>> _options = [];
-    private IReadOnlyList<Option<string>> _scopes = [new(AllGames, "All games")];
-    private IReadOnlyList<GameCapChip> _gameCaps = [];
-    private string _scope = AllGames;
-    private int _gameChoice;
-    private bool? _pending;
-
-    public FramePacerViewModel(GamingViewModel page)
+    public BoostDetailsViewModel()
     {
-        _page = page;
-        FrameGenerationOptions =
-        [
-            new(1, "Off"),
-            new(2, "2× (DLSS or FSR frame generation)"),
-            new(3, "3× (multi frame generation)"),
-            new(4, "4× (multi frame generation)"),
-        ];
-        page.Adaptive.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName is nameof(AdaptivePacingController.IsBusy) or nameof(AdaptivePacingController.IsOn))
-            {
-                OnPropertyChanged(nameof(AdaptiveOn));
-                OnPropertyChanged(nameof(CanToggleAdaptive));
-                OnPropertyChanged(nameof(ShowFrameGeneration));
-            }
-            else if (e.PropertyName is nameof(AdaptivePacingController.GameName))
-            {
-                OnPropertyChanged(nameof(ShowFrameGeneration));
-                OnPropertyChanged(nameof(FrameGenerationLabel));
-                OnPropertyChanged(nameof(SelectedFrameGeneration));
-            }
-        };
+        CloseCommand = new RelayCommand(() => IsOpen = false);
     }
 
-    // ---- Adaptive frame pacing ------------------------------------------------------------------------------
-
-    /// <summary>The engine behind the adaptive pacing switch (its status and last change are bound directly).</summary>
-    public AdaptivePacingController Adaptive => _page.Adaptive;
-
-    public string AdaptiveTags => "Frame stability · 1% lows · Smoothness";
-
-    public string AdaptiveDescription => "An intelligent engine that monitors actual frame times and automatically finds a stable FPS target for each game.";
-
-    /// <summary>The switch: on lets adaptive pacing set each game's limit as it plays; off removes the limits it set.</summary>
-    public bool AdaptiveOn
+    public bool IsOpen
     {
-        get => Adaptive.IsOn;
-        set
-        {
-            if (value != AdaptiveOn && CanToggleAdaptive)
-            {
-                _ = Adaptive.SetEnabledAsync(value);
-            }
-        }
+        get => _isOpen;
+        set => SetProperty(ref _isOpen, value);
     }
 
-    public bool CanToggleAdaptive => _page.IsSupported && !Adaptive.IsBusy;
-
-    /// <summary>How it works, and what it can't do here.</summary>
-    public string AdaptiveMethodText => IsSupported
-        ? "While a library game plays, Coreloom measures each frame (Windows' graphics events, nothing added to the game), finds the frame rate it holds with steady 1% lows over the last two minutes, and sets that game's own limit in the NVIDIA driver: a step at a time, at most 15 % lower or 10 % higher, and never again until the change shows. It stays under your refresh rate with G-SYNC or FreeSync, and works in whole rendered frames with frame generation. A limit you set for a game is left alone; turning this off removes the limits it set."
-        : "While a library game plays, Coreloom measures each frame and works out the frame rate it holds with steady 1% lows. Setting the limit needs an NVIDIA driver, so here it suggests one to set in AMD Software (Frame Rate Target Control) or in the game.";
-
-    /// <summary>The game whose frame generation is shown: the one picked under "Apply to", else the one being paced.</summary>
-    private string? FrameGenerationGameId => IsGameScope ? _scope : Adaptive.GameId;
-
-    public bool ShowFrameGeneration => Adaptive.IsOn && FrameGenerationGameId is not null;
-
-    public string FrameGenerationLabel
+    public string Title
     {
-        get
-        {
-            string? id = FrameGenerationGameId;
-            string name = id is null ? "this game" : _page.FindGame(id)?.Name ?? Adaptive.GameName ?? "this game";
-            return $"Frame generation in {name}";
-        }
+        get => _title;
+        private set => SetProperty(ref _title, value);
     }
 
-    public IReadOnlyList<Option<int>> FrameGenerationOptions { get; }
-
-    /// <summary>
-    /// Frames shown per frame rendered in the game (set in the game's options; Coreloom can't see it): adaptive pacing
-    /// keeps whole rendered frames and at least 40 of them a second.
-    /// </summary>
-    public int SelectedFrameGeneration
+    public string Summary
     {
-        get => FrameGenerationGameId is { } id ? _page.Store.Current.Gaming.PacingFor(id)?.FrameGeneration ?? 1 : 1;
-        set
-        {
-            value = Math.Clamp(value, 1, 4);
-            if (FrameGenerationGameId is not { } id || value == SelectedFrameGeneration)
-            {
-                return;
-            }
-
-            string name = _page.FindGame(id)?.Name ?? Adaptive.GameName ?? id;
-            _page.Store.Update("Gaming", s => AdaptivePacingController.Learned(s.Gaming, id, name).FrameGeneration = value);
-            Adaptive.FrameGenerationChanged(id);
-            OnPropertyChanged();
-        }
+        get => _summary;
+        private set => SetProperty(ref _summary, value);
     }
 
-    private GamingStatus Status => _page.CurrentStatus;
-
-    private int RefreshHz => Status.RefreshRate > 0 ? Status.RefreshRate : 60;
-
-    public bool IsSupported => Status.HasNvidiaDriver;
-
-    public string UnsupportedText => "The frame limiter sets the NVIDIA graphics driver's own high-precision limiter, and no NVIDIA driver was found. On AMD graphics, AMD Software's Radeon Chill or Frame Rate Target Control does the same.";
-
-    /// <summary>"All games" and every game in the library.</summary>
-    public IReadOnlyList<Option<string>> Scopes
+    public IReadOnlyList<DetailRow> Rows
     {
-        get => _scopes;
-        private set => SetProperty(ref _scopes, value);
-    }
-
-    /// <summary>What the limit applies to: <see cref="AllGames"/> or a game's library id.</summary>
-    public string SelectedScope
-    {
-        get => _scope;
-        set
-        {
-            value ??= AllGames;
-            if (value != _scope)
-            {
-                _scope = value;
-                _pending = null;
-                _gameChoice = _page.Store.Current.Gaming.FramePacerTarget; // a new game starts from the all-games choice
-                Message = null;
-                OnPropertyChanged(nameof(SelectedScope));
-                Update();
-            }
-        }
-    }
-
-    public bool IsGameScope => _scope.Length > 0;
-
-    private GameFrameCap? ScopeCap => IsGameScope ? _page.Store.Current.Gaming.CapFor(_scope) : null;
-
-    private string ScopeName => IsGameScope ? (_page.FindGame(_scope)?.Name ?? ScopeCap?.Name ?? "this game") : "every game";
-
-    /// <summary>The switch: on sets the limit (for every game, or for the chosen game), off removes it.</summary>
-    public bool IsOn
-    {
-        get => _pending ?? (IsGameScope ? ScopeCap is not null : Status.FrameCap > 0);
-        set
-        {
-            if (value != IsOn && CanToggle)
-            {
-                _pending = value;
-                OnPropertyChanged(nameof(IsOn));
-                if (IsGameScope)
-                {
-                    _ = _page.SetGameFramePacerAsync(_scope, value ? Target : 0, SelectedTarget);
-                }
-                else
-                {
-                    _ = _page.SetFramePacerAsync(value ? Target : 0);
-                }
-            }
-        }
-    }
-
-    public bool CanToggle => IsSupported && !_isBusy && (!IsGameScope || _page.FindGame(_scope) is not null || ScopeCap is not null);
-
-    public bool IsBusy
-    {
-        get => _isBusy;
-        internal set
-        {
-            if (SetProperty(ref _isBusy, value))
-            {
-                OnPropertyChanged(nameof(CanToggle));
-            }
-        }
-    }
-
-    /// <summary>The chosen limit (0 = automatic), for the scope shown.</summary>
-    public int SelectedTarget
-    {
-        get => IsGameScope ? ScopeCap?.Choice ?? _gameChoice : _page.Store.Current.Gaming.FramePacerTarget;
-        set
-        {
-            value = value <= 0 ? 0 : FrameCap.Clamp(value);
-            if (value == SelectedTarget)
-            {
-                return;
-            }
-
-            if (IsGameScope)
-            {
-                _gameChoice = value;
-                Update();
-                if (ScopeCap is not null && CanToggle)
-                {
-                    _ = _page.SetGameFramePacerAsync(_scope, FrameCap.Resolve(value, RefreshHz), value);
-                }
-
-                return;
-            }
-
-            _page.Store.Update("Gaming", s => s.Gaming.FramePacerTarget = value);
-            Update();
-            if (IsOn && CanToggle)
-            {
-                _ = _page.SetFramePacerAsync(Target);
-            }
-        }
-    }
-
-    public IReadOnlyList<Option<int>> Options
-    {
-        get => _options;
-        private set => SetProperty(ref _options, value);
-    }
-
-    /// <summary>The limit in frames per second (what "Automatic" works out to on this display).</summary>
-    public int Target => FrameCap.Resolve(SelectedTarget, RefreshHz);
-
-    /// <summary>The limit set now for the scope shown (0 when off).</summary>
-    private int ActiveLimit => IsGameScope ? ScopeCap?.Fps ?? 0 : Status.FrameCap;
-
-    /// <summary>The big number: the limit in the driver when on, the limit it would use when off.</summary>
-    public string LimitText => (IsOn && ActiveLimit > 0 ? ActiveLimit : Target).ToString(CultureInfo.CurrentCulture);
-
-    public string FrameTimeText => FrameCap.FrameTimeText(IsOn && ActiveLimit > 0 ? ActiveLimit : Target) + " per frame";
-
-    public string DisplayText => Status.RefreshRate > 0 ? $"{Status.RefreshRate.ToString(CultureInfo.CurrentCulture)} Hz display" : "Display refresh rate unknown";
-
-    /// <summary>Why this limit.</summary>
-    public string Explanation => SelectedTarget <= 0
-        ? $"Just under your {RefreshHz.ToString(CultureInfo.CurrentCulture)} Hz refresh rate, so G-SYNC or FreeSync stays engaged and frames never queue up behind V-Sync. Even frame times, lower latency."
-        : SelectedTarget >= Status.RefreshRate && Status.RefreshRate > 0
-            ? "At or above the refresh rate: good for displays without variable refresh, with V-Sync on."
-            : "A fixed limit: steadier frame times and less heat and noise when the game would otherwise swing above it.";
-
-    /// <summary>What the switch covers: every game, or one game and what the others do.</summary>
-    public string ScopeText
-    {
-        get
-        {
-            if (!IsGameScope)
-            {
-                int own = _page.Store.Current.Gaming.GameFrameCaps.Count;
-                return own == 0
-                    ? "Applies to every game. Pick a game above to give it a limit of its own."
-                    : $"Applies to every game except the {own.ToString(CultureInfo.CurrentCulture)} with a limit of {(own == 1 ? "its" : "their")} own.";
-            }
-
-            string others = Status.FrameCap > 0 ? $"the all-games limit ({Status.FrameCap.ToString(CultureInfo.CurrentCulture)} FPS)" : "no limit";
-            var cap = ScopeCap;
-            return cap is not null
-                ? $"Only {ScopeName} ({string.Join(", ", cap.Executables)}) is limited this way; other games keep {others}."
-                : $"Sets a limit for {ScopeName} only, in the driver's profile for its program; other games keep {others}.";
-        }
-    }
-
-    /// <summary>The setup that paces best with variable refresh (G-SYNC / FreeSync).</summary>
-    public string TipText => "For the smoothest result with G-SYNC or FreeSync, turn V-Sync on in the NVIDIA Control Panel and off in games: the limit keeps latency low and V-Sync catches the rare frame that would tear.";
-
-    /// <summary>The G-SYNC setup tip and how the limiter works (shown on hover, not as text on the card).</summary>
-    public string HelpText => $"{TipText}\n\n{MethodText}";
-
-    public string MethodText => IsGameScope
-        ? "Uses the graphics driver's own frame limiter in the game's driver profile (NVIDIA's own profile when it has one), so nothing is added to the game and it's safe with anti-cheat. It applies from the game's next start."
-        : "Uses the graphics driver's own frame limiter for every game, so nothing is added to games and it's safe with anti-cheat. It applies to games you start next.";
-
-    /// <summary>The driver had a limit Coreloom didn't set (e.g. from the NVIDIA Control Panel).</summary>
-    public string? ForeignLimitText => !IsGameScope && IsOn && Status.FrameCap != Target ? $"The driver's limit is {Status.FrameCap.ToString(CultureInfo.CurrentCulture)} FPS. Pick a limit to replace it." : null;
-
-    /// <summary>Games with a limit of their own.</summary>
-    public IReadOnlyList<GameCapChip> GameCaps
-    {
-        get => _gameCaps;
+        get => _rows;
         private set
         {
-            if (SetProperty(ref _gameCaps, value))
+            if (SetProperty(ref _rows, value))
             {
-                OnPropertyChanged(nameof(HasGameCaps));
+                OnPropertyChanged(nameof(HasRows));
             }
         }
     }
 
-    public bool HasGameCaps => _gameCaps.Count > 0;
+    public bool HasRows => _rows.Count > 0;
 
-    /// <summary>What went wrong, or that the game needs a restart; leaves after five seconds.</summary>
-    public string? Message
+    /// <summary>Shown instead of the lines when there are none yet.</summary>
+    public string? EmptyText
     {
-        get => _message;
-        internal set
-        {
-            if (SetProperty(ref _message, value))
-            {
-                OnPropertyChanged(nameof(HasMessage));
-            }
+        get => _emptyText;
+        private set => SetProperty(ref _emptyText, value);
+    }
 
-            _messageDismissal.Update(!string.IsNullOrEmpty(value), () => Message = null);
+    public string? Note
+    {
+        get => _note;
+        private set
+        {
+            if (SetProperty(ref _note, value))
+            {
+                OnPropertyChanged(nameof(HasNote));
+            }
         }
     }
 
-    public bool HasMessage => !string.IsNullOrEmpty(_message);
+    public bool HasNote => !string.IsNullOrEmpty(_note);
 
-    /// <summary>A game is running and its frames are being measured.</summary>
-    public bool HasLive
+    public IRelayCommand CloseCommand { get; }
+
+    /// <summary>Which boost's details are open (null when closed).</summary>
+    internal string? OpenFor { get; private set; }
+
+    /// <summary>Opens the card with a boost's details; <paramref name="source"/> is read again by <see cref="Refresh"/>.</summary>
+    internal void Open(string key, string title, Func<(string Summary, IReadOnlyList<DetailRow> Rows, string? Note, string? Empty)> source)
     {
-        get => _hasLive;
-        private set => SetProperty(ref _hasLive, value);
+        OpenFor = key;
+        Title = title;
+        _source = source;
+        Refresh();
+        IsOpen = true;
     }
 
-    public string LiveFps
+    /// <summary>Reads the open boost's details again (they change while a game plays or after a check).</summary>
+    internal void Refresh(string? key = null)
     {
-        get => _liveFps;
-        private set => SetProperty(ref _liveFps, value);
-    }
-
-    public string LiveLow
-    {
-        get => _liveLow;
-        private set => SetProperty(ref _liveLow, value);
-    }
-
-    /// <summary>The 1% low as a share of the average ("91 %").</summary>
-    public string LiveConsistency
-    {
-        get => _liveConsistency;
-        private set => SetProperty(ref _liveConsistency, value);
-    }
-
-    /// <summary>"Smooth", "Uneven", "Stuttering".</summary>
-    public string PacingText
-    {
-        get => _pacingText;
-        private set => SetProperty(ref _pacingText, value);
-    }
-
-    public string PacingColorKey
-    {
-        get => _pacingColorKey;
-        private set => SetProperty(ref _pacingColorKey, value);
-    }
-
-    internal void Live(FrameRateStats? stats)
-    {
-        if (stats is not { Fps: > 0 } s)
+        if (_source is null || (key is not null && key != OpenFor))
         {
-            HasLive = false;
-            LiveFps = LiveLow = LiveConsistency = PacingText = "—";
-            PacingColorKey = ColorKeys.Neutral;
             return;
         }
 
-        var grade = FramePacing.Grade(s.Fps, s.LowFps);
-        HasLive = true;
-        LiveFps = Math.Round(s.Fps).ToString(CultureInfo.CurrentCulture);
-        LiveLow = s.LowFps > 0 ? Math.Round(s.LowFps).ToString(CultureInfo.CurrentCulture) : "—";
-        LiveConsistency = s.LowFps > 0 ? FramePacing.Consistency(s.Fps, s.LowFps).ToString(CultureInfo.CurrentCulture) + " %" : "—";
-        PacingText = FramePacing.Text(grade);
-        PacingColorKey = grade == PacingGrade.Unknown ? ColorKeys.Neutral : ColorKeys.ForLevel(FramePacing.Level(grade));
-    }
-
-    /// <summary>Re-reads everything after a change (status, settings, library); the switch's pending state ends.</summary>
-    internal void Refresh()
-    {
-        if (!_isBusy)
+        var (summary, rows, note, empty) = _source();
+        Summary = summary;
+        if (rows.Count != _rows.Count || !rows.SequenceEqual(_rows))
         {
-            _pending = null;
+            Rows = rows;
         }
 
-        Update();
-    }
-
-    private void Update()
-    {
-        var options = new List<Option<int>> { new(0, $"Automatic · {FrameCap.AutoTarget(RefreshHz).ToString(CultureInfo.CurrentCulture)} FPS") };
-        foreach (int fps in FrameCap.Presets(RefreshHz))
-        {
-            options.Add(new(fps, fps == Status.RefreshRate ? $"{fps.ToString(CultureInfo.CurrentCulture)} FPS · refresh rate" : $"{fps.ToString(CultureInfo.CurrentCulture)} FPS"));
-        }
-
-        if (SelectedTarget > 0 && !options.Any(o => o.Value == SelectedTarget))
-        {
-            options.Add(new(SelectedTarget, $"{SelectedTarget.ToString(CultureInfo.CurrentCulture)} FPS"));
-        }
-
-        if (Options.Count != options.Count || !Options.Zip(options).All(p => p.First == p.Second))
-        {
-            Options = options;
-        }
-
-        // Every library game (and any game with a limit that has since left the library, so it can still be removed).
-        var caps = _page.Store.Current.Gaming.GameFrameCaps;
-        var games = _page.LibraryGames
-            .Select(g => (g.Id, g.Name))
-            .Concat(caps.Select(c => (Id: c.GameId, c.Name)))
-            .DistinctBy(g => g.Id, StringComparer.OrdinalIgnoreCase)
-            .OrderBy(g => GameLibrary.SortName(g.Name), StringComparer.CurrentCultureIgnoreCase)
-            .Select(g => new Option<string>(g.Id, caps.Any(c => string.Equals(c.GameId, g.Id, StringComparison.OrdinalIgnoreCase)) ? $"{g.Name} · own limit" : g.Name));
-        var scopes = new List<Option<string>> { new(AllGames, "All games") };
-        scopes.AddRange(games);
-        if (Scopes.Count != scopes.Count || !Scopes.Zip(scopes).All(p => p.First == p.Second))
-        {
-            Scopes = scopes;
-        }
-
-        if (IsGameScope && !scopes.Any(s => string.Equals(s.Value, _scope, StringComparison.OrdinalIgnoreCase)))
-        {
-            _scope = AllGames; // the game was uninstalled
-        }
-
-        var chips = caps
-            .OrderBy(c => GameLibrary.SortName(c.Name), StringComparer.CurrentCultureIgnoreCase)
-            .Select(c => new GameCapChip(
-                c.GameId,
-                c.Name,
-                c.Adaptive ? $"{c.Fps.ToString(CultureInfo.CurrentCulture)} FPS · adaptive" : $"{c.Fps.ToString(CultureInfo.CurrentCulture)} FPS",
-                new RelayCommand(() => SelectedScope = c.GameId),
-                new AsyncRelayCommand(() => _page.SetGameFramePacerAsync(c.GameId, 0, c.Choice))))
-            .ToList();
-        if (GameCaps.Count != chips.Count || !GameCaps.Zip(chips).All(p => p.First.GameId == p.Second.GameId && p.First.LimitText == p.Second.LimitText && p.First.Name == p.Second.Name))
-        {
-            GameCaps = chips;
-        }
-
-        OnPropertyChanged(nameof(SelectedScope));
-        OnPropertyChanged(nameof(IsGameScope));
-        OnPropertyChanged(nameof(SelectedTarget));
-        OnPropertyChanged(nameof(IsSupported));
-        OnPropertyChanged(nameof(IsOn));
-        OnPropertyChanged(nameof(CanToggle));
-        OnPropertyChanged(nameof(Target));
-        OnPropertyChanged(nameof(LimitText));
-        OnPropertyChanged(nameof(FrameTimeText));
-        OnPropertyChanged(nameof(DisplayText));
-        OnPropertyChanged(nameof(Explanation));
-        OnPropertyChanged(nameof(ScopeText));
-        OnPropertyChanged(nameof(MethodText));
-        OnPropertyChanged(nameof(HelpText));
-        OnPropertyChanged(nameof(ForeignLimitText));
-        OnPropertyChanged(nameof(AdaptiveOn));
-        OnPropertyChanged(nameof(CanToggleAdaptive));
-        OnPropertyChanged(nameof(AdaptiveMethodText));
-        OnPropertyChanged(nameof(ShowFrameGeneration));
-        OnPropertyChanged(nameof(FrameGenerationLabel));
-        OnPropertyChanged(nameof(SelectedFrameGeneration));
+        Note = note;
+        EmptyText = empty;
     }
 }
 
 /// <summary>
-/// The Gaming page: boosts for Windows and the graphics card, the frame limiter, shader caches and the installed games
-/// (as cards or a grid of covers). Every change happens only when the user flips a switch or presses a button.
+/// The Gaming page: boosts for Windows and the graphics card (on Windows twelve since 1.8.4, the shader caches among
+/// them; the frame limiter was removed), the banner's readiness dial and the installed games (as cards or a grid of
+/// covers). Every change happens only when the user flips a switch or presses a button.
 /// </summary>
 public sealed class GamingViewModel : PageViewModel
 {
     private static readonly TimeSpan StatusInterval = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan RunningInterval = TimeSpan.FromSeconds(3);
+
+    /// <summary>The DirectStorage check reads drives and game folders, so it runs after each scan and at most this often otherwise.</summary>
+    private static readonly TimeSpan DirectStorageInterval = TimeSpan.FromMinutes(10);
 
     private readonly IGamingService _service;
     private readonly List<GameViewModel> _all = [];
@@ -840,16 +552,27 @@ public sealed class GamingViewModel : PageViewModel
     private readonly Dismissal _heroDismissal = new();
     private readonly Dismissal _driverNoticeDismissal = new();
     private bool _driverNoticeShowing;
+    private DirectStorageReport _directStorage = DirectStorageReport.Unknown;
+    private DateTime _lastDirectStorage = DateTime.MinValue;
+    private bool _directStorageBusy;
+    private bool _cleanedUpLimits;
+    private bool _hasLive;
+    private string _liveFps = "—";
 
     public GamingViewModel(PageContext context)
         : base("gaming", "Gaming", "Icon.Controller", context)
     {
         _service = context.Tools.Gaming;
-        Adaptive = new AdaptivePacingController(this);
         CoreScheduling = new CoreSchedulingController(this, context.Tools.CoreScheduling);
-        FramePacer = new FramePacerViewModel(this);
+        Vram = new VramController(this);
         GamingTweakViewModel shaderCache = new(GamingTweak.ShaderCache, "NVIDIA shader cache", "Keeps the shaders games compile, so they aren't compiled again mid-play: fewer repeat stutters and steadier frame times the next times you play.", "Icon.Database", "NVIDIA", SetTweakAsync, "Frame stability",
             "Recommended: 10 GB when the current limit is smaller, or a larger size for a big game library.", "Doesn't remove every shader stutter or raise the average frame rate.");
+        GamingTweakViewModel keepShaderCaches = new(GamingTweak.KeepShaderCaches, "Keep shader caches", "Stops Windows' automatic maintenance from deleting the DirectX shader cache, so games don't compile their shaders again and stutter after a cleanup.", "Icon.Layers", "DirectX", SetTweakAsync, "Frame stability",
+            null, "Disk Cleanup and Storage Sense still clear it when you choose to.");
+        GamingTweakViewModel directStorage = new(GamingTweak.DirectStorage, "DirectStorage & GPU decompression", "Lets games that use DirectStorage load straight from the drive to the graphics card and decompress there. Coreloom checks everything it needs.", "Icon.Download", "AMD + NVIDIA", SetTweakAsync, "Loading + streaming",
+            null, "A check, not a switch: games use DirectStorage on their own when the PC supports it.", isSwitch: false);
+        GamingTweakViewModel vram = new(GamingTweak.VramManagement, "Intelligent VRAM management", "Watches the graphics memory of the game you play for pressure and texture streaming that runs out of room, then recommends texture settings for that game.", "Icon.Memory", "AMD + NVIDIA", SetTweakAsync, "Frame stability",
+            "Recommended: on. It only reads Windows' graphics-memory counters while one of your games is in front.", "Changes nothing in games; the recommendations are yours to apply.");
         GamingTweakViewModel coreScheduling = new(GamingTweak.CoreScheduling, "Intelligent CPU core scheduling", "Keeps games on the cores that suit them, such as a Ryzen X3D's 3D V-Cache cores, after checking AMD's own scheduling.", "Icon.Cpu", "Ryzen X3D", SetTweakAsync, "Frame stability",
             "Recommended: on. A per-game profile is only offered after a test in that game shows a clear gain.",
             "Chooses cores, never clocks or voltages; nothing is added to games.");
@@ -877,9 +600,27 @@ public sealed class GamingViewModel : PageViewModel
                 new(GamingTweak.GSync, "G-SYNC & adaptive refresh", "Matches your display's refresh to the frames the graphics card sends, so there's no tearing and less stutter, in fullscreen and windowed games.", "Icon.Pulse", "NVIDIA", SetTweakAsync, "Smoothness",
                     GSyncSetup.Recommendation(0, 0), "Improves how frames are shown, not the frame rate itself."),
                 shaderCache,
+                keepShaderCaches,
+                directStorage,
+                vram,
                 coreScheduling,
             ];
         ShaderCache = shaderCache;
+        KeepShaderCachesBoost = keepShaderCaches;
+        DirectStorageBoost = directStorage;
+        VramBoost = vram;
+        Details = new BoostDetailsViewModel();
+        DirectStorageBoost.DetailsCommand = new RelayCommand(() => Details.Open("directstorage", "DirectStorage & GPU decompression", DirectStorageDetails));
+        VramBoost.DetailsCommand = new RelayCommand(() => Details.Open("vram", "Intelligent VRAM management", Vram.Details));
+        Vram.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(VramController.BoostNote) && !VramBoost.IsBusy)
+            {
+                VramBoost.Apply(Vram.Status);
+                Details.Refresh("vram");
+                HeroChanged();
+            }
+        };
         CoreSchedulingBoost = coreScheduling;
         CoreSchedulingBoost.DetailsCommand = CoreScheduling.OpenDetailsCommand;
         CoreScheduling.PropertyChanged += (_, e) =>
@@ -890,17 +631,20 @@ public sealed class GamingViewModel : PageViewModel
             }
         };
         ShaderCacheSizes = [.. Coreloom.Core.Gaming.ShaderCacheSize.Choices.Select(size => new Option<uint>(size, Coreloom.Core.Gaming.ShaderCacheSize.Describe(size)))];
+        ShaderCache.Choices = ShaderCacheSizes; // the size the boost sets, under it (it was in the Shader cache card)
+        ShaderCache.ReadChoice = () => ShaderCacheSize;
+        ShaderCache.WriteChoice = size => ShaderCacheSize = size;
+        ShaderCache.ReadChoiceNote = () => ShaderCacheLimitText;
 
         RescanCommand = new AsyncRelayCommand(ScanAsync, () => !IsScanning && IsSupported);
         Editor = new GameEditorViewModel(this, _service);
         AddGameCommand = new RelayCommand(() => Editor.Add(), () => IsSupported);
         RefreshCommand = new AsyncRelayCommand(() => RefreshStatusAsync(force: true));
-        ApplyAllCommand = new AsyncRelayCommand(ApplyAllAsync, () => IsSupported && !_isApplyingAll && CountedBoosts.Any(t => t.IsSupported && !t.IsOn && !t.IsBusy));
+        ApplyAllCommand = new AsyncRelayCommand(ApplyAllAsync, () => IsSupported && !_isApplyingAll && CountedBoosts.Any(t => t.IsSwitch && t.IsSupported && !t.IsOn && !t.IsBusy));
         ClearSearchCommand = new RelayCommand(() => Search = string.Empty);
         DismissDriverNoticeCommand = new RelayCommand(DismissDriverNotice);
         ShowListCommand = new RelayCommand(() => IsGridView = false);
         ShowGridCommand = new RelayCommand(() => IsGridView = true);
-        FramePacer.Refresh();
     }
 
     /// <summary>For tests: the clock "played … ago" texts use.</summary>
@@ -929,13 +673,33 @@ public sealed class GamingViewModel : PageViewModel
     public string UnsupportedText => "Gaming tools read and change Windows and graphics-driver settings, which aren't available here.";
 
     /// <summary>
-    /// Hardware-accelerated GPU scheduling, Ultimate Performance, Game Mode, windowed optimizations, background recording,
-    /// GPU power mode, G-SYNC, the shader cache and intelligent CPU core scheduling.
+    /// On Windows (twelve since 1.8.4): hardware-accelerated GPU scheduling, Ultimate Performance, Game Mode, windowed
+    /// optimizations, background recording, GPU power mode, G-SYNC, the NVIDIA shader cache (with its size), keeping
+    /// shader caches, DirectStorage (a check), intelligent VRAM management and intelligent CPU core scheduling. On a Mac,
+    /// the four macOS leaves to the user.
     /// </summary>
     public IReadOnlyList<GamingTweakViewModel> Boosts { get; }
 
-    /// <summary>The shader cache boost (also shown in the Shader cache card, with its size).</summary>
+    /// <summary>The NVIDIA shader cache boost (its size is chosen under it).</summary>
     public GamingTweakViewModel ShaderCache { get; }
+
+    /// <summary>"Keep shader caches" (the Shader cache card, condensed into a boost in 1.8.4: sizes, driver notice).</summary>
+    public GamingTweakViewModel KeepShaderCachesBoost { get; }
+
+    /// <summary>DirectStorage and GPU decompression: a check (its Details list each part).</summary>
+    public GamingTweakViewModel DirectStorageBoost { get; }
+
+    /// <summary>Intelligent VRAM management (its Details list each game's recommendation).</summary>
+    public GamingTweakViewModel VramBoost { get; }
+
+    /// <summary>The card a boost's Details pill opens (DirectStorage, VRAM management).</summary>
+    public BoostDetailsViewModel Details { get; }
+
+    /// <summary>VRAM management's engine: what the app hands it while a game plays, and each game's record.</summary>
+    public VramController Vram { get; }
+
+    /// <summary>The DirectStorage check's latest outcome.</summary>
+    public DirectStorageReport DirectStorage => _directStorage;
 
     /// <summary>The sizes the shader cache boost can set: 10 GB, 100 GB, unlimited.</summary>
     public IReadOnlyList<Option<uint>> ShaderCacheSizes { get; }
@@ -965,11 +729,6 @@ public sealed class GamingViewModel : PageViewModel
     public string ShaderCacheLimitText => _status.ShaderCacheLimit is { } limit
         ? $"Limit now: {Coreloom.Core.Gaming.ShaderCacheSize.Describe(limit)}"
         : "Limit now: the driver's default";
-
-    public FramePacerViewModel FramePacer { get; }
-
-    /// <summary>Adaptive frame pacing: learns each game's steady frame rate while it plays and sets the game's limit.</summary>
-    public AdaptivePacingController Adaptive { get; }
 
     /// <summary>Intelligent CPU core scheduling: the core map, AMD's checks, where the game runs, tests and per-game profiles.</summary>
     public CoreSchedulingController CoreScheduling { get; }
@@ -1059,7 +818,39 @@ public sealed class GamingViewModel : PageViewModel
 
     public string DriverText => _status.DriverVersion ?? "—";
 
-    public string FrameLimitText => _status.FrameCap > 0 ? $"{_status.FrameCap.ToString(CultureInfo.CurrentCulture)} FPS" : "Off";
+    /// <summary>
+    /// The banner's VRR tile (since 1.8.4, in place of the frame limit): variable refresh as the G-SYNC boost reads it in
+    /// the NVIDIA driver — On or Off, with "Not supported" when the display can't — and a dash where it can't be read.
+    /// </summary>
+    public string VrrText => GSyncBoost is not { } gsync || IsMac ? "—"
+        : gsync.IsSupported ? (gsync.IsOn ? "On" : "Off")
+        : _status.HasNvidiaDriver && gsync.Message?.Contains("display", StringComparison.OrdinalIgnoreCase) == true ? "Off"
+        : "—";
+
+    /// <summary>Under the VRR tile's value: "G-SYNC", "display can't", or where it's set.</summary>
+    public string VrrCaption => GSyncBoost is not { } gsync || IsMac ? "variable refresh"
+        : gsync.IsSupported ? "G-SYNC"
+        : _status.HasNvidiaDriver && gsync.Message?.Contains("display", StringComparison.OrdinalIgnoreCase) == true ? "display can't"
+        : _status.HasNvidiaDriver ? "variable refresh" : "set in AMD Software";
+
+    /// <summary>Green while variable refresh is on.</summary>
+    public string VrrColorKey => VrrText == "On" ? ColorKeys.ToneCool : ColorKeys.Neutral;
+
+    private GamingTweakViewModel? GSyncBoost => Boosts.FirstOrDefault(b => b.Tweak == GamingTweak.GSync);
+
+    /// <summary>The running game's frame rate is being measured (shown next to its name in the banner).</summary>
+    public bool HasLive
+    {
+        get => _hasLive;
+        private set => SetProperty(ref _hasLive, value);
+    }
+
+    /// <summary>The running game's frame rate ("138").</summary>
+    public string LiveFps
+    {
+        get => _liveFps;
+        private set => SetProperty(ref _liveFps, value);
+    }
 
     public string GameCountText => _all.Count.ToString(CultureInfo.CurrentCulture);
 
@@ -1267,6 +1058,10 @@ public sealed class GamingViewModel : PageViewModel
         {
             _ = RefreshStatusAsync(force: false);
             _ = CheckRunningAsync();
+            if (DateTime.UtcNow - _lastDirectStorage > DirectStorageInterval)
+            {
+                _ = RefreshDirectStorageAsync();
+            }
         }
     }
 
@@ -1376,7 +1171,10 @@ public sealed class GamingViewModel : PageViewModel
         _all.Clear();
         _all.AddRange(next);
         ApplyLibrary();
-        FramePacer.Refresh(); // the games it can be set for
+        if (IsSupported && !IsMac)
+        {
+            _ = RefreshDirectStorageAsync(); // the games and drives it checks changed
+        }
     }
 
     private void ApplyLibrary()
@@ -1441,12 +1239,12 @@ public sealed class GamingViewModel : PageViewModel
         await ScanAsync();
     }
 
-    /// <summary>Removes a game added by hand, and its own frame limit if it had one.</summary>
+    /// <summary>Removes a game added by hand, and a frame limit Coreloom set for it before 1.8.4, if it had one.</summary>
     internal async Task RemoveCustomGameAsync(CustomGame game)
     {
         if (Settings.Current.Gaming.CapFor(game.Id) is { } cap)
         {
-            await SetGameFramePacerAsync(game.Id, 0, cap.Choice);
+            await RemoveLimitAsync(cap);
         }
 
         Settings.Update("Gaming", s => s.Gaming.CustomGames.RemoveAll(g => string.Equals(g.Id, game.Id, StringComparison.OrdinalIgnoreCase)));
@@ -1567,7 +1365,7 @@ public sealed class GamingViewModel : PageViewModel
 
         if (!on)
         {
-            FramePacer.Live(null);
+            Live(null);
         }
     }
 
@@ -1575,7 +1373,7 @@ public sealed class GamingViewModel : PageViewModel
     {
         if (_running is null || !_watching)
         {
-            FramePacer.Live(null);
+            Live(null);
             return;
         }
 
@@ -1588,7 +1386,13 @@ public sealed class GamingViewModel : PageViewModel
             }
         }
 
-        FramePacer.Live(best);
+        Live(best);
+    }
+
+    private void Live(FrameRateStats? stats)
+    {
+        HasLive = stats is { Fps: > 0 };
+        LiveFps = stats is { Fps: > 0 } s ? Math.Round(s.Fps).ToString(CultureInfo.CurrentCulture) : "—";
     }
 
     // ---- Settings ------------------------------------------------------------------------------------------
@@ -1636,7 +1440,7 @@ public sealed class GamingViewModel : PageViewModel
         {
             if (!tweak.IsBusy)
             {
-                tweak.Apply(tweak.Tweak == GamingTweak.CoreScheduling ? CoreScheduling.Status : status.Tweak(tweak.Tweak));
+                tweak.Apply(StatusOf(tweak.Tweak));
             }
         }
 
@@ -1658,20 +1462,140 @@ public sealed class GamingViewModel : PageViewModel
             Settings.Update("Gaming", s => s.Gaming.GlobalFrameCap = status.FrameCap); // the overlay shows when games are paced
         }
 
-        FramePacer.Refresh();
-        if (Boosts.FirstOrDefault(b => b.Tweak == GamingTweak.GSync) is { } gsync)
+        if (status.HasNvidiaDriver && !_cleanedUpLimits)
+        {
+            _cleanedUpLimits = true;
+            _ = RemoveAdaptiveLimitsAsync();
+        }
+
+        if (GSyncBoost is { } gsync)
         {
             gsync.Recommendation = GSyncSetup.Recommendation(status.FrameCap, status.RefreshRate);
         }
+
         ApplyShaderCaches();
+        ShaderCache.ChoiceChanged();
         OnPropertyChanged(nameof(ShaderCacheLimitText));
         HeroChanged();
         OnPropertyChanged(nameof(DisplayText));
         OnPropertyChanged(nameof(DriverText));
-        OnPropertyChanged(nameof(FrameLimitText));
+        OnPropertyChanged(nameof(VrrText));
+        OnPropertyChanged(nameof(VrrCaption));
+        OnPropertyChanged(nameof(VrrColorKey));
         OnPropertyChanged(nameof(DriverNotice));
         OnPropertyChanged(nameof(HasDriverNotice));
         DismissDriverNoticeLater();
+    }
+
+    /// <summary>
+    /// A boost's state: Coreloom's own switches from their engines, DirectStorage from its check, and "Keep shader caches"
+    /// with the new-driver notice as its note (the Shader cache card showed it before 1.8.4).
+    /// </summary>
+    private TweakStatus StatusOf(GamingTweak tweak) => tweak switch
+    {
+        GamingTweak.CoreScheduling => CoreScheduling.Status,
+        GamingTweak.VramManagement => Vram.Status,
+        GamingTweak.DirectStorage => DirectStorageStatus(),
+        GamingTweak.KeepShaderCaches when DriverNotice is { } notice => _status.Tweak(tweak) with { Note = notice },
+        _ => _status.Tweak(tweak),
+    };
+
+    private TweakStatus DirectStorageStatus() => _directStorage.State switch
+    {
+        DirectStorageState.Ready => new TweakStatus(true, true, Note: null, Label: "Ready"),
+        DirectStorageState.PartlyReady => new TweakStatus(true, false, Note: _directStorage.Problem, Label: "Partly ready"),
+        DirectStorageState.NotAvailable => TweakStatus.Unsupported(_directStorage.Problem ?? _directStorage.Summary),
+        _ => new TweakStatus(false, false, Label: "Checking…"),
+    };
+
+    /// <summary>Runs the DirectStorage check (graphics card, Windows, the games' drives, which games use it) off the page.</summary>
+    private async Task RefreshDirectStorageAsync()
+    {
+        if (_directStorageBusy || IsMac || !IsSupported)
+        {
+            return;
+        }
+
+        _directStorageBusy = true;
+        _lastDirectStorage = DateTime.UtcNow;
+        try
+        {
+            _directStorage = await _service.DirectStorageAsync(LibrarySnapshot(), CancellationToken.None);
+        }
+        catch (Exception e) when (IsExpected(e))
+        {
+            _directStorage = new DirectStorageReport(DirectStorageState.Unknown, "Couldn't be checked.", null, [], []);
+        }
+        finally
+        {
+            _directStorageBusy = false;
+        }
+
+        if (!DirectStorageBoost.IsBusy)
+        {
+            DirectStorageBoost.Apply(DirectStorageStatus());
+        }
+
+        DirectStorageBoost.Recommendation = _directStorage.State == DirectStorageState.Ready ? _directStorage.Summary : null;
+        OnPropertyChanged(nameof(DirectStorage));
+        Details.Refresh("directstorage");
+        HeroChanged();
+    }
+
+    private (string Summary, IReadOnlyList<DetailRow> Rows, string? Note, string? Empty) DirectStorageDetails()
+    {
+        var report = _directStorage;
+        var rows = report.Rows.Select(r => new DetailRow(r.Name, r.Value, DetailRow.ColorFor(r.Tone), r.Detail)).ToList();
+        const string note = "Games load with DirectStorage on their own when they ship Microsoft's runtime (dstorage.dll); there's nothing to switch on. GPU decompression needs DirectX 12 with Shader Model 6.0, NVMe drives have the bandwidth, and Windows 11's BypassIO saves processor time on each read.";
+        return (report.Summary, rows, note, rows.Count == 0 ? "Checking…" : null);
+    }
+
+    /// <summary>
+    /// Adaptive frame pacing (removed in 1.8.4 with the frame limiter) set limits by itself; nothing would change them
+    /// any more, so the first look at the driver removes them, as turning adaptive pacing off did. Limits the user set
+    /// (for all games or one game) stay in the driver, where NVIDIA's settings show them as Max Frame Rate.
+    /// </summary>
+    private async Task RemoveAdaptiveLimitsAsync()
+    {
+        var gaming = Settings.Current.Gaming;
+        var adaptive = gaming.GameFrameCaps.Where(c => c.Adaptive).ToList();
+        if (adaptive.Count == 0 && !gaming.AdaptivePacing)
+        {
+            return;
+        }
+
+        int removed = 0;
+        foreach (var cap in adaptive)
+        {
+            if (await RemoveLimitAsync(cap))
+            {
+                removed++;
+            }
+        }
+
+        Settings.Update("Gaming", s => s.Gaming.AdaptivePacing = false);
+        Coreloom.Core.Diagnostics.Log.Info("Gaming", $"Adaptive frame pacing was removed in 1.8.4: removed {removed.ToString(CultureInfo.InvariantCulture)} of the {adaptive.Count.ToString(CultureInfo.InvariantCulture)} game limits it had set.");
+    }
+
+    /// <summary>Removes a limit Coreloom set for a game's programs before 1.8.4, and forgets it when the driver agreed.</summary>
+    private async Task<bool> RemoveLimitAsync(GameFrameCap cap)
+    {
+        TweakResult result;
+        try
+        {
+            result = await _service.SetGameFrameCapAsync(cap.Name, cap.Executables, 0, CancellationToken.None);
+        }
+        catch (Exception e) when (IsExpected(e))
+        {
+            result = new TweakResult(false, "The graphics driver didn't accept the change.");
+        }
+
+        if (result.Success)
+        {
+            Settings.Update("Gaming", s => s.Gaming.GameFrameCaps.RemoveAll(c => string.Equals(c.GameId, cap.GameId, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        return result.Success;
     }
 
     /// <summary>The driver notice leaves by itself five seconds after it's been on screen, as if dismissed.</summary>
@@ -1708,6 +1632,12 @@ public sealed class GamingViewModel : PageViewModel
         OnPropertyChanged(nameof(HasShaderCaches));
         OnPropertyChanged(nameof(ShaderCacheSummary));
         OnPropertyChanged(nameof(ShaderCacheTotalText));
+
+        // The Shader cache card's sizes, condensed into the "Keep shader caches" boost: a line, and each cache on its tooltip.
+        KeepShaderCachesBoost.Recommendation = ShaderCacheSummary;
+        KeepShaderCachesBoost.RecommendationToolTip = rows.Count == 0
+            ? ShaderCacheNote
+            : string.Join(Environment.NewLine, rows.Select(r => $"{r.Name}: {r.SizeText}")) + Environment.NewLine + Environment.NewLine + ShaderCacheNote;
     }
 
     private string? ShaderCachesDriverNotice() => IsMac
@@ -1723,6 +1653,10 @@ public sealed class GamingViewModel : PageViewModel
 
         OnPropertyChanged(nameof(DriverNotice));
         OnPropertyChanged(nameof(HasDriverNotice));
+        if (!KeepShaderCachesBoost.IsBusy && _status != GamingStatus.Unavailable)
+        {
+            KeepShaderCachesBoost.Apply(StatusOf(GamingTweak.KeepShaderCaches)); // the notice under it leaves too
+        }
     }
 
     private void HeroChanged()
@@ -1741,6 +1675,27 @@ public sealed class GamingViewModel : PageViewModel
 
     private async Task SetTweakAsync(GamingTweakViewModel tweak, bool on)
     {
+        if (tweak.Tweak == GamingTweak.DirectStorage)
+        {
+            return; // a check: nothing to switch
+        }
+
+        if (tweak.Tweak == GamingTweak.VramManagement)
+        {
+            tweak.IsBusy = true;
+            var watching = await Vram.SetEnabledAsync(on);
+            tweak.IsBusy = false;
+            tweak.Apply(Vram.Status);
+            if (!watching.Success)
+            {
+                tweak.ShowOutcome(watching.Message);
+            }
+
+            Details.Refresh("vram");
+            HeroChanged();
+            return;
+        }
+
         if (tweak.Tweak == GamingTweak.CoreScheduling)
         {
             // Coreloom's own switch, not a Windows setting.
@@ -1787,98 +1742,6 @@ public sealed class GamingViewModel : PageViewModel
         HeroChanged();
     }
 
-    internal async Task SetFramePacerAsync(int fps)
-    {
-        FramePacer.IsBusy = true;
-        FramePacer.Message = null;
-        TweakResult result;
-        try
-        {
-            result = await _service.SetFrameCapAsync(fps, CancellationToken.None);
-        }
-        catch (Exception e) when (IsExpected(e))
-        {
-            result = new TweakResult(false, "The graphics driver didn't accept the change.");
-        }
-        finally
-        {
-            FramePacer.IsBusy = false;
-        }
-
-        await RefreshStatusAsync(force: true);
-        FramePacer.Message = result.Success
-            ? fps > 0 ? (_running is not null ? $"Restart {_running.Game.Name} to apply the new limit." : null) : null
-            : result.Message;
-    }
-
-    /// <summary>Sets (fps &gt; 0) or removes a game's own limit from the frame limiter card, with its busy state and message.</summary>
-    internal async Task SetGameFramePacerAsync(string gameId, int fps, int choice)
-    {
-        string name = FindGame(gameId)?.Name ?? Settings.Current.Gaming.CapFor(gameId)?.Name ?? "This game";
-        FramePacer.IsBusy = true;
-        FramePacer.Message = null;
-        TweakResult result;
-        try
-        {
-            result = await ApplyGameCapAsync(gameId, fps, choice, adaptive: false);
-        }
-        finally
-        {
-            FramePacer.IsBusy = false;
-        }
-
-        FramePacer.Refresh();
-        bool runningNow = _running is not null && string.Equals(_running.Game.Id, gameId, StringComparison.OrdinalIgnoreCase);
-        FramePacer.Message = !result.Success ? result.Message
-            : fps > 0 && runningNow ? $"Restart {name} to apply the new limit."
-            : null;
-    }
-
-    /// <summary>
-    /// Sets (fps &gt; 0) or removes a game's own limit: finds the game's programs, sets the limit in the driver's profile
-    /// for them, and remembers it (so it shows, can be removed, and the overlay knows the game is paced).
-    /// <paramref name="adaptive"/> marks a limit set by adaptive pacing (which changes only its own limits).
-    /// </summary>
-    internal async Task<TweakResult> ApplyGameCapAsync(string gameId, int fps, int choice, bool adaptive)
-    {
-        var game = FindGame(gameId);
-        var existing = Settings.Current.Gaming.CapFor(gameId);
-        string name = game?.Name ?? existing?.Name ?? "This game";
-        TweakResult result;
-        IReadOnlyList<string> programs = existing?.Executables ?? [];
-        try
-        {
-            if (fps > 0 && game is not null)
-            {
-                var found = await _service.FindExecutablesAsync(game.Game, CancellationToken.None);
-                programs = found.Concat(programs).Distinct(StringComparer.OrdinalIgnoreCase).Take(GameExecutables.Max).ToList();
-            }
-
-            result = await _service.SetGameFrameCapAsync(name, programs, fps, CancellationToken.None);
-        }
-        catch (Exception e) when (IsExpected(e))
-        {
-            result = new TweakResult(false, "The graphics driver didn't accept the change.");
-        }
-
-        if (result.Success)
-        {
-            int limit = FrameCap.Clamp(fps);
-            var saved = programs.ToList();
-            Settings.Update("Gaming", s =>
-            {
-                s.Gaming.GameFrameCaps.RemoveAll(c => string.Equals(c.GameId, gameId, StringComparison.OrdinalIgnoreCase));
-                if (limit > 0)
-                {
-                    s.Gaming.GameFrameCaps.Add(new GameFrameCap { GameId = gameId, Name = name, Choice = choice, Fps = limit, Executables = saved, Adaptive = adaptive });
-                }
-            });
-        }
-
-        FramePacer.Refresh();
-        return result;
-    }
-
     private async Task ApplyAllAsync()
     {
         _isApplyingAll = true;
@@ -1886,7 +1749,7 @@ public sealed class GamingViewModel : PageViewModel
         try
         {
             int changed = 0;
-            foreach (var tweak in CountedBoosts.Where(t => t.IsSupported && !t.IsOn).ToList())
+            foreach (var tweak in CountedBoosts.Where(t => t.IsSwitch && t.IsSupported && !t.IsOn).ToList())
             {
                 await SetTweakAsync(tweak, true);
                 if (tweak.IsOn)

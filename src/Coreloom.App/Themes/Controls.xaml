@@ -196,7 +196,8 @@
     </Setter>
   </Style>
 
-  <Style x:Key="Button.Subtle" TargetType="Button">
+  <!-- The base of every button: no fill until hovered. Icon buttons keep it; text buttons are glass (below). -->
+  <Style x:Key="Button.Plain" TargetType="Button">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderBrush" Value="Transparent" />
@@ -256,41 +257,10 @@
     </Setter>
   </Style>
 
-  <Style x:Key="Button.Secondary" TargetType="Button" BasedOn="{StaticResource Button.Subtle}">
-    <Setter Property="Background" Value="{DynamicResource Brush.Input}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.InputBorder}" />
-  </Style>
-
-  <Style x:Key="Button.Primary" TargetType="Button" BasedOn="{StaticResource Button.Subtle}">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
-    <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="Template">
-      <Setter.Value>
-        <ControlTemplate TargetType="Button">
-          <c:SquircleBorder x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
-            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
-          </c:SquircleBorder>
-          <ControlTemplate.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
-              <Setter TargetName="Root" Property="Background" Value="{DynamicResource Brush.AccentHover}" />
-            </Trigger>
-            <Trigger Property="IsPressed" Value="True">
-              <Setter TargetName="Root" Property="Opacity" Value="0.85" />
-            </Trigger>
-            <Trigger Property="IsEnabled" Value="False">
-              <Setter Property="Opacity" Value="0.45" />
-            </Trigger>
-          </ControlTemplate.Triggers>
-        </ControlTemplate>
-      </Setter.Value>
-    </Setter>
-  </Style>
-
-  <!-- A banner's main button (since 1.8.3): charcoal glass with white text, its rim lit along the top and toward a soft
-       light of the accent in its lower right corner, which grows on hover. Replaces the accent gradient fill, which white
-       text and icons got lost in. The key stays so every banner button picks it up. -->
-  <Style x:Key="Button.AccentGradient" TargetType="Button" BasedOn="{StaticResource Button.Subtle}">
+  <!-- Every text button (since 1.8.4; the banners' buttons since 1.8.3): charcoal glass with white text, its rim lit
+       along the top and toward a soft light of the accent in its lower right corner, which grows on hover. Primary,
+       Secondary, Subtle and the banners' AccentGradient are all this button now, so they look the same everywhere. -->
+  <Style x:Key="Button.Glass" TargetType="Button" BasedOn="{StaticResource Button.Plain}">
     <Setter Property="Foreground" Value="{DynamicResource Brush.OnGlow}" />
     <Setter Property="Background" Value="{DynamicResource Brush.GlowButtonFill}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.GlowButtonRim}" />
@@ -327,11 +297,23 @@
     </Setter>
   </Style>
 
+  <Style x:Key="Button.AccentGradient" TargetType="Button" BasedOn="{StaticResource Button.Glass}" />
+
+  <Style x:Key="Button.Primary" TargetType="Button" BasedOn="{StaticResource Button.Glass}" />
+
+  <Style x:Key="Button.Secondary" TargetType="Button" BasedOn="{StaticResource Button.Glass}">
+    <Setter Property="FontWeight" Value="Normal" />
+  </Style>
+
+  <Style x:Key="Button.Subtle" TargetType="Button" BasedOn="{StaticResource Button.Glass}">
+    <Setter Property="FontWeight" Value="Normal" />
+  </Style>
+
   <!-- The banners' grain (assets/textures/grain.png, tiled), laid a few percent strong over their light so it doesn't band. -->
   <ImageBrush x:Key="GrainTexture" ImageSource="pack://application:,,,/Coreloom;component/Assets/grain.png" TileMode="Tile" Stretch="None"
               AlignmentX="Left" AlignmentY="Top" ViewportUnits="Absolute" Viewport="0,0,160,160" />
 
-  <Style x:Key="Button.Icon" TargetType="Button" BasedOn="{StaticResource Button.Subtle}">
+  <Style x:Key="Button.Icon" TargetType="Button" BasedOn="{StaticResource Button.Plain}">
     <Setter Property="Width" Value="34" />
     <Setter Property="Height" Value="34" />
     <Setter Property="Padding" Value="0" />

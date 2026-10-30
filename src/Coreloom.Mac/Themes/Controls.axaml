@@ -193,7 +193,8 @@
   <!-- ================================================================================= -->
   <!-- Buttons                                                                            -->
   <!-- ================================================================================= -->
-  <ControlTheme x:Key="Button.Subtle" TargetType="Button">
+  <!-- The base of every button: no fill until hovered. Icon buttons keep it; text buttons are glass (below). -->
+  <ControlTheme x:Key="Button.Plain" TargetType="Button">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderBrush" Value="Transparent" />
@@ -226,43 +227,10 @@
     </Style>
   </ControlTheme>
 
-  <ControlTheme x:Key="Button.Secondary" TargetType="Button" BasedOn="{StaticResource Button.Subtle}">
-    <Setter Property="Background" Value="{DynamicResource Brush.Input}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.InputBorder}" />
-  </ControlTheme>
-
-  <ControlTheme x:Key="Button.Primary" TargetType="Button">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
-    <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="Padding" Value="12,7" />
-    <Setter Property="FontSize" Value="13" />
-    <Setter Property="Cursor" Value="Hand" />
-    <Setter Property="HorizontalContentAlignment" Value="Center" />
-    <Setter Property="VerticalContentAlignment" Value="Center" />
-    <Setter Property="Template">
-      <ControlTemplate>
-        <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
-          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
-                            HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
-        </c:SquircleBorder>
-      </ControlTemplate>
-    </Setter>
-    <Style Selector="^:pointerover /template/ c|SquircleBorder#Root">
-      <Setter Property="Background" Value="{DynamicResource Brush.AccentHover}" />
-    </Style>
-    <Style Selector="^:pressed /template/ c|SquircleBorder#Root">
-      <Setter Property="Opacity" Value="0.85" />
-    </Style>
-    <Style Selector="^:disabled">
-      <Setter Property="Opacity" Value="0.45" />
-    </Style>
-  </ControlTheme>
-
-  <!-- A banner's main button (since 1.8.3): charcoal glass with white text, its rim lit along the top and toward a soft
-       light of the accent in its lower right corner, which grows on hover. Replaces the accent gradient fill, which white
-       text and icons got lost in. The key stays so every banner button picks it up. -->
-  <ControlTheme x:Key="Button.AccentGradient" TargetType="Button">
+  <!-- Every text button (since 1.8.4; the banners' buttons since 1.8.3): charcoal glass with white text, its rim lit
+       along the top and toward a soft light of the accent in its lower right corner, which grows on hover. Primary,
+       Secondary, Subtle and the banners' AccentGradient are all this button now, so they look the same everywhere. -->
+  <ControlTheme x:Key="Button.Glass" TargetType="Button">
     <Setter Property="Foreground" Value="{DynamicResource Brush.OnGlow}" />
     <Setter Property="Background" Value="{DynamicResource Brush.GlowButtonFill}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.GlowButtonRim}" />
@@ -298,13 +266,28 @@
     <Style Selector="^:disabled">
       <Setter Property="Opacity" Value="0.45" />
     </Style>
+    <Style Selector="^:focus-visible /template/ c|SquircleBorder#Root">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="Button.AccentGradient" TargetType="Button" BasedOn="{StaticResource Button.Glass}" />
+
+  <ControlTheme x:Key="Button.Primary" TargetType="Button" BasedOn="{StaticResource Button.Glass}" />
+
+  <ControlTheme x:Key="Button.Secondary" TargetType="Button" BasedOn="{StaticResource Button.Glass}">
+    <Setter Property="FontWeight" Value="Normal" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="Button.Subtle" TargetType="Button" BasedOn="{StaticResource Button.Glass}">
+    <Setter Property="FontWeight" Value="Normal" />
   </ControlTheme>
 
   <!-- The banners' grain (assets/textures/grain.png, tiled), laid a few percent strong over their light so it doesn't band. -->
   <ImageBrush x:Key="GrainTexture" Source="avares://Coreloom/Assets/grain.png" TileMode="Tile" Stretch="None"
               AlignmentX="Left" AlignmentY="Top" DestinationRect="0,0,160,160" />
 
-  <ControlTheme x:Key="Button.Icon" TargetType="Button" BasedOn="{StaticResource Button.Subtle}">
+  <ControlTheme x:Key="Button.Icon" TargetType="Button" BasedOn="{StaticResource Button.Plain}">
     <Setter Property="Width" Value="34" />
     <Setter Property="Height" Value="34" />
     <Setter Property="Padding" Value="0" />
