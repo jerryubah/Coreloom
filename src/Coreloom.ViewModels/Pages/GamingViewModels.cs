@@ -572,7 +572,7 @@ public sealed class GamingViewModel : PageViewModel
         GamingTweakViewModel directStorage = new(GamingTweak.DirectStorage, "DirectStorage & GPU decompression", "Lets games that use DirectStorage load straight from the drive to the graphics card and decompress there. Coreloom checks everything it needs.", "Icon.Download", "AMD + NVIDIA", SetTweakAsync, "Loading + streaming",
             null, "A check, not a switch: games use DirectStorage on their own when the PC supports it.", isSwitch: false);
         GamingTweakViewModel vram = new(GamingTweak.VramManagement, "Intelligent VRAM management", "Watches the graphics memory of the game you play for pressure and texture streaming that runs out of room, then recommends texture settings for that game.", "Icon.Memory", "AMD + NVIDIA", SetTweakAsync, "Frame stability",
-            "Recommended: on. It only reads Windows' graphics-memory counters while one of your games is in front.", "Changes nothing in games; the recommendations are yours to apply.");
+            null, "Changes nothing in games; the recommendations are yours to apply.");
         GamingTweakViewModel coreScheduling = new(GamingTweak.CoreScheduling, "Intelligent CPU core scheduling", "Keeps games on the cores that suit them, such as a Ryzen X3D's 3D V-Cache cores, after checking AMD's own scheduling.", "Icon.Cpu", "Ryzen X3D", SetTweakAsync, "Frame stability",
             "Recommended: on. A per-game profile is only offered after a test in that game shows a clear gain.",
             "Chooses cores, never clocks or voltages; nothing is added to games.");
@@ -614,13 +614,19 @@ public sealed class GamingViewModel : PageViewModel
         VramBoost.DetailsCommand = new RelayCommand(() => Details.Open("vram", "Intelligent VRAM management", Vram.Details));
         Vram.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(VramController.BoostNote) && !VramBoost.IsBusy)
+            if (e.PropertyName == nameof(VramController.BoostNote))
             {
-                VramBoost.Apply(Vram.Status);
+                ShowVramNote();
+                if (!VramBoost.IsBusy)
+                {
+                    VramBoost.Apply(Vram.Status);
+                }
+
                 Details.Refresh("vram");
                 HeroChanged();
             }
         };
+        ShowVramNote();
         CoreSchedulingBoost = coreScheduling;
         CoreSchedulingBoost.DetailsCommand = CoreScheduling.OpenDetailsCommand;
         CoreScheduling.PropertyChanged += (_, e) =>
@@ -697,6 +703,11 @@ public sealed class GamingViewModel : PageViewModel
 
     /// <summary>VRAM management's engine: what the app hands it while a game plays, and each game's record.</summary>
     public VramController Vram { get; }
+
+    private const string VramRecommendation = "Recommended: on. It only reads Windows' graphics-memory counters while one of your games is in front.";
+
+    /// <summary>What VRAM management is watching, or the latest game's result, on its recommendation line once it's on.</summary>
+    private void ShowVramNote() => VramBoost.Recommendation = Vram.IsOn && Vram.BoostNote is { } note ? note : VramRecommendation;
 
     /// <summary>The DirectStorage check's latest outcome.</summary>
     public DirectStorageReport DirectStorage => _directStorage;

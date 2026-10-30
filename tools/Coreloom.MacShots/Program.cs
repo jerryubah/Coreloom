@@ -244,6 +244,24 @@ internal static class Program
             }
         }
 
+        // The drive speed test, scrolled to the top of the window (the website's "New in 1.8.4" picture for Mac visitors).
+        if (only is null || only.Split(',').Contains("storage"))
+        {
+            shell.Navigate(shell.Pages.First(p => p.Key == "storage"));
+            window.Height = WindowHeight * Scale;
+            Settle(window, data, 4);
+            var host = window.FindControl<Coreloom.Mac.Controls.PageHost>("Host")!;
+            var scroller = host.GetVisualDescendants().OfType<ScrollViewer>().First();
+            var title = host.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(b => b.Text == "Drive speed test");
+            if (title is not null && scroller.Content is Visual inner && title.TranslatePoint(default, inner) is { } at)
+            {
+                scroller.Offset = new Vector(0, Math.Max(0, at.Y - 64));
+                Settle(window, data, 2);
+                Capture(window, Path.Combine(output, "storage-speedtest.png"));
+                scroller.Offset = default;
+            }
+        }
+
         // A Bluetooth device being renamed.
         if (only is null || only.Split(',').Contains("devices"))
         {

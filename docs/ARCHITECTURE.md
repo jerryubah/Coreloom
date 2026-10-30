@@ -51,7 +51,7 @@ On a Mac the top and bottom layers are swapped for their macOS counterparts and 
   `src/Coreloom.Mac/Services`.
 - **Views.** Each WPF page was converted to Avalonia (`Views/*.axaml`): styles became `ControlTheme`s and
   `UserControl.Styles` selectors, triggers became classes bound to view-model flags or converters, and pieces
-  that only make sense on Windows (the AMD processor card, the NVIDIA frame limiter, CPU core scheduling) are left
+  that only make sense on Windows (the AMD processor card, CPU core scheduling, DirectStorage, VRAM management) are left
   out of the Mac pages rather than hidden at run time. `tools/Coreloom.MacShots` draws every page headlessly with
   sample Apple silicon readings and fails on any binding error.
 - **App shell.** `Program.Main` takes the single-instance lock (a `flock` and a Unix socket in Application Support)
@@ -228,7 +228,7 @@ Phones see a computer's readings through a small server inside Coreloom, on the 
 - **Cards in a row end on one line (1.4.7, 1.4.8).** Cards side by side share one bottom line, and the difference is
   taken by content that can use it rather than by empty space: `FitRows` (the process lists on the Processor and
   Memory pages) asks for its usual rows and shows more when its card is taller; a disk card's chart sits in a star row
-  and grows; the Frame limiter's pacing row and the shader cache list sit at the bottom of their cards; the Memory
+  and grows; the Memory
   tiles share the donut card's height (`StretchRows`); in Smart Optimize's masonry (`StackedColumns` with
   `FillColumns`) the lower card of the shorter column (*Speed up*, whose startup list grows, or *Free up memory*, whose
   gauge stays centred) is marked `CanFill`. The Performance boosts are an `AdaptiveGrid` whose rows are each as tall
@@ -362,7 +362,13 @@ One background spans each app's main window; the sidebar and the cards are frost
   `Button.Update`: `Brush.GlowButtonFill` (charcoal in either theme), `Brush.GlowButtonRim` (lit along the top and toward
   the light) and `Brush.GlowButtonLight` (a radial light of the accent in the lower right corner, fuller on hover), with
   `Brush.OnGlow` (near white) for text and icons. `Brush.AccentGradient` is one hue now (a lighter shade, the accent, a
-  deeper shade).
+  deeper shade). Since 1.8.4 this is `Button.Glass`, and `Button.Primary`, `Button.Secondary`, `Button.Subtle` and
+  `Button.AccentGradient` are all based on it (Secondary and Subtle in normal weight), so every text button looks the
+  same in both themes; `Button.Plain` (the old transparent Subtle) stays the base of icon buttons, and links, window
+  buttons, pills and swatches keep their own looks. Icons in buttons follow the button's foreground (`IconPath`), and
+  the few that named `Brush.OnAccent` use `Brush.OnGlow`.
+- **Speed tests (1.8.4).** The drive and internet speed tests are plain `Card` glass (no `Card.Glow` lamp in the
+  network or storage color), and their gauges (`ToneGauge`) have no colored orb; the arc keeps its rating color.
 - **Graph fills.** `ChartColors.AreaFill` eases from the fill's strength at the line to nothing at the bottom along
   `FillCurve`; sparklines also fade their fill in and out at the ends (`ChartColors.EdgeFade` as an opacity mask), so
   no hard edge shows on the card.
@@ -701,8 +707,8 @@ consumer thread runs below normal.
 
 `GamingViewModel` (the *Gaming* page, above Graphics) has four parts; everything Windows-specific is behind
 `IGamingService` (`WindowsGamingService` in the app, `UnsupportedGamingService` elsewhere). Settings live in `Gaming`
-(`GamingSettings`: list or grid, sort order, the frame limiter's target, the power plans to restore, the last driver
-version seen; `DownloadArtwork` is only kept for older settings files).
+(`GamingSettings`: list or grid, sort order, the power plans to restore, the last driver version seen, what VRAM
+management learned; `DownloadArtwork` and the frame limiter's fields are only kept for older settings files).
 
 - **Library.** Core parses each launcher's own files, unit-tested with samples: Valve's text KeyValues
   (`KeyValues`) for Steam's `libraryfolders.vdf` and `appmanifest_*.acf` (fully installed games only, tools such as
@@ -750,43 +756,54 @@ version seen; `DownloadArtwork` is only kept for older settings files).
   Windows' Settings. Every supported boost counts in the ring and *Boost now* turns each one on, Ultimate Performance
   included (1.4.7–1.4.8 left it out on a multi-CCD Ryzen X3D, so the ring read 8/8 with nine switches on); on such a
   processor `GamingTweakViewModel.Advice` explains on hover that it stops the core parking AMD's driver relies on.
-- **Frame limiter.** The NVIDIA driver's frame limiter (`FRL_FPS`, 0x10835002) in the global profile through NVAPI's
-  driver settings (`NvApi`: `nvapi_QueryInterface` function pointers, ids from NVIDIA's public `nvapi_interface.h`,
-  the 12,320-byte `NVDRS_SETTING`). *Automatic* is refresh − refresh² ÷ 3600 (`FrameCap.AutoTarget`, as NVIDIA Reflex
-  uses), from the fastest attached display. While a library game runs the page leases the frame-rate source and grades
-  pacing from its 1% low against the average (`FramePacing`).
-- **Per-game limits (1.4.1).** The limiter's *Apply to* picker chooses all games or one. A game's limit goes into the
-  driver profile of its programs: `GameExecutables.Pick` (Core, unit-tested) takes the running program in the game's
-  folder, the store's launch program, Unreal's `*-Shipping.exe`, else the largest program that isn't a helper;
-  `NvApi.SetForApplication` uses `NvAPI_DRS_FindApplicationByName` (NVIDIA's own profile when it lists the program;
-  `NVDRS_APPLICATION` V4 down to V1 for older drivers) or creates a "Coreloom: name" profile with the program
-  (`CreateProfile`, `CreateApplication`), sets `FRL_FPS` there and saves; removing deletes the setting and an emptied
-  Coreloom profile. `GamingSettings.GameFrameCaps` remembers each game's limit and programs, and `GlobalFrameCap` the
-  all-games limit last read, for the chips and the overlay.
+- **The frame limiter (1.4.0–1.8.3, removed in 1.8.4).** It set the NVIDIA driver's `FRL_FPS` (0x10835002) for all
+  games or, per game, in the driver profile of the game's programs (`NvApi.SetForApplication`, "Coreloom: name"
+  profiles); adaptive frame pacing (1.4.6) adjusted per-game limits itself. 1.8.4 removed the section, its view models
+  and `AdaptivePacingService`. On the first status read with an NVIDIA driver, `GamingViewModel.RemoveAdaptiveLimitsAsync`
+  removes the limits adaptive pacing had set (`GameFrameCap.Adaptive`) as turning it off did, since nothing would
+  change them again; limits the user set stay in the driver (Max Frame Rate in NVIDIA's settings) and in
+  `GamingSettings.GameFrameCaps`/`GlobalFrameCap`, which the overlay's dashed target line still reads. Removing a game
+  added by hand still removes its old limit (`SetGameFrameCapAsync(…, 0)`). The banner's Frame limit tile became
+  **VRR**: On or Off from the G-SYNC boost's driver state, *display can't* when the display has no variable refresh,
+  a dash without an NVIDIA driver.
 - **Games added by hand (1.4.6).** `CustomGame` entries (`GamingSettings.CustomGames`, normalized by `CustomGames`,
   Core, with Windows paths parsed by hand so the tests run on Linux) become `GameEntry`s of `GameStore.Custom` ("Added
   by you"), merged ahead of launcher games. `GameEditorViewModel` adds, edits and removes them (program picked with an
   open-file dialog, name suggested from the program's version info, picture or the program's icon). `FindRunning`
   matches a custom game by its exact program first, and never by a broad folder (Desktop, Downloads, a drive root);
-  `GameExecutables.Pick` puts the chosen program first for its own limit.
-- **Adaptive frame pacing (1.4.6).** Off until the user turns on its switch (`GamingSettings.AdaptivePacing`).
-  `AdaptivePacingService` (app) ticks once a second: the game in front from `GamingModeService`, its newest second of
-  frames from the shared ETW frame-rate source (leased as "adaptive pacing", released 30 s after the last game), and
-  the graphics card's utilization. `PacingSecond.From` (Core) sums up a second (frame rate, median and 99th
-  percentile frame time, spikes over 1.6× the median, the longest frame). `AdaptivePacingController` (view model)
-  maps the program to a library game, leaves alone a game with a limit the user set, and runs an
-  `AdaptivePacingSession` (Core, unit-tested): two minutes of seconds (under 10 FPS or with a frame over 500 ms left
-  out); after 45 s the sustainable rate is the frame rate reached in 80 % of seconds, but no more than the median 1%
-  low ÷ 0.85; `PacingLimits` snaps it under the refresh rate (G-SYNC/FreeSync: `FrameCap.AutoTarget`, steps of 5) or
-  to a whole fraction of it (fixed refresh), in whole rendered frames and at least 40 rendered frames a second with
-  frame generation (set per game: 2×, 3×, 4×). A game without a limit gets that; one missing its limit (median under
-  97 %, more than 10 % of seconds under 95 %, or 1% lows under 80 %) is lowered by at most 15 %; one holding it with
-  the graphics card under 70 % busy is raised by up to 10 %, never to or above a limit it failed before
-  (`FailedAt`); changes under 5 % are skipped. After a change 12 s of frames show whether the driver took it: if not,
-  nothing more changes until the game's next start. Limits go through `ApplyGameCapAsync` (the per-game path above)
-  marked `GameFrameCap.Adaptive`; turning the switch off removes those. `GamingSettings.AdaptivePacingGames` keeps
-  what was learned (limit, failed limit, sustained rate, frame generation, sessions). Without an NVIDIA driver it
-  suggests the limit instead. Each change and session end is logged under *Gaming*.
+  `GameExecutables.Pick` puts the chosen program first for its own limit (used by 1.4.1–1.8.3's per-game limits).
+- **Keep shader caches (1.8.4).** The Shader cache card condensed into a boost (`GamingTweak.KeepShaderCaches`):
+  Windows' automatic maintenance (the SilentCleanup task, `cleanmgr /autoclean`) runs every Disk Cleanup handler under
+  `HKLM\…\Explorer\VolumeCaches` whose `Autorun` is 1, the DirectX shader cache's `D3D Shader Cache` among them. On
+  writes `Autorun` = 0 in the 64- and 32-bit registry views, off writes Windows' default 1 (`ShaderCacheCleanup`,
+  Core). The boost's recommendation line is the caches' summary (each cache and size on its tooltip) and its note the
+  new-driver notice. The NVIDIA shader cache boost got the size picker (`GamingTweakViewModel.Choices`/`Choice`).
+- **DirectStorage & GPU decompression (1.8.4).** A check, not a switch (`GamingTweakViewModel.IsSwitch` false: no
+  toggle, *Boost now* leaves it, its pill says Ready / Partly ready, and it counts as on when ready).
+  `WindowsGamingService.DirectStorageAsync` gathers: the graphics card's highest Direct3D 12 shader model
+  (`Direct3D.HighestShaderModel`: `D3D12CreateDevice` at feature level 11.0 on the card with the most dedicated memory,
+  then `ID3D12Device::CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL)` asking 6.6 and stepping down), the bus type of
+  each drive holding games (`IOCTL_STORAGE_QUERY_PROPERTY` on the volume's disk), BypassIO on it
+  (`FSCTL_MANAGE_BYPASS_IO` 0x00090448 with `FS_BPIO_OP_QUERY` on the drive's root, the 352-byte `FS_BPIO_OUTPUT`:
+  OpStatus 0 is supported, else the failing driver and Windows' reason; `GameStorageProbe`), and the games whose folder
+  holds `dstorage.dll` or `dstoragecore.dll` within three folders. `DirectStorageCheck.Evaluate` (Core, unit-tested)
+  needs Shader Model 6.0 (GPU decompression, per Microsoft's DirectStorage 1.1 notes), wants NVMe for every drive with
+  games and, on Windows 11, BypassIO on them; the first problem becomes the boost's note, and every part a line in the
+  shared Details card (`BoostDetailsViewModel`). It runs after each library scan and at most every ten minutes on a
+  visit, and logs what it found.
+- **Intelligent VRAM management (1.8.4).** Coreloom's own switch (`GamingSettings.VramManagement`). `VramWatchService`
+  (app; it took `AdaptivePacingService`'s place) ticks every 2 s while it's on: the game in front from
+  `GamingModeService`, its dedicated and shared graphics memory from the *GPU Process Memory* counters
+  (`GpuProcessMemory`: PDH wildcard instances `pid_N_luid_…_phys_0`, summed for the game's process; opened only while
+  a game is in front and closed 30 s after), and the card's used and total VRAM from the telemetry frame.
+  `VramController` (view model) maps the program to a library game (other fullscreen programs aren't watched) and feeds
+  a `VramSession` (Core): peaks of the game's own use, of everything in use on the card, of its shared (system) memory,
+  and the share of readings with the card at 95 % or more. 30 s without the game ends the session; ten seconds or more
+  of readings become a `VramRecord` (merged with the game's earlier ones on the same card; the 40 most recent kept) and
+  a log line. `VramAdvice` judges it: *Too full* at 95 %+ for a tenth of the time or 92 %+ with 1 GB+ in system memory
+  (lower Texture quality or the streaming budget one step, close other apps on the card), *Tight* from 88 %, else
+  *Fits* (with room for higher textures under 60 % on an 8 GB+ card). The boost's note says what it's watching or the
+  latest game's result; its Details list every game.
 - **Intelligent CPU core scheduling (1.4.7).** A boost (`GamingTweak.CoreScheduling`, Coreloom's own switch:
   `GamingSettings.CoreScheduling`); its *Details* (`GamingTweakViewModel.DetailsCommand`) open a card over the page
   (1.4.7 had it under the shader cache), and a test's progress or a result to keep shows under the boost

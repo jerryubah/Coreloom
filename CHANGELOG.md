@@ -7,6 +7,29 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.8.4] - 2026-10-30
+
+Twelve Gaming boosts on Windows with DirectStorage and graphics memory among them, a VRR tile in place of the frame limit, calmer speed tests, and one dark glass button everywhere.
+
+### Highlights
+
+- **Windows: twelve boosts, no frame limiter.** The Gaming page's frame limiter section is gone, adaptive pacing with it. The shader cache section is now a boost, *Keep shader caches*: it stops Windows' automatic maintenance from deleting the DirectX shader cache, so games don't compile their shaders again after a cleanup. It shows how much is cached, and when a new graphics driver means starting over. The NVIDIA shader cache's size is chosen right under its own boost.
+- **Windows: DirectStorage & GPU decompression.** A check of everything DirectStorage needs: a DirectX 12 graphics card with Shader Model 6.0 for GPU decompression, NVMe drives for your games, and Windows 11's BypassIO storage path on them. It finds the games that use it, and Details shows each part and what's in the way. It's a check, not a switch: games use DirectStorage on their own when the PC is ready.
+- **Windows: Intelligent VRAM management.** Turn it on and Coreloom watches the graphics memory of the game you're playing. When the game leaves, it says how much was used and whether textures had to move to system memory, and recommends a texture setting for that game. It only reads Windows' counters; nothing in the game changes.
+- **VRR in the banner.** The Gaming banner's Frame limit tile now shows whether variable refresh (G-SYNC) is on or off.
+- **One button everywhere, and calmer speed tests.** Every button is now the dark glass button with white text from 1.8.3's banners. The drive and internet speed tests are plain glass, without colored glows.
+
+### In detail
+
+- Frame limits set before 1.8.4: adaptive pacing's own limits are removed from the NVIDIA driver the first time Gaming opens, since nothing would change them any more. A limit you set yourself (for all games or one game) stays, and shows in NVIDIA's settings as Max Frame Rate. G-SYNC's recommendation now points there.
+- VRAM management judges each game by the most in use on the graphics card while it played. It says *Too full* when the card was at 95 % or more for a tenth of the time, or when 1 GB or more of the game's graphics moved to system memory. It says *Tight* from 88 %. Each game's result is kept, the 40 most recent, and written to the log.
+- The DirectStorage check runs after each library scan, at most every ten minutes otherwise, and logs what it found.
+- Have 1.8.3? Choose *Check for Updates* (the Coreloom menu on a Mac, *Settings › Updates* on Windows), then *Install update*.
+
+### Feedback
+
+Something not right with the new boosts or buttons? [Open an issue](https://github.com/jerryubah/Coreloom/issues) with a screenshot.
+
 ## [1.8.3] - 2026-10-29
 
 Banners lit from above, new dials, dark glass buttons you can read, graph fills without edges, no outline around the overlay on Windows, and a Mac readings window that keeps its shape.

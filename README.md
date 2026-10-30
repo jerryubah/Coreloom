@@ -52,7 +52,7 @@ Each button downloads the newest version. Once installed, Coreloom keeps itself 
 
 - **Design.** One background across the whole window, with the sidebar and every card made of frosted glass that
   shows a soft copy of what's behind it (1.8.2); banners lit softly from their top edge, with a dial in its own tile
-  and dark glass buttons with white text (1.8.3); smooth squircle corners on every card and control; cards with data glow
+  and dark glass buttons with white text (1.8.3), now every button (1.8.4); smooth squircle corners on every card and control; cards with data glow
   in their own color, and their edge glows in that color under the pointer; temperatures shown like a thermometer (blue
   when cool through to red when hot); a near-black dark mode; tick-ring gauges; liquid toggles; quick search with live
   results (Ctrl+K); eased scrolling everywhere; and a dark-mode app icon, on Coreloom's shortcuts too.
@@ -72,20 +72,20 @@ Each button downloads the newest version. Once installed, Coreloom keeps itself 
 - **Gaming.** A tab with your installed games (Steam, Epic Games, GOG, Xbox, Ubisoft Connect, EA app, Battle.net,
   Riot) as cards or a grid of covers (a game without a picture on your PC gets one from its store or Steam
   automatically), with search, sorting and *Play*; **games added by hand** (*Add game*: pick the .exe, give it a name,
-  a picture or the program's icon, and change or remove it later), which are recognised, monitored and limited like
-  the rest; switches for hardware-accelerated GPU
+  a picture or the program's icon, and change or remove it later), which are recognised and monitored like the
+  rest; twelve boosts (1.8.4): switches for hardware-accelerated GPU
   scheduling, the Ultimate Performance power plan, Game Mode, windowed-game optimizations, Game Bar background
   recording, the NVIDIA *Prefer maximum performance* mode, G-SYNC for fullscreen and windowed games, a 10 GB / 100 GB /
-  unlimited NVIDIA shader cache and **intelligent CPU core scheduling**, each saying what it helps with and how to use
-  it (or *Boost now* for all of them); core scheduling knows which cores suit games (the 3D V-Cache CCD of a multi-CCD
+  unlimited NVIDIA shader cache, **keeping shader caches** (Windows' automatic maintenance stops deleting the DirectX
+  shader cache; the boost shows how much is cached and when a new driver resets it), **intelligent VRAM management**
+  (it watches the graphics memory of the game you play and recommends a texture setting per game) and **intelligent
+  CPU core scheduling**, plus a **DirectStorage & GPU decompression** check (a DirectX 12 card with Shader Model 6.0,
+  NVMe drives and Windows 11's BypassIO, and the games that use it), each saying what it helps with and how to use it
+  (or *Boost now* for all the switches); the banner shows whether variable refresh (VRR) is on; core scheduling knows which cores suit games (the 3D V-Cache CCD of a multi-CCD
   Ryzen X3D such as the 9950X3D, or a hybrid processor's performance cores), shows where the game you're playing runs,
   checks AMD's chipset driver, Game Mode and the power plan it depends on, and keeps a game on chosen cores only after
-  an A/B test in that game shows a clear gain and you keep it, never against AMD's own scheduling; a **frame limiter** that sets the NVIDIA driver's own frame limiter for all games or
-  for one game on its own, automatically just under your refresh rate so G-SYNC/FreeSync stays engaged, with live FPS,
-  1% low and pacing of the game you're playing; **adaptive frame pacing** (off until you turn it on), which measures
-  each game's real frame times while you play and sets the game's own limit to a frame rate it holds with steady 1%
-  lows, a step at a time, under your refresh rate and in whole rendered frames with frame generation; and shader-cache
-  care (cache sizes, a notice when a new driver resets them).
+  an A/B test in that game shows a clear gain and you keep it, never against AMD's own scheduling. (The frame limiter
+  and adaptive frame pacing were removed in 1.8.4; a limit already in the NVIDIA driver shows there as Max Frame Rate.)
 - **Benchmarking.** A CPU benchmark (eight tests of everyday and demanding work — compression, text processing,
   cryptography, navigation, ray tracing, machine learning, a photo filter and physics — on one core and on every
   thread, for a single-core and a multi-core score) and a GPU benchmark (two graphics tests and three compute tests on
@@ -98,7 +98,7 @@ Each button downloads the newest version. Once installed, Coreloom keeps itself 
   overclocked or changed.
 - **In-game overlay.** FPS, frame time and 1% lows with a smooth frame-time graph and GPU, CPU and RAM readings on top
   of your games, measured from Windows' graphics events (nothing is injected into games, and Coreloom gives way to the
-  game while it runs); while the frame limiter limits the game, its limit is a dashed line on the graph. Turned on
+  game while it runs); a frame limit in the NVIDIA driver is a dashed line on the graph. Turned on
   from the Graphics page or with a hotkey (End by default); choose what it shows (each line in its own size), where
   (nine places, fine-tuned X/Y, or a place per game), its size (Compact, Standard, Expanded or your own scale, following
   your screen's resolution), and its text, colors, opacity and corners. *Move on screen* (or Shift + the hotkey) lets
@@ -273,7 +273,10 @@ How it works is in [src/Coreloom.Phone/README.md](src/Coreloom.Phone/README.md).
 | Wired devices (USB, displays, Thunderbolt) | Plug and Play device tree (configuration manager) | No |
 | Installed games and their pictures | The launchers' own files (Steam `libraryfolders.vdf`, app manifests and library picture cache; Epic manifests; GOG and Xbox game folders) and Windows' installed-apps list; for games without a picture, Epic's catalog pictures or Steam's public store | No |
 | GPU scheduling, power plan, Game Mode, windowed-game and Game Bar settings | Windows: the graphics kernel (D3DKMT), the registry values Windows Settings uses, `powercfg` | Changing GPU scheduling: **yes** |
-| NVIDIA frame limit, shader cache size, power management mode, G-SYNC, driver version | **NVAPI** driver settings (the store the NVIDIA Control Panel uses) and display info | Changing them: **yes** |
+| NVIDIA frame limit (read only), shader cache size, power management mode, G-SYNC, driver version | **NVAPI** driver settings (the store the NVIDIA Control Panel uses) and display info | Changing them: **yes** |
+| Keeping the DirectX shader cache | The Disk Cleanup handler's `Autorun` value (`VolumeCaches\D3D Shader Cache`) | Changing it: **yes** |
+| DirectStorage readiness | Direct3D 12's shader model, the drives' bus type (storage IOCTLs), BypassIO (`FSCTL_MANAGE_BYPASS_IO`, as `fsutil bypassio state`), `dstorage.dll` in game folders | No |
+| A game's graphics memory (VRAM management) | Windows' *GPU Process Memory* performance counters (what Task Manager shows) | No |
 
 On a Mac:
 
@@ -432,13 +435,13 @@ LibreHardwareMonitor's own report. See [docs/TESTING-ON-YOUR-PC.md](docs/TESTING
   Optimizer are shown, never changed.
 - **The Gaming page changes settings only when you flip a switch.** Each switch sets one documented Windows setting
   (the registry values and `powercfg` commands Windows' own Settings use) or one NVIDIA driver setting (as the NVIDIA
-  Control Panel does), shows its state and can be turned off again. Adaptive frame pacing, once you turn it on, sets
-  and adjusts each game's own driver limit as you play (never a limit you set yourself), writes every change to the
-  log, and removes its limits when you turn it off. Intelligent CPU core scheduling, once on, only reads AMD's 3D
+  Control Panel does), shows its state and can be turned off again. Intelligent VRAM management, once on, only reads
+  Windows' graphics-memory counters while one of your games is in front; the DirectStorage check only reads.
+  Intelligent CPU core scheduling, once on, only reads AMD's 3D
   V-Cache driver and its preferences (it never changes them or restarts its service) and changes a game's cores only
   for a test you start or a profile you kept, the way Task Manager's *Set affinity* does; turning it off or closing
   Coreloom gives those games Windows' choice back. **Nothing is injected into games**: frame rates
-  come from Windows' graphics events, the frame limiter is the driver's own limiter, and games start through their own
+  come from Windows' graphics events, and games start through their own
   launchers as you, not as administrator.
 - **The Devices page changes something only when you click.** Connect, Disconnect, the Bluetooth switch and Eject do
   what Windows' own buttons do; nothing is unpaired or reconfigured.

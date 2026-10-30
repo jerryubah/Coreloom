@@ -140,6 +140,9 @@ Work through each area and tick what works.
       hard edge.
 - [ ] (1.8.3) Turn the in-game overlay on, then change the background, accent or theme in *Settings → Appearance*:
       the overlay keeps no outline or grey border (before, Windows 11 drew one after such a change).
+- [ ] (1.8.4) Every text button on every page (*Check again*, *Choose automatically*, *Start test*, *Clear filters*,
+      *Customize*, *Remove…*) is the same charcoal glass with white text, in dark and light themes; icon buttons (×,
+      refresh) are unchanged. The drive and internet speed tests are plain glass with no colored glow.
 
 **Overview**
 
@@ -565,10 +568,21 @@ Work through each area and tick what works.
 
 **Gaming**
 
-- [ ] Frame limiter *Apply to*: pick a game, choose a limit and switch it on: the NVIDIA Control Panel (*Manage 3D
-      settings › Program settings*) shows *Max Frame Rate* for that game's program (in NVIDIA's own profile for it, or a
-      "Coreloom: game" profile), and nothing changes for other games. The game stays at that limit after a restart of
-      it; the chip under the picker shows it, clicking the chip shows it, × removes it (and the Coreloom profile).
+- [ ] (1.8.4) No frame limiter section. Twelve boosts in four rows of three: … G-SYNC, NVIDIA shader cache (with its
+      size under it), *Keep shader caches*, *DirectStorage & GPU decompression*, *Intelligent VRAM management*,
+      *Intelligent CPU core scheduling*. The banner's tiles read Games, Display, **VRR** (On when G-SYNC is on) and
+      Driver. If you had adaptive pacing on, its per-game limits are gone from the NVIDIA Control Panel after Gaming
+      first opens; a limit you set yourself is still there (*Max Frame Rate*).
+- [ ] (1.8.4) *Keep shader caches*: switching it on sets `Autorun` to 0 under
+      `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches\D3D Shader Cache` (regedit), off sets it
+      back to 1. Its line shows the caches' total; hover it for each cache.
+- [ ] (1.8.4) DirectStorage: *Details* lists your graphics card (Shader Model), each drive with games (NVMe or not,
+      BypassIO on Windows 11) and the games that use DirectStorage; compare BypassIO with `fsutil bypassio state D:\` in
+      an administrator terminal. Note anything it gets wrong.
+- [ ] (1.8.4) VRAM management: switch it on and play a library game for a few minutes. The boost says *Watching
+      game: x of y GB in use*, close to Task Manager's *Dedicated GPU memory*; after you quit, it shows the result and
+      *Details* has the game's recommendation. A heavy game at its highest textures on a smaller card should say
+      *Tight* or *Too full*.
 - [ ] *Gaming* sits right above *Graphics* in the sidebar; *Settings › Updates* is now the last item in Settings, below
       *About* (the update dot still shows there, and the sidebar's update badge still opens it).
 - [ ] *Your games* lists the games installed with each launcher you use (Steam, Epic, GOG, Xbox / Game Pass, Ubisoft,
@@ -581,23 +595,20 @@ Work through each area and tick what works.
       keep its initials).
 - [ ] *Play* starts the game through its launcher and the game is **not** elevated (Task Manager › Details ›
       *Elevated* column says No). The folder button opens the game's folder.
-- [ ] With a library game running and the page open: the banner shows *Now playing* with its FPS, the game's card or
-      cover is marked *Playing*, and the frame limiter card shows FPS, 1% low and consistency close to the overlay's.
+- [ ] With a library game running and the page open: the banner shows *Now playing* with its FPS (close to the
+      overlay's), and the game's card or cover is marked *Playing*.
 - [ ] Boosts: each switch matches Windows (Settings › Display › Graphics for HAGS and windowed games, Control Panel
       power plans, Settings › Gaming for Game Mode and *Record what happened*) and the NVIDIA Control Panel (*Power
       management mode*, *Shader Cache Size*, *Set up G-SYNC*). Flip each on and off and check it there.
 - [ ] HAGS shows *Restart to finish* after switching it, and *On*/*Off* correctly after the restart.
 - [ ] Ultimate Performance creates and activates the plan; switching it off goes back to the plan you had before.
-- [ ] *Boost now* turns on everything that was off and says how
-      many; the ring shows e.g. 8/8.
-- [ ] Frame limiter: switching it on sets *Max Frame Rate* in the NVIDIA Control Panel (global) to the shown limit (138
-      on a 144 Hz display); a game started afterwards stays at that limit with flat frame times; switching it off
-      sets *Max Frame Rate* back to Off. Picking another limit in the list changes it.
+- [ ] *Boost now* turns on every switch that was off and says how many; DirectStorage counts only when it's ready,
+      so the ring shows 12/12 on a ready PC (11/12 when, say, games sit on a SATA drive).
 - [ ] Shader cache: the switch matches *Shader Cache Size* (10 GB or more) in the NVIDIA Control Panel; the sizes look
       plausible next to `%LOCALAPPDATA%\NVIDIA\DXCache` and `D3DSCache`. After a driver update the notice appears once
       and *Got it* hides it.
-- [ ] On a PC without an NVIDIA card: the frame limiter, power mode, shader-cache and G-SYNC switches explain why they
-      can't be used.
+- [ ] On a PC without an NVIDIA card: the power mode, shader-cache and G-SYNC switches explain why they can't be used,
+      and the VRR tile shows a dash.
 
 **In-game overlay**
 
@@ -818,7 +829,9 @@ GitHub's Macs check every build of Coreloom for Mac, but they are virtual machin
 11. **Banners and buttons (1.8.3).** Gaming and Smart Optimize: the light from the top edge stays behind the text, the
    dial sits in the middle of its tile, and *Smart Scan* runs a comet along the dial. Every main button (*Boost now*,
    *Smart Scan*, *Install update*, *New update available*) reads clearly: white text on charcoal glass.
-12. **Updates.** When a newer version is out, Settings has a red dot and the sidebar's *New update available* button
+12. **Buttons and speed tests (1.8.4).** Every text button is the same charcoal glass with white text, in dark and
+   light; the drive and internet speed tests are plain glass with no colored glow.
+13. **Updates.** When a newer version is out, Settings has a red dot and the sidebar's *New update available* button
    opens *Settings › Updates*. Once a newer version is out, *Coreloom › Check for Updates…* downloads it; *Install update* quits
    Coreloom, replaces it and opens the new version (`~/Library/Logs/Coreloom/update.log` says what happened).
 

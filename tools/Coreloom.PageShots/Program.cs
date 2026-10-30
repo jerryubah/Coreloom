@@ -269,6 +269,35 @@ internal static class Program
             Save(root, Path.Combine(output, name + ".png"));
         }
 
+        // The Gaming page scrolled to its boosts (the website's "New in 1.8.4" picture for Windows visitors).
+        ThemeService.Instance?.Apply(new AppearanceSettings { Theme = ThemePreference.Dark, ReducedMotion = true });
+        data.Settings.Current.Appearance.Backdrop = new BackdropSettings();
+        shell.Navigate(shell.Gaming);
+        for (int i = 0; i < 20; i++)
+        {
+            shell.OnFrame(data.Poll());
+            await Task.Delay(120);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        }
+
+        if (Descendants(root).OfType<GamingPage>().FirstOrDefault() is { } gamingPage
+            && Descendants(gamingPage).OfType<ScrollViewer>().FirstOrDefault() is { } pageScroller
+            && Descendants(gamingPage).OfType<TextBlock>().FirstOrDefault(b => b.Text == "Performance boosts") is { } boostsTitle
+            && pageScroller.Content is UIElement scrolled)
+        {
+            double y = boostsTitle.TranslatePoint(new Point(0, 0), scrolled).Y;
+            pageScroller.ScrollToVerticalOffset(Math.Max(0, y - 18));
+            for (int i = 0; i < 8; i++)
+            {
+                shell.OnFrame(data.Poll());
+                await Task.Delay(120);
+                await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            }
+
+            Save(root, Path.Combine(output, "windows-gaming-boosts.png"));
+            pageScroller.ScrollToVerticalOffset(0);
+        }
+
         // A newer version out: the sidebar's update button, the red dot on Settings and Settings › Updates.
         ThemeService.Instance?.Apply(new AppearanceSettings { Theme = ThemePreference.Dark, ReducedMotion = true });
         releases.None = false;
@@ -376,6 +405,19 @@ internal static class Program
         }
 
         Console.WriteLine($"{Path.GetFileName(file)}: {root.ActualWidth:0} × {root.ActualHeight:0}");
+    }
+
+    private static IEnumerable<DependencyObject> Descendants(DependencyObject parent)
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            yield return child;
+            foreach (var deeper in Descendants(child))
+            {
+                yield return deeper;
+            }
+        }
     }
 
     private static async Task ShootAsync(string file, FrameworkElement page, double? height, Action tick, double width = PageWidth)

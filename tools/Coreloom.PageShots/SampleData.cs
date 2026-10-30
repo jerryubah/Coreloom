@@ -58,6 +58,7 @@ internal sealed class SampleData
         {
             s.Gaming.CoreScheduling = true;
             s.Gaming.VramManagement = true;
+            s.Gaming.ShaderCacheSize = ShaderCacheSize.Unlimited; // what the sample driver has
             s.Gaming.KeepVram(new VramRecord { GameId = "epic:Dodo", Name = "Alan Wake 2", TotalMb = 32607, PeakGameMb = 17100, PeakInUseMb = 19400, PeakSharedMb = 310, Minutes = 95, Sessions = 2, LastPlayed = DateTime.UtcNow.AddDays(-2) });
             s.Gaming.KeepVram(new VramRecord { GameId = "steam:1091500", Name = "Cyberpunk 2077", TotalMb = 32607, PeakGameMb = 13900, PeakInUseMb = 15800, PeakSharedMb = 240, Minutes = 140, Sessions = 3, LastPlayed = DateTime.UtcNow.AddHours(-3) });
             s.Gaming.CoreProfiles.Add(new CoreProfile { Program = "Cyberpunk2077.exe", Name = "Cyberpunk 2077", FpsGain = 0.07, LowGain = 0.05 });

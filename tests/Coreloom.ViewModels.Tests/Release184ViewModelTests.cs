@@ -146,12 +146,14 @@ public class Release184ViewModelTests
 
         vram.Tick(new VramTick(4242, program, new VramSample(8 * Gb, 0, 9 * Gb, 16 * Gb)), t0);
         Assert.Null(vram.Session); // off: nothing watched
+        Assert.StartsWith("Recommended: on.", page.VramBoost.Recommendation);
         Assert.Null(page.VramBoost.Message);
 
         page.VramBoost.IsOn = true;
         await Task.Yield();
         Assert.True(settings.Current.Gaming.VramManagement);
-        Assert.Equal("Waiting for a game from your library.", page.VramBoost.Message);
+        Assert.Equal("Waiting for a game from your library.", page.VramBoost.Recommendation);
+        Assert.Null(page.VramBoost.Message); // the warning line is only for problems
 
         // A program that isn't one of the games isn't watched.
         vram.Tick(new VramTick(77, @"C:\Program Files\Browser\browser.exe", new VramSample(Gb, 0, 4 * Gb, 16 * Gb)), t0);
@@ -164,7 +166,7 @@ public class Release184ViewModelTests
         }
 
         Assert.Equal("Cyberpunk 2077", vram.GameName);
-        Assert.StartsWith("Watching Cyberpunk 2077:", page.VramBoost.Message);
+        Assert.StartsWith("Watching Cyberpunk 2077:", page.VramBoost.Recommendation);
 
         // Out of the game for a moment: the session goes on; after 30 seconds without a game it ends and is kept.
         vram.Tick(new VramTick(null, null, null), t0.AddSeconds(70));
@@ -176,7 +178,7 @@ public class Release184ViewModelTests
         Assert.Equal(16 * 1024, record.TotalMb);
         Assert.Equal(15 * 1024 + 512, record.PeakInUseMb);
         Assert.Equal(VramFit.Tight, VramAdvice.Fit(record));
-        Assert.StartsWith("Cyberpunk 2077: tight, 15.5 of 16 GB at most", page.VramBoost.Message);
+        Assert.StartsWith("Cyberpunk 2077: tight, 15.5 of 16 GB at most", page.VramBoost.Recommendation);
 
         page.VramBoost.DetailsCommand!.Execute(null);
         var row = Assert.Single(page.Details.Rows);
@@ -189,6 +191,7 @@ public class Release184ViewModelTests
         await Task.Yield();
         Assert.False(settings.Current.Gaming.VramManagement);
         Assert.Single(settings.Current.Gaming.VramGames); // what it learned stays
+        Assert.StartsWith("Recommended: on.", page.VramBoost.Recommendation);
         settings.Dispose();
     }
 

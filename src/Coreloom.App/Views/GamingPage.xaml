@@ -369,7 +369,7 @@
               <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Game Boost" Style="{StaticResource Text.Section}" />
                 <Border Style="{StaticResource Badge}" Margin="10,0,0,0" Background="{DynamicResource Brush.AccentSoft}">
-                  <TextBlock Text="boost · limit · play" FontSize="10.5" Foreground="{DynamicResource Brush.Accent}" />
+                  <TextBlock Text="boost · check · play" FontSize="10.5" Foreground="{DynamicResource Brush.Accent}" />
                 </Border>
               </StackPanel>
               <TextBlock Text="{Binding HeroTitle}" FontSize="21" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" Margin="0,8,0,0" />

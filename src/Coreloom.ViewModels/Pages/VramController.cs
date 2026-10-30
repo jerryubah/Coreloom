@@ -55,9 +55,12 @@ public sealed class VramController : ObservableObject
     /// <summary>The session in progress (for tests).</summary>
     internal VramSession? Session => _session;
 
-    /// <summary>The boost's state, with what it's doing as its note.</summary>
+    /// <summary>
+    /// The boost's state. Its note is only a problem reading graphics memory (shown in the warning color); what it's
+    /// watching and the latest game's result are <see cref="BoostNote"/>, shown on the boost's recommendation line.
+    /// </summary>
     public TweakStatus Status => IsSupported
-        ? new TweakStatus(true, IsOn, Note: BoostNote)
+        ? new TweakStatus(true, IsOn, Note: IsOn ? _problem : null)
         : TweakStatus.Unsupported("Needs Windows' graphics-memory counters.");
 
     /// <summary>"Watching Cyberpunk 2077: 9.8 of 16 GB in use", the latest game's result, or what it's waiting for.</summary>
@@ -68,11 +71,6 @@ public sealed class VramController : ObservableObject
             if (!IsOn)
             {
                 return null;
-            }
-
-            if (_problem is not null)
-            {
-                return _problem;
             }
 
             if (_session is { Latest: { } now } session)
