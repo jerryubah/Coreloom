@@ -941,6 +941,24 @@ unchanged.
 - **Keep shader caches** writes a documented Disk Cleanup value; whether Windows' maintenance then leaves the cache alone over weeks, and what Storage Sense does, can't be seen on a runner.
 - **Adaptive pacing's leftover limits** being removed from a real NVIDIA driver on the first visit (only the fake driver in the tests).
 
+## 1.8.5: CPU cache optimization, a switch on every boost and no yellow, the banner light on the speed tests, accent main buttons
+
+### Verified
+
+| What | How | Result |
+|---|---|---|
+| Tests | Core (`Release185Tests`: L3 caches counted on a Ryzen X3D, two equal CCDs, one CCD and a parsed 9950X3D; cache optimization offered only with two or more L3s, not on a hybrid Intel sharing one; the game's cores from its profile, else left to AMD while its driver parks, else the 3D V-Cache, else the busiest CCD once there are readings; the background mask; which apps move: listed ones on every core, not the game, not one whose cores were chosen, an inherited moved mask picked up, ended processes skipped; the setting through JSON), view models (`Release185ViewModelTests`: on a 9950X3D without AMD's driver, Chrome and Discord moved to the frequency cores, never the game, Notepad or a Chrome with chosen cores, a new tab's inherited cores picked up, looked again only every 5 s, the Details' rows, every core back 30 s after the game leaves; turning it off and closing give the cores back; left to AMD while its driver parks with the Balanced plan; two equal CCDs: waits for readings, then keeps the busiest one; one L3: *Not available* with the reason, neutral; no boost yellow, even with a restart to come; every boost a switch) and the 1.8.4 and core scheduling tests with the new counts | ✅ in the container (Core 759, view models 215) and on GitHub (CI run 41005293000: Windows Core 759, view models 215, Hardware 85, none skipped; Linux; macOS 188 on Intel, 187 + 1 skipped on Apple silicon) |
+| The Gaming page on Windows | Page shots runs 41005294848, 41006111898 and 41006870508: twelve boosts, each with its switch; CPU cache optimization *On · waiting for a game from your library* and its Details while Cyberpunk 2077 plays (the cache cores with 96 MB of L3 for the game, four background apps moved); the NVIDIA shader cache's size beside its switch with the switch level with the others; the pills running under the switch on the narrower window; no yellow anywhere on the boosts | ✅ |
+| Speed tests, Memory and buttons | Page shots (Storage, Network, Memory, Devices) and MacShots of every page (0 binding errors): the drive and internet speed tests and the Memory page's top card have the banner light; *Start test* is the glass banner button; *Connect*, *Pair a new device*, *Play* and the other primary buttons are filled with the accent, *Disconnect* and *Refresh* glass | ✅ |
+| The real Mac app | Mac verify run 41005296829 (the release's code): every page, Connect, menu bar readings, backgrounds, the readings window and a clean quit on Apple silicon and Intel | ✅ Apple silicon and Intel |
+| Website and README | Every app picture on the website and in the README redrawn from this version; Playwright as a Mac, a Windows and a phone-sized visitor: *New in 1.8.5* shows the Mac or Windows picture, title and three points for each, the hero badge says what's new, the background swatches still switch, no horizontal scrolling, no failed requests or console errors | ✅ |
+
+### Not verified yet
+
+- **CPU cache optimization on a real multi-CCD Ryzen.** The runner has one virtual processor group with no separate L3 caches, so moving real Chrome, Discord or Steam processes, Windows accepting the masks, apps getting every core back, and whether games actually run better have only been checked with the fake service in the tests. Task Manager's *Set affinity* should agree with what the boost says. Apps that run elevated or under another account can refuse the change; they're left as they are.
+- **AMD's driver and the parking rule** on a real 9800X3D/9950X3D: that leaving things to AMD with the Balanced plan, and moving apps with Ultimate Performance, are the better choices, is reasoned from how AMD's driver works, not measured.
+- The 1.8.4 items still open (VRAM management in a real game, *Keep shader caches* over weeks, adaptive pacing's leftover limits on a real driver).
+
 ## How to re-run the checks that can run anywhere
 
 ```bash
