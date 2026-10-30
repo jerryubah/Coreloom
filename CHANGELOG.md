@@ -7,6 +7,29 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.8.5] - 2026-10-30
+
+CPU cache optimization joins the Gaming boosts on Windows, every boost has its switch and nothing on them is yellow, the speed tests get the Gaming banner's light, and main actions such as Connect are filled with your accent again.
+
+### Highlights
+
+- **Windows: CPU cache optimization.** A new boost in DirectStorage's place. Coreloom reads the processor's cache layout, and when it has more than one L3 cache (a Ryzen with two CCDs, say), it keeps background apps such as browsers, chat, music, cloud sync and launchers' web helpers off the cores whose L3 cache your game uses, so the game keeps more of its cache. It can help CPU-bound games, most on processors with large L3 caches. It never moves the game, Windows' own processes, or an app whose cores you chose yourself, and the apps get every core back 30 seconds after the game closes, when you turn it off, or when Coreloom closes. *Details* shows each cache, which one the game has, and the apps moved.
+- **Every boost is a switch.** The DirectStorage check is gone; all twelve boosts have a switch, so *Boost now* can turn on everything the ring counts.
+- **No yellow on the boosts.** Notes, a restart still to come and why a boost isn't available are now said in the card's own colors, without yellow labels or text.
+- **The NVIDIA shader cache's size, beside its switch.** The size moved from the bottom of the card to the top, next to the switch, so the card ends with its text like the others in its row. What the driver has now shows when you point at it.
+- **The Gaming banner's light on the speed tests.** The internet and drive speed tests have the Gaming banner's light from their top edge, its bright line and grain. The Memory page has no speed test, so its top card, with the memory ring, gets the light instead.
+- **Main actions in your accent again.** *Connect*, *Pair a new device*, *Play*, *Clean selected*, *Free up memory*, *Run benchmark*, *Save* and the other main buttons in cards are filled with your accent again, so they don't look like the glass *Disconnect* or *Refresh* beside them. The banners' buttons (*Boost now*, *Smart Scan*, *Install update*, and the speed tests' *Start test*) stay glass.
+
+### In detail
+
+- CPU cache optimization leaves a Ryzen X3D to AMD while AMD's 3D V-Cache driver parks the other CCD (with the Balanced plan), since moving apps there would wake those cores. With Ultimate Performance or High Performance, or without AMD's driver, the game gets the 3D V-Cache to itself. On processors with equal CCDs it watches for a few seconds to see which CCD the game runs on. When core scheduling keeps a game on a CCD with its profile, cache optimization uses that one.
+- Every app it moves, and every one it gives back, is written to the log. It isn't offered where every core shares one L3 cache, or on processors with more than 64 logical processors.
+- Have 1.8.4? Choose *Check for Updates* (the Coreloom menu on a Mac, *Settings › Updates* on Windows), then *Install update*.
+
+### Feedback
+
+Something not right with cache optimization or the buttons? [Open an issue](https://github.com/jerryubah/Coreloom/issues) with a screenshot.
+
 ## [1.8.4] - 2026-10-30
 
 Twelve Gaming boosts on Windows with DirectStorage and graphics memory among them, a VRR tile in place of the frame limit, calmer speed tests, and one dark glass button everywhere.

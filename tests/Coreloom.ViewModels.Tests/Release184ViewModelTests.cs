@@ -6,7 +6,7 @@ using Coreloom.ViewModels.Services;
 
 namespace Coreloom.ViewModels.Tests;
 
-/// <summary>1.8.4: the Gaming page without the frame limiter, its twelve boosts, the VRR tile.</summary>
+/// <summary>1.8.4: the Gaming page without the frame limiter, its twelve boosts (CPU cache optimization in DirectStorage's place since 1.8.5), the VRR tile.</summary>
 public class Release184ViewModelTests
 {
     private static (GamingViewModel Page, FakeGaming Fake, SettingsService Settings) Create(Action<FakeGaming>? setup = null, Action<AppSettings>? settingsSetup = null)
@@ -39,11 +39,11 @@ public class Release184ViewModelTests
         [
             "Hardware-accelerated GPU scheduling", "Ultimate Performance power plan", "Game Mode", "Optimizations for windowed games",
             "No background recording", "Maximum graphics card performance", "G-SYNC & adaptive refresh", "NVIDIA shader cache",
-            "Keep shader caches", "DirectStorage & GPU decompression", "Intelligent VRAM management", "Intelligent CPU core scheduling",
+            "Keep shader caches", "CPU cache optimization", "Intelligent VRAM management", "Intelligent CPU core scheduling",
         ], page.Boosts.Select(b => b.Title));
         Assert.All(page.Boosts, b => Assert.True(b.HasCategory));
-        Assert.Equal("Loading + streaming", page.DirectStorageBoost.Category);
-        Assert.Equal("AMD + NVIDIA", page.DirectStorageBoost.Tag);
+        Assert.Equal("CPU performance", page.CacheOptimizationBoost.Category); // 1.8.5, in 1.8.4's DirectStorage check's place
+        Assert.Equal("Multi-CCD", page.CacheOptimizationBoost.Tag);
         Assert.Equal("Frame stability", page.VramBoost.Category);
         Assert.Equal("AMD + NVIDIA", page.VramBoost.Tag);
         Assert.DoesNotContain(typeof(GamingViewModel).GetProperties(), p => p.Name is "FramePacer" or "Adaptive" or "FrameLimitText");
@@ -83,55 +83,6 @@ public class Release184ViewModelTests
         await Task.Yield();
         Assert.True(fake.Tweaks[GamingTweak.KeepShaderCaches].IsOn);
         Assert.True(keep.IsOn);
-        settings.Dispose();
-    }
-
-    [Fact]
-    public async Task DirectStorage_IsACheck_CountedWhenReady_AndBoostNowLeavesIt()
-    {
-        var (page, fake, settings) = Create();
-        var ds = page.DirectStorageBoost;
-        Assert.True(fake.DirectStorageChecks >= 1); // checked after the scan
-        Assert.False(ds.IsSwitch);
-        Assert.False(ds.CanToggle);
-        Assert.Equal("Ready", ds.StatusText);
-        Assert.Equal(ColorKeys.ToneCool, ds.ColorKey);
-        Assert.True(ds.IsOn);
-        Assert.Contains("Ready", ds.Recommendation);
-
-        ds.IsOn = false; // a check can't be switched
-        Assert.True(ds.IsOn);
-
-        // A game on a SATA SSD: partly ready, with what's in the way; Boost now can't change that.
-        fake.DirectStorage = DirectStorageCheck.Evaluate(new DirectStorageInputs(26100, "RTX 5090", 0x66,
-            [new GameDrive(@"E:\", "SATA", true, new BypassIoState(true))], [new DirectStorageGame("steam:1", "Forspoken", @"E:\")]));
-        await page.RescanCommand.ExecuteAsync(null); // a scan always checks again (a visit only when it's due)
-        Assert.Equal("Partly ready", ds.StatusText);
-        Assert.Equal(ColorKeys.ToneWarm, ds.ColorKey);
-        Assert.False(ds.IsOn);
-        Assert.True(ds.IsSupported);
-        Assert.Contains("NVMe", ds.Message);
-        Assert.Null(ds.Recommendation);
-
-        await page.ApplyAllCommand.ExecuteAsync(null);
-        Assert.False(ds.IsOn);
-        Assert.Equal(page.BoostsAvailable - 1, page.BoostsOn); // everything else is on
-
-        // Details list each part.
-        ds.DetailsCommand!.Execute(null);
-        Assert.True(page.Details.IsOpen);
-        Assert.Equal("DirectStorage & GPU decompression", page.Details.Title);
-        Assert.Contains(page.Details.Rows, r => r.Name == "Drive E:" && r.Value == "SATA SSD" && r.ColorKey == ColorKeys.ToneWarm);
-        Assert.Contains(page.Details.Rows, r => r.Name == "Graphics card" && r.ColorKey == ColorKeys.ToneCool);
-        Assert.True(page.Details.HasNote);
-        page.Details.CloseCommand.Execute(null);
-        Assert.False(page.Details.IsOpen);
-
-        // No DirectX 12 card with Shader Model 6.0: not available.
-        fake.DirectStorage = DirectStorageCheck.Evaluate(new DirectStorageInputs(19045, "Old card", 0x51, [], []));
-        await page.RescanCommand.ExecuteAsync(null);
-        Assert.False(ds.IsSupported);
-        Assert.Equal("Not available", ds.StatusText);
         settings.Dispose();
     }
 
@@ -184,7 +135,7 @@ public class Release184ViewModelTests
         var row = Assert.Single(page.Details.Rows);
         Assert.Equal("Cyberpunk 2077", row.Name);
         Assert.StartsWith("Tight", row.Value);
-        Assert.Equal(ColorKeys.ToneWarm, row.ColorKey);
+        Assert.Equal(ColorKeys.Neutral, row.ColorKey); // said in words, not yellow (1.8.5)
         Assert.Contains("lower Texture quality one step", row.Detail);
 
         page.VramBoost.IsOn = false;

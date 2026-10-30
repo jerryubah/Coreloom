@@ -119,9 +119,9 @@
           <Grid Grid.Row="4" Margin="0,12,0,0">
             <Button x:Name="Connect" Style="{StaticResource Button.Primary}" Padding="12,6" HorizontalAlignment="Stretch" Command="{Binding ActionCommand}">
               <StackPanel Orientation="Horizontal">
-                <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Link}" Stroke="{DynamicResource Brush.OnGlow}"
+                <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Link}" Stroke="{DynamicResource Brush.OnAccent}"
                       Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
-                <c:RadialGauge Style="{StaticResource DeviceSpinner}" Fill="{DynamicResource Brush.OnGlow}" b:Spin.IsSpinning="{Binding IsBusy}"
+                <c:RadialGauge Style="{StaticResource DeviceSpinner}" Fill="{DynamicResource Brush.OnAccent}" b:Spin.IsSpinning="{Binding IsBusy}"
                                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
                 <TextBlock Text="{Binding ActionText}" Margin="7,0,0,0" />
               </StackPanel>
@@ -292,7 +292,7 @@
               <WrapPanel Margin="0,16,0,0">
                 <Button Style="{StaticResource Button.Primary}" Padding="16,8" Margin="0,0,8,0" Command="{Binding PairCommand}">
                   <StackPanel Orientation="Horizontal">
-                    <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Plus}" Stroke="{DynamicResource Brush.OnGlow}" />
+                    <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Plus}" Stroke="{DynamicResource Brush.OnAccent}" />
                     <TextBlock Text="Pair a new device" Margin="7,0,0,0" />
                   </StackPanel>
                 </Button>

@@ -4,7 +4,7 @@ using Coreloom.Core.Settings;
 
 namespace Coreloom.Core.Tests;
 
-/// <summary>1.8.4: keeping shader caches, the DirectStorage check, VRAM management's advice, G-SYNC without the frame limiter.</summary>
+/// <summary>1.8.4: keeping shader caches, VRAM management's advice, G-SYNC without the frame limiter (the DirectStorage check went in 1.8.5).</summary>
 public class Release184Tests
 {
     private const long Gb = 1L << 30;
@@ -29,93 +29,6 @@ public class Release184Tests
         Assert.Equal("Recommended: on for fullscreen and windowed games, with your 237 FPS limit for your 240 Hz display.", GSyncSetup.Recommendation(237, 240));
         Assert.Equal("Recommended: on for fullscreen and windowed games, with Max Frame Rate in NVIDIA's settings at about 224 FPS for your 240 Hz display.", GSyncSetup.Recommendation(0, 240));
         Assert.DoesNotContain("frame limiter", GSyncSetup.Recommendation(0, 0));
-    }
-
-    private static DirectStorageInputs Inputs(int build = 26100, int? model = 0x66, IReadOnlyList<GameDrive>? drives = null, IReadOnlyList<DirectStorageGame>? games = null) =>
-        new(build, "NVIDIA GeForce RTX 5090", model, drives ?? [new GameDrive(@"D:\", "NVMe", true, new BypassIoState(true))], games ?? []);
-
-    [Fact]
-    public void DirectStorage_IsReady_WithShaderModel6_NVMe_AndBypassIO()
-    {
-        var games = new[] { new DirectStorageGame("steam:1", "Forspoken", @"D:\"), new DirectStorageGame("steam:2", "Ratchet & Clank: Rift Apart", @"D:\") };
-        var report = DirectStorageCheck.Evaluate(Inputs(games: games));
-        Assert.Equal(DirectStorageState.Ready, report.State);
-        Assert.Null(report.Problem);
-        Assert.Equal("Ready for 2 games that use it: GPU decompression and NVMe with BypassIO.", report.Summary);
-        Assert.Contains(report.Rows, r => r.Name == "Graphics card" && r.Tone == CheckTone.Good && r.Detail!.Contains("Shader Model 6.6"));
-        Assert.Contains(report.Rows, r => r.Name == "Drive D:" && r.Value == "NVMe" && r.Detail!.Contains("Forspoken and Ratchet & Clank: Rift Apart are on it."));
-        Assert.Contains(report.Rows, r => r.Name == "BypassIO on D:" && r.Value == "Supported");
-        Assert.Contains(report.Rows, r => r.Name == "Games using DirectStorage" && r.Value == "2");
-
-        var none = DirectStorageCheck.Evaluate(Inputs());
-        Assert.Equal(DirectStorageState.Ready, none.State); // nothing uses it yet, but the PC is ready
-        Assert.Contains(none.Rows, r => r.Name == "Games using DirectStorage" && r.Tone == CheckTone.Info);
-    }
-
-    [Fact]
-    public void DirectStorage_SaysWhatsInTheWay()
-    {
-        var sata = DirectStorageCheck.Evaluate(Inputs(drives: [new GameDrive(@"E:\", "SATA", true, new BypassIoState(true))]));
-        Assert.Equal(DirectStorageState.PartlyReady, sata.State);
-        Assert.Contains("NVMe drive", sata.Problem);
-
-        var hdd = DirectStorageCheck.Evaluate(Inputs(drives: [new GameDrive(@"F:\", "SATA", false, null)]));
-        Assert.Contains(hdd.Rows, r => r.Value == "Hard drive" && r.Tone == CheckTone.Problem);
-
-        var blocked = DirectStorageCheck.Evaluate(Inputs(drives: [new GameDrive(@"D:\", "NVMe", true, new BypassIoState(false, "SomeFilter.sys", "The filter driver doesn't support BypassIO."))]));
-        Assert.Equal(DirectStorageState.PartlyReady, blocked.State);
-        Assert.Contains("SomeFilter.sys is in the way", blocked.Problem);
-        Assert.Contains("Windows says: The filter driver doesn't support BypassIO.", blocked.Problem);
-
-        // Windows 10: works without BypassIO (not asked), noted but not in the way.
-        var win10 = DirectStorageCheck.Evaluate(Inputs(build: 19045, drives: [new GameDrive(@"D:\", "NVMe", true, new BypassIoState(false, "x", "y"))]));
-        Assert.Equal(DirectStorageState.Ready, win10.State);
-        Assert.Contains(win10.Rows, r => r.Name == "Windows" && r.Tone == CheckTone.Info);
-        Assert.DoesNotContain(win10.Rows, r => r.Name.StartsWith("BypassIO", StringComparison.Ordinal));
-
-        var old = DirectStorageCheck.Evaluate(Inputs(model: 0x51));
-        Assert.Equal(DirectStorageState.NotAvailable, old.State);
-        Assert.Contains("Shader Model 5.1", old.Problem);
-        Assert.Equal(DirectStorageState.NotAvailable, DirectStorageCheck.Evaluate(Inputs(model: null)).State);
-    }
-
-    [Fact]
-    public void DirectStorage_FindsTheGamesThatShipItsRuntime_AndTheirDrives()
-    {
-        string root = Path.Combine(Path.GetTempPath(), "coreloom-ds-" + Guid.NewGuid().ToString("N"));
-        try
-        {
-            string uses = Path.Combine(root, "Forspoken");
-            Directory.CreateDirectory(Path.Combine(uses, "bin", "x64"));
-            File.WriteAllText(Path.Combine(uses, "bin", "x64", "DStorage.dll"), "x");
-            string doesnt = Path.Combine(root, "Celeste");
-            Directory.CreateDirectory(Path.Combine(doesnt, "Content"));
-            File.WriteAllText(Path.Combine(doesnt, "Celeste.exe"), "x");
-            string deep = Path.Combine(root, "Deep", "a", "b", "c", "d");
-            Directory.CreateDirectory(deep);
-            File.WriteAllText(Path.Combine(deep, "dstoragecore.dll"), "x");
-
-            Assert.True(DirectStorageCheck.UsesDirectStorage(uses));
-            Assert.False(DirectStorageCheck.UsesDirectStorage(doesnt));
-            Assert.False(DirectStorageCheck.UsesDirectStorage(Path.Combine(root, "Deep"))); // deeper than it looks
-            Assert.False(DirectStorageCheck.UsesDirectStorage(Path.Combine(root, "Missing")));
-            Assert.False(DirectStorageCheck.UsesDirectStorage(null));
-        }
-        finally
-        {
-            Directory.Delete(root, recursive: true);
-        }
-
-        var library = new[]
-        {
-            new GameEntry("a", "A", GameStore.Steam) { InstallPath = @"e:\Games\A" },
-            new GameEntry("b", "B", GameStore.Epic) { InstallPath = @"D:\Epic\B" },
-            new GameEntry("c", "C", GameStore.Gog) { InstallPath = @"E:\GOG\C" },
-            new GameEntry("d", "D", GameStore.Xbox),
-        };
-        Assert.Equal([@"D:\", @"E:\"], DirectStorageCheck.DriveRoots(library, @"C:\"));
-        Assert.Equal([@"C:\"], DirectStorageCheck.DriveRoots([], @"C:\"));
-        Assert.Null(DirectStorageCheck.RootOf("/home/games"));
     }
 
     [Fact]

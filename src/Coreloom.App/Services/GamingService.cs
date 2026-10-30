@@ -678,37 +678,6 @@ internal sealed class WindowsGamingService : IGamingService
         }
     }
 
-    // ---- DirectStorage (since 1.8.4) -----------------------------------------------------------------------
-
-    public Task<DirectStorageReport> DirectStorageAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken) => Task.Run(() =>
-    {
-        var started = Stopwatch.StartNew();
-        var card = Coreloom.Hardware.Gaming.GameStorageProbe.GraphicsCard();
-        string systemRoot = DirectStorageCheck.RootOf(Environment.GetFolderPath(Environment.SpecialFolder.Windows)) ?? @"C:\";
-        var drives = DirectStorageCheck.DriveRoots(games, systemRoot)
-            .Select(root =>
-            {
-                var (bus, ssd) = Coreloom.Hardware.Gaming.GameStorageProbe.DriveKind(root);
-                return new GameDrive(root, bus, ssd, Coreloom.Hardware.Gaming.GameStorageProbe.BypassIo(root));
-            })
-            .ToList();
-        var using_ = new List<DirectStorageGame>();
-        foreach (var game in games)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (DirectStorageCheck.RootOf(game.InstallPath) is { } root && DirectStorageCheck.UsesDirectStorage(game.InstallPath))
-            {
-                using_.Add(new DirectStorageGame(game.Id, game.Name, root));
-            }
-        }
-
-        var report = DirectStorageCheck.Evaluate(new DirectStorageInputs(Environment.OSVersion.Version.Build, card?.Name, card?.ShaderModel, drives, using_));
-        Log.Info(LogCategory, $"DirectStorage: {report.State} in {started.ElapsedMilliseconds} ms ({card?.Name ?? "no Direct3D 12 card"}, shader model {(card?.ShaderModel is int m ? DirectStorageCheck.ShaderModelText(m) : "none")}; " +
-            $"{string.Join(", ", drives.Select(d => $"{d.Root} {d.Bus}{(d.BypassIo is { } b ? b.Supported ? " BypassIO" : $" no BypassIO ({b.Driver ?? "?"}: {b.Reason ?? "?"})" : string.Empty)}"))}; " +
-            $"{using_.Count} of {games.Count} games use it).");
-        return report;
-    }, cancellationToken);
-
     // ---- Running game and frame rates ----------------------------------------------------------------------
 
     public Task<RunningGame?> FindRunningAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken) => Task.Run(() =>

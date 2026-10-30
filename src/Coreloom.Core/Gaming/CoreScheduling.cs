@@ -94,6 +94,12 @@ public sealed record CoreLayout(IReadOnlyList<CoreGroup> Groups, int LogicalProc
     public ulong AllMask => Groups.Aggregate(0UL, (mask, g) => mask | g.Mask);
 
     /// <summary>
+    /// How many separate L3 caches the processor has (since 1.8.5): 2 on a two-CCD Ryzen, 1 on a one-CCD Ryzen or an
+    /// Intel processor (whose L3 every core shares), 0 when unknown.
+    /// </summary>
+    public int L3Caches { get; init; }
+
+    /// <summary>
     /// The cores games are best kept on: the cache cores, the performance cores, or the first CCD when CCDs are alike
     /// (which keeps a game's threads on one L3 cache). Null when there's nothing to choose.
     /// </summary>
@@ -288,7 +294,7 @@ public sealed record CoreLayout(IReadOnlyList<CoreGroup> Groups, int LogicalProc
             built.Add(new CoreGroup(built.Count, g.Kind, name, g.Processors, g.Cores.Count, g.L3, mask));
         }
 
-        return new CoreLayout(built, all.Count);
+        return new CoreLayout(built, all.Count) { L3Caches = domains.Count(d => d.Cache is not null) };
     }
 
     private static IEnumerable<int> Bits(ulong mask)

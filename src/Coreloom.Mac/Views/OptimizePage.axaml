@@ -268,7 +268,7 @@
             <WrapPanel Margin="0,6,0,0">
               <Button Theme="{StaticResource Button.Primary}" Padding="16,7" Margin="0,0,8,0" Command="{Binding CleanCommand}">
                 <StackPanel Orientation="Horizontal">
-                  <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Trash}" Stroke="{DynamicResource Brush.OnGlow}" />
+                  <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Trash}" Stroke="{DynamicResource Brush.OnAccent}" />
                   <TextBlock Text="Clean selected" Margin="7,0,0,0" />
                 </StackPanel>
               </Button>
@@ -378,7 +378,7 @@
                 <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                   <Button Theme="{StaticResource Button.Primary}" Padding="16,7" Command="{Binding FreeUpCommand}">
                     <StackPanel Orientation="Horizontal">
-                      <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnGlow}" />
+                      <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
                       <TextBlock Text="Free up memory" Margin="7,0,0,0" />
                     </StackPanel>
                   </Button>

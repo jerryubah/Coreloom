@@ -99,6 +99,34 @@ internal sealed unsafe partial class WindowsCoreSchedulingService : ICoreSchedul
         }
     }
 
+    /// <summary>
+    /// The background apps CPU cache optimization looks for, from one snapshot of the process list by name (no process
+    /// is opened here, so a scan every few seconds stays light on the UI thread).
+    /// </summary>
+    public IReadOnlyList<RunningProcess> RunningPrograms()
+    {
+        var list = new List<RunningProcess>();
+        int own = Environment.ProcessId;
+        foreach (var process in System.Diagnostics.Process.GetProcesses())
+        {
+            using (process)
+            {
+                if (process.Id is 0 or 4 || process.Id == own)
+                {
+                    continue;
+                }
+
+                string file = process.ProcessName + ".exe";
+                if (CacheLocality.IsBackgroundApp(file))
+                {
+                    list.Add(new RunningProcess(process.Id, file));
+                }
+            }
+        }
+
+        return list;
+    }
+
     public bool SetAffinity(int processId, ulong mask)
     {
         if (mask == 0)
@@ -200,10 +228,10 @@ internal sealed unsafe partial class WindowsCoreSchedulingService : ICoreSchedul
 }
 
 /// <summary>
-/// Feeds core scheduling once a second while the user has it on: the game in front (from gaming mode), the load on each
-/// logical processor (from the sensor frame) and, only during a test the user started, the game's newest second of
-/// frames (Windows' graphics events, as for the overlay). Nothing runs while it's off. Closing Coreloom gives the games
-/// it changed Windows' choice of cores back.
+/// Feeds core scheduling and CPU cache optimization (since 1.8.5) once a second while the user has either on: the game in
+/// front (from gaming mode), the load on each logical processor (from the sensor frame) and, only during a core
+/// scheduling test the user started, the game's newest second of frames (Windows' graphics events, as for the overlay).
+/// Nothing runs while both are off. Closing Coreloom gives the games and apps they changed Windows' choice of cores back.
 /// </summary>
 internal sealed class CoreSchedulingTicker : IDisposable
 {
@@ -214,18 +242,21 @@ internal sealed class CoreSchedulingTicker : IDisposable
     private readonly GamingModeService _gamingMode;
     private readonly EtwFrameRateSource? _frames;
     private readonly Func<bool> _isOn;
+    private readonly Func<bool> _cacheIsOn;
     private readonly Func<IReadOnlyList<double>?> _threadLoads;
     private readonly DispatcherTimer _timer;
     private readonly double[] _buffer = new double[2048];
     private bool _acquired;
     private bool _wasOn;
+    private bool _cacheWasOn;
 
-    public CoreSchedulingTicker(ShellViewModel shell, GamingModeService gamingMode, EtwFrameRateSource? frames, Func<bool> isOn, Func<IReadOnlyList<double>?> threadLoads, Dispatcher dispatcher)
+    public CoreSchedulingTicker(ShellViewModel shell, GamingModeService gamingMode, EtwFrameRateSource? frames, Func<bool> isOn, Func<bool> cacheIsOn, Func<IReadOnlyList<double>?> threadLoads, Dispatcher dispatcher)
     {
         _shell = shell;
         _gamingMode = gamingMode;
         _frames = frames;
         _isOn = isOn;
+        _cacheIsOn = cacheIsOn;
         _threadLoads = threadLoads;
         _timer = new DispatcherTimer(DispatcherPriority.Background, dispatcher) { Interval = TimeSpan.FromSeconds(1) };
         _timer.Tick += (_, _) => Tick();
@@ -240,10 +271,11 @@ internal sealed class CoreSchedulingTicker : IDisposable
         try
         {
             _shell.Gaming.CoreScheduling.RestoreAll();
+            _shell.Gaming.CacheOptimization.RestoreAll();
         }
         catch (Exception e) when (e is InvalidOperationException or System.ComponentModel.Win32Exception)
         {
-            Log.Warn(LogCategory, "Giving games Windows' choice of cores back failed.", e);
+            Log.Warn(LogCategory, "Giving games and apps Windows' choice of cores back failed.", e);
         }
     }
 
@@ -252,7 +284,10 @@ internal sealed class CoreSchedulingTicker : IDisposable
         try
         {
             var scheduling = _shell.Gaming.CoreScheduling;
-            if (!_isOn())
+            var cache = _shell.Gaming.CacheOptimization;
+            bool schedulingOn = _isOn();
+            bool cacheOn = _cacheIsOn();
+            if (!schedulingOn)
             {
                 Release();
                 if (_wasOn)
@@ -260,15 +295,25 @@ internal sealed class CoreSchedulingTicker : IDisposable
                     _wasOn = false;
                     scheduling.Tick(default); // gives back the cores it changed
                 }
+            }
 
+            if (!cacheOn && _cacheWasOn)
+            {
+                _cacheWasOn = false;
+                cache.Tick(default, DateTime.UtcNow); // gives the apps it moved every core back
+            }
+
+            if (!schedulingOn && !cacheOn)
+            {
                 return;
             }
 
-            _wasOn = true;
+            _wasOn = schedulingOn;
+            _cacheWasOn = cacheOn;
             int? pid = _gamingMode.GameProcessId;
             PacingSecond? second = null;
             string? problem = null;
-            if (scheduling.WantsFrames && pid is int id && _frames is not null)
+            if (schedulingOn && scheduling.WantsFrames && pid is int id && _frames is not null)
             {
                 if (!_acquired)
                 {
@@ -291,7 +336,16 @@ internal sealed class CoreSchedulingTicker : IDisposable
                 Release();
             }
 
-            scheduling.Tick(new CoreTick(pid, _gamingMode.GameProgram, _threadLoads(), second, problem));
+            var tick = new CoreTick(pid, _gamingMode.GameProgram, _threadLoads(), second, problem);
+            if (schedulingOn)
+            {
+                scheduling.Tick(tick);
+            }
+
+            if (cacheOn)
+            {
+                cache.Tick(tick, DateTime.UtcNow);
+            }
         }
         catch (Exception e) when (e is InvalidOperationException or ArgumentException or System.ComponentModel.Win32Exception or IOException)
         {

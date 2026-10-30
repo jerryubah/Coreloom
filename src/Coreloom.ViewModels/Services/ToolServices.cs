@@ -182,7 +182,7 @@ public sealed class UnsupportedDeviceService : IDeviceService
 
 /// <summary>
 /// The Gaming page's view of Windows: installed games from every launcher, the Windows and graphics-driver settings
-/// that help games, the driver's frame limit (read only since 1.8.4), shader caches, DirectStorage and the game that is running.
+/// that help games, the driver's frame limit (read only since 1.8.4), shader caches and the game that is running.
 /// </summary>
 public interface IGamingService
 {
@@ -204,12 +204,6 @@ public interface IGamingService
     /// </summary>
     Task<TweakResult> SetGameFrameCapAsync(string gameName, IReadOnlyList<string> executables, int fps, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Whether DirectStorage and GPU decompression can work here for these games: the graphics card, Windows, the drives
-    /// the games are on (NVMe, BypassIO) and which games ship DirectStorage (since 1.8.4; Windows only).
-    /// </summary>
-    Task<DirectStorageReport> DirectStorageAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken) =>
-        Task.FromResult(DirectStorageReport.Unknown);
 
     /// <summary>The library game that is running now, if any.</summary>
     Task<RunningGame?> FindRunningAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken);
@@ -347,6 +341,12 @@ public interface ICoreSchedulingService
 
     /// <summary>Sets a process's cores; false when Windows (or the game's anti-cheat) refuses.</summary>
     bool SetAffinity(int processId, ulong mask);
+
+    /// <summary>
+    /// The programs running now, with their files (for CPU cache optimization, since 1.8.5). Windows answers with just
+    /// the background apps <see cref="CacheLocality"/> looks for, matched by process name, so the scan stays light.
+    /// </summary>
+    IReadOnlyList<RunningProcess> RunningPrograms() => [];
 }
 
 /// <summary>Stand-in where Windows isn't available: no layout, nothing to change.</summary>

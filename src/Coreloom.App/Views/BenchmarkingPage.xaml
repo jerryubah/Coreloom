@@ -160,7 +160,7 @@
                       Visibility="{Binding IsIdle, Converter={StaticResource BoolToVisibility}}"
                       AutomationProperties.Name="{Binding Title, StringFormat='Run the {0} benchmark'}">
                 <StackPanel Orientation="Horizontal">
-                  <Path Style="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnGlow}" />
+                  <Path Style="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
                   <TextBlock Text="Run benchmark" Margin="7,0,0,0" />
                 </StackPanel>
               </Button>
@@ -333,7 +333,7 @@
               <Button Style="{StaticResource Button.Primary}" Padding="18,8" Command="{Binding StartStressCommand}"
                       Visibility="{Binding IsStressIdle, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel Orientation="Horizontal">
-                  <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Flame}" Stroke="{DynamicResource Brush.OnGlow}" />
+                  <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Flame}" Stroke="{DynamicResource Brush.OnAccent}" />
                   <TextBlock Text="Start stress test" Margin="7,0,0,0" />
                 </StackPanel>
               </Button>

@@ -403,7 +403,7 @@ public sealed class CoreSchedulingController : ObservableObject
             .Select(c => new CoreCheckRow(c.Name, c.Status, c.State switch
             {
                 CheckState.Good => ColorKeys.ToneCool,
-                CheckState.Warn => ColorKeys.ToneWarm,
+                CheckState.Warn => ColorKeys.Neutral, // said in words; nothing in the boosts is yellow since 1.8.5
                 CheckState.Bad => ColorKeys.ToneHot,
                 _ => ColorKeys.Neutral,
             }, c.Detail))
@@ -645,7 +645,7 @@ public sealed class CoreSchedulingController : ObservableObject
         StatusColorKey = verdict.State switch
         {
             PlacementState.Good => ColorKeys.ToneCool,
-            PlacementState.Mixed => ColorKeys.ToneWarm,
+            PlacementState.Mixed => ColorKeys.Neutral,
             PlacementState.Off => ColorKeys.ToneHot,
             _ => ColorKeys.Neutral,
         };

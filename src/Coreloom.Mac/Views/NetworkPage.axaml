@@ -18,67 +18,74 @@
       <ContentControl Content="{Binding Chart}" ContentTemplate="{StaticResource ChartCard}" Height="300" Margin="0,16,0,0" />
 
       <!-- Internet speed test -->
-      <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,16,0,0" DataContext="{Binding SpeedTest}" Padding="20,18">
-        <StackPanel>
-          <Grid ColumnDefinitions="Auto,*,Auto">
-            <c:SquircleBorder Width="38" Height="38" CornerRadius="11" Background="{DynamicResource Brush.AccentSoft}" VerticalAlignment="Top">
-              <Path Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Globe}" Stroke="{DynamicResource Brush.Accent}" />
-            </c:SquircleBorder>
-            <StackPanel Grid.Column="1" Margin="12,0,16,0">
-              <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Internet speed test" />
-              <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Status}" TextWrapping="Wrap" Margin="0,2,0,0" />
-            </StackPanel>
-            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
-              <Button Theme="{StaticResource Button.Primary}" Padding="18,8" Command="{Binding RunCommand}"
-                      IsVisible="{Binding IsIdle}">
-                <StackPanel Orientation="Horizontal">
-                  <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnGlow}" />
-                  <TextBlock Text="{Binding RunText}" Margin="7,0,0,0" />
+      <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,16,0,0" DataContext="{Binding SpeedTest}" Padding="0" Sheen="0.8">
+        <Grid ClipToBounds="True">
+          <!-- The Gaming banner's light (since 1.8.5): from the top edge in the accent, a bright line where it meets the edge, a little grain. -->
+          <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.HeroGlow}" IsHitTestVisible="False" />
+          <c:SquircleBorder CornerRadius="17" Background="{StaticResource GrainTexture}" Opacity="0.045" IsHitTestVisible="False" />
+          <Border Height="1" VerticalAlignment="Top" Margin="56,0" Background="{DynamicResource Brush.HeroLine}" IsHitTestVisible="False" />
+
+          <StackPanel Margin="20,18">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <c:SquircleBorder Width="38" Height="38" CornerRadius="11" Background="{DynamicResource Brush.AccentSoft}" VerticalAlignment="Top">
+                <Path Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Globe}" Stroke="{DynamicResource Brush.Accent}" />
+              </c:SquircleBorder>
+              <StackPanel Grid.Column="1" Margin="12,0,16,0">
+                <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Internet speed test" />
+                <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Status}" TextWrapping="Wrap" Margin="0,2,0,0" />
+              </StackPanel>
+              <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+                <Button Theme="{StaticResource Button.AccentGradient}" Padding="18,8" Command="{Binding RunCommand}"
+                        IsVisible="{Binding IsIdle}">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnGlow}" />
+                    <TextBlock Text="{Binding RunText}" Margin="7,0,0,0" />
+                  </StackPanel>
+                </Button>
+                <Button Theme="{StaticResource Button.Secondary}" Padding="18,8" Content="Cancel" Command="{Binding CancelCommand}"
+                        IsVisible="{Binding IsRunning}" />
+              </StackPanel>
+            </Grid>
+
+            <ProgressBar Theme="{StaticResource ProgressBar.Thin}" Margin="0,14,0,0" Maximum="1"
+                         b:Smooth.Value="{Binding Progress}" IsVisible="{Binding IsRunning}" />
+            <Border Background="{DynamicResource Brush.CriticalSoft}" CornerRadius="8" Padding="12,8" Margin="0,12,0,0"
+                    IsVisible="{Binding Error, Converter={StaticResource HasValue}}">
+              <StackPanel Orientation="Horizontal">
+                <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Critical}" />
+                <TextBlock Text="{Binding Error}" Margin="8,0,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
+              </StackPanel>
+            </Border>
+
+            <c:AdaptiveGrid MinColumnWidth="300" MaxColumns="2" Spacing="20" Margin="0,16,0,0">
+              <!-- Live gauge -->
+              <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="16,18">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                  <ContentControl Content="{Binding Live}" ContentTemplate="{StaticResource ToneGauge}" />
+                  <Border Theme="{StaticResource Badge}" HorizontalAlignment="Center" Margin="0,8,0,0" Padding="10,3">
+                    <TextBlock Text="{Binding Phase}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+                  </Border>
                 </StackPanel>
-              </Button>
-              <Button Theme="{StaticResource Button.Secondary}" Padding="18,8" Content="Cancel" Command="{Binding CancelCommand}"
-                      IsVisible="{Binding IsRunning}" />
-            </StackPanel>
-          </Grid>
-
-          <ProgressBar Theme="{StaticResource ProgressBar.Thin}" Margin="0,14,0,0" Maximum="1"
-                       b:Smooth.Value="{Binding Progress}" IsVisible="{Binding IsRunning}" />
-          <Border Background="{DynamicResource Brush.CriticalSoft}" CornerRadius="8" Padding="12,8" Margin="0,12,0,0"
-                  IsVisible="{Binding Error, Converter={StaticResource HasValue}}">
-            <StackPanel Orientation="Horizontal">
-              <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Critical}" />
-              <TextBlock Text="{Binding Error}" Margin="8,0,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
-            </StackPanel>
-          </Border>
-
-          <c:AdaptiveGrid MinColumnWidth="300" MaxColumns="2" Spacing="20" Margin="0,16,0,0">
-            <!-- Live gauge -->
-            <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="16,18">
-              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <ContentControl Content="{Binding Live}" ContentTemplate="{StaticResource ToneGauge}" />
-                <Border Theme="{StaticResource Badge}" HorizontalAlignment="Center" Margin="0,8,0,0" Padding="10,3">
-                  <TextBlock Text="{Binding Phase}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
-                </Border>
+              </c:SquircleBorder>
+              <!-- Results -->
+              <StackPanel>
+                <ItemsControl ItemsSource="{Binding Results}" ItemTemplate="{StaticResource ToneTile}" Focusable="False">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <c:AdaptiveGrid MinColumnWidth="150" MaxColumns="2" Spacing="12" UniformRowHeight="True" />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                </ItemsControl>
+                <StackPanel Orientation="Horizontal" Margin="2,12,0,0" IsVisible="{Binding Server, Converter={StaticResource HasValue}}">
+                  <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Network}" VerticalAlignment="Center" />
+                  <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Server}" Margin="7,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Finished}" Margin="22,2,0,0"
+                           IsVisible="{Binding Finished, Converter={StaticResource HasValue}}" />
               </StackPanel>
-            </c:SquircleBorder>
-            <!-- Results -->
-            <StackPanel>
-              <ItemsControl ItemsSource="{Binding Results}" ItemTemplate="{StaticResource ToneTile}" Focusable="False">
-                <ItemsControl.ItemsPanel>
-                  <ItemsPanelTemplate>
-                    <c:AdaptiveGrid MinColumnWidth="150" MaxColumns="2" Spacing="12" UniformRowHeight="True" />
-                  </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-              </ItemsControl>
-              <StackPanel Orientation="Horizontal" Margin="2,12,0,0" IsVisible="{Binding Server, Converter={StaticResource HasValue}}">
-                <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Network}" VerticalAlignment="Center" />
-                <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Server}" Margin="7,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-              </StackPanel>
-              <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Finished}" Margin="22,2,0,0"
-                         IsVisible="{Binding Finished, Converter={StaticResource HasValue}}" />
-            </StackPanel>
-          </c:AdaptiveGrid>
-        </StackPanel>
+            </c:AdaptiveGrid>
+          </StackPanel>
+        </Grid>
       </c:SquircleBorder>
 
       <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,16,0,0">

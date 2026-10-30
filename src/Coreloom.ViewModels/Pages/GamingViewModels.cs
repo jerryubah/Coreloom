@@ -208,12 +208,12 @@ public sealed class GamingTweakViewModel : ObservableObject
     }
 
     /// <summary>
-    /// A switch (the usual) or a check that can't be switched (DirectStorage since 1.8.4: its pill says "Ready" or
-    /// "Partly ready", it counts as on when ready, and "Boost now" leaves it alone).
+    /// A switch (every boost since 1.8.5), or a check that can't be switched: its pill says what the check found, it
+    /// counts as on when that's good, and "Boost now" leaves it alone. 1.8.4's DirectStorage check was the only one.
     /// </summary>
     public bool IsSwitch { get; }
 
-    /// <summary>A choice the boost sets (the NVIDIA shader cache's size), shown under it; null when it has none.</summary>
+    /// <summary>A choice the boost sets (the NVIDIA shader cache's size), shown beside its switch; null when it has none.</summary>
     public IReadOnlyList<Option<uint>>? Choices { get; internal set; }
 
     public bool HasChoices => Choices is not null;
@@ -363,14 +363,10 @@ public sealed class GamingTweakViewModel : ObservableObject
         : !_status.IsSupported ? "Not available" : _status.NeedsRestart ? "Restart to finish" : _status.IsOn ? "On" : "Off";
 
     /// <summary>
-    /// "Tone.Cool" when on (or a check is ready), "Tone.Warm" when a restart is pending (or a check is only partly ready),
-    /// "Neutral" otherwise.
+    /// "Tone.Cool" when on, "Neutral" otherwise. Since 1.8.5 nothing on a boost is yellow: a restart still to come or a
+    /// note says so in words, in the card's usual colors.
     /// </summary>
-    public string ColorKey => !_status.IsSupported ? ColorKeys.Neutral
-        : _status.NeedsRestart ? ColorKeys.ToneWarm
-        : _status.IsOn ? ColorKeys.ToneCool
-        : !IsSwitch && _status.Label is not null ? ColorKeys.ToneWarm
-        : ColorKeys.Neutral;
+    public string ColorKey => _status.IsSupported && _status.IsOn ? ColorKeys.ToneCool : ColorKeys.Neutral;
 
     internal TweakStatus Status => _status;
 
@@ -397,21 +393,15 @@ public sealed class GamingTweakViewModel : ObservableObject
 public sealed record ShaderCacheRow(string Name, string Path, string SizeText) : StaticRecord;
 
 /// <summary>
-/// One line of a boost's details: what it is, its state ("NVMe", "Too full"), the state's color and a sentence.</summary>
+/// One line of a boost's details: what it is, its state ("6 cores · 32 MB L3", "Tight"), the state's color (green or
+/// neutral, red only when a game ran out of graphics memory) and a sentence.</summary>
 public sealed record DetailRow(string Name, string Value, string ColorKey, string? Detail) : StaticRecord
 {
     public bool HasDetail => !string.IsNullOrEmpty(Detail);
-
-    internal static string ColorFor(CheckTone tone) => tone switch
-    {
-        CheckTone.Good => ColorKeys.ToneCool,
-        CheckTone.Problem => ColorKeys.ToneWarm,
-        _ => ColorKeys.Neutral,
-    };
 }
 
 /// <summary>
-/// The card a boost's Details pill opens (DirectStorage's checks, VRAM management's games): a title, a summary, its
+/// The card a boost's Details pill opens (CPU cache optimization's caches, VRAM management's games): a title, a summary, its
 /// lines and a note at the bottom. One card serves every boost; opening it fills it with that boost's details.
 /// </summary>
 public sealed class BoostDetailsViewModel : ObservableObject
@@ -518,17 +508,15 @@ public sealed class BoostDetailsViewModel : ObservableObject
 }
 
 /// <summary>
-/// The Gaming page: boosts for Windows and the graphics card (on Windows twelve since 1.8.4, the shader caches among
-/// them; the frame limiter was removed), the banner's readiness dial and the installed games (as cards or a grid of
-/// covers). Every change happens only when the user flips a switch or presses a button.
+/// The Gaming page: boosts for Windows, the processor and the graphics card (on Windows twelve since 1.8.4, the shader
+/// caches among them; CPU cache optimization took DirectStorage's place in 1.8.5), the banner's readiness dial and the
+/// installed games (as cards or a grid of covers). Every change happens only when the user flips a switch or presses a
+/// button.
 /// </summary>
 public sealed class GamingViewModel : PageViewModel
 {
     private static readonly TimeSpan StatusInterval = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan RunningInterval = TimeSpan.FromSeconds(3);
-
-    /// <summary>The DirectStorage check reads drives and game folders, so it runs after each scan and at most this often otherwise.</summary>
-    private static readonly TimeSpan DirectStorageInterval = TimeSpan.FromMinutes(10);
 
     private readonly IGamingService _service;
     private readonly List<GameViewModel> _all = [];
@@ -552,9 +540,6 @@ public sealed class GamingViewModel : PageViewModel
     private readonly Dismissal _heroDismissal = new();
     private readonly Dismissal _driverNoticeDismissal = new();
     private bool _driverNoticeShowing;
-    private DirectStorageReport _directStorage = DirectStorageReport.Unknown;
-    private DateTime _lastDirectStorage = DateTime.MinValue;
-    private bool _directStorageBusy;
     private bool _cleanedUpLimits;
     private bool _hasLive;
     private string _liveFps = "—";
@@ -565,12 +550,13 @@ public sealed class GamingViewModel : PageViewModel
         _service = context.Tools.Gaming;
         CoreScheduling = new CoreSchedulingController(this, context.Tools.CoreScheduling);
         Vram = new VramController(this);
+        CacheOptimization = new CacheOptimizationController(this, context.Tools.CoreScheduling);
         GamingTweakViewModel shaderCache = new(GamingTweak.ShaderCache, "NVIDIA shader cache", "Keeps the shaders games compile, so they aren't compiled again mid-play: fewer repeat stutters and steadier frame times the next times you play.", "Icon.Database", "NVIDIA", SetTweakAsync, "Frame stability",
             "Recommended: 10 GB when the current limit is smaller, or a larger size for a big game library.", "Doesn't remove every shader stutter or raise the average frame rate.");
         GamingTweakViewModel keepShaderCaches = new(GamingTweak.KeepShaderCaches, "Keep shader caches", "Stops Windows' automatic maintenance from deleting the DirectX shader cache, so games don't compile their shaders again and stutter after a cleanup.", "Icon.Layers", "DirectX", SetTweakAsync, "Frame stability",
             null, "Disk Cleanup and Storage Sense still clear it when you choose to.");
-        GamingTweakViewModel directStorage = new(GamingTweak.DirectStorage, "DirectStorage & GPU decompression", "Lets games that use DirectStorage load straight from the drive to the graphics card and decompress there. Coreloom checks everything it needs.", "Icon.Download", "AMD + NVIDIA", SetTweakAsync, "Loading + streaming",
-            null, "A check, not a switch: games use DirectStorage on their own when the PC supports it.", isSwitch: false);
+        GamingTweakViewModel cacheOptimization = new(GamingTweak.CacheOptimization, "CPU cache optimization", "Detects the processor's cache layout and keeps background apps off the cores whose L3 cache your game uses, so the game keeps more of its cache.", "Icon.Cache", "Multi-CCD", SetTweakAsync, "CPU performance",
+            CacheOptimizationRecommendation, "Can help CPU-bound games, most on processors with large L3 caches. Moves only background apps, never the game.");
         GamingTweakViewModel vram = new(GamingTweak.VramManagement, "Intelligent VRAM management", "Watches the graphics memory of the game you play for pressure and texture streaming that runs out of room, then recommends texture settings for that game.", "Icon.Memory", "AMD + NVIDIA", SetTweakAsync, "Frame stability",
             null, "Changes nothing in games; the recommendations are yours to apply.");
         GamingTweakViewModel coreScheduling = new(GamingTweak.CoreScheduling, "Intelligent CPU core scheduling", "Keeps games on the cores that suit them, such as a Ryzen X3D's 3D V-Cache cores, after checking AMD's own scheduling.", "Icon.Cpu", "Ryzen X3D", SetTweakAsync, "Frame stability",
@@ -601,16 +587,25 @@ public sealed class GamingViewModel : PageViewModel
                     GSyncSetup.Recommendation(0, 0), "Improves how frames are shown, not the frame rate itself."),
                 shaderCache,
                 keepShaderCaches,
-                directStorage,
+                cacheOptimization,
                 vram,
                 coreScheduling,
             ];
         ShaderCache = shaderCache;
         KeepShaderCachesBoost = keepShaderCaches;
-        DirectStorageBoost = directStorage;
+        CacheOptimizationBoost = cacheOptimization;
         VramBoost = vram;
         Details = new BoostDetailsViewModel();
-        DirectStorageBoost.DetailsCommand = new RelayCommand(() => Details.Open("directstorage", "DirectStorage & GPU decompression", DirectStorageDetails));
+        CacheOptimizationBoost.DetailsCommand = new RelayCommand(() => Details.Open("cache", "CPU cache optimization", CacheOptimization.Details));
+        CacheOptimization.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(CacheOptimizationController.Note))
+            {
+                ShowCacheNote();
+                Details.Refresh("cache");
+            }
+        };
+        ShowCacheNote();
         VramBoost.DetailsCommand = new RelayCommand(() => Details.Open("vram", "Intelligent VRAM management", Vram.Details));
         Vram.PropertyChanged += (_, e) =>
         {
@@ -637,7 +632,7 @@ public sealed class GamingViewModel : PageViewModel
             }
         };
         ShaderCacheSizes = [.. Coreloom.Core.Gaming.ShaderCacheSize.Choices.Select(size => new Option<uint>(size, Coreloom.Core.Gaming.ShaderCacheSize.Describe(size)))];
-        ShaderCache.Choices = ShaderCacheSizes; // the size the boost sets, under it (it was in the Shader cache card)
+        ShaderCache.Choices = ShaderCacheSizes; // the size the boost sets, beside its switch (it was in the Shader cache card)
         ShaderCache.ReadChoice = () => ShaderCacheSize;
         ShaderCache.WriteChoice = size => ShaderCacheSize = size;
         ShaderCache.ReadChoiceNote = () => ShaderCacheLimitText;
@@ -681,8 +676,8 @@ public sealed class GamingViewModel : PageViewModel
     /// <summary>
     /// On Windows (twelve since 1.8.4): hardware-accelerated GPU scheduling, Ultimate Performance, Game Mode, windowed
     /// optimizations, background recording, GPU power mode, G-SYNC, the NVIDIA shader cache (with its size), keeping
-    /// shader caches, DirectStorage (a check), intelligent VRAM management and intelligent CPU core scheduling. On a Mac,
-    /// the four macOS leaves to the user.
+    /// shader caches, CPU cache optimization (since 1.8.5, where 1.8.4's DirectStorage check was), intelligent VRAM
+    /// management and intelligent CPU core scheduling. On a Mac, the four macOS leaves to the user.
     /// </summary>
     public IReadOnlyList<GamingTweakViewModel> Boosts { get; }
 
@@ -692,13 +687,21 @@ public sealed class GamingViewModel : PageViewModel
     /// <summary>"Keep shader caches" (the Shader cache card, condensed into a boost in 1.8.4: sizes, driver notice).</summary>
     public GamingTweakViewModel KeepShaderCachesBoost { get; }
 
-    /// <summary>DirectStorage and GPU decompression: a check (its Details list each part).</summary>
-    public GamingTweakViewModel DirectStorageBoost { get; }
+    /// <summary>CPU cache optimization (its Details list the processor's caches and the apps moved).</summary>
+    public GamingTweakViewModel CacheOptimizationBoost { get; }
+
+    /// <summary>CPU cache optimization's engine: what it moves while a game plays.</summary>
+    public CacheOptimizationController CacheOptimization { get; }
+
+    private const string CacheOptimizationRecommendation = "Recommended: on for processors with more than one L3 cache, such as Ryzen with two CCDs.";
+
+    /// <summary>What cache optimization is doing, on its recommendation line once it's on (never a warning).</summary>
+    private void ShowCacheNote() => CacheOptimizationBoost.Recommendation = CacheOptimization.Note ?? CacheOptimizationRecommendation;
 
     /// <summary>Intelligent VRAM management (its Details list each game's recommendation).</summary>
     public GamingTweakViewModel VramBoost { get; }
 
-    /// <summary>The card a boost's Details pill opens (DirectStorage, VRAM management).</summary>
+    /// <summary>The card a boost's Details pill opens (CPU cache optimization, VRAM management).</summary>
     public BoostDetailsViewModel Details { get; }
 
     /// <summary>VRAM management's engine: what the app hands it while a game plays, and each game's record.</summary>
@@ -708,9 +711,6 @@ public sealed class GamingViewModel : PageViewModel
 
     /// <summary>What VRAM management is watching, or the latest game's result, on its recommendation line once it's on.</summary>
     private void ShowVramNote() => VramBoost.Recommendation = Vram.IsOn && Vram.BoostNote is { } note ? note : VramRecommendation;
-
-    /// <summary>The DirectStorage check's latest outcome.</summary>
-    public DirectStorageReport DirectStorage => _directStorage;
 
     /// <summary>The sizes the shader cache boost can set: 10 GB, 100 GB, unlimited.</summary>
     public IReadOnlyList<Option<uint>> ShaderCacheSizes { get; }
@@ -1069,10 +1069,6 @@ public sealed class GamingViewModel : PageViewModel
         {
             _ = RefreshStatusAsync(force: false);
             _ = CheckRunningAsync();
-            if (DateTime.UtcNow - _lastDirectStorage > DirectStorageInterval)
-            {
-                _ = RefreshDirectStorageAsync();
-            }
         }
     }
 
@@ -1182,10 +1178,6 @@ public sealed class GamingViewModel : PageViewModel
         _all.Clear();
         _all.AddRange(next);
         ApplyLibrary();
-        if (IsSupported && !IsMac)
-        {
-            _ = RefreshDirectStorageAsync(); // the games and drives it checks changed
-        }
     }
 
     private void ApplyLibrary()
@@ -1499,67 +1491,17 @@ public sealed class GamingViewModel : PageViewModel
     }
 
     /// <summary>
-    /// A boost's state: Coreloom's own switches from their engines, DirectStorage from its check, and "Keep shader caches"
-    /// with the new-driver notice as its note (the Shader cache card showed it before 1.8.4).
+    /// A boost's state: Coreloom's own switches from their engines, and "Keep shader caches" with the new-driver notice
+    /// as its note (the Shader cache card showed it before 1.8.4).
     /// </summary>
     private TweakStatus StatusOf(GamingTweak tweak) => tweak switch
     {
         GamingTweak.CoreScheduling => CoreScheduling.Status,
         GamingTweak.VramManagement => Vram.Status,
-        GamingTweak.DirectStorage => DirectStorageStatus(),
+        GamingTweak.CacheOptimization => CacheOptimization.Status,
         GamingTweak.KeepShaderCaches when DriverNotice is { } notice => _status.Tweak(tweak) with { Note = notice },
         _ => _status.Tweak(tweak),
     };
-
-    private TweakStatus DirectStorageStatus() => _directStorage.State switch
-    {
-        DirectStorageState.Ready => new TweakStatus(true, true, Note: null, Label: "Ready"),
-        DirectStorageState.PartlyReady => new TweakStatus(true, false, Note: _directStorage.Problem, Label: "Partly ready"),
-        DirectStorageState.NotAvailable => TweakStatus.Unsupported(_directStorage.Problem ?? _directStorage.Summary),
-        _ => new TweakStatus(false, false, Label: "Checking…"),
-    };
-
-    /// <summary>Runs the DirectStorage check (graphics card, Windows, the games' drives, which games use it) off the page.</summary>
-    private async Task RefreshDirectStorageAsync()
-    {
-        if (_directStorageBusy || IsMac || !IsSupported)
-        {
-            return;
-        }
-
-        _directStorageBusy = true;
-        _lastDirectStorage = DateTime.UtcNow;
-        try
-        {
-            _directStorage = await _service.DirectStorageAsync(LibrarySnapshot(), CancellationToken.None);
-        }
-        catch (Exception e) when (IsExpected(e))
-        {
-            _directStorage = new DirectStorageReport(DirectStorageState.Unknown, "Couldn't be checked.", null, [], []);
-        }
-        finally
-        {
-            _directStorageBusy = false;
-        }
-
-        if (!DirectStorageBoost.IsBusy)
-        {
-            DirectStorageBoost.Apply(DirectStorageStatus());
-        }
-
-        DirectStorageBoost.Recommendation = _directStorage.State == DirectStorageState.Ready ? _directStorage.Summary : null;
-        OnPropertyChanged(nameof(DirectStorage));
-        Details.Refresh("directstorage");
-        HeroChanged();
-    }
-
-    private (string Summary, IReadOnlyList<DetailRow> Rows, string? Note, string? Empty) DirectStorageDetails()
-    {
-        var report = _directStorage;
-        var rows = report.Rows.Select(r => new DetailRow(r.Name, r.Value, DetailRow.ColorFor(r.Tone), r.Detail)).ToList();
-        const string note = "Games load with DirectStorage on their own when they ship Microsoft's runtime (dstorage.dll); there's nothing to switch on. GPU decompression needs DirectX 12 with Shader Model 6.0, NVMe drives have the bandwidth, and Windows 11's BypassIO saves processor time on each read.";
-        return (report.Summary, rows, note, rows.Count == 0 ? "Checking…" : null);
-    }
 
     /// <summary>
     /// Adaptive frame pacing (removed in 1.8.4 with the frame limiter) set limits by itself; nothing would change them
@@ -1686,9 +1628,21 @@ public sealed class GamingViewModel : PageViewModel
 
     private async Task SetTweakAsync(GamingTweakViewModel tweak, bool on)
     {
-        if (tweak.Tweak == GamingTweak.DirectStorage)
+        if (tweak.Tweak == GamingTweak.CacheOptimization)
         {
-            return; // a check: nothing to switch
+            tweak.IsBusy = true;
+            var moved = await CacheOptimization.SetEnabledAsync(on);
+            tweak.IsBusy = false;
+            tweak.Apply(CacheOptimization.Status);
+            if (!moved.Success)
+            {
+                tweak.ShowOutcome(moved.Message);
+            }
+
+            ShowCacheNote();
+            Details.Refresh("cache");
+            HeroChanged();
+            return;
         }
 
         if (tweak.Tweak == GamingTweak.VramManagement)

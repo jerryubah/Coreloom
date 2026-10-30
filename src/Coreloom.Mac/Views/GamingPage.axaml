@@ -46,7 +46,7 @@
             <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
               <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
               <WrapPanel Orientation="Horizontal" Margin="0,4,0,0">
-                <Border Classes="pill status" Classes.on="{Binding IsOn}" Classes.restart="{Binding NeedsRestart}" Margin="0,0,6,2">
+                <Border Classes="pill status" Classes.on="{Binding IsOn}" Margin="0,0,6,2">
                   <TextBlock Text="{Binding StatusText}" FontSize="10.5" FontWeight="SemiBold" />
                 </Border>
                 <!-- what it helps with -->
@@ -72,7 +72,7 @@
                        IsVisible="{Binding HasCaveat}" />
           </StackPanel>
           <TextBlock Grid.Row="2" Text="{Binding Message}" FontSize="11.5" TextWrapping="Wrap" Margin="0,8,0,0" IsVisible="{Binding HasMessage}"
-                     Foreground="{Binding IsSupported, Converter={StaticResource BoolToBrush}, ConverterParameter='Brush.Elevated|Brush.TextTertiary'}" />
+                     Foreground="{Binding IsSupported, Converter={StaticResource BoolToBrush}, ConverterParameter='Brush.TextSecondary|Brush.TextTertiary'}" />
         </Grid>
       </c:SquircleBorder>
     </DataTemplate>
@@ -119,7 +119,7 @@
             <Button Theme="{StaticResource Button.Primary}" Padding="14,7" Command="{Binding PlayCommand}" IsEnabled="{Binding CanPlay}"
                     AutomationProperties.Name="{Binding Name, StringFormat='Play {0}'}">
               <StackPanel Orientation="Horizontal">
-                <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnGlow}" />
+                <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
                 <TextBlock Text="Play" Margin="7,0,0,0" />
               </StackPanel>
             </Button>
@@ -165,7 +165,7 @@
           <Button Classes="reveal" Theme="{StaticResource Button.Primary}" Padding="16,7" Margin="0,0,0,14" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                   Command="{Binding PlayCommand}" IsEnabled="{Binding CanPlay}" AutomationProperties.Name="{Binding Name, StringFormat='Play {0}'}">
             <StackPanel Orientation="Horizontal">
-              <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnGlow}" />
+              <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
               <TextBlock Text="Play" Margin="7,0,0,0" />
             </StackPanel>
           </Button>
@@ -227,7 +227,7 @@
   </UserControl.Resources>
 
   <UserControl.Styles>
-    <!-- A boost's status pill: green when on, orange while it waits for a restart. -->
+    <!-- A boost's status pill: green when on (since 1.8.5 nothing on a boost is yellow). -->
     <Style Selector="Border.pill">
       <Setter Property="CornerRadius" Value="6" />
       <Setter Property="Padding" Value="7,1" />
@@ -243,12 +243,6 @@
     </Style>
     <Style Selector="Border.status.on > TextBlock">
       <Setter Property="Foreground" Value="{DynamicResource Brush.Success}" />
-    </Style>
-    <Style Selector="Border.status.restart">
-      <Setter Property="Background" Value="{DynamicResource Brush.ElevatedSoft}" />
-    </Style>
-    <Style Selector="Border.status.restart > TextBlock">
-      <Setter Property="Foreground" Value="{DynamicResource Brush.Elevated}" />
     </Style>
 
     <!-- A boost's icon: in its color while on, grey while off (the neutral series color is too dark for a line). -->

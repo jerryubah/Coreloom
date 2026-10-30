@@ -54,15 +54,15 @@
       </Setter>
     </Style>
 
-    <!-- A boost: icon (green when on), name and tag, what it does, its switch (a check such as DirectStorage has none), a
-         choice it sets (the NVIDIA shader cache's size), and what happened. -->
+    <!-- A boost: icon (green when on), name and tag, what it does, its switch with the choice it sets beside it (the NVIDIA
+         shader cache's size, since 1.8.5 at the top so the card ends with its text), and what happened. Nothing on a
+         boost is yellow since 1.8.5: notes and a restart still to come are said in the card's usual colors. -->
     <DataTemplate x:Key="BoostCard" DataType="{x:Type pages:GamingTweakViewModel}">
       <c:SquircleBorder x:Name="Card" Style="{StaticResource Card}" Padding="16,14,16,14" ToolTip="{Binding Advice}" ToolTipService.ShowDuration="30000">
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <Grid>
@@ -96,13 +96,20 @@
                         AutomationProperties.Name="{Binding Title, StringFormat='Details for {0}'}" />
               </WrapPanel>
             </StackPanel>
-            <Grid Grid.Column="2" VerticalAlignment="Top" Visibility="{Binding IsSwitch, Converter={StaticResource BoolToVisibility}}">
-              <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding IsOn, Mode=TwoWay}" IsEnabled="{Binding CanToggle}"
-                        AutomationProperties.Name="{Binding Title}"
-                        Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
-              <c:RadialGauge Style="{StaticResource GameSpinner}" Margin="0,4,10,0" b:Spin.IsSpinning="{Binding IsBusy}"
-                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
-            </Grid>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+              <!-- the choice it sets (the NVIDIA shader cache's size: applied at once while on); what's set now on its tooltip -->
+              <ComboBox Style="{StaticResource ComboBox.Default}" MinWidth="104" Margin="0,0,10,0" VerticalAlignment="Center"
+                        ItemsSource="{Binding Choices}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Choice}"
+                        ToolTip="{Binding ChoiceNote}" AutomationProperties.Name="{Binding Title, StringFormat='{}{0} size'}"
+                        Visibility="{Binding HasChoices, Converter={StaticResource BoolToVisibility}}" />
+              <Grid VerticalAlignment="Center" Visibility="{Binding IsSwitch, Converter={StaticResource BoolToVisibility}}">
+                <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding IsOn, Mode=TwoWay}" IsEnabled="{Binding CanToggle}"
+                          AutomationProperties.Name="{Binding Title}"
+                          Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                <c:RadialGauge Style="{StaticResource GameSpinner}" Margin="0,4,10,0" b:Spin.IsSpinning="{Binding IsBusy}"
+                               Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+              </Grid>
+            </StackPanel>
           </Grid>
           <StackPanel Grid.Row="1" Margin="0,12,0,0">
             <TextBlock Text="{Binding Description}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" />
@@ -112,17 +119,7 @@
             <TextBlock Text="{Binding Caveat}" FontSize="11.5" Foreground="{DynamicResource Brush.TextTertiary}" TextWrapping="Wrap" Margin="0,4,0,0"
                        Visibility="{Binding HasCaveat, Converter={StaticResource BoolToVisibility}}" />
           </StackPanel>
-          <!-- the choice it sets (the NVIDIA shader cache's size: applied at once while on), at the bottom of the card -->
-          <Grid Grid.Row="2" Margin="0,12,0,0" Visibility="{Binding HasChoices, Converter={StaticResource BoolToVisibility}}">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <ComboBox Style="{StaticResource ComboBox.Default}" MinWidth="130" ItemsSource="{Binding Choices}" DisplayMemberPath="Label" SelectedValuePath="Value"
-                      SelectedValue="{Binding Choice}" AutomationProperties.Name="{Binding Title, StringFormat='{}{0} size'}" VerticalAlignment="Center" />
-            <TextBlock Grid.Column="1" Text="{Binding ChoiceNote}" Style="{StaticResource Text.Caption}" Margin="12,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-          </Grid>
-          <TextBlock Grid.Row="3" x:Name="Message" Text="{Binding Message}" FontSize="11.5" Foreground="{DynamicResource Brush.Elevated}" TextWrapping="Wrap" Margin="0,8,0,0"
+          <TextBlock Grid.Row="2" x:Name="Message" Text="{Binding Message}" FontSize="11.5" Foreground="{DynamicResource Brush.TextSecondary}" TextWrapping="Wrap" Margin="0,8,0,0"
                      Visibility="{Binding HasMessage, Converter={StaticResource BoolToVisibility}}" />
         </Grid>
       </c:SquircleBorder>
@@ -134,20 +131,9 @@
         <DataTrigger Binding="{Binding IsOn}" Value="True">
           <Setter TargetName="StatusPill" Property="Background" Value="{DynamicResource Brush.SuccessSoft}" />
         </DataTrigger>
-        <MultiDataTrigger>
-          <MultiDataTrigger.Conditions>
-            <Condition Binding="{Binding IsSwitch}" Value="False" />
-            <Condition Binding="{Binding IsSupported}" Value="True" />
-            <Condition Binding="{Binding IsOn}" Value="False" />
-          </MultiDataTrigger.Conditions>
-          <Setter TargetName="StatusPill" Property="Background" Value="{DynamicResource Brush.ElevatedSoft}" />
-        </MultiDataTrigger>
         <DataTrigger Binding="{Binding IsSmoothness}" Value="True">
           <Setter TargetName="CategoryPill" Property="Background" Value="{DynamicResource Brush.SuccessSoft}" />
           <Setter TargetName="CategoryText" Property="Foreground" Value="{DynamicResource Brush.Success}" />
-        </DataTrigger>
-        <DataTrigger Binding="{Binding NeedsRestart}" Value="True">
-          <Setter TargetName="StatusPill" Property="Background" Value="{DynamicResource Brush.ElevatedSoft}" />
         </DataTrigger>
       </DataTemplate.Triggers>
     </DataTemplate>
@@ -201,7 +187,7 @@
             <Button Style="{StaticResource Button.Primary}" Padding="14,7" Command="{Binding PlayCommand}" IsEnabled="{Binding CanPlay}"
                     AutomationProperties.Name="{Binding Name, StringFormat='Play {0}'}">
               <StackPanel Orientation="Horizontal">
-                <Path Style="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnGlow}" />
+                <Path Style="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
                 <TextBlock Text="Play" Margin="7,0,0,0" />
               </StackPanel>
             </Button>
@@ -258,7 +244,7 @@
           <Button x:Name="Play" Style="{StaticResource Button.Primary}" Padding="16,7" Margin="0,0,0,14" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                   Command="{Binding PlayCommand}" IsEnabled="{Binding CanPlay}" Opacity="0" AutomationProperties.Name="{Binding Name, StringFormat='Play {0}'}">
             <StackPanel Orientation="Horizontal">
-              <Path Style="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnGlow}" />
+              <Path Style="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
               <TextBlock Text="Play" Margin="7,0,0,0" />
             </StackPanel>
           </Button>
@@ -577,7 +563,7 @@
     </StackPanel>
   </ScrollViewer>
 
-  <!-- A boost's details (DirectStorage's checks, VRAM management's games), opened from its Details pill -->
+  <!-- A boost's details (CPU cache optimization's caches, VRAM management's games), opened from its Details pill -->
   <Grid DataContext="{Binding Details}" Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}}">
     <Border Background="{DynamicResource Brush.Scrim}">
       <Border.InputBindings>

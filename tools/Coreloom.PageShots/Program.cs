@@ -87,9 +87,11 @@ internal static class Program
         await ShootAsync(Path.Combine(output, "gaming-core-scheduling.png"), new GamingPage { DataContext = gaming }, 1150, () => gaming.Refresh(data));
         gaming.CoreScheduling.CloseDetailsCommand.Execute(null);
 
-        // 1.8.4: the details behind DirectStorage's check and VRAM management's games.
-        gaming.DirectStorageBoost.DetailsCommand!.Execute(null);
-        await ShootAsync(Path.Combine(output, "gaming-directstorage.png"), new GamingPage { DataContext = gaming }, 1000, () => gaming.Refresh(data));
+        // 1.8.5: CPU cache optimization's details while Cyberpunk 2077 plays (the apps it moved); 1.8.4: VRAM management's games.
+        gaming.CacheOptimization.Tick(new CoreTick(4242, @"D:\Steam\steamapps\common\Cyberpunk 2077\bin\x64\Cyberpunk2077.exe", null), DateTime.UtcNow);
+        gaming.CacheOptimizationBoost.DetailsCommand!.Execute(null);
+        await ShootAsync(Path.Combine(output, "gaming-cache.png"), new GamingPage { DataContext = gaming }, 1000, () => gaming.Refresh(data));
+        gaming.CacheOptimization.RestoreAll();
         gaming.VramBoost.DetailsCommand!.Execute(null);
         await ShootAsync(Path.Combine(output, "gaming-vram.png"), new GamingPage { DataContext = gaming }, 1000, () => gaming.Refresh(data));
         gaming.Details.CloseCommand.Execute(null);

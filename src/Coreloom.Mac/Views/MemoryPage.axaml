@@ -10,29 +10,36 @@
 
       <c:AdaptiveGrid MinColumnWidth="420" MaxColumns="2" Spacing="16">
         <!-- Donut hero and the readings beside it, ending on one line (the donut stays centred, the tiles share the height) -->
-        <c:SquircleBorder Theme="{StaticResource Card}">
-          <Grid ColumnDefinitions="Auto,*">
-            <Grid Width="190" Height="190" VerticalAlignment="Center">
-              <c:DonutChart Segments="{Binding Segments}" Thickness="16" />
-              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="{Binding CenterText}" FontFamily="{StaticResource MonoFont}" FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Center" />
-                <TextBlock Text="{Binding CenterCaption}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Center" />
+        <c:SquircleBorder Theme="{StaticResource Card}" Padding="0" Sheen="0.8">
+          <Grid ClipToBounds="True">
+            <!-- The Gaming banner's light (since 1.8.5): from the top edge in the accent, a bright line where it meets the edge, a little grain. -->
+            <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.HeroGlow}" IsHitTestVisible="False" />
+            <c:SquircleBorder CornerRadius="17" Background="{StaticResource GrainTexture}" Opacity="0.045" IsHitTestVisible="False" />
+            <Border Height="1" VerticalAlignment="Top" Margin="56,0" Background="{DynamicResource Brush.HeroLine}" IsHitTestVisible="False" />
+
+            <Grid Margin="18,16" ColumnDefinitions="Auto,*">
+              <Grid Width="190" Height="190" VerticalAlignment="Center">
+                <c:DonutChart Segments="{Binding Segments}" Thickness="16" />
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding CenterText}" FontFamily="{StaticResource MonoFont}" FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                  <TextBlock Text="{Binding CenterCaption}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Center" />
+                </StackPanel>
+              </Grid>
+              <StackPanel Grid.Column="1" Margin="28,0,0,0" VerticalAlignment="Center">
+                <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Memory" Margin="0,0,0,10" />
+                <ItemsControl ItemsSource="{Binding Segments}" ItemTemplate="{StaticResource DonutLegendRow}" Focusable="False" />
+                <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Load.StatsText}" Margin="0,10,0,0" />
+                <!-- macOS's own measure of whether memory is short -->
+                <c:SquircleBorder Theme="{StaticResource Card.Inset}" Margin="0,14,0,0" Padding="12,8" HorizontalAlignment="Left" IsVisible="{Binding HasPressure}"
+                                  ToolTip.Tip="How hard macOS is working to free memory, as in Activity Monitor: green is normal, yellow means it is compressing memory and using swap, red means it is short.">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Ellipse Width="9" Height="9" VerticalAlignment="Center" Fill="{Binding PressureColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+                    <TextBlock Text="Memory pressure" Theme="{StaticResource Text.Secondary}" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding PressureText}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  </StackPanel>
+                </c:SquircleBorder>
               </StackPanel>
             </Grid>
-            <StackPanel Grid.Column="1" Margin="28,0,0,0" VerticalAlignment="Center">
-              <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Memory" Margin="0,0,0,10" />
-              <ItemsControl ItemsSource="{Binding Segments}" ItemTemplate="{StaticResource DonutLegendRow}" Focusable="False" />
-              <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Load.StatsText}" Margin="0,10,0,0" />
-              <!-- macOS's own measure of whether memory is short -->
-              <c:SquircleBorder Theme="{StaticResource Card.Inset}" Margin="0,14,0,0" Padding="12,8" HorizontalAlignment="Left" IsVisible="{Binding HasPressure}"
-                                ToolTip.Tip="How hard macOS is working to free memory, as in Activity Monitor: green is normal, yellow means it is compressing memory and using swap, red means it is short.">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                  <Ellipse Width="9" Height="9" VerticalAlignment="Center" Fill="{Binding PressureColorKey, Converter={StaticResource ColorKeyToBrush}}" />
-                  <TextBlock Text="Memory pressure" Theme="{StaticResource Text.Secondary}" VerticalAlignment="Center" />
-                  <TextBlock Text="{Binding PressureText}" FontWeight="SemiBold" VerticalAlignment="Center" />
-                </StackPanel>
-              </c:SquircleBorder>
-            </StackPanel>
           </Grid>
         </c:SquircleBorder>
 

@@ -154,89 +154,6 @@ internal sealed unsafe partial class Direct3D : IDisposable
 
     private delegate bool AdapterVisitor(void* adapter, GpuAdapter info);
 
-    // ----- Direct3D 12 shader model (DirectStorage's GPU decompression, since 1.8.4) -------------------------------
-
-    private static readonly Guid D3D12Device = new("189819f1-1db6-4b57-be54-1821339b85f7");
-
-    /// <summary>
-    /// The highest Direct3D 12 shader model of a graphics card (0x60 = 6.0), or null when it can't make a Direct3D 12
-    /// device. <paramref name="choice"/> defaults to the card with the most dedicated memory; <paramref name="includeSoftware"/>
-    /// lets the tests ask Windows' software adapter. Asks for up to 6.6 and gets the highest the driver supports.
-    /// </summary>
-    public static (GpuAdapter Adapter, int? ShaderModel)? HighestShaderModel(GpuAdapter? choice = null, bool includeSoftware = false)
-    {
-        GpuAdapter? best = choice;
-        if (best is null)
-        {
-            var all = new List<GpuAdapter>();
-            ForEachAdapter((_, info) =>
-            {
-                all.Add(info);
-                return false;
-            });
-            best = all.Where(a => includeSoftware || !a.IsSoftware).OrderBy(a => a.IsSoftware).ThenByDescending(a => a.Memory).FirstOrDefault();
-        }
-
-        if (best is null)
-        {
-            return null;
-        }
-
-        (GpuAdapter Adapter, int? ShaderModel)? result = null;
-        ForEachAdapter((adapter, info) =>
-        {
-            if (info.Luid != best.Luid)
-            {
-                return false;
-            }
-
-            result = (info, ShaderModelOf(adapter));
-            return true;
-        });
-        return result;
-    }
-
-    private static int? ShaderModelOf(void* adapter)
-    {
-        void* device;
-        Guid iid = D3D12Device;
-        int hr;
-        try
-        {
-            hr = D3D12CreateDevice(adapter, 0xb000 /* feature level 11.0, the least Direct3D 12 accepts */, &iid, &device);
-        }
-        catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException)
-        {
-            return null; // no Direct3D 12 on this Windows
-        }
-
-        if (hr < 0 || device == null)
-        {
-            return null;
-        }
-
-        try
-        {
-            // ID3D12Device::CheckFeatureSupport (slot 13) with D3D12_FEATURE_SHADER_MODEL (7): ask for the highest model
-            // this code knows; a runtime that doesn't know it answers E_INVALIDARG, so step down until it accepts.
-            foreach (int asked in new[] { 0x66, 0x65, 0x64, 0x63, 0x62, 0x61, 0x60, 0x51 })
-            {
-                int model = asked;
-                int check = ((delegate* unmanaged[Stdcall]<void*, int, void*, uint, int>)Slot(device, 13))(device, 7, &model, sizeof(int));
-                if (check >= 0)
-                {
-                    return model;
-                }
-            }
-
-            return 0x51; // a Direct3D 12 device always has 5.1
-        }
-        finally
-        {
-            Release(device);
-        }
-    }
-
     // ----- Shaders --------------------------------------------------------------------------------------------------
 
     public nint ComputeShader(string source, string entry) => CreateShader(source, entry, "cs_5_0", CreateComputeShaderSlot);
@@ -538,9 +455,6 @@ internal sealed unsafe partial class Direct3D : IDisposable
 
     [LibraryImport("dxgi.dll")]
     private static partial int CreateDXGIFactory1(Guid* riid, void** factory);
-
-    [LibraryImport("d3d12.dll")]
-    private static partial int D3D12CreateDevice(void* adapter, int minimumFeatureLevel, Guid* riid, void** device);
 
     [LibraryImport("d3d11.dll")]
     private static partial int D3D11CreateDevice(void* adapter, int driverType, nint software, uint flags, int* featureLevels, uint levels, uint sdkVersion, void** device, int* featureLevel, void** context);

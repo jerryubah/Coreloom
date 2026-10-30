@@ -257,9 +257,10 @@
     </Setter>
   </Style>
 
-  <!-- Every text button (since 1.8.4; the banners' buttons since 1.8.3): charcoal glass with white text, its rim lit
-       along the top and toward a soft light of the accent in its lower right corner, which grows on hover. Primary,
-       Secondary, Subtle and the banners' AccentGradient are all this button now, so they look the same everywhere. -->
+  <!-- The glass button (the banners' since 1.8.3, every text button's in 1.8.4): charcoal glass with white text, its rim
+       lit along the top and toward a soft light of the accent in its lower right corner, which grows on hover. The
+       banners' AccentGradient, Secondary and Subtle are this button; since 1.8.5 Primary is the accent-filled button
+       again, so an action such as Connect doesn't look secondary. -->
   <Style x:Key="Button.Glass" TargetType="Button" BasedOn="{StaticResource Button.Plain}">
     <Setter Property="Foreground" Value="{DynamicResource Brush.OnGlow}" />
     <Setter Property="Background" Value="{DynamicResource Brush.GlowButtonFill}" />
@@ -299,7 +300,32 @@
 
   <Style x:Key="Button.AccentGradient" TargetType="Button" BasedOn="{StaticResource Button.Glass}" />
 
-  <Style x:Key="Button.Primary" TargetType="Button" BasedOn="{StaticResource Button.Glass}" />
+  <!-- A card's main action (Connect, Play, Clean, Save…): filled with the accent, white text (back in 1.8.5). -->
+  <Style x:Key="Button.Primary" TargetType="Button" BasedOn="{StaticResource Button.Plain}">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <c:SquircleBorder x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+          </c:SquircleBorder>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Root" Property="Background" Value="{DynamicResource Brush.AccentHover}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="Root" Property="Opacity" Value="0.85" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Opacity" Value="0.45" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
 
   <Style x:Key="Button.Secondary" TargetType="Button" BasedOn="{StaticResource Button.Glass}">
     <Setter Property="FontWeight" Value="Normal" />

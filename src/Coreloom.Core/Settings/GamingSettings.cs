@@ -100,6 +100,12 @@ public sealed class GamingSettings
     /// </summary>
     public bool VramManagement { get; set; }
 
+    /// <summary>
+    /// CPU cache optimization (since 1.8.5): background apps kept off the game's L3 cache while it's in front. Off until
+    /// turned on.
+    /// </summary>
+    public bool CacheOptimization { get; set; }
+
     /// <summary>What VRAM management learned per game (newest first, at most <see cref="VramRecord.MaxGames"/>).</summary>
     public List<VramRecord> VramGames { get; set; } = [];
 

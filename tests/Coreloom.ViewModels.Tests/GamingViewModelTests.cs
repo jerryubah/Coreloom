@@ -47,18 +47,6 @@ internal sealed class FakeGaming : IGamingService
         [GamingTweak.KeepShaderCaches] = new(true, false),
     };
 
-    /// <summary>What the DirectStorage check answers (asked after each scan).</summary>
-    public DirectStorageReport DirectStorage { get; set; } = DirectStorageCheck.Evaluate(new DirectStorageInputs(
-        26100, "NVIDIA GeForce RTX 5090", 0x66, [new GameDrive(@"D:\", "NVMe", true, new BypassIoState(true))], []));
-
-    public int DirectStorageChecks { get; private set; }
-
-    public Task<DirectStorageReport> DirectStorageAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken)
-    {
-        DirectStorageChecks++;
-        return Task.FromResult(DirectStorage);
-    }
-
     /// <summary>The shader cache size last set in the "driver" (MB), or null for its default.</summary>
     public uint? ShaderCacheLimit { get; set; }
 
@@ -351,9 +339,9 @@ public class GamingViewModelTests
     {
         var (page, fake, settings) = Create();
         Assert.Equal(12, page.Boosts.Count);
-        Assert.Equal(11, page.BoostsAvailable); // core scheduling has no cores to choose between on this test PC
-        Assert.Equal(3, page.BoostsOn); // Game Mode, no background recording, and DirectStorage (ready)
-        Assert.Equal("3/11", page.ReadinessText);
+        Assert.Equal(10, page.BoostsAvailable); // core scheduling and cache optimization have no cores to choose between on this test PC
+        Assert.Equal(2, page.BoostsOn); // Game Mode and no background recording
+        Assert.Equal("2/10", page.ReadinessText);
         Assert.Contains("8 boosts can make", page.HeroTitle);
         Assert.True(page.Boosts.Single(b => b.Tweak == GamingTweak.GameMode).IsOn);
 
@@ -363,7 +351,8 @@ public class GamingViewModelTests
         Assert.False(page.CoreSchedulingBoost.IsOn); // not available here
         Assert.True(page.VramBoost.IsOn);
         Assert.True(settings.Current.Gaming.VramManagement);
-        Assert.Equal(11, page.BoostsOn);
+        Assert.False(page.CacheOptimizationBoost.IsOn); // not available here either
+        Assert.Equal(10, page.BoostsOn);
         Assert.True(page.AllBoostsOn);
         Assert.True(page.RestartPending);
         Assert.Equal("Restart Windows to finish.", page.Boosts.Single(b => b.Tweak == GamingTweak.GpuScheduling).Message);

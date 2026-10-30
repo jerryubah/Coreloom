@@ -58,6 +58,7 @@ internal sealed class SampleData
         {
             s.Gaming.CoreScheduling = true;
             s.Gaming.VramManagement = true;
+            s.Gaming.CacheOptimization = true;
             s.Gaming.ShaderCacheSize = ShaderCacheSize.Unlimited; // what the sample driver has
             s.Gaming.KeepVram(new VramRecord { GameId = "epic:Dodo", Name = "Alan Wake 2", TotalMb = 32607, PeakGameMb = 17100, PeakInUseMb = 19400, PeakSharedMb = 310, Minutes = 95, Sessions = 2, LastPlayed = DateTime.UtcNow.AddDays(-2) });
             s.Gaming.KeepVram(new VramRecord { GameId = "steam:1091500", Name = "Cyberpunk 2077", TotalMb = 32607, PeakGameMb = 13900, PeakInUseMb = 15800, PeakSharedMb = 240, Minutes = 140, Sessions = 3, LastPlayed = DateTime.UtcNow.AddHours(-3) });
@@ -257,12 +258,6 @@ internal sealed class SampleGaming : IGamingService
 
     public bool IsSupported => true;
 
-    /// <summary>Sample: the RTX 5090 (Shader Model 6.6, the highest Coreloom asks for), the games' drive NVMe with BypassIO, one game using it.</summary>
-    public Task<DirectStorageReport> DirectStorageAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken) =>
-        Task.FromResult(DirectStorageCheck.Evaluate(new DirectStorageInputs(26100, "NVIDIA GeForce RTX 5090", 0x66,
-            [new GameDrive(@"D:\", "NVMe", true, new BypassIoState(true))],
-            [new DirectStorageGame("steam:1895880", "Ratchet & Clank: Rift Apart", @"D:\")])));
-
     public Task<IReadOnlyList<GameEntry>> ScanLibraryAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<GameEntry>>(
     [
         new("steam:1091500", "Cyberpunk 2077", GameStore.Steam) { InstallPath = @"D:\Steam\steamapps\common\Cyberpunk 2077", SizeBytes = 92L << 30, LastPlayed = DateTimeOffset.Now.AddHours(-3) },
@@ -324,9 +319,35 @@ internal sealed class SampleCores : ICoreSchedulingService
 
     public AmdVCacheStatus ReadAmdStatus() => new(ServiceState.Running, ServiceState.Running, 0, []);
 
-    public ProcessAffinity? GetAffinity(int processId) => null;
+    /// <summary>Background apps on every core (CPU cache optimization's details move them); the game isn't among them.</summary>
+    private readonly Dictionary<int, ProcessAffinity> _apps = new()
+    {
+        [5101] = new(0xFFFF_FFFF, 0xFFFF_FFFF),
+        [5102] = new(0xFFFF_FFFF, 0xFFFF_FFFF),
+        [5103] = new(0xFFFF_FFFF, 0xFFFF_FFFF),
+        [5104] = new(0xFFFF_FFFF, 0xFFFF_FFFF),
+    };
 
-    public bool SetAffinity(int processId, ulong mask) => false;
+    public ProcessAffinity? GetAffinity(int processId) => _apps.TryGetValue(processId, out var cores) ? cores : null;
+
+    public bool SetAffinity(int processId, ulong mask)
+    {
+        if (!_apps.TryGetValue(processId, out var cores))
+        {
+            return false;
+        }
+
+        _apps[processId] = cores with { Process = mask };
+        return true;
+    }
+
+    public IReadOnlyList<RunningProcess> RunningPrograms() =>
+    [
+        new(5101, @"C:\Program Files\Google\Chrome\Application\chrome.exe"),
+        new(5102, @"C:\Users\Jerry\AppData\Local\Discord\app-1.0.9200\Discord.exe"),
+        new(5103, @"C:\Users\Jerry\AppData\Roaming\Spotify\Spotify.exe"),
+        new(5104, @"C:\Program Files (x86)\Steam\bin\cef\cef.win7x64\steamwebhelper.exe"),
+    ];
 }
 
 internal sealed class SampleOptimize : IOptimizeService

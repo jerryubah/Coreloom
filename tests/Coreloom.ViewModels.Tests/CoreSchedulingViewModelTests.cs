@@ -30,6 +30,11 @@ internal sealed class FakeCores : ICoreSchedulingService
     /// <summary>Windows (or the game's anti-cheat) refuses changes.</summary>
     public bool Refuse { get; set; }
 
+    /// <summary>The programs running (CPU cache optimization looks through them, since 1.8.5).</summary>
+    public List<RunningProcess> Running { get; } = [];
+
+    public IReadOnlyList<RunningProcess> RunningPrograms() => Running;
+
     public bool IsSupported => true;
 
     public CoreLayout ReadLayout() => Layout;
@@ -137,21 +142,21 @@ public class CoreSchedulingViewModelTests
     {
         var (page, gaming, _, settings) = Create(gaming: g => g.Plan = new PowerPlan(Guid.NewGuid(), "Ultimate Performance", true));
         var ultimate = page.Boosts.Single(b => b.Tweak == GamingTweak.UltimatePower);
-        Assert.Equal("3/12", page.ReadinessText); // Game Mode, no background recording and DirectStorage (ready)
+        Assert.Equal("2/12", page.ReadinessText); // Game Mode and no background recording
         Assert.Equal(ColorKeys.Neutral, page.CoreScheduling.Checks.Single(c => c.Name == "Power plan").ColorKey); // grey, not red
 
         ultimate.IsOn = true;
         await Task.Yield();
-        Assert.Equal("4/12", page.ReadinessText);
+        Assert.Equal("3/12", page.ReadinessText);
 
         page.CoreSchedulingBoost.IsOn = true;
         await Task.Yield();
-        Assert.Equal("5/12", page.ReadinessText);
+        Assert.Equal("4/12", page.ReadinessText);
 
         ultimate.IsOn = false;
         await Task.Yield();
-        Assert.Equal("4/12", page.ReadinessText);
-        Assert.Equal("8 boosts can make your games smoother", page.HeroTitle);
+        Assert.Equal("3/12", page.ReadinessText);
+        Assert.Equal("9 boosts can make your games smoother", page.HeroTitle);
 
         await page.ApplyAllCommand.ExecuteAsync(null);
         Assert.Equal("12/12", page.ReadinessText);
@@ -361,7 +366,7 @@ public class CoreSchedulingViewModelTests
         Assert.False(page.CoreSchedulingBoost.IsSupported);
         Assert.Equal("Every core on this processor has the 3D V-Cache, so there's nothing to choose between.", page.CoreSchedulingBoost.Message);
         Assert.Null(page.Boosts.Single(b => b.Tweak == GamingTweak.UltimatePower).Advice);
-        Assert.Equal(11, page.BoostsAvailable); // core scheduling can't be used here, so it isn't counted
+        Assert.Equal(10, page.BoostsAvailable); // core scheduling and cache optimization (one L3) can't be used here, so they aren't counted
         settings.Dispose();
     }
 

@@ -54,8 +54,8 @@ public enum GamingTweak
     KeepShaderCaches,
 
     /// <summary>
-    /// Windows (since 1.8.4): whether games can use DirectStorage and GPU decompression here — a check, not a switch
-    /// (see <see cref="DirectStorageCheck"/>); "on" when everything it needs is in place.
+    /// Windows, 1.8.4 only: the DirectStorage readiness check (removed in 1.8.5 for CPU cache optimization). Kept so the
+    /// values after it keep their numbers.
     /// </summary>
     DirectStorage,
 
@@ -64,6 +64,12 @@ public enum GamingTweak
     /// and memory recommendation (see <see cref="VramAdvice"/>). Switched by Coreloom itself, not a Windows setting.
     /// </summary>
     VramManagement,
+
+    /// <summary>
+    /// Windows (since 1.8.5): while a game is in front, background apps are kept off the cores whose L3 cache the game
+    /// uses (see <see cref="CacheLocality"/>). Switched by Coreloom itself, not a Windows setting.
+    /// </summary>
+    CacheOptimization,
 }
 
 /// <summary>Whether a tweak can be used here, whether it is on, and whether a restart is still needed for it.</summary>

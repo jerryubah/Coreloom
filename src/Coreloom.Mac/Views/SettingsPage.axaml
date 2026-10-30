@@ -1066,7 +1066,7 @@
                     <Button Theme="{StaticResource Button.Primary}" Command="{Binding InstallCommand}" IsVisible="{Binding ShowStatusInstallButton}"
                             ToolTip.Tip="Downloads the update if needed, quits Coreloom, replaces the app and opens it again.">
                       <StackPanel Orientation="Horizontal">
-                        <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Download}" Stroke="{DynamicResource Brush.OnGlow}" />
+                        <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Download}" Stroke="{DynamicResource Brush.OnAccent}" />
                         <TextBlock Text="Install update" Margin="6,0,0,0" />
                       </StackPanel>
                     </Button>

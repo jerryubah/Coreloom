@@ -273,7 +273,35 @@
 
   <ControlTheme x:Key="Button.AccentGradient" TargetType="Button" BasedOn="{StaticResource Button.Glass}" />
 
-  <ControlTheme x:Key="Button.Primary" TargetType="Button" BasedOn="{StaticResource Button.Glass}" />
+  <!-- A card's main action (Connect, Play, Clean, Save…): filled with the accent, white text (back in 1.8.5, so an
+       action such as Connect doesn't look like the glass Secondary beside it). -->
+  <ControlTheme x:Key="Button.Primary" TargetType="Button">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Padding" Value="12,7" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                            HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+        </c:SquircleBorder>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ c|SquircleBorder#Root">
+      <Setter Property="Background" Value="{DynamicResource Brush.AccentHover}" />
+    </Style>
+    <Style Selector="^:pressed /template/ c|SquircleBorder#Root">
+      <Setter Property="Opacity" Value="0.85" />
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.45" />
+    </Style>
+  </ControlTheme>
 
   <ControlTheme x:Key="Button.Secondary" TargetType="Button" BasedOn="{StaticResource Button.Glass}">
     <Setter Property="FontWeight" Value="Normal" />

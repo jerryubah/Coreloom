@@ -19,78 +19,85 @@
       <ContentPresenter Content="{Binding TotalChart}" ContentTemplate="{StaticResource ChartCard}" Height="260" Margin="0,16,0,0" />
 
       <!-- Drive speed test -->
-      <c:SquircleBorder Style="{StaticResource Card}" Margin="0,16,0,0" DataContext="{Binding Benchmark}" Padding="20,18">
-        <StackPanel>
-          <Grid>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto" />
-              <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <c:SquircleBorder Width="38" Height="38" CornerRadius="11" Background="{DynamicResource Brush.AccentSoft}" VerticalAlignment="Top">
-              <Path Style="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Gauge}" Stroke="{DynamicResource Brush.Accent}" />
-            </c:SquircleBorder>
-            <StackPanel Grid.Column="1" Margin="12,0,0,0">
-              <TextBlock Style="{StaticResource Text.CardTitle}" Text="Drive speed test" />
-              <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding Status}" TextWrapping="Wrap" Margin="0,2,0,0" />
-            </StackPanel>
-          </Grid>
+      <c:SquircleBorder Style="{StaticResource Card}" Margin="0,16,0,0" DataContext="{Binding Benchmark}" Padding="0" Sheen="0.8">
+        <Grid ClipToBounds="True">
+          <!-- The Gaming banner's light (since 1.8.5): from the top edge in the accent, a bright line where it meets the edge, a little grain. -->
+          <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.HeroGlow}" IsHitTestVisible="False" />
+          <c:SquircleBorder CornerRadius="17" Background="{StaticResource GrainTexture}" Opacity="0.045" IsHitTestVisible="False" />
+          <Border Height="1" VerticalAlignment="Top" Margin="56,0" Background="{DynamicResource Brush.HeroLine}" IsHitTestVisible="False" />
 
-          <!-- Drive, size and start -->
-          <WrapPanel Margin="0,14,0,0" Orientation="Horizontal">
-            <ComboBox Style="{StaticResource ComboBox.Default}" MinWidth="280" Margin="0,0,10,8" ItemsSource="{Binding Drives}" DisplayMemberPath="Text"
-                      SelectedItem="{Binding SelectedDrive}" IsEnabled="{Binding IsIdle}" AutomationProperties.Name="Drive to test" />
-            <ListBox Style="{StaticResource Segmented}" Margin="0,0,10,8" VerticalAlignment="Center" ItemsSource="{Binding Sizes}" DisplayMemberPath="Text"
-                     SelectedItem="{Binding SelectedSize}" IsEnabled="{Binding IsIdle}" AutomationProperties.Name="Test size" />
-            <Button Style="{StaticResource Button.Icon}" Margin="0,0,10,8" Command="{Binding RefreshDrivesCommand}" ToolTip="Refresh the list of drives"
-                    AutomationProperties.Name="Refresh drives">
-              <Path Style="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Refresh}" />
-            </Button>
-            <Button Style="{StaticResource Button.Primary}" Padding="18,8" Margin="0,0,10,8" Command="{Binding RunCommand}"
-                    Visibility="{Binding IsIdle, Converter={StaticResource BoolToVisibility}}">
-              <StackPanel Orientation="Horizontal">
-                <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnGlow}" />
-                <TextBlock Text="Start test" Margin="7,0,0,0" />
+          <StackPanel Margin="20,18">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <c:SquircleBorder Width="38" Height="38" CornerRadius="11" Background="{DynamicResource Brush.AccentSoft}" VerticalAlignment="Top">
+                <Path Style="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Gauge}" Stroke="{DynamicResource Brush.Accent}" />
+              </c:SquircleBorder>
+              <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                <TextBlock Style="{StaticResource Text.CardTitle}" Text="Drive speed test" />
+                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding Status}" TextWrapping="Wrap" Margin="0,2,0,0" />
               </StackPanel>
-            </Button>
-            <Button Style="{StaticResource Button.Secondary}" Padding="18,8" Margin="0,0,10,8" Content="Cancel" Command="{Binding CancelCommand}"
-                    Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibility}}" />
-          </WrapPanel>
+            </Grid>
 
-          <ProgressBar Style="{StaticResource ProgressBar.Thin}" Margin="0,4,0,0" Maximum="1"
-                       b:Smooth.Value="{Binding Progress}" Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibility}}" />
-          <Border Background="{DynamicResource Brush.CriticalSoft}" CornerRadius="8" Padding="12,8" Margin="0,8,0,0"
-                  Visibility="{Binding Error, Converter={StaticResource HasValueToVisibility}}">
-            <StackPanel Orientation="Horizontal">
-              <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Critical}" />
-              <TextBlock Text="{Binding Error}" Margin="8,0,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
-            </StackPanel>
-          </Border>
+            <!-- Drive, size and start -->
+            <WrapPanel Margin="0,14,0,0" Orientation="Horizontal">
+              <ComboBox Style="{StaticResource ComboBox.Default}" MinWidth="280" Margin="0,0,10,8" ItemsSource="{Binding Drives}" DisplayMemberPath="Text"
+                        SelectedItem="{Binding SelectedDrive}" IsEnabled="{Binding IsIdle}" AutomationProperties.Name="Drive to test" />
+              <ListBox Style="{StaticResource Segmented}" Margin="0,0,10,8" VerticalAlignment="Center" ItemsSource="{Binding Sizes}" DisplayMemberPath="Text"
+                       SelectedItem="{Binding SelectedSize}" IsEnabled="{Binding IsIdle}" AutomationProperties.Name="Test size" />
+              <Button Style="{StaticResource Button.Icon}" Margin="0,0,10,8" Command="{Binding RefreshDrivesCommand}" ToolTip="Refresh the list of drives"
+                      AutomationProperties.Name="Refresh drives">
+                <Path Style="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Refresh}" />
+              </Button>
+              <Button Style="{StaticResource Button.AccentGradient}" Padding="18,8" Margin="0,0,10,8" Command="{Binding RunCommand}"
+                      Visibility="{Binding IsIdle, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel Orientation="Horizontal">
+                  <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnGlow}" />
+                  <TextBlock Text="Start test" Margin="7,0,0,0" />
+                </StackPanel>
+              </Button>
+              <Button Style="{StaticResource Button.Secondary}" Padding="18,8" Margin="0,0,10,8" Content="Cancel" Command="{Binding CancelCommand}"
+                      Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibility}}" />
+            </WrapPanel>
 
-          <!-- Gauges and results -->
-          <c:AdaptiveGrid MinColumnWidth="400" MaxColumns="2" Spacing="20" Margin="0,16,0,0">
-            <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="16,18">
-              <c:AdaptiveGrid MinColumnWidth="170" MaxColumns="2" Spacing="12" VerticalAlignment="Center">
-                <ContentPresenter Content="{Binding ReadGauge}" ContentTemplate="{StaticResource ToneGauge}" />
-                <ContentPresenter Content="{Binding WriteGauge}" ContentTemplate="{StaticResource ToneGauge}" />
-              </c:AdaptiveGrid>
-            </c:SquircleBorder>
-            <StackPanel>
-              <Grid Margin="14,0,14,6">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="1.2*" MinWidth="130" />
-                  <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Text="Test" Style="{StaticResource Text.Label}" />
-                <TextBlock Grid.Column="1" Text="Read" Style="{StaticResource Text.Label}" />
-                <TextBlock Grid.Column="2" Text="Write" Style="{StaticResource Text.Label}" />
-              </Grid>
-              <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource DiskBenchmarkRow}" Focusable="False" />
-              <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding Summary}" Margin="2,2,0,0"
-                         Visibility="{Binding Summary, Converter={StaticResource HasValueToVisibility}}" />
-            </StackPanel>
-          </c:AdaptiveGrid>
-        </StackPanel>
+            <ProgressBar Style="{StaticResource ProgressBar.Thin}" Margin="0,4,0,0" Maximum="1"
+                         b:Smooth.Value="{Binding Progress}" Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibility}}" />
+            <Border Background="{DynamicResource Brush.CriticalSoft}" CornerRadius="8" Padding="12,8" Margin="0,8,0,0"
+                    Visibility="{Binding Error, Converter={StaticResource HasValueToVisibility}}">
+              <StackPanel Orientation="Horizontal">
+                <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Critical}" />
+                <TextBlock Text="{Binding Error}" Margin="8,0,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
+              </StackPanel>
+            </Border>
+
+            <!-- Gauges and results -->
+            <c:AdaptiveGrid MinColumnWidth="400" MaxColumns="2" Spacing="20" Margin="0,16,0,0">
+              <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="16,18">
+                <c:AdaptiveGrid MinColumnWidth="170" MaxColumns="2" Spacing="12" VerticalAlignment="Center">
+                  <ContentPresenter Content="{Binding ReadGauge}" ContentTemplate="{StaticResource ToneGauge}" />
+                  <ContentPresenter Content="{Binding WriteGauge}" ContentTemplate="{StaticResource ToneGauge}" />
+                </c:AdaptiveGrid>
+              </c:SquircleBorder>
+              <StackPanel>
+                <Grid Margin="14,0,14,6">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.2*" MinWidth="130" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="Test" Style="{StaticResource Text.Label}" />
+                  <TextBlock Grid.Column="1" Text="Read" Style="{StaticResource Text.Label}" />
+                  <TextBlock Grid.Column="2" Text="Write" Style="{StaticResource Text.Label}" />
+                </Grid>
+                <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource DiskBenchmarkRow}" Focusable="False" />
+                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding Summary}" Margin="2,2,0,0"
+                           Visibility="{Binding Summary, Converter={StaticResource HasValueToVisibility}}" />
+              </StackPanel>
+            </c:AdaptiveGrid>
+          </StackPanel>
+        </Grid>
       </c:SquircleBorder>
 
       <!-- Drives side by side end on one line: the shorter card's chart grows, so its volumes line up at the bottom -->

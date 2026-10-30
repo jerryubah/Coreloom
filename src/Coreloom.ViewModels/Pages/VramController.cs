@@ -172,7 +172,7 @@ public sealed class VramController : ObservableObject
                 string color = fit switch
                 {
                     VramFit.Over => ColorKeys.ToneHot,
-                    VramFit.Tight => ColorKeys.ToneWarm,
+                    VramFit.Tight => ColorKeys.Neutral, // said in words; nothing on a boost is yellow since 1.8.5
                     _ => ColorKeys.ToneCool,
                 };
                 return new DetailRow(r.Name, $"{VramAdvice.FitText(fit)} · {VramAdvice.PeakText(r)}", color, VramAdvice.Advice(r));

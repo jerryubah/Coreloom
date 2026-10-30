@@ -447,8 +447,9 @@ public partial class App : Application
         }, Dispatcher);
         _vramWatch.Start();
 
-        // Intelligent CPU core scheduling (does nothing until turned on in Gaming › Performance boosts).
-        _coreScheduling = new Services.CoreSchedulingTicker(shell, _gamingMode, _frameRates, () => settingsService.Current.Gaming.CoreScheduling, () =>
+        // Intelligent CPU core scheduling and CPU cache optimization (nothing until one is turned on in Gaming › Performance boosts).
+        _coreScheduling = new Services.CoreSchedulingTicker(shell, _gamingMode, _frameRates, () => settingsService.Current.Gaming.CoreScheduling,
+            () => settingsService.Current.Gaming.CacheOptimization, () =>
         {
             var frame = host.Engine.LatestFrame;
             int count = Math.Min(Environment.ProcessorCount, 256);
