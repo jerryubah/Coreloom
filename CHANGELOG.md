@@ -7,6 +7,29 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.8.6] - 2026-10-31
+
+Two new pages on Windows: Drivers, which finds updates and installs the ones you pick, and Applications, with every app's size, its startup switch and Uninstall. Smooth gradients on the Mac, X buttons that aren't cut off, and a website with room to breathe.
+
+### Highlights
+
+- **Windows: Drivers.** A new page in the sidebar lists every device's driver, grouped and labeled (Graphics, Audio, Network, Bluetooth, Storage, USB, Chipset and system…), with its maker, version and date. Alike devices are counted on one line, and Windows' own drivers are hidden until you show them. *Check for updates* asks Windows Update for your devices' drivers, NVIDIA for a newer graphics driver, and checks the DirectX files older games need. Tick the ones you want, or *Select all*, then *Update*. A new NVIDIA driver installs right in Coreloom, or opens the NVIDIA app if you'd rather install it there.
+- **Windows: Applications.** Another new page lists every installed app, desktop and Microsoft Store, with its size, publisher and install date. Filter by *Desktop*, *Microsoft Store* or *Startup*, sort by size, name, date or publisher, and search. Apps that start with Windows have their switch right on their line. *Uninstall* asks first, then runs the app's own uninstaller (Store apps are removed for your account).
+- **Windows: no more cut-off X buttons.** The close buttons on the Gaming and Benchmarking details, and the rename button on Devices, reached past their scroll areas, so their hover square was cut off. They sit inside now, and every page picture checks that no icon button is cut.
+- **Mac: smooth gradients.** The frosted glass is drawn at four times the detail it could be before, and blurred without steps, so it no longer shows blocks. A faint grain over the window keeps lights, glows and chart fills smooth on any screen, and the dials' glow is soft instead of ringed.
+- **Website: room to breathe.** No word is cut off any more (the big gradient headings lost the bottoms of their letters), the hero text keeps its margins on a phone, and the sections have more space between them.
+
+### In detail
+
+- Drivers: Windows Update's offers are matched to your devices by hardware id. An NVIDIA card's driver comes from NVIDIA's own driver lookup (the Game Ready driver, WHQL), downloaded and installed silently, with Windows asking for a restart when one is needed. The graphics driver installs last, since the screen goes dark for a moment while it does. The first visit checks once; *Check for updates* checks again.
+- Applications: sizes come from each app's installer, or its folder is measured (for a few seconds at most) when the installer doesn't say. A startup entry belongs to the app whose folder holds the program it starts. After an uninstaller closes, Coreloom checks that the app is really gone.
+- Both pages are Windows-only, and nothing is installed or uninstalled until you choose it. Every check, install and uninstall is written to the log.
+- Have 1.8.5? Choose *Check for Updates* (the Coreloom menu on a Mac, *Settings › Updates* on Windows), then *Install update*.
+
+### Feedback
+
+Something not right on the new pages? [Open an issue](https://github.com/jerryubah/Coreloom/issues) with a screenshot.
+
 ## [1.8.5] - 2026-10-30
 
 CPU cache optimization joins the Gaming boosts on Windows, every boost has its switch and nothing on them is yellow, the speed tests get the Gaming banner's light, and main actions such as Connect are filled with your accent again.

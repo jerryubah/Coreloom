@@ -260,6 +260,38 @@ Work through each area and tick what works.
       *Lighting*; USB controller cards aren't listed; no device shows a garbled name.
 - [ ] Cards are compact (roughly 270–330 px wide) and keep that width as you resize the window or search; they wrap
       onto new rows instead of stretching. Long names end in "…" and show in full on hover.
+- [ ] (1.8.6) Hover the rename pencil on a Bluetooth card, and the × on the Gaming and Benchmarking details cards: the
+      grey hover square is whole, not cut off on its right.
+
+**Drivers (1.8.6)**
+
+- [ ] *Drivers* sits below *Devices* in the sidebar. The first visit reads the drivers and checks for updates once
+      (it can take a minute: Windows Update is the slow one).
+- [ ] The groups match Device Manager: your graphics card under *Graphics* with NVIDIA's own number (e.g. 581.57) and
+      Windows' version, audio, network, Bluetooth, storage, USB, *Chipset and system*… Several alike devices show once
+      with ×n. Compare a few versions and dates with Device Manager › the device › Driver.
+- [ ] *Show Windows' own drivers* adds the Microsoft and "(Standard …)" ones; the line under the list says how many were
+      hidden. Search finds a driver by device, maker or group.
+- [ ] Updates: what Windows Update offers here should match *Settings › Windows Update › Advanced options › Optional
+      updates › Driver updates*. With an NVIDIA card, a newer Game Ready driver shows as *From NVIDIA* with its release
+      notes; when you're on the newest, it doesn't show.
+- [ ] Untick all but one Windows Update driver and *Update 1 driver*: it says *Downloading…*, *Installing…*, then
+      *Installed* (green) or why not (red); Device Manager shows the new version afterwards.
+- [ ] (If you have an NVIDIA card and a newer driver is offered.) Install it from Coreloom: the screen goes dark for a
+      moment, NVIDIA's settings are kept, and the version updates. Or press *Open the NVIDIA app* instead: the NVIDIA app
+      opens (not as administrator).
+- [ ] If DirectX files are missing (a fresh Windows), *DirectX End-User Runtime* is offered; installing it adds
+      `xinput1_3.dll` and `d3dx9_43.dll` to `C:\Windows\System32`.
+
+**Applications (1.8.6)**
+
+- [ ] *Applications* sits above *Smart Optimize*. The list matches *Settings › Apps › Installed apps* (no updates or
+      system parts), largest first, with sizes close to Settings'. Folders without a size are measured after a moment.
+- [ ] *Desktop*, *Microsoft Store* and *Startup* filter the list; the order menu and search work. Under *Startup*, each
+      app's switch matches Task Manager › Startup apps, and turning one off there turns it off here after *Refresh*.
+- [ ] *Uninstall* on something small you don't need: it asks first; *Cancel* does nothing; *Uninstall* opens the app's
+      own uninstaller, and the line says *Uninstalled* once it's done (or that it's still installed if you cancel the
+      uninstaller). A Store app is removed without a window.
 
 **Smart Optimize**
 
@@ -845,7 +877,10 @@ GitHub's Macs check every build of Coreloom for Mac, but they are virtual machin
    other main buttons in cards are filled with your accent; *Disconnect*, *Refresh* and the banners' buttons are
    charcoal glass. The drive and internet speed tests and the Memory page's top card have the Gaming banner's light
    from the top edge.
-13. **Updates.** When a newer version is out, Settings has a red dot and the sidebar's *New update available* button
+13. **Smooth gradients (1.8.6).** Over the Coreloom gradient and over a picture, look closely at the glass cards, the
+   banners' light, the dials' glow and the graphs' fills: no blocks or steps, in dark and light. (A very faint grain
+   over the window is what keeps them smooth.)
+14. **Updates.** When a newer version is out, Settings has a red dot and the sidebar's *New update available* button
    opens *Settings › Updates*. Once a newer version is out, *Coreloom › Check for Updates…* downloads it; *Install update* quits
    Coreloom, replaces it and opens the new version (`~/Library/Logs/Coreloom/update.log` says what happened).
 

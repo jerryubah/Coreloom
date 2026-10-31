@@ -119,6 +119,14 @@ Each button downloads the newest version. Once installed, Coreloom keeps itself 
   USB or display cable, grouped by type on the same grid as the Bluetooth cards, with *Eject* for drives and driver problems flagged. Bluetooth can be turned
   on and off there, and *Pair a new device* opens Windows' Bluetooth settings. Any Bluetooth device can be renamed
   (the pencil on its card, or right-click); the name is kept in Coreloom, and Windows keeps the device's own.
+- **Drivers** (1.8.6). Every device's driver, grouped and labeled (Graphics, Audio, Network, Bluetooth, Storage, USB,
+  chipset and system…) with its maker, version and date; Windows' own drivers hidden until you show them. *Check for
+  updates* asks Windows Update for your devices' drivers, NVIDIA for a newer graphics driver (its Game Ready driver,
+  installed silently, or the NVIDIA app opened instead) and checks the DirectX runtime's files older games need; tick
+  the ones you want, or all of them, and *Update*.
+- **Applications** (1.8.6). Every installed app (desktop and Microsoft Store) with its size, publisher and install
+  date, filters for desktop, Store and startup apps, sorting and search; startup apps have their switch on their line,
+  and *Uninstall* asks first, then runs the app's own uninstaller.
 - **Drive speed test** on the Storage page: sequential and random read and write speeds (like CrystalDiskMark) on a
   temporary file that is deleted afterwards.
 - **Internet speed test** on the Network page: download, upload, ping and jitter against Cloudflare's speed test
@@ -279,6 +287,8 @@ How it works is in [src/Coreloom.Phone/README.md](src/Coreloom.Phone/README.md).
 | Keeping the DirectX shader cache | The Disk Cleanup handler's `Autorun` value (`VolumeCaches\D3D Shader Cache`) | Changing it: **yes** |
 | The processor's cache layout, background apps' cores (CPU cache optimization) | `GetLogicalProcessorInformationEx` (each L3 cache and its cores); the process list by name; `SetProcessAffinityMask` on the listed background apps you run, as Task Manager's *Set affinity* | No |
 | A game's graphics memory (VRAM management) | Windows' *GPU Process Memory* performance counters (what Task Manager shows) | No |
+| Drivers and their updates | The device tree's driver properties (configuration manager); the Windows Update Agent's driver offers; NVIDIA's public driver lookup; the DirectX runtime's files in System32 | Installing them: **yes** |
+| Installed apps, their sizes and startup entries | The Uninstall registry keys (both views, and this account), the Store's package manager, app folders measured; the Run keys and Startup folders | Uninstalling an app for everyone: **yes** |
 
 On a Mac:
 
@@ -450,6 +460,10 @@ LibreHardwareMonitor's own report. See [docs/TESTING-ON-YOUR-PC.md](docs/TESTING
   launchers as you, not as administrator.
 - **The Devices page changes something only when you click.** Connect, Disconnect, the Bluetooth switch and Eject do
   what Windows' own buttons do; nothing is unpaired or reconfigured.
+- **Drivers and Applications change nothing until you choose.** Drivers installs only the updates you tick (Windows
+  Update's own installer, NVIDIA's package silently, or Microsoft's DirectX web installer); Applications uninstalls an
+  app only after you confirm, with the app's own uninstaller, and turning a startup app off uses the same switch as
+  Task Manager.
 - **Smart Optimize changes only what you ask it to.** It deletes files only inside known junk folders (never through
   links, never files younger than a day in temp folders, never files in use), turns startup apps off with the same
   switch Task Manager uses (turn them back on any time), and uses Windows' own tools for everything else: Microsoft

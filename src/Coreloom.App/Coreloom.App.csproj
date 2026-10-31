@@ -79,6 +79,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Page shots read this PC's drivers and apps with the app's own readers (1.8.6), as a check on a real Windows. -->
+    <InternalsVisibleTo Include="Coreloom.PageShots" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Coreloom.Core\Coreloom.Core.csproj" />
     <ProjectReference Include="..\Coreloom.Hardware\Coreloom.Hardware.csproj" />
     <ProjectReference Include="..\Coreloom.ViewModels\Coreloom.ViewModels.csproj" />

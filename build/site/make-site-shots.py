@@ -2,17 +2,19 @@
 """Makes the website's pictures of the app (site/assets/{mac,windows}-{overview,overview-light,gaming,optimize}.webp,
 {mac,windows}-backdrop-{aurora,dunes}.webp: the Overview over two of the background pictures, since 1.8.2, and the
 "New in 1.8.4" pictures: windows-boosts.webp, the Gaming page scrolled to its boosts, and mac-speedtest.webp, the
-Storage page scrolled to the drive speed test).
+Storage page scrolled to the drive speed test; and since 1.8.6 windows-drivers.webp and windows-applications.webp, the two
+new Windows pages, and mac-memory.webp, the Memory page with its lit ring card over the frosted glass).
 
 From the 2× window pictures of the sample machines (1440 × 960 points, so 2880 × 1920 pixels):
-  Mac:     tools/Coreloom.MacShots (overview.png, overview-light.png, gaming.png, optimize.png, storage-speedtest.png); run with
+  Mac:     tools/Coreloom.MacShots (overview.png, overview-light.png, gaming.png, optimize.png, storage-speedtest.png,
+           memory.png); run with
            --wallpaper=<picture> for the MacBook's desktop picture, and once more with --backdrop=image:aurora and
            --backdrop=image:dunes, its overview.png copied into the folder as backdrop-aurora.png and backdrop-dunes.png. Headless pictures have no window buttons, so the
            close, minimize and zoom buttons are drawn where the app puts them: inside the sidebar's glass, 16 points in,
            centred 20 points below its top.
   Windows: tools/Coreloom.PageShots on Windows (windows-overview.png, windows-overview-light.png, windows-gaming.png,
-           windows-optimize.png, windows-overview-aurora.png, windows-overview-dunes.png and windows-gaming-boosts.png on
-           the pageshots-output branch).
+           windows-optimize.png, windows-overview-aurora.png, windows-overview-dunes.png, windows-gaming-boosts.png,
+           windows-drivers.png and windows-applications.png on the pageshots-output branch).
 
     python3 build/site/make-site-shots.py <MacShots folder> <PageShots folder>
 """
@@ -54,14 +56,15 @@ def main():
     mac, windows = Path(sys.argv[1]), Path(sys.argv[2])
     for source, name in [("overview", "mac-overview"), ("overview-light", "mac-overview-light"), ("gaming", "mac-gaming"), ("optimize", "mac-optimize"),
                          ("backdrop-aurora", "mac-backdrop-aurora"), ("backdrop-dunes", "mac-backdrop-dunes"),
-                         ("storage-speedtest", "mac-speedtest")]:
+                         ("storage-speedtest", "mac-speedtest"), ("memory", "mac-memory")]:
         path = mac / f"{source}.png"
         if path.exists():
             save(window_buttons(Image.open(path)), name)
     for source, name in [("windows-overview", "windows-overview"), ("windows-overview-light", "windows-overview-light"),
                          ("windows-gaming", "windows-gaming"), ("windows-optimize", "windows-optimize"),
                          ("windows-overview-aurora", "windows-backdrop-aurora"), ("windows-overview-dunes", "windows-backdrop-dunes"),
-                         ("windows-gaming-boosts", "windows-boosts")]:
+                         ("windows-gaming-boosts", "windows-boosts"), ("windows-drivers", "windows-drivers"),
+                         ("windows-applications", "windows-applications")]:
         path = windows / f"{source}.png"
         if path.exists():
             save(Image.open(path), name)

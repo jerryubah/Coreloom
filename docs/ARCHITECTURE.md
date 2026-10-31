@@ -324,7 +324,13 @@ One background spans each app's main window; the sidebar and the cards are frost
   scaled to cover the window (blocks averaged first when shrinking a lot) and laid over the theme's background at the
   picture's opacity, then blurred (three box-blur passes, done at a reduced size when the blur is large). The *frost*
   is the same background a few times smaller and blurred by `FrostPoints`, with a little more color. The light theme
-  pales colors and gradients toward its background and halves a picture's opacity.
+  pales colors and gradients toward its background and halves a picture's opacity. Since 1.8.6 the frost is at most
+  four times smaller each way (it could be 32, and stretched back up it showed blocks), and `Blur` works in floating
+  point and writes back with half a step of uniform noise, so wide blurs of dark gradients don't band while a flat
+  color stays exact.
+- **Grain over the Mac window (1.8.6).** Avalonia draws gradients without dithering, so the Mac's main window lays the
+  grain tile (`GrainWindow`, one grain per Retina pixel) over everything at 3 %, hit-test invisible; the Mac dial's
+  glow is twenty finer copies of the arc instead of eight.
 - **The apps.** `Services/Backdrop` (one per app) takes the settings and theme from `ThemeService.Apply` and the size
   from the window's `WindowBackdrop`, debounces (30 ms after a change, 140 ms after a resize), decodes the picture once
   (macOS's sips converts HEIC), renders on the thread pool, turns the pixels into two bitmaps on the UI thread and raises
@@ -585,6 +591,57 @@ out of ReadyToRun to keep downloads small. `WindowsDeviceService`:
 
 Struct sizes are checked against the Windows SDK (BLUETOOTH_DEVICE_INFO 560 bytes, KSPROPERTY 24, DEVPROPKEY 20) before
 use (`DeviceNative.LayoutIsValid`). Events log under "Devices".
+
+## Drivers (1.8.6, Windows)
+
+`DriversViewModel` (ViewModels) over `IDriverService` (`WindowsDriverService` in the app).
+
+- **Installed drivers.** `DeviceNative.InstalledDrivers` reads every present device node (configuration manager:
+  `CM_Get_Device_ID_List` with `CM_GETIDLIST_FILTER_PRESENT`, then `CM_Get_DevNode_Property`) for `DEVPKEY_Device_DriverVersion`
+  (no version, no driver: skipped), `DriverDate` (FILETIME), `DriverProvider`, `DriverInfPath`, the setup class,
+  `HardwareIds` and the problem code. `DriverCatalog` (Core, unit-tested) maps setup classes to groups with labels and
+  icons, leaves out endpoints and copies (`AudioEndpoint`, `Volume`, `PrintQueue`…), counts alike devices on one line,
+  and treats Microsoft's and the `(Standard …)` providers as Windows' own (hidden until *Show Windows' own drivers*,
+  except graphics and devices with a problem). `NvidiaVersion` turns Windows' version into NVIDIA's (the last five
+  digits of the third and fourth parts: 32.0.15.8157 is 581.57).
+- **Updates.** `CheckAsync` gathers three sources: the DirectX End-User Runtime's 2010 files in System32
+  (`DirectXRuntime`: D3DX 9–11, D3DCompiler_43, XInput 1.3, XAudio 2.7); for an NVIDIA card, NVIDIA's public lookup
+  (`NvidiaDrivers`: the product list `lookupValueSearch.aspx?TypeID=3` maps the card's name to its family and series ids,
+  then `AjaxDriverService.php?func=DriverManualLookup&psid=…&pfid=…&osID=57&isWHQL=1&dch=1` answers the newest Game
+  Ready driver, whose URL-encoded fields are read), offered when newer than the installed one; and the Windows Update
+  Agent (`Microsoft.Update.Session` by late-bound COM, `Search("IsInstalled=0 and Type='Driver' and IsHidden=0")`),
+  each offer matched to its device by `DriverHardwareID`, else by model name. NVIDIA's offer replaces Windows Update's
+  for the card. What couldn't be checked is said plainly.
+- **Installing.** Only picked updates, graphics last (the screen blanks). Windows Update: `UpdateColl` with the offer from
+  the last search, `CreateUpdateDownloader().Download()`, `CreateUpdateInstaller().Install()`, result 2/3 is success
+  (`RebootRequired` says when to restart). NVIDIA: the package downloaded to *Drivers* in the app's local folder and run
+  with `-s -noreboot` (exit 0 installed, 1 or 3010 installed with a restart to come). DirectX: Microsoft's
+  `dxwebsetup.exe /Q`. Coreloom runs elevated, so none of them asks again; the download is deleted afterwards. *Open the
+  NVIDIA app* starts the NVIDIA app (or GeForce Experience) as the signed-in user (`ShellLaunch`), else NVIDIA's driver
+  pages.
+
+## Applications (1.8.6, Windows)
+
+`ApplicationsViewModel` over `IAppService` (`WindowsAppService`) and `IOptimizeService`'s startup entries.
+
+- **Apps.** The Uninstall keys under HKLM (64- and 32-bit views) and HKCU, judged by `InstalledApps.FromUninstallKey`
+  (Core, unit-tested) as Settings › Apps does: a name and an uninstaller, not a `SystemComponent`, not an update
+  (`ReleaseType`, `ParentKeyName`); Windows Installer products uninstall with `MsiExec.exe /X{product code}`. Store apps
+  are this account's packages (`PackageManager.FindPackagesForUser("")`) that aren't frameworks, resources, bundles or
+  system packages and have an app list entry, with their logo (the scale-qualified file). `Dedupe` keeps one line per
+  name and version.
+- **Sizes and pictures.** `EstimatedSize` (KB) when the installer gave one; otherwise the folder is measured on a
+  background thread (12 s in all, never a drive, Windows, Program Files or a profile folder itself). Pictures come from
+  `DisplayIcon` (the icon extracted once to *AppIcons*), or the Store logo.
+- **Startup.** `InstalledApps.ForStartup` gives each Run-key or Startup-folder entry to the app whose folder holds its
+  program, else the app with its name; entries no app claims are listed under *Startup* alone. The switch is
+  `SetStartupEnabled` (StartupApproved, as Task Manager).
+- **Uninstalling.** Asked first on the row. The app's own command line (`SplitCommand`: a quoted program, else up to
+  ".exe") is started and waited for; many uninstallers hand over to a copy of themselves, so Coreloom then watches the
+  Uninstall key (for up to ten minutes, stopping three seconds after no uninstaller-like process is left) and reports
+  *Uninstalled* only when it's gone. Store apps: `PackageManager.RemovePackageAsync`.
+- **Checks.** PageShots (on a real Windows runner) writes `drivers-check.txt` and `apps-check.txt` with what the two
+  readers found there, and `clip-check.txt` with any icon button an ancestor cuts off.
 
 ## Smart Optimize
 

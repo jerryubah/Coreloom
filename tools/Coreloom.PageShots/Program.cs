@@ -132,6 +132,57 @@ internal static class Program
 
         await ShootBenchmarkingAsync(output, data);
         await CheckBenchmarksAsync(output);
+        await CheckWindowsListsAsync(output);
+    }
+
+    /// <summary>
+    /// 1.8.6: the Drivers and Applications pages' readers on this (real) Windows: the device tree's drivers, grouped as
+    /// the page groups them; the Windows Update Agent's COM object (no search); the installed apps with their sizes and
+    /// pictures. Written to drivers-check.txt and apps-check.txt.
+    /// </summary>
+    private static async Task CheckWindowsListsAsync(string output)
+    {
+        var lines = new List<string>();
+        try
+        {
+            var service = new Coreloom.App.Services.WindowsDriverService(Path.Combine(Path.GetTempPath(), "coreloom-shots-drivers"), "Coreloom/pageshots");
+            var drivers = await service.InstalledAsync(CancellationToken.None);
+            var groups = Coreloom.Core.Drivers.DriverCatalog.Group(drivers);
+            lines.Add($"{drivers.Count} devices with a driver; {groups.Sum(g => g.Count)} listed in {groups.Count} lines; {groups.Where(g => !g.IsMicrosoft).Sum(g => g.Count)} from device makers; {drivers.Count(d => d.HardwareIds.Count > 0)} with hardware ids; {drivers.Count(d => d.Date is not null)} with a date");
+            foreach (var group in groups.Take(60))
+            {
+                lines.Add($"{Coreloom.Core.Drivers.DriverCatalog.Label(group.Category)} | {group.Name}{(group.Count > 1 ? $" ×{group.Count}" : string.Empty)} | {group.Provider} | {group.Version} | {group.Date:yyyy-MM-dd}{(group.HasProblem ? " | problem" : string.Empty)}");
+            }
+
+            var wua = Type.GetTypeFromProgID("Microsoft.Update.Session");
+            lines.Add(wua is not null && Activator.CreateInstance(wua) is not null ? "Windows Update Agent: the session object is created" : "Windows Update Agent: not available");
+        }
+        catch (Exception e)
+        {
+            lines.Add("Reading drivers failed: " + e);
+        }
+
+        File.WriteAllLines(Path.Combine(output, "drivers-check.txt"), lines);
+        lines.Clear();
+        try
+        {
+            var service = new Coreloom.App.Services.WindowsAppService(Path.Combine(Path.GetTempPath(), "coreloom-shots-apps"));
+            var apps = await service.InstalledAsync(CancellationToken.None);
+            var measured = await service.MeasureAsync([.. apps.Where(a => a.SizeBytes is null && a.InstallLocation is not null)], CancellationToken.None);
+            int icons = apps.Take(40).Count(a => service.IconFor(a) is { } file && File.Exists(file));
+            lines.Add($"{apps.Count} apps ({apps.Count(a => a.Kind == Coreloom.Core.Apps.AppKind.Store)} from the Store); {apps.Count(a => a.SizeBytes is not null)} with a size from their installer, {measured.Count} measured; {icons} of the first 40 with a picture; {apps.Count(a => a.CanUninstall)} with an uninstaller");
+            foreach (var app in apps.OrderBy(a => a.Name, StringComparer.OrdinalIgnoreCase).Take(80))
+            {
+                long? size = app.SizeBytes ?? (measured.TryGetValue(app.Id, out long m) ? m : null);
+                lines.Add($"{app.Kind} | {app.Name} | {app.Publisher} | {app.Version} | {(size is { } s ? $"{s / (1024.0 * 1024):0.#} MB" : "—")} | {app.Installed:yyyy-MM-dd} | {Path.GetFileName(Coreloom.Core.Apps.InstalledApps.SplitCommand(app.Uninstall ?? string.Empty).File)}");
+            }
+        }
+        catch (Exception e)
+        {
+            lines.Add("Reading apps failed: " + e);
+        }
+
+        File.WriteAllLines(Path.Combine(output, "apps-check.txt"), lines);
     }
 
     private static async Task ShootBenchmarkingAsync(string output, SampleData data)
