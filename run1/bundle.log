@@ -1,0 +1,90 @@
+
+==> Publish for osx-x64 (1.8.6)
+  Determining projects to restore...
+  Restored /Users/runner/work/Coreloom/Coreloom/src/Coreloom.ViewModels/Coreloom.ViewModels.csproj (in 6.24 sec).
+  Restored /Users/runner/work/Coreloom/Coreloom/src/Coreloom.Hardware.Mac/Coreloom.Hardware.Mac.csproj (in 6.23 sec).
+  Restored /Users/runner/work/Coreloom/Coreloom/src/Coreloom.Core/Coreloom.Core.csproj (in 6.23 sec).
+  Restored /Users/runner/work/Coreloom/Coreloom/src/Coreloom.Mac/Coreloom.Mac.csproj (in 6.27 sec).
+  Coreloom.Core -> /Users/runner/work/Coreloom/Coreloom/src/Coreloom.Core/bin/Release/net10.0/Coreloom.Core.dll
+  Coreloom.Hardware.Mac -> /Users/runner/work/Coreloom/Coreloom/src/Coreloom.Hardware.Mac/bin/Release/net10.0/Coreloom.Hardware.Mac.dll
+  Coreloom.ViewModels -> /Users/runner/work/Coreloom/Coreloom/src/Coreloom.ViewModels/bin/Release/net10.0/Coreloom.ViewModels.dll
+  Coreloom.Mac -> /Users/runner/work/Coreloom/Coreloom/src/Coreloom.Mac/bin/Release/net10.0/osx-x64/Coreloom.dll
+  Coreloom.Mac -> /Users/runner/work/Coreloom/Coreloom/artifacts/mac/publish-x64/
+
+==> Coreloom.app
+/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-x64/Coreloom.app/Contents/Info.plist: OK
+Contents/MacOS:
+total 280856
+drwxr-xr-x  6 runner  staff        192 Oct 31 01:07 .
+drwxr-xr-x  6 runner  staff        192 Oct 31 01:07 ..
+-rwxr-xr-x  1 runner  staff  124242777 Oct 31 01:07 Coreloom
+-rwxr--r--  1 runner  staff    1509776 Oct 31 01:07 libAvaloniaNative.dylib
+-rwxr--r--  1 runner  staff    2922800 Oct 31 01:07 libHarfBuzzSharp.dylib
+-rwxr--r--  1 runner  staff   15116016 Oct 31 01:07 libSkiaSharp.dylib
+Contents/Resources:
+total 1640
+drwxr-xr-x  7 runner  staff     224 Oct 31 01:07 .
+drwxr-xr-x  6 runner  staff     192 Oct 31 01:07 ..
+-rw-r--r--  1 runner  staff  809909 Oct 31 01:07 AppIcon.icns
+-rw-r--r--  1 runner  staff    4380 Oct 31 01:07 LICENSE-Inter.txt
+-rw-r--r--  1 runner  staff    4399 Oct 31 01:07 LICENSE-JetBrainsMono.txt
+-rw-r--r--  1 runner  staff    1067 Oct 31 01:07 LICENSE.txt
+-rw-r--r--  1 runner  staff    7743 Oct 31 01:07 THIRD-PARTY-NOTICES.md
+x86_64
+
+==> Sign ad hoc (no Developer ID configured)
+/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-x64/Coreloom.app/Contents/MacOS/libAvaloniaNative.dylib: replacing existing signature
+/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-x64/Coreloom.app/Contents/MacOS/libHarfBuzzSharp.dylib: replacing existing signature
+/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-x64/Coreloom.app/Contents/MacOS/libSkiaSharp.dylib: replacing existing signature
+/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-x64/Coreloom.app/Contents/MacOS/Coreloom: replacing existing signature
+/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-x64/Coreloom.app: replacing existing signature
+--prepared:/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-x64/Coreloom.app/Contents/MacOS/libHarfBuzzSharp.dylib
+--validated:/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-x64/Coreloom.app/Contents/MacOS/libHarfBuzzSharp.dylib
+--prepared:/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-x64/Coreloom.app/Contents/MacOS/libAvaloniaNative.dylib
+--validated:/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-x64/Coreloom.app/Contents/MacOS/libAvaloniaNative.dylib
+--prepared:/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-x64/Coreloom.app/Contents/MacOS/libSkiaSharp.dylib
+--validated:/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-x64/Coreloom.app/Contents/MacOS/libSkiaSharp.dylib
+/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-x64/Coreloom.app: valid on disk
+/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-x64/Coreloom.app: satisfies its Designated Requirement
+    Executable=/Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-x64/Coreloom.app/Contents/MacOS/Coreloom
+    Identifier=com.jerryubah.coreloom
+    Format=app bundle with Mach-O thin (x86_64)
+    CodeDirectory v=20400 size=963343 flags=0x2(adhoc) hashes=30098+3 location=embedded
+    Signature=adhoc
+    Info.plist entries=23
+    TeamIdentifier=not set
+    Sealed Resources version=2 rules=13 files=8
+    Internal requirements count=0 size=12
+
+==> Coreloom-1.8.6-macos-x64.zip
+
+==> Coreloom-1.8.6-macos-x64.dmg
+2 images written to /Users/runner/work/Coreloom/Coreloom/artifacts/mac/stage-x64/background.tiff.
+Checksumming Protective Master Boot Record (MBR : 0)…
+Protective Master Boot Record (MBR :: verified   CRC32 $3676C2AF
+Checksumming GPT Header (Primary GPT Header : 1)…
+ GPT Header (Primary GPT Header : 1): verified   CRC32 $15D2EDAE
+Checksumming GPT Partition Data (Primary GPT Table : 2)…
+GPT Partition Data (Primary GPT Tabl: verified   CRC32 $08AC2F9E
+Checksumming  (Apple_Free : 3)…
+                    (Apple_Free : 3): verified   CRC32 $00000000
+Checksumming disk image (Apple_HFS : 4)…
+          disk image (Apple_HFS : 4): verified   CRC32 $7F1E2219
+Checksumming  (Apple_Free : 5)…
+                    (Apple_Free : 5): verified   CRC32 $00000000
+Checksumming GPT Partition Data (Backup GPT Table : 6)…
+GPT Partition Data (Backup GPT Table: verified   CRC32 $08AC2F9E
+Checksumming GPT Header (Backup GPT Header : 7)…
+  GPT Header (Backup GPT Header : 7): verified   CRC32 $BF9BE2C0
+verified   CRC32 $B38D1B2C
+hdiutil: verify: checksum of "/Users/runner/work/Coreloom/Coreloom/artifacts/mac/Coreloom-1.8.6-macos-x64.dmg" is VALID
+
+==> Done
+total 250128
+drwxr-xr-x  5 runner  staff       160 Oct 31 01:08 .
+drwxr-xr-x  3 runner  staff        96 Oct 31 01:05 ..
+-rw-r--r--@ 1 runner  staff  64275186 Oct 31 01:08 Coreloom-1.8.6-macos-x64.dmg
+-rw-r--r--  1 runner  staff  63331548 Oct 31 01:07 Coreloom-1.8.6-macos-x64.zip
+drwxr-xr-x  3 runner  staff        96 Oct 31 01:07 Coreloom-x64.app
+43017f4d3728e73f27d906e84d9a83ac4293c851cb98c847fb872c76e24beaff  /Users/runner/work/Coreloom/Coreloom/artifacts/mac/Coreloom-1.8.6-macos-x64.zip
+17c37b4feff3dbec262d9441aea76d6dab78386cab609ce7f69a9e42000d8ebe  /Users/runner/work/Coreloom/Coreloom/artifacts/mac/Coreloom-1.8.6-macos-x64.dmg

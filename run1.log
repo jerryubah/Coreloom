@@ -1,0 +1,26 @@
+ GPT Header (Primary GPT Header : 1): verified   CRC32 $15D2EDAE
+Checksumming GPT Partition Data (Primary GPT Table : 2)…
+GPT Partition Data (Primary GPT Tabl: verified   CRC32 $08AC2F9E
+Checksumming  (Apple_Free : 3)…
+                    (Apple_Free : 3): verified   CRC32 $00000000
+Checksumming disk image (Apple_HFS : 4)…
+          disk image (Apple_HFS : 4): verified   CRC32 $7F1E2219
+Checksumming  (Apple_Free : 5)…
+                    (Apple_Free : 5): verified   CRC32 $00000000
+Checksumming GPT Partition Data (Backup GPT Table : 6)…
+GPT Partition Data (Backup GPT Table: verified   CRC32 $08AC2F9E
+Checksumming GPT Header (Backup GPT Header : 7)…
+  GPT Header (Backup GPT Header : 7): verified   CRC32 $BF9BE2C0
+verified   CRC32 $B38D1B2C
+hdiutil: verify: checksum of "/Users/runner/work/Coreloom/Coreloom/artifacts/mac/Coreloom-1.8.6-macos-x64.dmg" is VALID
+
+==> Done
+total 250128
+drwxr-xr-x  5 runner  staff       160 Oct 31 01:08 .
+drwxr-xr-x  3 runner  staff        96 Oct 31 01:05 ..
+-rw-r--r--@ 1 runner  staff  64275186 Oct 31 01:08 Coreloom-1.8.6-macos-x64.dmg
+-rw-r--r--  1 runner  staff  63331548 Oct 31 01:07 Coreloom-1.8.6-macos-x64.zip
+drwxr-xr-x  3 runner  staff        96 Oct 31 01:07 Coreloom-x64.app
+43017f4d3728e73f27d906e84d9a83ac4293c851cb98c847fb872c76e24beaff  /Users/runner/work/Coreloom/Coreloom/artifacts/mac/Coreloom-1.8.6-macos-x64.zip
+17c37b4feff3dbec262d9441aea76d6dab78386cab609ce7f69a9e42000d8ebe  /Users/runner/work/Coreloom/Coreloom/artifacts/mac/Coreloom-1.8.6-macos-x64.dmg
+Coreloom 1.8.6 (x64): packages and app verified.
