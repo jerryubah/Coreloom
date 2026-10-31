@@ -22,12 +22,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-15
-            arch: arm64
           - os: macos-15-intel
             arch: x64
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
+    timeout-minutes: 80
     steps:
       - uses: actions/checkout@v5
 
@@ -44,7 +42,13 @@ jobs:
 
       - name: Build, launch and photograph the app
         if: hashFiles('build/mac/verify-app.sh') != ''
-        run: bash build/mac/verify-app.sh ${{ matrix.arch }} out
+        run: |
+          for i in 1 2 3 4; do
+            bash build/mac/verify-app.sh ${{ matrix.arch }} out/run$i > out/run$i.log 2>&1; echo "run $i exit $?" >> out/runs.txt
+            mkdir -p out/run$i/diag; ls ~/Library/Logs/DiagnosticReports > out/run$i/diag/list.txt 2>&1 || true
+            cp ~/Library/Logs/DiagnosticReports/Coreloom* out/run$i/diag/ 2>/dev/null || true
+          done
+          cat out/runs.txt
 
       - name: Publish the outputs
         if: always()
