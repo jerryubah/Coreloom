@@ -1,0 +1,49 @@
+58 devices with a driver; 52 listed in 47 lines; 1 from device makers; 56 with hardware ids; 58 with a date
+Graphics | Microsoft Hyper-V Video | Microsoft | 10.0.26100.1150 | 2006-06-21
+Displays | Generic Monitor (HyperVMonitor) | Microsoft | 10.0.26100.33648 | 2006-06-21
+Network | Hyper-V Virtual Switch Extension Adapter | Microsoft | 10.0.26100.1 | 2006-06-21
+Network | Mellanox ConnectX-4 Lx Virtual Ethernet Adapter | Mellanox Technologies Ltd. | 23.4.26054.1 | 2023-05-03
+Network | Microsoft Hyper-V Network Adapter #4 | Microsoft | 10.0.26100.33648 | 2006-06-21
+Network | Microsoft Kernel Debug Network Adapter | Microsoft | 10.0.26100.32860 | 2006-06-21
+Storage | Microsoft Hyper-V SCSI Controller ×2 | Microsoft | 10.0.26100.7309 | 2006-06-21
+Storage | Microsoft Storage Spaces Controller | Microsoft | 10.0.26100.33648 | 2006-06-21
+Storage | Microsoft Virtual Disk ×2 | Microsoft | 10.0.26100.33648 | 2006-06-21
+Keyboards, mice and controllers | HID-compliant mouse | Microsoft | 10.0.26100.1150 | 2006-06-21
+Keyboards, mice and controllers | Microsoft Hyper-V Input | Microsoft | 10.0.26100.1150 | 2006-06-21
+Keyboards, mice and controllers | Microsoft Hyper-V Virtual Keyboard | Microsoft | 10.0.26100.1150 | 2006-06-21
+Chipset and system | ACPI Module Device | Microsoft | 10.0.26100.1150 | 2006-06-21
+Chipset and system | ACPI x64-based PC | Microsoft | 10.0.26100.1 | 2006-06-21
+Chipset and system | Advanced programmable interrupt controller | Microsoft | 10.0.26100.1150 | 2006-06-21
+Chipset and system | AMD EPYC 7763 64-Core Processor ×4 | Microsoft | 10.0.26100.33648 | 2009-04-21
+Chipset and system | Composite Bus Enumerator | Microsoft | 10.0.26100.1150 | 2006-06-21
+Chipset and system | Microsoft ACPI-Compliant System | Microsoft | 10.0.26100.7309 | 2006-06-21
+Chipset and system | Microsoft Basic Display Driver | Microsoft | 10.0.26100.4202 | 2006-06-21
+Chipset and system | Microsoft Basic Render Driver | Microsoft | 10.0.26100.33648 | 2006-06-21
+Chipset and system | Microsoft Corporation Virtual Machine | Microsoft | 10.0.26100.1 | 2006-06-21
+Chipset and system | Microsoft Hyper-V Data Exchange | Microsoft | 10.0.26100.1 | 2006-06-21
+Chipset and system | Microsoft Hyper-V Dynamic Memory | Microsoft | 10.0.26100.5074 | 2006-06-21
+Chipset and system | Microsoft Hyper-V Generation Counter | Microsoft | 10.0.26100.1150 | 2006-06-21
+Chipset and system | Microsoft Hyper-V Guest Shutdown | Microsoft | 10.0.26100.1 | 2006-06-21
+Chipset and system | Microsoft Hyper-V Heartbeat | Microsoft | 10.0.26100.1 | 2006-06-21
+Chipset and system | Microsoft Hyper-V PCI Server | Microsoft | 10.0.26100.3037 | 2006-06-21
+Chipset and system | Microsoft Hyper-V Time Synchronization | Microsoft | 10.0.26100.1 | 2006-06-21
+Chipset and system | Microsoft Hyper-V Virtual Disk Server | Microsoft | 10.0.26100.33648 | 2006-06-21
+Chipset and system | Microsoft Hyper-V Virtual Machine Bus | Microsoft | 10.0.26100.33648 | 2006-06-21
+Chipset and system | Microsoft Hyper-V Virtual Machine Bus Provider | Microsoft | 10.0.26100.33648 | 2006-06-21
+Chipset and system | Microsoft Hyper-V Virtual PCI Bus | Microsoft | 10.0.26100.33158 | 2006-06-21
+Chipset and system | Microsoft Hyper-V Virtualization Infrastructure Driver | Microsoft | 10.0.26100.33648 | 2006-06-21
+Chipset and system | Microsoft Hypervisor Service | Microsoft | 10.0.26100.32995 | 2006-06-21
+Chipset and system | Microsoft System Management BIOS Driver | Microsoft | 10.0.26100.1 | 2006-06-21
+Chipset and system | Microsoft Virtual Drive Enumerator | Microsoft | 10.0.26100.1591 | 2006-06-21
+Chipset and system | NDIS Virtual Network Adapter Enumerator | Microsoft | 10.0.26100.1 | 2006-06-21
+Chipset and system | Plug and Play Software Device Enumerator | Microsoft | 10.0.26100.4202 | 2025-05-23
+Chipset and system | Remote Desktop Device Redirector Bus | Microsoft | 10.0.26100.32995 | 2006-06-21
+Chipset and system | System CMOS/real time clock | Microsoft | 10.0.26100.1150 | 2006-06-21
+Chipset and system | UMBus Enumerator | Microsoft | 10.0.26100.1150 | 2006-06-21
+Chipset and system | UMBus Root Bus Enumerator | Microsoft | 10.0.26100.1150 | 2006-06-21
+Chipset and system | Volume Manager | Microsoft | 10.0.26100.7309 | 2006-06-21
+Software components | Generic software component | Microsoft | 10.0.26100.1 | 2006-06-21
+Software components | Microsoft GS Wavetable Synth | Microsoft | 10.0.26100.1 | 2006-06-21
+Software components | Microsoft Radio Device Enumeration Bus | Microsoft | 10.0.26100.1 | 2006-06-21
+Other devices | Communications Port (COM2) | Microsoft | 10.0.26100.33648 | 2006-06-21
+Windows Update Agent: the session object is created
