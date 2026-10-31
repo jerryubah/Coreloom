@@ -1,0 +1,254 @@
+<UserControl x:Class="Coreloom.App.Views.ApplicationsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Coreloom.App.Controls"
+             xmlns:b="clr-namespace:Coreloom.App.Behaviors"
+             xmlns:pages="clr-namespace:Coreloom.ViewModels.Pages;assembly=Coreloom.ViewModels">
+
+  <!-- Applications (Windows, since 1.8.6): a banner with the totals, search, a filter and the order, then one line per
+       app with its size, its startup switch when it starts with Windows, and Uninstall (asked first). -->
+  <UserControl.Resources>
+    <Style x:Key="AppSpinner" TargetType="c:RadialGauge">
+      <Setter Property="Width" Value="14" />
+      <Setter Property="Height" Value="14" />
+      <Setter Property="Thickness" Value="2.2" />
+      <Setter Property="SweepAngle" Value="359" />
+      <Setter Property="Value" Value="0.28" />
+      <Setter Property="TrackBrush" Value="Transparent" />
+      <Setter Property="Fill" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+
+    <Style x:Key="StatValue" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+      <Setter Property="FontSize" Value="22" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Margin" Value="0,6,0,0" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <!-- An app: its picture (or initials), name and details, where it's from, its startup switch, its size, and its buttons. -->
+    <DataTemplate x:Key="AppRow" DataType="{x:Type pages:AppRowViewModel}">
+      <StackPanel x:Name="Row" Margin="0,0,0,2">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="132" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <Grid Width="38" Height="38" VerticalAlignment="Center">
+            <c:SquircleBorder CornerRadius="11" Background="{DynamicResource Brush.ControlHover}" />
+            <TextBlock Text="{Binding Initials}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       Visibility="{Binding HasIcon, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+            <Border Width="26" Height="26" b:AsyncImage.DecodeWidth="52" b:AsyncImage.Path="{Binding Icon}" />
+          </Grid>
+          <StackPanel Grid.Column="1" Margin="14,0,14,0" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" />
+              <Border Style="{StaticResource Badge}" Margin="8,0,0,0">
+                <TextBlock Text="{Binding KindText}" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
+              </Border>
+            </StackPanel>
+            <TextBlock Text="{Binding Detail}" Style="{StaticResource Text.Caption}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Detail}" />
+          </StackPanel>
+          <!-- starts with Windows: the switch Task Manager has -->
+          <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,18,0"
+                      Visibility="{Binding HasStartup, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="Starts with Windows" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" Margin="0,0,10,0" />
+            <CheckBox Style="{StaticResource ToggleSwitch}" IsChecked="{Binding StartsWithWindows}" AutomationProperties.Name="{Binding Name, StringFormat='{}{0} starts with Windows'}" />
+          </StackPanel>
+          <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="0,0,16,0">
+            <TextBlock Text="{Binding SizeText}" FontFamily="{StaticResource MonoFont}" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" HorizontalAlignment="Right" />
+            <ProgressBar Style="{StaticResource ProgressBar.Thin}" Margin="0,6,0,0" Maximum="1" Value="{Binding SizeShare, Mode=OneWay}" IsTabStop="False" />
+          </StackPanel>
+          <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+            <Button Style="{StaticResource Button.Icon}" Width="32" Height="32" Margin="0,0,6,0" Command="{Binding OpenFolderCommand}"
+                    ToolTip="Open its folder" AutomationProperties.Name="Open folder" Visibility="{Binding HasFolder, Converter={StaticResource BoolToVisibility}}">
+              <Path Style="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Folder}" />
+            </Button>
+            <Grid>
+              <Button Style="{StaticResource Button.Secondary}" Padding="14,7" Command="{Binding UninstallCommand}"
+                      Visibility="{Binding CanUninstall, Converter={StaticResource BoolToVisibility}}" AutomationProperties.Name="{Binding Name, StringFormat='Uninstall {0}'}">
+                <StackPanel Orientation="Horizontal">
+                  <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Trash}" />
+                  <TextBlock Text="Uninstall" Margin="7,0,0,0" />
+                </StackPanel>
+              </Button>
+              <c:RadialGauge Style="{StaticResource AppSpinner}" b:Spin.IsSpinning="{Binding IsBusy}" HorizontalAlignment="Center"
+                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+            </Grid>
+          </StackPanel>
+        </Grid>
+
+        <!-- Asked first: what uninstalling does, then Uninstall or Cancel -->
+        <c:SquircleBorder Style="{StaticResource Card.Inset}" Margin="52,10,0,0" Padding="14,10"
+                          Visibility="{Binding IsConfirming, Converter={StaticResource BoolToVisibility}}">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="{Binding ConfirmText}" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center" Margin="0,0,14,0" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+              <Button Style="{StaticResource Button.Primary}" Padding="16,7" Margin="0,0,8,0" Content="Uninstall" Command="{Binding ConfirmUninstallCommand}" />
+              <Button Style="{StaticResource Button.Secondary}" Padding="14,7" Content="Cancel" Command="{Binding CancelUninstallCommand}" />
+            </StackPanel>
+          </Grid>
+        </c:SquircleBorder>
+        <TextBlock Text="{Binding Message}" FontSize="12" Foreground="{DynamicResource Brush.TextSecondary}" TextWrapping="Wrap" Margin="52,6,0,0"
+                   Visibility="{Binding HasMessage, Converter={StaticResource BoolToVisibility}}" />
+      </StackPanel>
+      <DataTemplate.Triggers>
+        <DataTrigger Binding="{Binding IsRemoved}" Value="True">
+          <Setter TargetName="Row" Property="Opacity" Value="0.55" />
+        </DataTrigger>
+      </DataTemplate.Triggers>
+    </DataTemplate>
+  </UserControl.Resources>
+
+  <ScrollViewer Style="{StaticResource ScrollViewer.Window}">
+    <StackPanel Margin="32,14,28,32" b:Motion.Entrance="True">
+
+      <!-- Not available here -->
+      <c:SquircleBorder Style="{StaticResource Card}" Margin="0,0,0,16"
+                        Visibility="{Binding IsSupported, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+        <StackPanel Orientation="Horizontal">
+          <Path Style="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.TextSecondary}" />
+          <TextBlock Text="{Binding UnsupportedText}" Margin="10,0,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
+        </StackPanel>
+      </c:SquircleBorder>
+
+      <!-- ============================================================ -->
+      <!-- Totals                                                       -->
+      <!-- ============================================================ -->
+      <c:SquircleBorder Style="{StaticResource Card}" Padding="0" Sheen="0.8">
+        <Grid ClipToBounds="True">
+          <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.HeroGlow}" IsHitTestVisible="False" />
+          <c:SquircleBorder CornerRadius="17" Background="{StaticResource GrainTexture}" Opacity="0.045" IsHitTestVisible="False" />
+          <Border Height="1" VerticalAlignment="Top" Margin="56,0" Background="{DynamicResource Brush.HeroLine}" IsHitTestVisible="False" />
+
+          <c:AdaptiveGrid MinColumnWidth="360" MaxColumns="2" Spacing="28" Margin="26,24,26,24">
+            <StackPanel VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal">
+                <Grid Width="48" Height="48">
+                  <c:SquircleBorder CornerRadius="14" Background="{DynamicResource Brush.DialTile}" BorderBrush="{DynamicResource Brush.DialTileRim}" BorderThickness="1" />
+                  <Path Style="{StaticResource IconPath}" Width="22" Height="22" Data="{StaticResource Icon.Apps}" Stroke="{DynamicResource Brush.Accent}" />
+                </Grid>
+                <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="Your apps" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
+                  <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                    <c:RadialGauge Style="{StaticResource AppSpinner}" Width="11" Height="11" Margin="0,0,6,0" b:Spin.IsSpinning="{Binding IsMeasuring}"
+                                   Visibility="{Binding IsMeasuring, Converter={StaticResource BoolToVisibility}}" />
+                    <TextBlock Style="{StaticResource Text.Caption}" Text="Measuring folders…" Visibility="{Binding IsMeasuring, Converter={StaticResource BoolToVisibility}}" />
+                    <TextBlock Style="{StaticResource Text.Caption}" Text="Desktop and Microsoft Store" Visibility="{Binding IsMeasuring, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                  </StackPanel>
+                </StackPanel>
+              </StackPanel>
+              <TextBlock FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" Margin="0,18,0,0">
+                <Run Text="{Binding TotalSizeText, Mode=OneWay}" /><Run Text=" of apps on this PC" />
+              </TextBlock>
+              <TextBlock Style="{StaticResource Text.Secondary}" TextWrapping="Wrap" Margin="0,6,0,0" LineHeight="19"
+                         Text="See what's installed and how much space each app takes, choose what starts with Windows, and uninstall what you don't use with the app's own uninstaller." />
+              <WrapPanel Margin="0,18,0,0">
+                <Button Style="{StaticResource Button.AccentGradient}" Padding="20,9" Margin="0,0,10,8" Command="{Binding SetFilterCommand}" CommandParameter="{x:Static pages:AppFilter.Startup}">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Power}" Stroke="{DynamicResource Brush.OnGlow}" />
+                    <TextBlock Text="Review startup apps" Margin="8,0,0,0" />
+                  </StackPanel>
+                </Button>
+                <Button Style="{StaticResource Button.Secondary}" Padding="14,9" Margin="0,0,10,8" Command="{Binding RefreshCommand}">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Refresh}" />
+                    <TextBlock Text="Refresh" Margin="7,0,0,0" />
+                  </StackPanel>
+                </Button>
+              </WrapPanel>
+            </StackPanel>
+
+            <c:AdaptiveGrid MinColumnWidth="150" MaxColumns="2" Spacing="10" UniformRowHeight="True" VerticalAlignment="Center">
+              <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,12">
+                <StackPanel>
+                  <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
+                    <TextBlock Text="Installed" Style="{StaticResource Text.Label}" Margin="7,0,0,0" />
+                  </StackPanel>
+                  <TextBlock Text="{Binding AppCount}" Style="{StaticResource StatValue}" />
+                  <TextBlock Text="apps" Style="{StaticResource Text.Caption}" />
+                </StackPanel>
+              </c:SquircleBorder>
+              <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,12">
+                <StackPanel>
+                  <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Info}" VerticalAlignment="Center" />
+                    <TextBlock Text="Space used" Style="{StaticResource Text.Label}" Margin="7,0,0,0" />
+                  </StackPanel>
+                  <TextBlock Text="{Binding TotalSizeText}" Style="{StaticResource StatValue}" />
+                  <TextBlock Text="by every app together" Style="{StaticResource Text.Caption}" />
+                </StackPanel>
+              </c:SquircleBorder>
+              <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,12">
+                <StackPanel>
+                  <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" />
+                    <TextBlock Text="Start with Windows" Style="{StaticResource Text.Label}" Margin="7,0,0,0" />
+                  </StackPanel>
+                  <TextBlock Text="{Binding StartupText}" Style="{StaticResource StatValue}" />
+                  <TextBlock Text="startup apps on" Style="{StaticResource Text.Caption}" />
+                </StackPanel>
+              </c:SquircleBorder>
+              <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,12">
+                <StackPanel>
+                  <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center" />
+                    <TextBlock Text="Microsoft Store" Style="{StaticResource Text.Label}" Margin="7,0,0,0" />
+                  </StackPanel>
+                  <TextBlock Text="{Binding StoreCount}" Style="{StaticResource StatValue}" />
+                  <TextBlock Text="apps from the Store" Style="{StaticResource Text.Caption}" />
+                </StackPanel>
+              </c:SquircleBorder>
+            </c:AdaptiveGrid>
+          </c:AdaptiveGrid>
+        </Grid>
+      </c:SquircleBorder>
+
+      <!-- ============================================================ -->
+      <!-- Search, filter and order                                     -->
+      <!-- ============================================================ -->
+      <WrapPanel Margin="0,26,0,0">
+        <c:QuickSearch Width="380" Margin="0,0,14,10" HorizontalAlignment="Left" Placeholder="Search apps by name or publisher"
+                       Hint="Start typing an app's name or its publisher" Text="{Binding Search}" Suggestions="{Binding SearchSuggestions}" />
+        <ListBox Style="{StaticResource Segmented}" Margin="0,0,14,10" VerticalAlignment="Center" ItemsSource="{Binding FilterOptions}" DisplayMemberPath="Label"
+                 SelectedValuePath="Value" SelectedValue="{Binding Filter}" AutomationProperties.Name="Show" />
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,10" VerticalAlignment="Center">
+          <TextBlock Text="Order" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" Margin="0,0,8,0" />
+          <ComboBox Style="{StaticResource ComboBox.Default}" MinWidth="170" ItemsSource="{Binding SortOptions}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                    SelectedValue="{Binding Sort}" AutomationProperties.Name="Order" />
+        </StackPanel>
+      </WrapPanel>
+      <TextBlock Text="{Binding CountText}" Style="{StaticResource Text.Secondary}" Margin="2,8,0,12" />
+
+      <!-- ============================================================ -->
+      <!-- The apps                                                     -->
+      <!-- ============================================================ -->
+      <c:SquircleBorder Style="{StaticResource Card}" Padding="18,16,18,4" Visibility="{Binding HasApps, Converter={StaticResource BoolToVisibility}}">
+        <ItemsControl ItemsSource="{Binding Apps}" ItemTemplate="{StaticResource AppRow}" Focusable="False">
+          <ItemsControl.ItemContainerStyle>
+            <Style TargetType="ContentPresenter">
+              <Setter Property="Margin" Value="0,0,0,14" />
+            </Style>
+          </ItemsControl.ItemContainerStyle>
+        </ItemsControl>
+      </c:SquircleBorder>
+      <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="16,14" Visibility="{Binding HasApps, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+        <StackPanel Orientation="Horizontal">
+          <Path Style="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Apps}" Stroke="{DynamicResource Brush.TextTertiary}" />
+          <TextBlock Text="{Binding EmptyText}" Style="{StaticResource Text.Secondary}" Margin="10,0,0,0" VerticalAlignment="Center" />
+        </StackPanel>
+      </c:SquircleBorder>
+      <TextBlock Style="{StaticResource Text.Caption}" Margin="2,12,0,0" TextWrapping="Wrap"
+                 Text="Sizes come from each app's installer, or its folder measured when it doesn't say. Uninstall runs the app's own uninstaller; Store apps are removed for your account. Turning a startup app off doesn't uninstall it." />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

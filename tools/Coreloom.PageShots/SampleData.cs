@@ -1,6 +1,8 @@
 using System.IO;
+using Coreloom.Core.Apps;
 using Coreloom.Core.Benchmarks;
 using Coreloom.Core.Devices;
+using Coreloom.Core.Drivers;
 using Coreloom.Core.Gaming;
 using Coreloom.Core.Hardware;
 using Coreloom.Core.History;
@@ -98,7 +100,7 @@ internal sealed class SampleData
     public GamingViewModel Gaming() => Page(c => new GamingViewModel(c));
 
     /// <summary>The sample tools (games, core scheduling, clean-up, benchmarks).</summary>
-    public ToolServices Tools => new() { Gaming = new SampleGaming(), CoreScheduling = new SampleCores(), Optimizer = new SampleOptimize(), Benchmarks = new SampleBenchmarks(), Devices = new SampleDevices() };
+    public ToolServices Tools => new() { Gaming = new SampleGaming(), CoreScheduling = new SampleCores(), Optimizer = new SampleOptimize(), Benchmarks = new SampleBenchmarks(), Devices = new SampleDevices(), Drivers = new SampleDrivers(), Apps = new SampleApps() };
 
     /// <summary>Takes a new reading (the sample values drift a little each time), a second after the last with the sample clock.</summary>
     public TelemetryFrame Poll()
@@ -308,6 +310,116 @@ internal sealed class SampleGaming : IGamingService
     }
 
     public Task<IReadOnlyList<GameEntry>> DownloadArtworkAsync(IReadOnlyList<GameEntry> games, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<GameEntry>>([]);
+}
+
+/// <summary>The sample PC's drivers and the updates on offer, for the Drivers page (since 1.8.6).</summary>
+internal sealed class SampleDrivers : IDriverService
+{
+    private static InstalledDriver D(string name, string cls, string provider, string version, int year, int month, int day) =>
+        new($@"SAMPLE\{name}", name, cls, provider, version, new DateTime(year, month, day));
+
+    public bool IsSupported => true;
+
+    public Task<IReadOnlyList<InstalledDriver>> InstalledAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<InstalledDriver>>(
+    [
+        D("NVIDIA GeForce RTX 5090", "Display", "NVIDIA", "32.0.15.8157", 2026, 9, 30),
+        D("AMD Radeon(TM) Graphics", "Display", "Advanced Micro Devices, Inc.", "32.0.21013.1000", 2026, 7, 2),
+        D("NVIDIA High Definition Audio", "MEDIA", "NVIDIA", "1.4.3.2", 2025, 6, 11),
+        D("Realtek USB Audio", "MEDIA", "Realtek", "6.3.9600.2393", 2025, 11, 4),
+        D("Focusrite USB Audio", "MEDIA", "Focusrite Audio Engineering Ltd.", "4.143.0.261", 2025, 9, 18),
+        D("Realtek Gaming 5GbE Family Controller", "Net", "Realtek", "10.72.0.0", 2026, 4, 9),
+        D("Qualcomm FastConnect 7800 Wi-Fi 7", "Net", "Qualcomm Technologies, Inc.", "3.1.0.1415", 2026, 2, 27),
+        D("Qualcomm FastConnect 7800 Bluetooth Adapter", "Bluetooth", "Qualcomm Technologies, Inc.", "10.0.0.1250", 2025, 12, 3),
+        D("Samsung SSD 990 PRO 4TB", "DiskDrive", "Microsoft", "10.0.26100.1", 2006, 6, 21),
+        D("Standard NVM Express Controller", "SCSIAdapter", "Microsoft", "10.0.26100.4202", 2006, 6, 21),
+        D("AMD SATA Controller", "HDC", "Advanced Micro Devices, Inc.", "9.3.2.158", 2024, 3, 18),
+        D("AMD USB 3.20 eXtensible Host Controller", "USB", "Advanced Micro Devices, Inc.", "1.0.0.183", 2025, 1, 22),
+        D("USB Root Hub (USB 3.0)", "USB", "(Standard USB HUBs)", "10.0.26100.1", 2006, 6, 21),
+        D("USB Root Hub (USB 3.0)", "USB", "(Standard USB HUBs)", "10.0.26100.1", 2006, 6, 21),
+        D("Logitech G Pro X Superlight 2", "HIDClass", "Logitech", "1.10.82.0", 2025, 8, 5),
+        D("HID Keyboard Device", "Keyboard", "Microsoft", "10.0.26100.1", 2006, 6, 21),
+        D("Xbox Wireless Controller", "XnaComposite", "Microsoft", "10.0.26100.2033", 2006, 6, 21),
+        D("AMD GPIO Controller", "System", "Advanced Micro Devices, Inc", "2.2.0.130", 2024, 1, 2),
+        D("AMD PSP 11.0 Device", "SecurityDevices", "Advanced Micro Devices Inc.", "5.39.0.0", 2025, 3, 3),
+        D("AMD 3D V-Cache Performance Optimizer", "System", "Advanced Micro Devices, Inc.", "1.0.0.11", 2025, 10, 9),
+        D("AMD SMBus", "System", "Advanced Micro Devices, Inc", "5.12.0.44", 2023, 12, 11),
+        D("Odyssey OLED G8", "Monitor", "Samsung", "1.0.0.0", 2024, 9, 1),
+        D("Elgato Facecam MK.2", "Camera", "Elgato", "1.0.0.22", 2025, 5, 14),
+        D("System Firmware", "Firmware", "ASRock", "3.30.0.0", 2026, 8, 12),
+    ]);
+
+    public Task<DriverScan> CheckAsync(IReadOnlyList<InstalledDriver> installed, IProgress<string>? progress, CancellationToken cancellationToken) => Task.FromResult(new DriverScan(
+    [
+        new DriverUpdate("nvidia", "NVIDIA GeForce RTX 5090", DriverSource.Nvidia, DriverCategory.Graphics)
+        {
+            Provider = "NVIDIA", CurrentVersion = "581.57", NewVersion = "621.01", Date = new DateTime(2026, 10, 21), SizeText = "1.04 GB",
+            DetailsUrl = "https://www.nvidia.com/en-us/drivers/details/282412/",
+        },
+        new DriverUpdate("u1", "Qualcomm FastConnect 7800 Bluetooth Adapter", DriverSource.WindowsUpdate, DriverCategory.Bluetooth)
+        {
+            Provider = "Qualcomm Technologies, Inc.", CurrentVersion = "10.0.0.1250", NewVersion = "10.0.0.1301", Date = new DateTime(2026, 9, 8), SizeBytes = 21_400_000,
+        },
+        new DriverUpdate("u2", "Realtek Gaming 5GbE Family Controller", DriverSource.WindowsUpdate, DriverCategory.Network)
+        {
+            Provider = "Realtek", CurrentVersion = "10.72.0.0", NewVersion = "10.76.0.0", Date = new DateTime(2026, 8, 26), SizeBytes = 2_900_000,
+        },
+        DirectXRuntime.AsUpdate(["XInput 1.3 (controllers)", "XAudio 2.7 (sound)"])!,
+    ], []));
+
+    public Task<DriverInstallResult> InstallAsync(DriverUpdate update, IProgress<string>? progress, CancellationToken cancellationToken) =>
+        Task.FromResult(new DriverInstallResult(true, "Installed."));
+
+    public bool OpenNvidiaApp() => true;
+
+    public void OpenUrl(string url)
+    {
+    }
+}
+
+/// <summary>The sample PC's apps, for the Applications page (since 1.8.6).</summary>
+internal sealed class SampleApps : IAppService
+{
+    private static InstalledApp A(string name, string publisher, string version, double gb, int year, int month, AppKind kind = AppKind.Desktop) =>
+        new((kind == AppKind.Store ? "store:" : "hklm:") + name, name, kind)
+        {
+            Publisher = publisher,
+            Version = version,
+            SizeBytes = (long)(gb * (1L << 30)),
+            Installed = new DateTime(year, month, 3),
+            Uninstall = "uninstall.exe",
+            InstallLocation = $@"C:\Program Files\{name}",
+        };
+
+    public bool IsSupported => true;
+
+    public Task<IReadOnlyList<InstalledApp>> InstalledAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<InstalledApp>>(
+    [
+        A("Adobe Photoshop 2026", "Adobe Inc.", "27.4.0", 4.8, 2026, 9),
+        A("Microsoft Visual Studio Code", "Microsoft Corporation", "1.105.1", 0.42, 2026, 10),
+        A("Steam", "Valve Corporation", "2.10.91.91", 1.1, 2024, 5),
+        A("Discord", "Discord Inc.", "1.0.9200", 0.36, 2026, 9),
+        A("Spotify", "Spotify AB", "1.2.74.477", 0.41, 2026, 6, AppKind.Store),
+        A("Microsoft OneDrive", "Microsoft Corporation", "25.180.0914.0002", 0.29, 2026, 9),
+        A("Microsoft Teams", "Microsoft Corporation", "25290.205.3964.4258", 0.47, 2026, 10, AppKind.Store),
+        A("NVIDIA Broadcast", "NVIDIA Corporation", "2.0.2.0", 2.6, 2025, 11),
+        A("Blender", "Blender Foundation", "4.5.3", 1.3, 2026, 8),
+        A("OBS Studio", "OBS Project", "32.0.1", 0.52, 2026, 9),
+        A("Figma", "Figma, Inc.", "125.8.6", 0.33, 2026, 10),
+        A("7-Zip 25.01 (x64)", "Igor Pavlov", "25.01", 0.006, 2025, 8),
+        A("Epic Games Launcher", "Epic Games, Inc.", "1.3.143.0", 0.85, 2024, 12),
+        A("Xbox", "Microsoft Corporation", "2510.1001.21.0", 0.18, 2026, 10, AppKind.Store),
+    ]);
+
+    public Task<IReadOnlyDictionary<string, long>> MeasureAsync(IReadOnlyList<InstalledApp> apps, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyDictionary<string, long>>(new Dictionary<string, long>());
+
+    public string? IconFor(InstalledApp app) => null;
+
+    public Task<AppUninstallResult> UninstallAsync(InstalledApp app, CancellationToken cancellationToken) => Task.FromResult(new AppUninstallResult(true, "Uninstalled."));
+
+    public void OpenFolder(string path)
+    {
+    }
 }
 
 /// <summary>A PC's Bluetooth devices and what's plugged in, for the Devices page (since 1.8.5: Connect is the accent button again).</summary>

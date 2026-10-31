@@ -23,7 +23,9 @@ internal static class Program
     private static int Main(string[] args)
     {
         string output = Path.GetFullPath(args.Length > 0 ? args[0] : "pageshots");
+        ClipCheck.Folder = output;
         Directory.CreateDirectory(output);
+        File.Delete(Path.Combine(output, "clip-check.txt"));
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         foreach (string name in new[] { "Icons", "Converters", "Controls", "Templates" })
         {
@@ -116,6 +118,17 @@ internal static class Program
         await ShootAsync(Path.Combine(output, "network.png"), new NetworkPage { DataContext = network }, null, () => network.Refresh(data));
         var devices = data.Page(c => new DevicesViewModel(c));
         await ShootAsync(Path.Combine(output, "devices.png"), new DevicesPage { DataContext = devices }, null, () => devices.Refresh(data));
+
+        // 1.8.6: the Drivers page (updates found, three picked) and the Applications page (largest first, then startup apps).
+        var drivers = data.Page(c => new DriversViewModel(c));
+        await ShootAsync(Path.Combine(output, "drivers.png"), new DriversPage { DataContext = drivers }, null, () => drivers.Refresh(data));
+        drivers.Updates[3].IsSelected = false;
+        await ShootAsync(Path.Combine(output, "drivers-narrow.png"), new DriversPage { DataContext = drivers }, null, () => drivers.Refresh(data), 1000);
+        var applications = data.Page(c => new ApplicationsViewModel(c));
+        await ShootAsync(Path.Combine(output, "applications.png"), new ApplicationsPage { DataContext = applications }, null, () => applications.Refresh(data));
+        applications.Filter = AppFilter.Startup;
+        applications.Apps.First(a => a.App is not null).UninstallCommand.Execute(null);
+        await ShootAsync(Path.Combine(output, "applications-startup.png"), new ApplicationsPage { DataContext = applications }, null, () => applications.Refresh(data), 1000);
 
         await ShootBenchmarkingAsync(output, data);
         await CheckBenchmarksAsync(output);
@@ -255,6 +268,8 @@ internal static class Program
             ("windows-overview-light", ThemePreference.Light, shell.Overview, new BackdropSettings()),
             ("windows-gaming", ThemePreference.Dark, shell.Gaming, new BackdropSettings()),
             ("windows-optimize", ThemePreference.Dark, shell.Optimize, new BackdropSettings()),
+            ("windows-drivers", ThemePreference.Dark, shell.Drivers, new BackdropSettings()), // 1.8.6
+            ("windows-applications", ThemePreference.Dark, shell.Applications, new BackdropSettings()),
             ("windows-overview-aurora", ThemePreference.Dark, shell.Overview, Picture("aurora")),
             ("windows-overview-dunes", ThemePreference.Dark, shell.Overview, Picture("dunes")),
             ("windows-overview-midnight", ThemePreference.Dark, shell.Overview, new BackdropSettings { Gradient = "midnight" }),
@@ -467,6 +482,7 @@ internal static class Program
         }
 
         page.UpdateLayout();
+        ClipCheck.Run(page, Path.GetFileName(file));
         width = page.ActualWidth;
         double pageHeight = page.ActualHeight;
         var background = new DrawingVisual();

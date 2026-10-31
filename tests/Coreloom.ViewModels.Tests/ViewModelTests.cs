@@ -409,13 +409,15 @@ public class ShellViewModelTests
         var (shell, _, settings, stubs) = Create();
         Assert.Same(shell.Overview, shell.CurrentPage);
         Assert.NotNull(stubs.Applied);
-        Assert.Equal(11, shell.Pages.Count);
+        Assert.Equal(13, shell.Pages.Count); // Drivers and Applications since 1.8.6 (Windows only)
         Assert.Same(shell.Gaming, shell.Pages[1]);
         Assert.Same(shell.Benchmarking, shell.Pages[shell.Pages.IndexOf(shell.Gaming) + 1]); // Benchmarking sits below Gaming
         Assert.Same(shell.Benchmarking, shell.Pages[shell.Pages.IndexOf(shell.Gpu) - 1]); // and above Graphics
         Assert.Same(shell.History, shell.Pages[^1]);
         Assert.Same(shell.Optimize, shell.Pages[^2]); // Smart Optimize sits above Performance History
         Assert.Same(shell.Devices, shell.Pages[shell.Pages.IndexOf(shell.Storage) + 1]); // Devices sits below Storage
+        Assert.Same(shell.Drivers, shell.Pages[shell.Pages.IndexOf(shell.Devices) + 1]); // Drivers below Devices
+        Assert.Same(shell.Applications, shell.Pages[shell.Pages.IndexOf(shell.Optimize) - 1]); // Applications above Smart Optimize
         Assert.Equal("Updates", shell.Settings.Sections[^1]); // Updates sits at the bottom of Settings, below About
         Assert.Equal("About", shell.Settings.Sections[^2]);
         settings.Dispose();

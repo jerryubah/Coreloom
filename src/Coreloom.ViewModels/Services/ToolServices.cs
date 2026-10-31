@@ -1,5 +1,7 @@
+using Coreloom.Core.Apps;
 using Coreloom.Core.Benchmarks;
 using Coreloom.Core.Devices;
+using Coreloom.Core.Drivers;
 using Coreloom.Core.Gaming;
 using Coreloom.Core.Optimize;
 using Coreloom.Core.Overlay;
@@ -364,6 +366,102 @@ public sealed class UnsupportedCoreSchedulingService : ICoreSchedulingService
 }
 
 /// <summary>The tools the pages offer (benchmarks, speed test, Smart Optimize, devices, gaming). Tests swap in fakes.</summary>
+/// <summary>
+/// The Drivers page's view of Windows (since 1.8.6): the drivers in the device tree, the updates Windows Update, NVIDIA
+/// and Microsoft's DirectX runtime offer, and installing the ones the user picks. Installing only happens when asked.
+/// </summary>
+public interface IDriverService
+{
+    bool IsSupported { get; }
+
+    /// <summary>Every present device's driver (name, setup class, provider, version, date, hardware ids).</summary>
+    Task<IReadOnlyList<InstalledDriver>> InstalledAsync(CancellationToken cancellationToken);
+
+    /// <summary>Looks for updates: Windows Update's drivers, NVIDIA's newer driver for an NVIDIA card, and the DirectX runtime's missing parts.</summary>
+    Task<DriverScan> CheckAsync(IReadOnlyList<InstalledDriver> installed, IProgress<string>? progress, CancellationToken cancellationToken);
+
+    /// <summary>Downloads and installs one update (progress says what it's doing).</summary>
+    Task<DriverInstallResult> InstallAsync(DriverUpdate update, IProgress<string>? progress, CancellationToken cancellationToken);
+
+    /// <summary>Opens the NVIDIA app (or GeForce Experience); false when neither is installed.</summary>
+    bool OpenNvidiaApp();
+
+    /// <summary>Opens a web page (release notes, NVIDIA's driver pages).</summary>
+    void OpenUrl(string url);
+}
+
+/// <summary>What a check for driver updates found, and what couldn't be checked.</summary>
+public sealed record DriverScan(IReadOnlyList<DriverUpdate> Updates, IReadOnlyList<string> Problems)
+{
+    public static DriverScan Empty { get; } = new([], []);
+}
+
+/// <summary>Stand-in where Windows isn't available: nothing installed, nothing to check.</summary>
+public sealed class UnsupportedDriverService : IDriverService
+{
+    public bool IsSupported => false;
+
+    public Task<IReadOnlyList<InstalledDriver>> InstalledAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<InstalledDriver>>([]);
+
+    public Task<DriverScan> CheckAsync(IReadOnlyList<InstalledDriver> installed, IProgress<string>? progress, CancellationToken cancellationToken) => Task.FromResult(DriverScan.Empty);
+
+    public Task<DriverInstallResult> InstallAsync(DriverUpdate update, IProgress<string>? progress, CancellationToken cancellationToken) =>
+        Task.FromResult(new DriverInstallResult(false, "Drivers can only be updated on Windows."));
+
+    public bool OpenNvidiaApp() => false;
+
+    public void OpenUrl(string url)
+    {
+    }
+}
+
+/// <summary>
+/// The Applications page's view of Windows (since 1.8.6): installed desktop and Store apps with their sizes, the apps
+/// that start with Windows, and uninstalling an app with its own uninstaller.
+/// </summary>
+public interface IAppService
+{
+    bool IsSupported { get; }
+
+    /// <summary>Installed apps (desktop and Store), one line each.</summary>
+    Task<IReadOnlyList<InstalledApp>> InstalledAsync(CancellationToken cancellationToken);
+
+    /// <summary>Measures the folders of apps that don't say how big they are (a few seconds at most); returns their sizes by id.</summary>
+    Task<IReadOnlyDictionary<string, long>> MeasureAsync(IReadOnlyList<InstalledApp> apps, CancellationToken cancellationToken);
+
+    /// <summary>The app's picture as an image file (cached), or null.</summary>
+    string? IconFor(InstalledApp app);
+
+    /// <summary>Runs the app's own uninstaller (or removes the Store package) and waits for it; true when the app is gone afterwards.</summary>
+    Task<AppUninstallResult> UninstallAsync(InstalledApp app, CancellationToken cancellationToken);
+
+    /// <summary>Opens the app's folder.</summary>
+    void OpenFolder(string path);
+}
+
+/// <summary>How uninstalling went.</summary>
+public sealed record AppUninstallResult(bool Removed, string Message);
+
+/// <summary>Stand-in where Windows isn't available.</summary>
+public sealed class UnsupportedAppService : IAppService
+{
+    public bool IsSupported => false;
+
+    public Task<IReadOnlyList<InstalledApp>> InstalledAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<InstalledApp>>([]);
+
+    public Task<IReadOnlyDictionary<string, long>> MeasureAsync(IReadOnlyList<InstalledApp> apps, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyDictionary<string, long>>(new Dictionary<string, long>());
+
+    public string? IconFor(InstalledApp app) => null;
+
+    public Task<AppUninstallResult> UninstallAsync(InstalledApp app, CancellationToken cancellationToken) =>
+        Task.FromResult(new AppUninstallResult(false, "Apps can only be uninstalled on Windows."));
+
+    public void OpenFolder(string path)
+    {
+    }
+}
+
 public sealed class ToolServices
 {
     public IHardwareBenchmarkService Benchmarks { get; init; } = new PortableBenchmarkService();
@@ -379,4 +477,8 @@ public sealed class ToolServices
     public IGamingService Gaming { get; init; } = new UnsupportedGamingService();
 
     public ICoreSchedulingService CoreScheduling { get; init; } = new UnsupportedCoreSchedulingService();
+
+    public IDriverService Drivers { get; init; } = new UnsupportedDriverService();
+
+    public IAppService Apps { get; init; } = new UnsupportedAppService();
 }

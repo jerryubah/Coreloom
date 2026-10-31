@@ -46,6 +46,10 @@
   <Geometry x:Key="Icon.Upload">M12,15 L12,4 M7.5,8.5 L12,4 16.5,8.5 M5,19.5 L19,19.5</Geometry>
   <Geometry x:Key="Icon.Rocket">M12,3 C15.4,5 16.9,8.6 16.4,13 L14.2,15.8 L9.8,15.8 L7.6,13 C7.1,8.6 8.6,5 12,3 Z M12,9.3 m-1.5,0 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0 M7.9,13.4 L5.2,15.6 6.2,19 9.2,17 M16.1,13.4 L18.8,15.6 17.8,19 14.8,17 M10.6,18.6 L12,21.2 13.4,18.6</Geometry>
   <Geometry x:Key="Icon.Devices">M3,5 L15.5,5 15.5,14 3,14 Z M6.5,18 L12,18 M9.25,14 L9.25,18 M17.5,8.5 L21,8.5 21,19 17.5,19 Z M19.25,16.6 L19.25,16.7</Geometry>
+  <!-- an expansion card with its contacts (the Drivers page, since 1.8.6) -->
+  <Geometry x:Key="Icon.Driver">M3,6 L21,6 21,16 3,16 Z M6,16 L6,19 M9,16 L9,19 M12,16 L12,19 M15,16 L15,19 M18,16 L18,19 M6.5,9.5 L11,9.5 M6.5,12.5 L9,12.5 M14,9 L17.5,9 17.5,13 14,13 Z</Geometry>
+  <!-- three tiles and a turned one (the Applications page, since 1.8.6) -->
+  <Geometry x:Key="Icon.Apps">M4,4 L10,4 10,10 4,10 Z M14,4 L20,4 20,10 14,10 Z M4,14 L10,14 10,20 4,20 Z M17,13.5 L20.5,17 17,20.5 13.5,17 Z</Geometry>
   <Geometry x:Key="Icon.Headphones">M4.5,14.5 L4.5,12 A7.5,7.5 0 0,1 19.5,12 L19.5,14.5 M4.5,13.5 L7.5,13.5 7.5,19.5 5.5,19.5 Q4.5,19.5 4.5,18.5 Z M19.5,13.5 L16.5,13.5 16.5,19.5 18.5,19.5 Q19.5,19.5 19.5,18.5 Z</Geometry>
   <Geometry x:Key="Icon.Speaker">M4,9.5 L7.5,9.5 12,5.5 12,18.5 7.5,14.5 4,14.5 Z M15.5,9 Q17.2,12 15.5,15 M18,6.5 Q21.5,12 18,17.5</Geometry>
   <Geometry x:Key="Icon.Microphone">M12,3.5 A2.5,2.5 0 0,1 14.5,6 L14.5,11.5 A2.5,2.5 0 0,1 9.5,11.5 L9.5,6 A2.5,2.5 0 0,1 12,3.5 Z M6.5,11 A5.5,5.5 0 0,0 17.5,11 M12,16.5 L12,20 M9,20 L15,20</Geometry>

@@ -303,6 +303,8 @@ public partial class App : Application
                 Devices = _devices = new WindowsDeviceService(),
                 Gaming = new WindowsGamingService(frameRates, paths.LocalDirectory, $"Coreloom/{app.DisplayVersion}"),
                 CoreScheduling = new WindowsCoreSchedulingService(),
+                Drivers = new Services.WindowsDriverService(paths.LocalDirectory, $"Coreloom/{app.DisplayVersion}"),
+                Apps = new Services.WindowsAppService(paths.LocalDirectory),
             },
         });
         _shell = shell;

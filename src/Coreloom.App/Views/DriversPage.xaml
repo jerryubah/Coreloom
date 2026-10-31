@@ -1,0 +1,329 @@
+<UserControl x:Class="Coreloom.App.Views.DriversPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Coreloom.App.Controls"
+             xmlns:b="clr-namespace:Coreloom.App.Behaviors"
+             xmlns:pages="clr-namespace:Coreloom.ViewModels.Pages;assembly=Coreloom.ViewModels">
+
+  <!-- Drivers (Windows, since 1.8.6): a banner that checks for updates, the updates on offer with a box each (and one for
+       all of them), and every device's driver grouped and labeled. -->
+  <UserControl.Resources>
+    <Style x:Key="DriverSpinner" TargetType="c:RadialGauge">
+      <Setter Property="Width" Value="14" />
+      <Setter Property="Height" Value="14" />
+      <Setter Property="Thickness" Value="2.2" />
+      <Setter Property="SweepAngle" Value="359" />
+      <Setter Property="Value" Value="0.28" />
+      <Setter Property="TrackBrush" Value="Transparent" />
+      <Setter Property="Fill" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+
+    <!-- A banner tile: a dot, a label, a value and a caption. -->
+    <Style x:Key="StatValue" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+      <Setter Property="FontSize" Value="22" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Margin" Value="0,6,0,0" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <!-- An update: its box, icon, name and where it comes from, the versions, and how installing it goes. -->
+    <DataTemplate x:Key="UpdateRow" DataType="{x:Type pages:DriverUpdateViewModel}">
+      <Grid Margin="0,0,0,2">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <CheckBox Style="{StaticResource CheckBox.Compact}" VerticalAlignment="Center" IsChecked="{Binding IsSelected}" IsEnabled="{Binding CanSelect}"
+                  AutomationProperties.Name="{Binding Name, StringFormat='Update {0}'}" />
+        <Grid Grid.Column="1" Width="38" Height="38" Margin="6,0,0,0" VerticalAlignment="Center">
+          <c:SquircleBorder CornerRadius="11" Background="{DynamicResource Brush.AccentSoft}" />
+          <Path Style="{StaticResource IconPath}" Width="18" Height="18" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" Stroke="{DynamicResource Brush.Accent}" />
+        </Grid>
+        <StackPanel Grid.Column="2" Margin="14,0,14,0" VerticalAlignment="Center">
+          <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" />
+          <WrapPanel Margin="0,4,0,0">
+            <Border Style="{StaticResource Badge}" Margin="0,0,6,2">
+              <TextBlock Text="{Binding CategoryText}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+            </Border>
+            <Border Style="{StaticResource Badge}" Margin="0,0,8,2">
+              <TextBlock Text="{Binding SourceText}" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
+            </Border>
+            <TextBlock Text="{Binding DetailText}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" Margin="0,0,0,2" />
+          </WrapPanel>
+          <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+            <c:RadialGauge Style="{StaticResource DriverSpinner}" Margin="0,0,8,0" b:Spin.IsSpinning="{Binding IsWorking}"
+                           Visibility="{Binding IsWorking, Converter={StaticResource BoolToVisibility}}" />
+            <TextBlock Text="{Binding StatusText}" FontSize="12" TextWrapping="Wrap" Foreground="{Binding StatusColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+          </StackPanel>
+        </StackPanel>
+        <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
+          <TextBlock Text="{Binding VersionText}" FontFamily="{StaticResource MonoFont}" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" HorizontalAlignment="Right" />
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+            <Button Style="{StaticResource Button.Link}" FontSize="12" Command="{Binding OpenNotesCommand}" Content="Release notes"
+                    Visibility="{Binding HasNotes, Converter={StaticResource BoolToVisibility}}" />
+            <Button Style="{StaticResource Button.Link}" FontSize="12" Margin="14,0,0,0" Content="Open the NVIDIA app"
+                    Command="{Binding DataContext.OpenNvidiaAppCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Visibility="{Binding IsNvidia, Converter={StaticResource BoolToVisibility}}"
+                    ToolTip="Install it there instead, with NVIDIA's own options" />
+          </StackPanel>
+        </StackPanel>
+      </Grid>
+    </DataTemplate>
+
+    <!-- An installed driver: the device (×n when several are alike), its provider, version and date. -->
+    <DataTemplate x:Key="DriverRow" DataType="{x:Type pages:DriverRowViewModel}">
+      <Grid Margin="0,7">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="2.2*" MinWidth="160" />
+          <ColumnDefinition Width="1.3*" />
+          <ColumnDefinition Width="1.3*" />
+          <ColumnDefinition Width="104" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
+          <TextBlock Text="{Binding Name}" Foreground="{DynamicResource Brush.Text}" FontSize="13" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" VerticalAlignment="Center" />
+          <Border Style="{StaticResource Badge}" Margin="8,0,0,0" Visibility="{Binding HasCount, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="{Binding CountText}" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
+          </Border>
+          <Border Style="{StaticResource Badge}" Margin="8,0,0,0" Visibility="{Binding HasProblem, Converter={StaticResource BoolToVisibility}}"
+                  ToolTip="Device Manager reports a problem with this device">
+            <TextBlock Text="Problem" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+          </Border>
+        </StackPanel>
+        <TextBlock Grid.Column="1" Text="{Binding ProviderText}" Style="{StaticResource Text.Secondary}" FontSize="12.5" TextTrimming="CharacterEllipsis" ToolTip="{Binding ProviderText}" Margin="0,0,12,0" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="2" Text="{Binding VersionText}" FontFamily="{StaticResource MonoFont}" FontSize="12" Foreground="{DynamicResource Brush.TextSecondary}" TextTrimming="CharacterEllipsis" ToolTip="{Binding VersionText}" Margin="0,0,12,0" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="3" Text="{Binding DateText}" Style="{StaticResource Text.Caption}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+      </Grid>
+    </DataTemplate>
+
+    <!-- A group of drivers: its icon, heading and count, then its lines on a card. -->
+    <DataTemplate x:Key="DriverCategory" DataType="{x:Type pages:DriverCategoryViewModel}">
+      <c:SquircleBorder Style="{StaticResource Card}" Margin="0,0,0,12" Padding="18,14,18,10">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+            <Grid Width="30" Height="30">
+              <c:SquircleBorder CornerRadius="9" Background="{DynamicResource Brush.ControlHover}" />
+              <Path Style="{StaticResource IconPath}" Width="15" Height="15" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" Stroke="{DynamicResource Brush.TextSecondary}" />
+            </Grid>
+            <TextBlock Text="{Binding Label}" Style="{StaticResource Text.CardTitle}" Margin="11,0,0,0" VerticalAlignment="Center" />
+            <Border Style="{StaticResource Badge}" Margin="9,0,0,0">
+              <TextBlock Text="{Binding CountText}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+            </Border>
+          </StackPanel>
+          <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource DriverRow}" Focusable="False">
+            <ItemsControl.ItemContainerStyle>
+              <Style TargetType="ContentPresenter">
+                <Setter Property="Margin" Value="0" />
+              </Style>
+            </ItemsControl.ItemContainerStyle>
+          </ItemsControl>
+        </StackPanel>
+      </c:SquircleBorder>
+    </DataTemplate>
+  </UserControl.Resources>
+
+  <ScrollViewer Style="{StaticResource ScrollViewer.Window}">
+    <StackPanel Margin="32,14,28,32" b:Motion.Entrance="True">
+
+      <!-- Not available here -->
+      <c:SquircleBorder Style="{StaticResource Card}" Margin="0,0,0,16"
+                        Visibility="{Binding IsSupported, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+        <StackPanel Orientation="Horizontal">
+          <Path Style="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.TextSecondary}" />
+          <TextBlock Text="{Binding UnsupportedText}" Margin="10,0,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
+        </StackPanel>
+      </c:SquircleBorder>
+
+      <!-- ============================================================ -->
+      <!-- Updates banner                                               -->
+      <!-- ============================================================ -->
+      <c:SquircleBorder Style="{StaticResource Card}" Padding="0" Sheen="0.8">
+        <Grid ClipToBounds="True">
+          <!-- The banners' light: from the top edge in the accent, a bright line where it meets the edge, a little grain. -->
+          <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.HeroGlow}" IsHitTestVisible="False" />
+          <c:SquircleBorder CornerRadius="17" Background="{StaticResource GrainTexture}" Opacity="0.045" IsHitTestVisible="False" />
+          <Border Height="1" VerticalAlignment="Top" Margin="56,0" Background="{DynamicResource Brush.HeroLine}" IsHitTestVisible="False" />
+
+          <c:AdaptiveGrid MinColumnWidth="360" MaxColumns="2" Spacing="28" Margin="26,24,26,24">
+            <StackPanel VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal">
+                <Grid Width="48" Height="48">
+                  <c:SquircleBorder CornerRadius="14" Background="{DynamicResource Brush.DialTile}" BorderBrush="{DynamicResource Brush.DialTileRim}" BorderThickness="1" />
+                  <Path Style="{StaticResource IconPath}" Width="22" Height="22" Data="{StaticResource Icon.Driver}" Stroke="{DynamicResource Brush.Accent}" />
+                </Grid>
+                <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="Driver updates" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
+                  <TextBlock Text="{Binding LastCheckedText}" Style="{StaticResource Text.Caption}" Margin="0,2,0,0" />
+                </StackPanel>
+              </StackPanel>
+              <TextBlock Text="{Binding HeroTitle}" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" Margin="0,18,0,0" />
+              <TextBlock Text="{Binding HeroDetail}" Style="{StaticResource Text.Secondary}" TextWrapping="Wrap" Margin="0,6,0,0" LineHeight="19" />
+              <WrapPanel Margin="0,18,0,0">
+                <Button Style="{StaticResource Button.AccentGradient}" Padding="20,9" Margin="0,0,10,8" Command="{Binding CheckCommand}">
+                  <StackPanel Orientation="Horizontal">
+                    <Grid Width="14" Height="14">
+                      <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Refresh}" Stroke="{DynamicResource Brush.OnGlow}"
+                            Visibility="{Binding IsChecking, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                      <c:RadialGauge Style="{StaticResource DriverSpinner}" Fill="{DynamicResource Brush.OnGlow}" b:Spin.IsSpinning="{Binding IsChecking}"
+                                     Visibility="{Binding IsChecking, Converter={StaticResource BoolToVisibility}}" />
+                    </Grid>
+                    <TextBlock Text="Check for updates" Margin="8,0,0,0" />
+                  </StackPanel>
+                </Button>
+                <Button Style="{StaticResource Button.Secondary}" Padding="14,9" Margin="0,0,10,8" Command="{Binding OpenNvidiaAppCommand}"
+                        Visibility="{Binding HasNvidiaCard, Converter={StaticResource BoolToVisibility}}"
+                        ToolTip="Opens the NVIDIA app (or GeForce Experience), or NVIDIA's driver pages when neither is installed">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.External}" />
+                    <TextBlock Text="Open the NVIDIA app" Margin="7,0,0,0" />
+                  </StackPanel>
+                </Button>
+              </WrapPanel>
+              <TextBlock Text="{Binding ProblemsText}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,4,0,0"
+                         Visibility="{Binding HasProblems, Converter={StaticResource BoolToVisibility}}" />
+            </StackPanel>
+
+            <!-- At a glance -->
+            <c:AdaptiveGrid MinColumnWidth="150" MaxColumns="2" Spacing="10" UniformRowHeight="True" VerticalAlignment="Center">
+              <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,12">
+                <StackPanel>
+                  <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
+                    <TextBlock Text="Updates" Style="{StaticResource Text.Label}" Margin="7,0,0,0" />
+                  </StackPanel>
+                  <TextBlock Text="{Binding UpdatesCountText}" Style="{StaticResource StatValue}" />
+                  <TextBlock Text="available" Style="{StaticResource Text.Caption}" />
+                </StackPanel>
+              </c:SquircleBorder>
+              <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,12">
+                <StackPanel>
+                  <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" />
+                    <TextBlock Text="Graphics driver" Style="{StaticResource Text.Label}" Margin="7,0,0,0" />
+                  </StackPanel>
+                  <TextBlock Text="{Binding GraphicsDriverText}" Style="{StaticResource StatValue}" ToolTip="{Binding GraphicsDriverText}" />
+                  <TextBlock Text="{Binding GraphicsDriverCaption}" Style="{StaticResource Text.Caption}" TextTrimming="CharacterEllipsis" ToolTip="{Binding GraphicsDriverCaption}" />
+                </StackPanel>
+              </c:SquircleBorder>
+              <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,12">
+                <StackPanel>
+                  <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Info}" VerticalAlignment="Center" />
+                    <TextBlock Text="Drivers" Style="{StaticResource Text.Label}" Margin="7,0,0,0" />
+                  </StackPanel>
+                  <TextBlock Text="{Binding DriverCount}" Style="{StaticResource StatValue}" />
+                  <TextBlock Text="installed on this PC" Style="{StaticResource Text.Caption}" />
+                </StackPanel>
+              </c:SquircleBorder>
+              <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="14,12">
+                <StackPanel>
+                  <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center" />
+                    <TextBlock Text="From device makers" Style="{StaticResource Text.Label}" Margin="7,0,0,0" />
+                  </StackPanel>
+                  <TextBlock Text="{Binding MakerCount}" Style="{StaticResource StatValue}" />
+                  <TextBlock Text="the rest come with Windows" Style="{StaticResource Text.Caption}" />
+                </StackPanel>
+              </c:SquircleBorder>
+            </c:AdaptiveGrid>
+          </c:AdaptiveGrid>
+        </Grid>
+      </c:SquircleBorder>
+
+      <!-- ============================================================ -->
+      <!-- Updates on offer                                             -->
+      <!-- ============================================================ -->
+      <StackPanel Visibility="{Binding HasUpdates, Converter={StaticResource BoolToVisibility}}">
+        <Grid Margin="2,30,0,14">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="Updates" Style="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
+              <Border Style="{StaticResource Badge}" Margin="10,1,0,0">
+                <TextBlock Text="{Binding PendingCount}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+              </Border>
+            </StackPanel>
+            <TextBlock Text="Tick the ones to install. A graphics driver goes last: the screen may go dark for a moment while it installs." Style="{StaticResource Text.Secondary}" TextWrapping="Wrap" Margin="0,3,0,0" />
+          </StackPanel>
+        </Grid>
+        <c:SquircleBorder Style="{StaticResource Card}" Padding="18,14,20,16">
+          <StackPanel>
+            <Grid Margin="0,0,0,10">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <CheckBox Style="{StaticResource CheckBox.Compact}" IsChecked="{Binding SelectAll}" VerticalAlignment="Center" HorizontalAlignment="Left"
+                        AutomationProperties.Name="Select all updates">
+                <TextBlock Text="Select all" FontWeight="SemiBold" />
+              </CheckBox>
+              <Button Grid.Column="1" Style="{StaticResource Button.Primary}" Padding="18,8" Command="{Binding InstallSelectedCommand}">
+                <StackPanel Orientation="Horizontal">
+                  <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Download}" Stroke="{DynamicResource Brush.OnAccent}" />
+                  <TextBlock Text="{Binding InstallText}" Margin="7,0,0,0" />
+                </StackPanel>
+              </Button>
+            </Grid>
+            <Border Style="{StaticResource Divider}" Margin="0,0,0,12" />
+            <ItemsControl ItemsSource="{Binding Updates}" ItemTemplate="{StaticResource UpdateRow}" Focusable="False">
+              <ItemsControl.ItemContainerStyle>
+                <Style TargetType="ContentPresenter">
+                  <Setter Property="Margin" Value="0,0,0,14" />
+                </Style>
+              </ItemsControl.ItemContainerStyle>
+            </ItemsControl>
+            <TextBlock Text="{Binding ResultText}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap"
+                       Visibility="{Binding HasResult, Converter={StaticResource BoolToVisibility}}" />
+          </StackPanel>
+        </c:SquircleBorder>
+      </StackPanel>
+
+      <!-- ============================================================ -->
+      <!-- Installed drivers                                            -->
+      <!-- ============================================================ -->
+      <Grid Margin="2,30,0,14">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="Installed drivers" Style="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
+            <Border Style="{StaticResource Badge}" Margin="10,1,0,0">
+              <TextBlock Text="{Binding DriverCount}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+            </Border>
+          </StackPanel>
+          <TextBlock Text="Grouped by what they're for, with each driver's maker, version and date." Style="{StaticResource Text.Secondary}" Margin="0,3,0,0" />
+        </StackPanel>
+        <Button Grid.Column="1" Style="{StaticResource Button.Secondary}" Padding="14,8" VerticalAlignment="Center" Command="{Binding RefreshCommand}" ToolTip="Read the drivers again">
+          <StackPanel Orientation="Horizontal">
+            <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Refresh}" />
+            <TextBlock Text="Refresh" Margin="7,0,0,0" />
+          </StackPanel>
+        </Button>
+      </Grid>
+      <WrapPanel Margin="0,0,0,14">
+        <c:QuickSearch Width="420" Margin="0,0,16,6" HorizontalAlignment="Left" Placeholder="Search drivers by device, maker or group"
+                       Hint="Start typing a device's name, its maker or a group" Text="{Binding Search}" Suggestions="{Binding SearchSuggestions}" />
+        <CheckBox Style="{StaticResource CheckBox.Compact}" IsChecked="{Binding ShowWindowsDrivers}" VerticalAlignment="Center" Margin="0,0,0,6">
+          <TextBlock Text="Show Windows' own drivers" />
+        </CheckBox>
+      </WrapPanel>
+      <ItemsControl ItemsSource="{Binding Categories}" ItemTemplate="{StaticResource DriverCategory}" Focusable="False" />
+      <c:SquircleBorder Style="{StaticResource Card.Inset}" Padding="16,14" Visibility="{Binding HasCategories, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+        <StackPanel Orientation="Horizontal">
+          <Path Style="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Driver}" Stroke="{DynamicResource Brush.TextTertiary}" />
+          <TextBlock Text="{Binding EmptyText}" Style="{StaticResource Text.Secondary}" Margin="10,0,0,0" VerticalAlignment="Center" />
+        </StackPanel>
+      </c:SquircleBorder>
+      <TextBlock Text="{Binding HiddenText}" Style="{StaticResource Text.Caption}" Margin="2,2,0,0" TextWrapping="Wrap"
+                 Visibility="{Binding HiddenText, Converter={StaticResource HasValueToVisibility}}" />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

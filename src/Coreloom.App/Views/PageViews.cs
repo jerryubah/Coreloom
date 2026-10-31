@@ -110,6 +110,18 @@ public partial class NetworkPage : UserControl
     public NetworkPage() => InitializeComponent();
 }
 
+/// <summary>Drivers (since 1.8.6).</summary>
+public partial class DriversPage : UserControl
+{
+    public DriversPage() => InitializeComponent();
+}
+
+/// <summary>Applications (since 1.8.6).</summary>
+public partial class ApplicationsPage : UserControl
+{
+    public ApplicationsPage() => InitializeComponent();
+}
+
 public partial class HistoryPage : UserControl
 {
     public HistoryPage() => InitializeComponent();

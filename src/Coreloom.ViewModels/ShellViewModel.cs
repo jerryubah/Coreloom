@@ -87,7 +87,9 @@ public sealed class ShellViewModel : ObservableObject
         Memory = new MemoryViewModel(context);
         Storage = new StorageViewModel(context);
         Devices = new DevicesViewModel(context);
+        Drivers = new DriversViewModel(context);
         Network = new NetworkViewModel(context);
+        Applications = new ApplicationsViewModel(context);
         History = new HistoryViewModel(context, deps.Shell);
         Optimize = new OptimizeViewModel(context);
         Connect = deps.Connect is { } connect ? new Connect.ConnectHost(context, connect, deps.App.DisplayVersion) : null;
@@ -120,7 +122,10 @@ public sealed class ShellViewModel : ObservableObject
             Navigate(Settings);
         };
 
-        Pages = [Overview, Gaming, Benchmarking, Gpu, Cpu, Memory, Storage, Devices, Network, Optimize, History];
+        // Drivers and Applications (1.8.6) read and change Windows' own lists, so they're Windows-only pages.
+        Pages = context.IsMac
+            ? [Overview, Gaming, Benchmarking, Gpu, Cpu, Memory, Storage, Devices, Network, Optimize, History]
+            : [Overview, Gaming, Benchmarking, Gpu, Cpu, Memory, Storage, Devices, Drivers, Network, Applications, Optimize, History];
         _currentPage = Overview;
         NavigateCommand = new RelayCommand<PageViewModel>(page =>
         {
@@ -191,7 +196,13 @@ public sealed class ShellViewModel : ObservableObject
 
     public DevicesViewModel Devices { get; }
 
+    /// <summary>Drivers (Windows, since 1.8.6).</summary>
+    public DriversViewModel Drivers { get; }
+
     public NetworkViewModel Network { get; }
+
+    /// <summary>Applications (Windows, since 1.8.6).</summary>
+    public ApplicationsViewModel Applications { get; }
 
     public HistoryViewModel History { get; }
 

@@ -408,7 +408,7 @@
               <TextBlock Text="{Binding Item.Score}" Theme="{StaticResource Score}" FontSize="30" HorizontalAlignment="Right" />
               <TextBlock Text="{Binding Item.ScoreLabel}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Right" />
             </StackPanel>
-            <Button Grid.Column="3" Theme="{StaticResource Button.Icon}" Width="32" Height="32" Margin="6,0,-6,0" VerticalAlignment="Top"
+            <Button Grid.Column="3" Theme="{StaticResource Button.Icon}" Width="32" Height="32" Margin="6,0,0,0" VerticalAlignment="Top"
                     Command="{Binding DataContext.CloseDetailsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" ToolTip.Tip="Close" AutomationProperties.Name="Close">
               <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Close}" />
             </Button>
