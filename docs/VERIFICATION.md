@@ -953,11 +953,36 @@ unchanged.
 | The real Mac app | Mac verify run 41005296829 (the release's code): every page, Connect, menu bar readings, backgrounds, the readings window and a clean quit on Apple silicon and Intel | ✅ Apple silicon and Intel |
 | Website and README | Every app picture on the website and in the README redrawn from this version; Playwright as a Mac, a Windows and a phone-sized visitor: *New in 1.8.5* shows the Mac or Windows picture, title and three points for each, the hero badge says what's new, the background swatches still switch, no horizontal scrolling, no failed requests or console errors | ✅ |
 
+### Updating to 1.8.5 on a Mac
+
+| Run | Result |
+|---|---|
+| 0.9.0 (built from 1.8.5's code) and the published 1.8.4 → the published 1.8.5, run 41145690294 (`macupdatetest-185`) | Intel ✅ both: found and verified in about 30 s, replaced after quitting, 1.8.5 running. Apple silicon ❌ both, twice: every check on the shared runner got GitHub's "rate limit reached", so nothing was downloaded within the test's 10 minutes. On the second opening 1.8.4 did find, download and verify 1.8.5 (00:32:16 in its log), just after the test had stopped waiting. The same happened to 1.8.4's test and passed on a re-run; it's GitHub limiting the runner's shared address, not the app |
+
 ### Not verified yet
 
 - **CPU cache optimization on a real multi-CCD Ryzen.** The runner has one virtual processor group with no separate L3 caches, so moving real Chrome, Discord or Steam processes, Windows accepting the masks, apps getting every core back, and whether games actually run better have only been checked with the fake service in the tests. Task Manager's *Set affinity* should agree with what the boost says. Apps that run elevated or under another account can refuse the change; they're left as they are.
 - **AMD's driver and the parking rule** on a real 9800X3D/9950X3D: that leaving things to AMD with the Balanced plan, and moving apps with Ultimate Performance, are the better choices, is reasoned from how AMD's driver works, not measured.
 - The 1.8.4 items still open (VRAM management in a real game, *Keep shader caches* over weeks, adaptive pacing's leftover limits on a real driver).
+
+## 1.8.6: Drivers and Applications pages on Windows, X buttons inside their cards, smooth Mac gradients, a roomier website
+
+### Verified
+
+| What | How | Result |
+|---|---|---|
+| Tests | Core (`Release186Tests`: drivers sorted into fourteen kinds from Windows' device classes; Microsoft's own drivers and noise like audio endpoints and volumes kept apart; identical devices grouped; NVIDIA's version read from Windows' (32.0.15.8157 → 581.57); versions compared part by part; a Windows Update driver offer matched to the device by hardware id, else by model; NVIDIA's product list and driver lookup parsed from saved replies, newer-only, https only; the installer's exit codes; the DirectX runtime's six files; Uninstall keys read the way Settings › Apps reads them, system components, updates and parts left out, MSI product codes uninstalled with `msiexec /x`; icon paths, install dates and command lines split; duplicates in the 64- and 32-bit lists kept once; startup entries matched to their app; the finer frost and its dither keeping flat colours exact), view models (`Release186ViewModelTests`: the Drivers page loads and checks once, hides Windows' own drivers until asked, lists NVIDIA first, *Select all*, installs the graphics driver last and says which failed and that Windows needs a restart; the Applications page's filters, order, search, sizes measured after loading, the startup switch, uninstall only after *Uninstall* is confirmed, and the 13 pages in order) | ✅ in the container (Core 767, view models 221) and on GitHub (CI run 41151328811: Windows Core 767, view models 221, Hardware 84 + 1 skipped timer test; Linux; macOS 188 on Intel, 187 + 1 skipped on Apple silicon) |
+| The Drivers and Applications pages on Windows | Page shots run 41149824092 with sample data: drivers in their kinds with NVIDIA's version, four updates (NVIDIA, two from Windows Update, DirectX) selected, *Update 4 drivers*, *Open the NVIDIA app*; 14 apps with sizes, filters, the startup filter and an uninstall waiting to be confirmed; the narrow window | ✅ |
+| The real Windows lists on GitHub's Windows Server runner | The page-shots run read the runner's own drivers and apps with the release's code (`drivers-check.txt`, `apps-check.txt`): 58 devices with a driver, 52 listed in 47 lines (identical ones grouped), all with a date and 56 with hardware ids; Windows Update's session object created; 62 apps (3 from the Store), 54 with a size from their installer and 2 measured, every one with an uninstaller | ✅ (a virtual machine: only Microsoft's and Mellanox's drivers, no GPU driver, no updates offered) |
+| X buttons | A new check in page shots walks every icon button on every page and reports any cut off by a scroll area, a card or a clip. On a probe branch with the old Devices margin put back it reported *the × button "Close" is cut by a ScrollContentPresenter: 6 × 0 px outside*; with the fix, 59 buttons on 29 pages and states, 0 cut off | ✅ |
+| Mac gradients | MacShots of every page with the gradient, the photo backgrounds and your wallpaper; Mac verify run 41149827072 on Apple silicon and Intel: the frost now drawn at a quarter of the window at most (236 × 159 for 943 × 634, 115 ms) with dithering, a 3 % grain over the window, the dial's glow in 20 steps. Measured on the 2880 × 1920 pictures against 1.8.5's: stretches of one flat colour 12 px or longer (the steps you see as blocks) went from 9,400–16,400 per picture to under 250, and the longest from 460–1,319 px to 20 px | ✅ |
+| Website | Playwright as a Mac, a Windows and a phone-sized visitor at 1440, 1100, 820 and 390 px: a new check that no heading, word or picture is cut by its box or the window reports nothing (the gradient headings had their descenders and accents cut); every section has room above and below; *New in 1.8.6* shows each system's picture and points; Windows visitors see the Applications showcase; no horizontal scrolling, failed requests or console errors. Every picture redrawn from this version | ✅ |
+
+### Not verified yet
+
+- **Installing real driver updates.** The runner is a virtual machine with no NVIDIA card, and Windows Update had nothing to offer it, so downloading and installing from Windows Update, NVIDIA's silent install (`-s -noreboot`) and the DirectX runtime's quiet install have only run against fakes. NVIDIA's lookup was checked against its saved replies, not live from the app. The screen goes black for a few seconds while a graphics driver installs; that's expected.
+- **Uninstalling real apps.** Each app's own uninstaller runs, and some ask questions or open a browser page when they finish; Coreloom waits for it and checks the app is gone from the list. That, and removing Store apps, hasn't been tried on a real PC.
+- **Mac gradients on a real Retina display.** The runners' virtual displays are not Retina; the dithering is meant to be invisible at 2×, but that's only been looked at in pictures.
 
 ## How to re-run the checks that can run anywhere
 
