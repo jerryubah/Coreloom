@@ -49,6 +49,7 @@ public class Release186Tests
         Assert.All(Enum.GetValues<DriverCategory>(), c => Assert.StartsWith("Icon.", DriverCatalog.IconKey(c)));
         Assert.True(DriverCatalog.IsMicrosoft("Microsoft Windows"));
         Assert.False(DriverCatalog.IsMicrosoft("NVIDIA"));
+        Assert.True(DriverCatalog.IsMicrosoft("(Standard USB HUBs)")); // Windows' generic drivers
     }
 
     [Fact]

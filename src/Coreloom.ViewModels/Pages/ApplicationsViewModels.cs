@@ -64,7 +64,21 @@ public sealed class AppRowViewModel : ObservableObject
 
     public string Name => _app?.Name ?? _startup!.Name;
 
-    public string Initials => string.Concat(Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Where(w => char.IsLetterOrDigit(w[0])).Take(2).Select(w => char.ToUpperInvariant(w[0])));
+    /// <summary>The picture's stand-in: the first letters of the first two words ("Visual Studio" → VS; a number counts only first).</summary>
+    public string Initials
+    {
+        get
+        {
+            var words = Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Where(w => char.IsLetterOrDigit(w[0])).ToList();
+            if (words.Count == 0)
+            {
+                return "?";
+            }
+
+            string first = char.ToUpperInvariant(words[0][0]).ToString();
+            return words.Count > 1 && char.IsLetter(words[1][0]) ? first + char.ToUpperInvariant(words[1][0]) : first;
+        }
+    }
 
     public string Publisher => _app?.Publisher ?? _startup?.Publisher ?? string.Empty;
 

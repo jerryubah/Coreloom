@@ -315,6 +315,11 @@
   <ImageBrush x:Key="GrainTexture" Source="avares://Coreloom/Assets/grain.png" TileMode="Tile" Stretch="None"
               AlignmentX="Left" AlignmentY="Top" DestinationRect="0,0,160,160" />
 
+  <!-- The same grain, one grain to a pixel on a Retina screen, laid faintly over the whole window (since 1.8.6) so its
+       lights, glows and fills don't show steps on 8-bit screens. -->
+  <ImageBrush x:Key="GrainWindow" Source="avares://Coreloom/Assets/grain.png" TileMode="Tile" Stretch="Fill"
+              AlignmentX="Left" AlignmentY="Top" DestinationRect="0,0,80,80" />
+
   <ControlTheme x:Key="Button.Icon" TargetType="Button" BasedOn="{StaticResource Button.Plain}">
     <Setter Property="Width" Value="34" />
     <Setter Property="Height" Value="34" />

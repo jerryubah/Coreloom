@@ -188,7 +188,7 @@ public class Release182Tests
 
         var gradient = BackdropRenderer.Render(request with { Kind = BackdropKind.Gradient, Gradient = BackdropPresets.FindGradient("aurora") })!;
         Assert.Equal((400, 300), (gradient.Background.Width, gradient.Background.Height));
-        Assert.True(gradient.Frost.Width < 100 && gradient.Frost.Height < 80); // small: it's stretched (and blurred) anyway
+        Assert.True(gradient.Frost.Width <= 100 && gradient.Frost.Height <= 75); // smaller (a quarter since 1.8.6): it's stretched and blurred anyway
 
         // A white picture at half strength over the dark theme's background: half gray, plus a little of the dark.
         var white = BackdropRenderer.Solid(new Rgb(1, 1, 1), 64, 64);

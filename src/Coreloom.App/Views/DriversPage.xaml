@@ -57,7 +57,7 @@
           <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
             <c:RadialGauge Style="{StaticResource DriverSpinner}" Margin="0,0,8,0" b:Spin.IsSpinning="{Binding IsWorking}"
                            Visibility="{Binding IsWorking, Converter={StaticResource BoolToVisibility}}" />
-            <TextBlock Text="{Binding StatusText}" FontSize="12" TextWrapping="Wrap" Foreground="{Binding StatusColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+            <TextBlock x:Name="Status" Text="{Binding StatusText}" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource Brush.TextSecondary}" />
           </StackPanel>
         </StackPanel>
         <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
@@ -72,6 +72,14 @@
           </StackPanel>
         </StackPanel>
       </Grid>
+      <DataTemplate.Triggers>
+        <DataTrigger Binding="{Binding IsDone}" Value="True">
+          <Setter TargetName="Status" Property="Foreground" Value="{DynamicResource Brush.Success}" />
+        </DataTrigger>
+        <DataTrigger Binding="{Binding Failed}" Value="True">
+          <Setter TargetName="Status" Property="Foreground" Value="{DynamicResource Brush.Critical}" />
+        </DataTrigger>
+      </DataTemplate.Triggers>
     </DataTemplate>
 
     <!-- An installed driver: the device (×n when several are alike), its provider, version and date. -->

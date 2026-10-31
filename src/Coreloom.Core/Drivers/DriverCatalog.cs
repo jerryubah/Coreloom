@@ -157,8 +157,8 @@ public static class DriverCatalog
     public static bool IsMicrosoft(string? provider) =>
         provider is not null && (provider.Equals("Microsoft", StringComparison.OrdinalIgnoreCase)
             || provider.StartsWith("Microsoft ", StringComparison.OrdinalIgnoreCase)
-            || provider.Equals("(Standard system devices)", StringComparison.OrdinalIgnoreCase)
-            || provider.Equals("(Standard USB Host Controller)", StringComparison.OrdinalIgnoreCase));
+            || provider.StartsWith("(Standard ", StringComparison.OrdinalIgnoreCase)
+            || provider.StartsWith("(Generic ", StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Whether a device is worth listing: it has a driver, and it isn't another device's endpoint or copy.</summary>
     public static bool IsListed(InstalledDriver driver) =>

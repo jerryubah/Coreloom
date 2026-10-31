@@ -239,9 +239,12 @@ public sealed class HeroDial : Control
         DrawLabels(dc, center, radius, thickness, dark);
     }
 
-    /// <summary>Wider, fainter copies of the arc under it: a soft glow without a blur effect.</summary>
+    /// <summary>
+    /// Wider, fainter copies of the arc under it: a soft glow without a blur effect. Twenty copies, each a little wider
+    /// and fainter (since 1.8.6; eight showed as rings on the Mac's dark glass), adding up to the same light.
+    /// </summary>
     private static readonly (double Widen, double Alpha)[] GlowLayers =
-        [(3.6, 0x06), (3.2, 0x07), (2.8, 0x08), (2.45, 0x09), (2.1, 0x0A), (1.8, 0x0B), (1.5, 0x0C), (1.25, 0x0D)];
+        [.. Enumerable.Range(0, 20).Select(i => (Widen: 3.6 - (i * (2.4 / 19)), Alpha: Math.Round(2 + (3.0 * i / 19))))];
 
     /// <summary>The deeper shade the arc starts in, the color itself, and the lighter shade it ends in.</summary>
     private (Color Deep, Color Main, Color Light) Colors3()

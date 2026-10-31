@@ -113,7 +113,9 @@ public static class BackdropRenderer
         int height = Math.Max(1, request.Height);
         double scale = request.Scale > 0 ? request.Scale : 1;
         double frostPixels = Math.Max(1, request.FrostPoints * scale);
-        int frostFactor = Math.Clamp((int)Math.Round(frostPixels / 6), 2, 32);
+        // At most a quarter of the window's pixels each way (since 1.8.6; it was up to 1/32): stretched back up, a
+        // smaller copy showed blocks and steps behind the glass.
+        int frostFactor = Math.Clamp((int)Math.Round(frostPixels / 6), 2, 4);
         int frostWidth = Math.Max(4, (int)Math.Ceiling((double)width / frostFactor));
         int frostHeight = Math.Max(4, (int)Math.Ceiling((double)height / frostFactor));
         int frostRadius = Math.Max(1, (int)Math.Round(frostPixels / frostFactor));
@@ -149,8 +151,8 @@ public static class BackdropRenderer
 
                 var frost = Cover(image, frostWidth, frostHeight);
                 Over(frost, request.ThemeBase, opacity);
-                Blur(frost, frostRadius);
                 Saturate(frost, 1.15);
+                Blur(frost, frostRadius); // last: its dithered result is what's shown
                 return new BackdropLayers(background, frost);
             }
 
@@ -410,7 +412,11 @@ public static class BackdropRenderer
         }
     }
 
-    /// <summary>A Gaussian-like blur: three passes of a box blur across and down (edges extend outward).</summary>
+    /// <summary>
+    /// A Gaussian-like blur: three passes of a box blur across and down (edges extend outward), worked out in floating
+    /// point and written back with half a step of noise (since 1.8.6), so a wide blur of a dark gradient doesn't come out
+    /// in steps. A flat color stays exactly the same.
+    /// </summary>
     public static void Blur(PixelImage image, int radius, int passes = 3)
     {
         if (radius < 1)
@@ -418,52 +424,72 @@ public static class BackdropRenderer
             return;
         }
 
-        var buffer = new byte[image.Bgra.Length];
+        int width = image.Width, height = image.Height;
+        var bgra = image.Bgra;
+        var a = new float[width * height * 3];
+        var b = new float[a.Length];
+        for (int i = 0, p = 0; i < a.Length; i += 3, p += 4)
+        {
+            a[i] = bgra[p];
+            a[i + 1] = bgra[p + 1];
+            a[i + 2] = bgra[p + 2];
+        }
+
         for (int pass = 0; pass < passes; pass++)
         {
-            BoxAcross(image.Bgra, buffer, image.Width, image.Height, radius);
-            BoxDown(buffer, image.Bgra, image.Width, image.Height, radius);
+            BoxAcross(a, b, width, height, radius);
+            BoxDown(b, a, width, height, radius);
         }
-    }
 
-    private static void BoxAcross(byte[] src, byte[] dst, int width, int height, int radius)
-    {
-        int window = (2 * radius) + 1;
         Parallel.For(0, height, y =>
         {
-            int row = y * width * 4;
-            for (int c = 0; c < 3; c++)
-            {
-                int sum = 0;
-                for (int i = -radius; i <= radius; i++)
-                {
-                    sum += src[row + (Math.Clamp(i, 0, width - 1) * 4) + c];
-                }
-
-                for (int x = 0; x < width; x++)
-                {
-                    dst[row + (x * 4) + c] = (byte)((sum + (window / 2)) / window);
-                    sum += src[row + (Math.Min(width - 1, x + radius + 1) * 4) + c] - src[row + (Math.Max(0, x - radius) * 4) + c];
-                }
-            }
-
+            uint seed = (uint)(y * 2654435761u) | 1u;
             for (int x = 0; x < width; x++)
             {
-                dst[row + (x * 4) + 3] = 255;
+                int i = ((y * width) + x) * 3;
+                int p = ((y * width) + x) * 4;
+                float noise = Next(ref seed) - 0.5f;
+                bgra[p] = (byte)Math.Clamp((int)(a[i] + noise + 0.5f), 0, 255);
+                bgra[p + 1] = (byte)Math.Clamp((int)(a[i + 1] + noise + 0.5f), 0, 255);
+                bgra[p + 2] = (byte)Math.Clamp((int)(a[i + 2] + noise + 0.5f), 0, 255);
+                bgra[p + 3] = 255;
             }
         });
     }
 
-    private static void BoxDown(byte[] src, byte[] dst, int width, int height, int radius)
+    private static void BoxAcross(float[] src, float[] dst, int width, int height, int radius)
     {
-        int window = (2 * radius) + 1;
-        int stride = width * 4;
-        Parallel.For(0, width, x =>
+        float window = (2 * radius) + 1; // divided, not multiplied by 1/window: a flat color stays exact
+        Parallel.For(0, height, y =>
         {
-            int column = x * 4;
+            int row = y * width * 3;
             for (int c = 0; c < 3; c++)
             {
-                int sum = 0;
+                float sum = 0;
+                for (int i = -radius; i <= radius; i++)
+                {
+                    sum += src[row + (Math.Clamp(i, 0, width - 1) * 3) + c];
+                }
+
+                for (int x = 0; x < width; x++)
+                {
+                    dst[row + (x * 3) + c] = sum / window;
+                    sum += src[row + (Math.Min(width - 1, x + radius + 1) * 3) + c] - src[row + (Math.Max(0, x - radius) * 3) + c];
+                }
+            }
+        });
+    }
+
+    private static void BoxDown(float[] src, float[] dst, int width, int height, int radius)
+    {
+        float window = (2 * radius) + 1;
+        int stride = width * 3;
+        Parallel.For(0, width, x =>
+        {
+            int column = x * 3;
+            for (int c = 0; c < 3; c++)
+            {
+                float sum = 0;
                 for (int i = -radius; i <= radius; i++)
                 {
                     sum += src[(Math.Clamp(i, 0, height - 1) * stride) + column + c];
@@ -471,14 +497,9 @@ public static class BackdropRenderer
 
                 for (int y = 0; y < height; y++)
                 {
-                    dst[(y * stride) + column + c] = (byte)((sum + (window / 2)) / window);
+                    dst[(y * stride) + column + c] = sum / window;
                     sum += src[(Math.Min(height - 1, y + radius + 1) * stride) + column + c] - src[(Math.Max(0, y - radius) * stride) + column + c];
                 }
-            }
-
-            for (int y = 0; y < height; y++)
-            {
-                dst[(y * stride) + column + 3] = 255;
             }
         });
     }

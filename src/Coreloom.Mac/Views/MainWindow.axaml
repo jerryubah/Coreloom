@@ -250,5 +250,8 @@
         </Grid>
       </c:SquircleBorder>
     </Grid>
+
+    <!-- Over everything, faintly (since 1.8.6): grain, so the window's gradients read as smooth instead of in steps. -->
+    <Border Grid.ColumnSpan="2" Background="{StaticResource GrainWindow}" Opacity="0.03" IsHitTestVisible="False" />
   </Grid>
 </Window>
