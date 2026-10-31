@@ -17,7 +17,13 @@ VERSION="${VERSION:-0.0.0}"
 PACKAGES="$ROOT/artifacts/mac"
 APP="/Applications/Coreloom.app"
 failed=0
-fail() { echo "FAILED: $*" | tee -a "$OUT/failures.txt"; failed=1; }
+# On GitHub, each failure is also an annotation, so the reason shows on the run's page (and through the API) without
+# opening the log or downloading the results.
+fail() {
+  echo "FAILED: $*" | tee -a "$OUT/failures.txt"; failed=1
+  [[ -n "${GITHUB_ACTIONS:-}" ]] && echo "::error title=Mac app ($ARCH)::$*"
+  return 0
+}
 
 # ---- Package --------------------------------------------------------------------------------------------------
 if ! command -v dmgbuild > /dev/null; then
@@ -26,7 +32,7 @@ if ! command -v dmgbuild > /dev/null; then
     && export PATH="${RUNNER_TEMP:-/tmp}/dmgbuild-env/bin:$PATH"
 fi
 bash "$ROOT/build/mac/bundle.sh" --arch "$ARCH" --version "$VERSION" --out "$PACKAGES" > "$OUT/bundle.log" 2>&1 \
-  || { tail -60 "$OUT/bundle.log"; fail "bundle.sh"; exit 1; }
+  || { tail -60 "$OUT/bundle.log"; fail "bundle.sh: $(grep -v '^\s*$' "$OUT/bundle.log" | tail -3 | tr '\n' ' ')"; exit 1; }
 tail -25 "$OUT/bundle.log"
 BUILT="$PACKAGES/Coreloom-$ARCH.app"
 ZIP="$PACKAGES/Coreloom-$VERSION-macos-$ARCH.zip"

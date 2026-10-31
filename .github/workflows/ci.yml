@@ -131,7 +131,12 @@ jobs:
       - name: Package and open the app
         if: success() || failure()
         run: |
-          python3 -m venv "$RUNNER_TEMP/dmgbuild" && "$RUNNER_TEMP/dmgbuild/bin/pip" install --quiet dmgbuild && export PATH="$RUNNER_TEMP/dmgbuild/bin:$PATH"
+          # dmgbuild lays out the disk image's window; if PyPI can't be reached, bundle.sh makes a plain image instead.
+          if python3 -m venv "$RUNNER_TEMP/dmgbuild" && "$RUNNER_TEMP/dmgbuild/bin/pip" install --quiet dmgbuild; then
+            export PATH="$RUNNER_TEMP/dmgbuild/bin:$PATH"
+          else
+            echo "::warning title=dmgbuild::dmgbuild couldn't be installed; the disk image is a plain one"
+          fi
           bash build/mac/verify-app.sh ${{ matrix.arch }} artifacts/mac-verify
 
       - name: Test report

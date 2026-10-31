@@ -978,6 +978,21 @@ unchanged.
 | Mac gradients | MacShots of every page with the gradient, the photo backgrounds and your wallpaper; Mac verify run 41149827072 on Apple silicon and Intel: the frost now drawn at a quarter of the window at most (236 × 159 for 943 × 634, 115 ms) with dithering, a 3 % grain over the window, the dial's glow in 20 steps. Measured on the 2880 × 1920 pictures against 1.8.5's: stretches of one flat colour 12 px or longer (the steps you see as blocks) went from 9,400–16,400 per picture to under 250, and the longest from 460–1,319 px to 20 px | ✅ |
 | Website | Playwright as a Mac, a Windows and a phone-sized visitor at 1440, 1100, 820 and 390 px: a new check that no heading, word or picture is cut by its box or the window reports nothing (the gradient headings had their descenders and accents cut); every section has room above and below; *New in 1.8.6* shows each system's picture and points; Windows visitors see the Applications showcase; no horizontal scrolling, failed requests or console errors. Every picture redrawn from this version | ✅ |
 
+### Updating to 1.8.6 on a Mac
+
+| Run | Result |
+|---|---|
+| 0.9.0 (built from 1.8.6's code) and the published 1.8.5 → the published 1.8.6, run 41153274047 (`macupdatetest-186`) | ✅ Apple silicon and Intel, all four the first time: found and verified in 23–30 s, replaced after quitting, 1.8.6 started with `--updated` |
+
+### GitHub's Intel Mac in CI
+
+The CI job's last step on the Intel Mac (*Package and open the app*) failed on 2 of the 5 branch runs of 1.8.6's code,
+after all 188 tests passed; it hadn't failed in the 25 runs before. The same commit passed on main, in the release
+build and in five runs of the same check through *Mac verify* (run 41153443283 ran it four times in a row on Intel),
+and the update test above passed on Intel, so the published app isn't affected. The failure's reason is only in the
+run's log, which needs a GitHub sign-in, so the check now also writes each failure as an annotation on the run's page,
+and a PyPI hiccup installing dmgbuild no longer fails the step (a plain disk image is made instead).
+
 ### Not verified yet
 
 - **Installing real driver updates.** The runner is a virtual machine with no NVIDIA card, and Windows Update had nothing to offer it, so downloading and installing from Windows Update, NVIDIA's silent install (`-s -noreboot`) and the DirectX runtime's quiet install have only run against fakes. NVIDIA's lookup was checked against its saved replies, not live from the app. The screen goes black for a few seconds while a graphics driver installs; that's expected.
