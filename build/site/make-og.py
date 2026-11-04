@@ -16,7 +16,7 @@ W, H = 1200, 630
 
 
 def font(weight, size):
-    return ImageFont.truetype(str(FONTS / f"Inter-{weight}.ttf"), size)
+    return ImageFont.truetype(str(FONTS / f"Outfit-{weight}.ttf"), size)  # the app's type since 1.9.0
 
 
 def background():
@@ -67,7 +67,7 @@ def main():
     icon = Image.open(ASSETS / "icon-256.png").convert("RGBA").resize((120, 120), Image.LANCZOS)
     canvas.alpha_composite(icon, (64, 92))
     d = ImageDraw.Draw(canvas)
-    d.text((64, 252), "Coreloom", font=font("Bold", 64), fill=(244, 245, 247))
+    d.text((64, 252), "Coreloom", font=font("SemiBold", 64), fill=(244, 245, 247))
     d.text((66, 340), "Hardware monitor", font=font("Medium", 30), fill=(184, 192, 208))
     d.text((66, 380), "for Mac and Windows", font=font("Medium", 30), fill=(184, 192, 208))
     d.text((66, 470), "Free · Open source · No telemetry", font=font("Regular", 22), fill=(140, 150, 168))

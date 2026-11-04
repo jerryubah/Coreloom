@@ -999,6 +999,27 @@ and a PyPI hiccup installing dmgbuild no longer fails the step (a plain disk ima
 - **Uninstalling real apps.** Each app's own uninstaller runs, and some ask questions or open a browser page when they finish; Coreloom waits for it and checks the app is gone from the list. That, and removing Store apps, hasn't been tried on a real PC.
 - **Mac gradients on a real Retina display.** The runners' virtual displays are not Retina; the dithering is meant to be invisible at 2×, but that's only been looked at in pictures.
 
+## 1.9.0: the new look (Outfit, pills, dark glass, thin rings, motion), the splash, the phone app
+
+### Verified
+
+| What | How | Result |
+|---|---|---|
+| Tests | Core (`Release190Tests`: the deeper blue is the default and the old one stays on offer as *Sky*; settings from before 1.9.0 move to the new blue only when they kept the old default, and the schema version moves to 2; the frost behind the glass is deeper; `ConnectTests` now expects the phone's Outfit font), view models (`Release190ViewModelTests`: Drivers shows its updates as a count in the sidebar once checked, Settings keeps its red dot, the 13 pages in their 1.8.6 order) and every earlier test with the restyled pages | ✅ in the container (Core 770, view models 222) and on GitHub (CI_RUNS) |
+| The look on Windows | Page shots runs SHOTS_RUNS: every page and the whole window in Outfit, the current page a blue pill in the sidebar (Drivers with its count, white on the pill), pill buttons and pickers, green switches, thin ring gauges, the light numbers, dark glass cards still glowing in their colour; the new splash (`windows-splash.png`); the clip check: 59 icon buttons on 29 pages and states, 0 cut off | ✅ |
+| The look on the Mac | MacShots of every page and dialog with 0 binding errors (the current page now shown as selected in headless pictures, as in the app); Mac verify runs MACVERIFY_RUNS on Apple silicon and Intel: every page in the light theme the runner uses, Connect serving the phone app with its Outfit font, the menu bar readings, the backgrounds, the readings window, a clean quit | ✅ |
+| The phone app | Playwright at iPhone size against the demo server, dark and light: pairing, every tab, the Add to Home Screen sheet, link pairing, reload resuming (the only console errors the deliberate wrong code's 403 and requests cut off by reloads); `connect.js` in Node against the demo: 16 of 16; the new type, light numbers, thin arcs and pill buttons in the pictures | ✅ |
+| Website | Playwright as a Mac, a Windows and a phone-sized visitor at 1440, 1100, 820 and 390 px: *New in 1.9.0* shows the system's picture and three points, the badge says what's new, nothing cut off, every section with room, the background swatches switch, no horizontal scrolling, failed requests or console errors; the phone mockups checked pixel by pixel for the orange that used to show around the screen: none. Every picture on the site and in the README redrawn from this version, and the link preview and the Mac disk image's background set in Outfit | ✅ |
+
+UPDATE_190
+
+### Not verified yet
+
+- **The look on real screens.** Everything above is from runners and headless pictures at 2×: how Outfit renders at 100–175 % on Windows (ClearType with Display mode for small text, Ideal for large) and on a non-Retina Mac, the motion's smoothness on a real GPU (the leaving page's blur, the staggered entrance, the chart draw-in), and whether the light numbers read well on a bright screen.
+- **The splash on real hardware.** Its lights and the drift on 4K and at 150 %, the handoff to the main window.
+- **The accent move.** Settings saved by 1.8.x with the old default accent moving to the new blue on the first start (unit-tested, not watched on a real PC).
+- The 1.8.6 items still open (real driver installs, real uninstalls).
+
 ## How to re-run the checks that can run anywhere
 
 ```bash
