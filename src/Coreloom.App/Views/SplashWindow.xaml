@@ -15,13 +15,13 @@
   <!--
     Startup splash (16:9), redrawn for 1.9.0 in the app's own look: a near-black canvas with soft, out-of-focus lights
     (the accent's blue low on the left, a little amber up on the right, teal in the lower right corner) drifting a
-    little, a pane of dark glass in the middle with the app icon on a soft halo, the "Coreloom" wordmark in Outfit, a thin
+    little, a pane of dark glass in the middle with the app icon on a soft halo, the "Coreloom" wordmark in Inter, a thin
     loading line and the current step. It runs on its own UI thread, so it must stay self-contained: no
     StaticResource/DynamicResource keys and no implicit styles from App.xaml (the window also blocks those lookups in
     code). The corners are clipped to a squircle in code.
   -->
 
-  <Grid x:Name="Root" TextElement.FontFamily="pack://application:,,,/Fonts/#Outfit">
+  <Grid x:Name="Root" TextElement.FontFamily="pack://application:,,,/Fonts/#Inter">
     <!-- The canvas: near-black navy, a shade lighter toward the top left. -->
     <Rectangle>
       <Rectangle.Fill>
@@ -125,7 +125,7 @@
 
           <!-- "Core" in white, "loom" in the accent's blue. -->
           <c:TrackedText x:Name="Wordmark" Text="Coreloom" AccentStart="4" HorizontalAlignment="Center" Margin="0,16,0,0"
-                         FontSize="42" FontWeight="SemiBold" Tracking="-0.8" LineHeight="46">
+                         FontSize="42" FontWeight="Bold" Tracking="-1.2" LineHeight="46">
             <c:TrackedText.Foreground>
               <LinearGradientBrush MappingMode="Absolute" StartPoint="0,6" EndPoint="0,40">
                 <GradientStop Color="#FFFFFF" Offset="0" />

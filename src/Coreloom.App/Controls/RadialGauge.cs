@@ -23,7 +23,7 @@ public enum GaugeGradient
 /// <summary>How a <see cref="RadialGauge"/> is drawn.</summary>
 public enum GaugeLook
 {
-    /// <summary>A smooth thin arc (since 1.9.0; it was a ring of ticks for gauges 40 px and up).</summary>
+    /// <summary>Ticks for gauges (40 px and up), a smooth arc for small spinners and comet tails.</summary>
     Auto,
 
     /// <summary>A ring of fine radial ticks: the lit ones brighten toward the head, which glows.</summary>
@@ -34,7 +34,7 @@ public enum GaugeLook
 }
 
 /// <summary>
-/// 270° ring gauge, drawn as a thin smooth arc with rounded caps (since 1.9.0) or a ring of fine radial ticks (<see cref="GaugeLook"/>). <see cref="Value"/> is a 0–1 fraction; changes ease over ~450 ms
+/// 270° ring gauge, drawn as a ring of fine radial ticks (<see cref="GaugeLook"/>) or a smooth arc with rounded caps. <see cref="Value"/> is a 0–1 fraction; changes ease over ~450 ms
 /// at the display refresh rate unless reduced motion is on. With <see cref="ToneScale"/> the arc takes its color from the
 /// shared four-color scale (green idle or cool, blue normal, orange heavy, red at the limit; see <see cref="GaugeTone"/>),
 /// worked out from the animated value so the color glides along with the arc; otherwise it is drawn with <see cref="Fill"/>.
@@ -275,7 +275,7 @@ public sealed class RadialGauge : FrameworkElement
         double start = 90 + ((360 - sweep) / 2); // opening centered at the bottom
         double value = (double)GetValue(DisplayValueProperty);
         double tone = (double)GetValue(DisplayToneProperty);
-        bool ticks = Look == GaugeLook.Ticks;
+        bool ticks = Look == GaugeLook.Ticks || (Look == GaugeLook.Auto && size >= 40 && !FadeTail);
 
         if (ticks)
         {

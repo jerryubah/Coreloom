@@ -24,7 +24,7 @@ public enum GaugeGradient
 /// <summary>How a <see cref="RadialGauge"/> is drawn.</summary>
 public enum GaugeLook
 {
-    /// <summary>A smooth thin arc (since 1.9.0; it was a ring of ticks for gauges 40 px and up).</summary>
+    /// <summary>Ticks for gauges (40 px and up), a smooth arc for small spinners and comet tails.</summary>
     Auto,
 
     /// <summary>A ring of fine radial ticks: the lit ones brighten toward the head, which glows.</summary>
@@ -252,7 +252,7 @@ public sealed class RadialGauge : Control
         double start = 90 + ((360 - sweep) / 2); // opening centered at the bottom
         double value = _displayValue;
         double tone = _displayTone;
-        bool ticks = Look == GaugeLook.Ticks;
+        bool ticks = Look == GaugeLook.Ticks || (Look == GaugeLook.Auto && size >= 40 && !FadeTail);
 
         if (ticks)
         {

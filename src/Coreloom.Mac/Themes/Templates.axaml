@@ -29,7 +29,7 @@
           </Border>
         </Grid>
         <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="18" FontWeight="Light"
+          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="18" FontWeight="SemiBold"
                      b:AnimatedText.Formatter="{Binding NumberFormatter}" b:AnimatedText.Value="{Binding Value}">
             <TextBlock.Foreground>
               <MultiBinding Converter="{StaticResource LevelToBrush}" ConverterParameter="Text">
@@ -58,7 +58,7 @@
           <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Detail}" Margin="0,4,0,0" IsVisible="{Binding Detail, Converter={StaticResource HasValue}}" />
           <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding StatsText}" Margin="0,2,0,0" IsVisible="{Binding StatsText, Converter={StaticResource HasValue}}" />
         </StackPanel>
-        <c:RadialGauge Grid.Column="1" Width="80" Height="80" Thickness="6" Orb="False" Margin="12,0,0,0" VerticalAlignment="Center"
+        <c:RadialGauge Grid.Column="1" Width="80" Height="80" Thickness="10" Orb="True" Margin="12,0,0,0" VerticalAlignment="Center"
                        Value="{Binding Fraction}" TrackBrush="{DynamicResource Brush.Track}"
                        ToneScale="True" TemperatureScale="{Binding IsTemperature}" CoolAt="{Binding GaugeCoolAt}" WarmAt="{Binding GaugeWarmAt}" HotAt="{Binding GaugeHotAt}"
                        IsUnavailable="{Binding !HasValue}" />
@@ -100,7 +100,7 @@
             <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Metric.Detail}" Margin="0,4,0,0" TextWrapping="NoWrap"
                        IsVisible="{Binding Metric.Detail, Converter={StaticResource HasValue}}" />
           </StackPanel>
-          <c:RadialGauge Grid.Column="1" Width="60" Height="60" Thickness="5" Margin="10,0,0,0"
+          <c:RadialGauge Grid.Column="1" Width="60" Height="60" Thickness="8" Margin="10,0,0,0"
                          Value="{Binding Metric.Fraction}" TrackBrush="{DynamicResource Brush.Track}"
                          ToneScale="True" TemperatureScale="{Binding Metric.IsTemperature}" CoolAt="{Binding Metric.GaugeCoolAt}" WarmAt="{Binding Metric.GaugeWarmAt}" HotAt="{Binding Metric.GaugeHotAt}"
                          IsUnavailable="{Binding !Metric.HasValue}" />
@@ -124,7 +124,7 @@
       <StackPanel Orientation="Horizontal">
         <Ellipse Width="8" Height="8" Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" VerticalAlignment="Center" />
         <TextBlock Text="{Binding Label}" Margin="6,0,0,0" FontSize="12" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center" />
-        <TextBlock Text="{Binding CurrentText}" Margin="6,0,0,0" FontFamily="{StaticResource MonoFont}" FontSize="11.5" FontWeight="Medium"
+        <TextBlock Text="{Binding CurrentText}" Margin="6,0,0,0" FontFamily="{StaticResource MonoFont}" FontSize="11.5" FontWeight="SemiBold"
                    Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center" />
       </StackPanel>
     </CheckBox>
@@ -177,7 +177,7 @@
         <Border Grid.Column="1" Theme="{StaticResource Badge}" Margin="8,0" IsVisible="{Binding IsDerived}">
           <TextBlock Text="derived" FontSize="10" Foreground="{DynamicResource Brush.TextSecondary}" />
         </Border>
-        <TextBlock Grid.Column="2" Text="{Binding Value}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="Medium"
+        <TextBlock Grid.Column="2" Text="{Binding Value}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold"
                    Foreground="{DynamicResource Brush.Text}" TextAlignment="Right" />
         <TextBlock Grid.Column="3" Text="{Binding Source}" FontSize="11" Foreground="{DynamicResource Brush.TextTertiary}" Width="132"
                    TextAlignment="Right" TextTrimming="CharacterEllipsis" Margin="12,0,0,0" />
@@ -231,7 +231,7 @@
           <Grid Margin="0,5" IsVisible="{Binding Name, Converter={StaticResource HasValue}}" RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto">
             <TextBlock Text="{Binding Name}" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
             <TextBlock Grid.Column="1" Text="{Binding Secondary}" FontSize="11.5" Foreground="{DynamicResource Brush.TextTertiary}" Margin="12,0" />
-            <TextBlock Grid.Column="2" Text="{Binding Primary}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="Medium"
+            <TextBlock Grid.Column="2" Text="{Binding Primary}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold"
                        Foreground="{DynamicResource Brush.Text}" MinWidth="64" TextAlignment="Right" />
             <ProgressBar Grid.Row="1" Grid.ColumnSpan="3" Theme="{StaticResource ProgressBar.Thin}" Height="3" Margin="0,5,0,0"
                          Value="{Binding Fraction, Mode=OneWay, Converter={StaticResource FractionToPercent}}" />
@@ -248,7 +248,7 @@
     <Grid Margin="0,4" ColumnDefinitions="Auto,*,Auto">
       <Ellipse Width="9" Height="9" Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" VerticalAlignment="Center" />
       <TextBlock Grid.Column="1" Text="{Binding Label}" Margin="8,0,12,0" Theme="{StaticResource Text.Secondary}" />
-      <TextBlock Grid.Column="2" Text="{Binding ValueText}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" />
+      <TextBlock Grid.Column="2" Text="{Binding ValueText}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
     </Grid>
   </DataTemplate>
 
@@ -266,7 +266,7 @@
       <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
         <Grid>
           <TextBlock Text="{Binding Name}" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" Margin="0,0,48,0" />
-          <TextBlock Text="{Binding PercentText}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" HorizontalAlignment="Right" />
+          <TextBlock Text="{Binding PercentText}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" HorizontalAlignment="Right" />
         </Grid>
         <ProgressBar Theme="{StaticResource ProgressBar.Thin}" Margin="0,6,0,0" Foreground="{Binding Used.ColorKey, Converter={StaticResource ColorKeyToBrush}}"
                      Value="{Binding Fraction, Mode=OneWay, Converter={StaticResource FractionToPercent}}" />
@@ -314,7 +314,7 @@
           </Panel>
           <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
             <TextBlock Theme="{StaticResource Text.Label}" Text="{Binding Name, StringFormat='{}{0} health'}" />
-            <TextBlock Text="{Binding StatusText}" FontSize="20" FontWeight="Medium" Margin="0,1,0,0"
+            <TextBlock Text="{Binding StatusText}" FontSize="20" FontWeight="SemiBold" Margin="0,1,0,0"
                        Foreground="{Binding StatusKey, Converter={StaticResource StatusToBrush}, ConverterParameter=Brush.TextSecondary}" />
             <TextBlock Text="{Binding Summary}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" MaxWidth="260" />
           </StackPanel>
@@ -348,7 +348,7 @@
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
       <TextBlock Text="{Binding Label}" Opacity="0.55" Margin="{Binding LabelSpacing, Converter={StaticResource ToValue}}" VerticalAlignment="Bottom"
-                 FontSize="{Binding SmallFontSize}" FontWeight="Medium" IsVisible="{Binding Overlay.ShowLabels}"
+                 FontSize="{Binding SmallFontSize}" FontWeight="SemiBold" IsVisible="{Binding Overlay.ShowLabels}"
                  Effect="{Binding Overlay.TextShadow, Converter={StaticResource TextShadow}}" />
       <ItemsControl Grid.Column="1" ItemsSource="{Binding Values}" ItemTemplate="{StaticResource OverlayValue}" Focusable="False" VerticalAlignment="Bottom"
                     Effect="{Binding Overlay.TextShadow, Converter={StaticResource TextShadow}}">
@@ -416,7 +416,7 @@
                    Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" b:Pulse.IsPulsing="{Binding IsActive}" IsVisible="{Binding IsActive}" />
         </Grid>
         <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="22" FontWeight="Light" Foreground="{DynamicResource Brush.Text}"
+          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}"
                      b:AnimatedText.Formatter="{Binding NumberFormatter}" b:AnimatedText.Value="{Binding Value}" />
           <TextBlock Theme="{StaticResource Text.Unit}" Text="{Binding Unit}" VerticalAlignment="Bottom" Margin="5,0,0,3" />
         </StackPanel>
@@ -431,12 +431,12 @@
   <DataTemplate x:Key="ToneGauge" DataType="pages:ToneValueViewModel">
     <StackPanel HorizontalAlignment="Center">
       <Panel Width="164" Height="164">
-        <c:RadialGauge Thickness="10" Orb="False" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True" Tone="{Binding Tone}" Value="{Binding Fraction}" />
+        <c:RadialGauge Thickness="15" Orb="False" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True" Tone="{Binding Tone}" Value="{Binding Fraction}" />
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
           <Path Theme="{StaticResource IconPath}" Width="16" Height="16" HorizontalAlignment="Center"
                 Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}"
                 b:Pulse.IsPulsing="{Binding IsActive}" />
-          <TextBlock FontFamily="{StaticResource UiFont}" FontSize="29" FontWeight="Light" HorizontalAlignment="Center" Margin="0,4,0,0"
+          <TextBlock FontFamily="{StaticResource UiFont}" FontSize="29" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,4,0,0"
                      Foreground="{DynamicResource Brush.Text}" FontFeatures="+tnum"
                      b:AnimatedText.Formatter="{Binding NumberFormatter}" b:AnimatedText.Value="{Binding Value}" />
           <TextBlock Text="{Binding Unit}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Center" />
@@ -451,7 +451,7 @@
     <StackPanel>
       <Grid>
         <StackPanel Orientation="Horizontal">
-          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="16" FontWeight="Light" Foreground="{DynamicResource Brush.Text}"
+          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}"
                      b:AnimatedText.Formatter="{Binding NumberFormatter}" b:AnimatedText.Value="{Binding Value}" />
           <TextBlock Theme="{StaticResource Text.Unit}" Text="{Binding Unit}" VerticalAlignment="Bottom" Margin="4,0,0,1" />
         </StackPanel>
@@ -474,7 +474,7 @@
         </Grid.ColumnDefinitions>
         <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
           <StackPanel Orientation="Horizontal">
-            <TextBlock Text="{Binding Name}" FontWeight="Medium" FontSize="13" Foreground="{DynamicResource Brush.Text}" />
+            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource Brush.Text}" />
             <Border Theme="{StaticResource Badge}" Margin="8,0,0,0">
               <TextBlock Text="{Binding ShortName}" FontFamily="{StaticResource MonoFont}" FontSize="10" Foreground="{DynamicResource Brush.TextSecondary}" />
             </Border>

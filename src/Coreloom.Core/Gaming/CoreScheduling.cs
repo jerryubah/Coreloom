@@ -519,10 +519,13 @@ public static class CoreScheduling
 
         if (layout.IsVCache && plan is not null)
         {
-            bool parks = plan.Id != PowerPlans.HighPerformance && plan.Id != PowerPlans.UltimateTemplate && !plan.Name.Contains("Ultimate", StringComparison.OrdinalIgnoreCase);
+            // Balanced lets AMD's driver park cores, and a plan that stops parking (High or Ultimate Performance) is fine
+            // too since 1.8.5: CPU cache optimization keeps the game on the cache cores itself then. Both are Good (1.9.1);
+            // another parking plan is a note, not an error.
+            bool parks = !StopsParking(plan);
             checks.Add(parks
                 ? new CoreCheck("Power plan", plan.Name, plan.Id == PowerPlans.Balanced ? CheckState.Good : CheckState.Info, plan.Id == PowerPlans.Balanced ? "Balanced lets cores park, which AMD's driver needs." : "AMD recommends Balanced on Ryzen X3D processors.")
-                : new CoreCheck("Power plan", plan.Name, CheckState.Info, "This plan stops core parking, which AMD's driver uses to keep games on the cache cores. Balanced lets it park them."));
+                : new CoreCheck("Power plan", plan.Name, CheckState.Good, "This plan stops core parking, so Coreloom's CPU cache optimization keeps the game on the cache cores itself."));
         }
 
         return checks;

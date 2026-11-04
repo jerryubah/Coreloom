@@ -28,19 +28,16 @@ files in a build is determined by NuGet; run `dotnet list package --include-tran
 | Mono.Posix.NETStandard | MIT (Mono project) | https://github.com/mono/mono |
 | System.Management, System.IO.Ports, System.IO.FileSystem.AccessControl | MIT (.NET Foundation) | https://github.com/dotnet/runtime |
 
-## Fonts: Outfit, Inter and JetBrains Mono
+## Fonts: Inter and JetBrains Mono
 
 - License: SIL Open Font License 1.1 (OFL-1.1), https://openfontlicense.org
-- Outfit (the interface since 1.9.0): © 2021 The Outfit Project Authors, https://github.com/Outfitio/Outfit-Fonts
-  (Light, Regular, Medium, SemiBold, Bold; the project's own static files)
-- Inter (the Mac's menu bar readings): © 2016 The Inter Project Authors, https://github.com/rsms/inter
-  (Regular, Medium, SemiBold, Bold)
-- JetBrains Mono (logs and code): © 2020 The JetBrains Mono Project Authors, https://github.com/JetBrains/JetBrainsMono
+- Inter: © 2016 The Inter Project Authors, https://github.com/rsms/inter (Regular, Medium, SemiBold, Bold)
+- JetBrains Mono: © 2020 The JetBrains Mono Project Authors, https://github.com/JetBrains/JetBrainsMono
   (Regular, Medium, SemiBold)
 - The font files are embedded unmodified in `Coreloom.exe`'s assembly resources. Each license text is
-  also installed next to the app as `LICENSE-Outfit.txt`, `LICENSE-Inter.txt` and `LICENSE-JetBrainsMono.txt`.
+  also installed next to the app as `LICENSE-Inter.txt` and `LICENSE-JetBrainsMono.txt`.
 
-## The phone app (Coreloom Connect): noble cryptography and Outfit
+## The phone app (Coreloom Connect): noble cryptography and Inter
 
 The phone app in `src/Coreloom.Phone`, which Coreloom serves to paired phones, is embedded in `Coreloom.Core`'s
 assembly resources (in both the Windows and the Mac app).
@@ -50,13 +47,12 @@ assembly resources (in both the Windows and the Mac app).
 | @noble/curves 2.4.0 (P-256) | MIT (© Paul Miller) | https://github.com/paulmillr/noble-curves |
 | @noble/hashes 2.4.0 (SHA-256, HMAC, HKDF) | MIT (© Paul Miller) | https://github.com/paulmillr/noble-hashes |
 | @noble/ciphers 2.4.0 (AES-GCM) | MIT (© Paul Miller) | https://github.com/paulmillr/noble-ciphers |
-| Outfit (Light, Regular, Medium, SemiBold) as WOFF2, Latin subset | SIL OFL 1.1 (© 2021 The Outfit Project Authors) | https://github.com/Outfitio/Outfit-Fonts |
+| Inter (Regular, Medium, SemiBold, Bold) as WOFF2, Latin subset | SIL OFL 1.1 (© 2016 The Inter Project Authors) | https://github.com/rsms/inter |
 
 - The noble libraries are bundled unmodified into `vendor/crypto.js` (see `build/phone/crypto`); their license
   notices are kept at the end of that file.
-- Outfit is subset to the characters Coreloom shows and converted to WOFF2 (`build/phone/make-assets.py`; Inter until
-  1.8.6). Outfit's copyright notice declares no Reserved Font Name. Its license is served with the fonts as
-  `fonts/LICENSE-Outfit.txt`.
+- Inter is subset to the characters Coreloom shows and converted to WOFF2 (`build/phone/make-assets.py`). Inter's
+  copyright notice declares no Reserved Font Name. Its license is served with the fonts as `fonts/LICENSE-Inter.txt`.
 
 ## Coreloom icon
 

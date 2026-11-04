@@ -39,11 +39,11 @@ def draw(scale: int) -> Image.Image:
 
     # Title and instruction.
     title = "Install Coreloom"
-    f_title = font("Outfit-SemiBold.ttf", 22, scale)
+    f_title = font("Inter-SemiBold.ttf", 22, scale)
     tw = d.textlength(title, font=f_title)
     d.text(((w - tw) / 2, 34 * scale), title, font=f_title, fill=(240, 244, 255))
     sub = "Drag Coreloom into the Applications folder."
-    f_sub = font("Outfit-Regular.ttf", 13.5, scale)
+    f_sub = font("Inter-Regular.ttf", 13.5, scale)
     sw = d.textlength(sub, font=f_sub)
     d.text(((w - sw) / 2, 68 * scale), sub, font=f_sub, fill=(176, 189, 216))
 
@@ -59,8 +59,8 @@ def draw(scale: int) -> Image.Image:
     d.polygon([(x1, y), (x1 - 16 * scale, y - 10 * scale), (x1 - 16 * scale, y + 10 * scale)], fill=(108, 160, 255))
 
     # The first opening.
-    f_note = font("Outfit-Regular.ttf", 11.5, scale)
-    f_bold = font("Outfit-SemiBold.ttf", 11.5, scale)
+    f_note = font("Inter-Regular.ttf", 11.5, scale)
+    f_bold = font("Inter-SemiBold.ttf", 11.5, scale)
     lines = [
         [("First opening: ", f_bold), ("if macOS says it could not verify Coreloom, open", f_note)],
         [("System Settings › Privacy & Security", f_bold), (" and click ", f_note), ("Open Anyway", f_bold), (" (only this once).", f_note)],

@@ -52,25 +52,25 @@
     <!-- Collapsed, an item is only 40 px wide: the icon sits centered with no margins (with them it didn't fit and was
          clipped on the right). -->
     <DataTemplate x:Key="NavItemTemplate" DataType="{x:Type pages:PageViewModel}">
-      <Grid x:Name="Row" Margin="13,0,10,0">
+      <Grid x:Name="Row" Margin="14,0,10,0">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="*" />
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <Grid VerticalAlignment="Center">
-          <Path Style="{StaticResource IconPath}" Width="17" Height="17" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
+          <Path Style="{StaticResource IconPath}" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
           <!-- A red dot when the page has news (Settings, when an update is out) -->
           <Ellipse Width="9" Height="9" Fill="{DynamicResource Brush.Critical}" Stroke="{DynamicResource Brush.Surface}" StrokeThickness="1.5"
                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-3,-4,0" IsHitTestVisible="False"
                    Visibility="{Binding HasNotice, Converter={StaticResource BoolToVisibility}}" />
         </Grid>
-        <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="13,0,8,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+        <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="14,0,8,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                    Visibility="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
         <!-- A count beside the name (Drivers: updates waiting), since 1.9.0 -->
         <Border x:Name="Count" Grid.Column="2" Style="{StaticResource Badge.Count}" Margin="0,0,-2,0"
                 Visibility="{Binding Badge, Converter={StaticResource HasValueToVisibility}}">
-          <TextBlock x:Name="CountText" Text="{Binding Badge}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          <TextBlock Text="{Binding Badge}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </Border>
       </Grid>
       <DataTemplate.Triggers>
@@ -79,34 +79,46 @@
           <Setter TargetName="Row" Property="HorizontalAlignment" Value="Center" />
           <Setter TargetName="Count" Property="Visibility" Value="Collapsed" />
         </DataTrigger>
-        <!-- On the selected page's accent pill, the count is white on a lighter pill. -->
-        <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
-          <Setter TargetName="Count" Property="Background" Value="#3AFFFFFF" />
-          <Setter TargetName="CountText" Property="Foreground" Value="{DynamicResource Brush.OnAccent}" />
-        </DataTrigger>
       </DataTemplate.Triggers>
     </DataTemplate>
 
-    <!-- The update button (1.9.0: the accent pill, like every main action), with the version and its state. -->
-    <Style x:Key="Button.Update" TargetType="Button" BasedOn="{StaticResource Button.Primary}">
+    <!-- The update button (since 1.8.3): charcoal glass like the banners' buttons, its rim lit along the top and toward a
+         soft light of the accent in the lower right corner, which grows on hover. White text. -->
+    <Style x:Key="Button.Update" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.OnGlow}" />
+      <Setter Property="Background" Value="{DynamicResource Brush.GlowButtonFill}" />
       <Setter Property="HorizontalContentAlignment" Value="Left" />
-      <Setter Property="Padding" Value="6,5,12,5" />
+      <Setter Property="Padding" Value="9,8,12,8" />
+      <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+      <Setter Property="RenderTransform">
+        <Setter.Value>
+          <ScaleTransform />
+        </Setter.Value>
+      </Setter>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <c:SquircleBorder x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="99" Smoothing="0" Padding="{TemplateBinding Padding}">
-              <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+            <c:SquircleBorder x:Name="Root" CornerRadius="14" Background="{TemplateBinding Background}" BorderBrush="{DynamicResource Brush.GlowButtonRim}"
+                              BorderThickness="1" ClipContent="True">
+              <Grid>
+                <Border x:Name="Light" Background="{DynamicResource Brush.GlowButtonLight}" Opacity="0.85" IsHitTestVisible="False" />
+                <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+              </Grid>
             </c:SquircleBorder>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Root" Property="Background" Value="{DynamicResource Brush.AccentHover}" />
+                <Setter TargetName="Light" Property="Opacity" Value="1" />
               </Trigger>
               <Trigger Property="IsPressed" Value="True">
-                <Setter TargetName="Root" Property="Opacity" Value="0.88" />
+                <Setter Property="RenderTransform">
+                  <Setter.Value>
+                    <ScaleTransform ScaleX="0.98" ScaleY="0.98" />
+                  </Setter.Value>
+                </Setter>
               </Trigger>
               <Trigger Property="IsKeyboardFocused" Value="True">
                 <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Brush.Text}" />
-                <Setter TargetName="Root" Property="BorderThickness" Value="1" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -115,7 +127,7 @@
       <Style.Triggers>
         <DataTrigger Binding="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
           <Setter Property="HorizontalContentAlignment" Value="Center" />
-          <Setter Property="Padding" Value="0,5" />
+          <Setter Property="Padding" Value="0,7" />
         </DataTrigger>
       </Style.Triggers>
     </Style>
@@ -161,7 +173,7 @@
           <Grid>
             <StackPanel Style="{StaticResource SidebarBrand}">
               <Image Source="{DynamicResource Image.AppIcon}" Width="26" Height="26" RenderOptions.BitmapScalingMode="HighQuality" />
-              <TextBlock Text="Coreloom" FontSize="16" FontWeight="Medium" Margin="10,0,0,0" VerticalAlignment="Center"
+              <TextBlock Text="Coreloom" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"
                          Visibility="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
             </StackPanel>
             <Button Style="{StaticResource Button.Icon}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,4,0,0"
@@ -190,13 +202,13 @@
                     AutomationProperties.Name="{Binding Updates.BadgeToolTip}"
                     Visibility="{Binding Updates.ShowBadge, Converter={StaticResource BoolToVisibility}}">
               <StackPanel Orientation="Horizontal">
-                <Border Width="26" Height="26" CornerRadius="13" Background="#2EFFFFFF" VerticalAlignment="Center">
-                  <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
+                <Border Width="28" Height="28" CornerRadius="9" Background="#1FFFFFFF" VerticalAlignment="Center">
+                  <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnGlow}" />
                 </Border>
-                <StackPanel Margin="9,0,0,0" VerticalAlignment="Center"
+                <StackPanel Margin="10,0,0,0" VerticalAlignment="Center"
                             Visibility="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
-                  <TextBlock Text="{Binding Updates.BadgeText}" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource Brush.OnAccent}" TextTrimming="CharacterEllipsis" />
-                  <TextBlock Text="{Binding Updates.BadgeDetail}" FontSize="11" Margin="0,1,0,0" Foreground="{DynamicResource Brush.OnAccent}" Opacity="0.8" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{Binding Updates.BadgeText}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.OnGlow}" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{Binding Updates.BadgeDetail}" FontSize="11" Margin="0,1,0,0" Foreground="{DynamicResource Brush.OnGlow}" Opacity="0.75" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
               </StackPanel>
             </Button>
@@ -240,8 +252,8 @@
 
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
             <!-- Live indicator -->
-            <Border Style="{StaticResource Badge}" Padding="11,5" Margin="0,0,12,0" Background="{DynamicResource Brush.Pill}"
-                    BorderBrush="{DynamicResource Brush.PillBorder}" BorderThickness="1" ToolTip="Monitoring status and polling interval">
+            <Border Style="{StaticResource Badge}" Padding="10,5" Margin="0,0,12,0" Background="{DynamicResource Brush.Surface}"
+                    ToolTip="Monitoring status and polling interval">
               <StackPanel Orientation="Horizontal">
                 <Grid Width="10" Height="10" VerticalAlignment="Center">
                   <Ellipse x:Name="LivePulse" Fill="{DynamicResource Brush.Success}" Opacity="0.35" RenderTransformOrigin="0.5,0.5">
@@ -260,8 +272,7 @@
                      SelectedValuePath="Value" SelectedValue="{Binding SelectedWindow}" ToolTip="Chart time range" />
 
             <!-- Freeze charts -->
-            <ToggleButton Style="{StaticResource ToggleButton.Icon}" Margin="10,0,0,0" IsChecked="{Binding IsChartsFrozen}"
-                          Background="{DynamicResource Brush.Pill}" BorderBrush="{DynamicResource Brush.PillBorder}"
+            <ToggleButton Style="{StaticResource ToggleButton.Icon}" Margin="8,0,0,0" IsChecked="{Binding IsChartsFrozen}"
                           ToolTip="Pause charts to inspect them (monitoring continues)">
               <Grid>
                 <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Pause}"
@@ -275,7 +286,7 @@
 
         <StackPanel Grid.Row="2">
           <!-- "Updated to …" banner (first launches after an update, until dismissed) -->
-          <c:SquircleBorder Margin="32,16,28,0" Padding="14,10" CornerRadius="18"
+          <c:SquircleBorder Margin="32,16,28,0" Padding="14,10" CornerRadius="14"
                   Background="{DynamicResource Brush.AccentSoft}" BorderBrush="{DynamicResource Brush.CardBorder}" BorderThickness="1"
                   Visibility="{Binding Updates.ShowUpdatedBanner, Converter={StaticResource BoolToVisibility}}">
             <Grid>
@@ -286,7 +297,7 @@
                 <ColumnDefinition Width="Auto" />
               </Grid.ColumnDefinitions>
               <Path Style="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.Accent}" />
-              <TextBlock Grid.Column="1" Margin="12,0" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12.5" FontWeight="Medium"
+              <TextBlock Grid.Column="1" Margin="12,0" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12.5" FontWeight="SemiBold"
                          Text="{Binding Updates.UpdatedBannerText}" />
               <Button Grid.Column="2" Style="{StaticResource Button.Secondary}" Content="See what's new" Padding="12,5"
                       Command="{Binding ShowWhatsNewCommand}" />
@@ -298,7 +309,7 @@
           </c:SquircleBorder>
 
           <!-- Limited-mode banner -->
-          <c:SquircleBorder Margin="32,16,28,0" Padding="14,10" CornerRadius="18"
+          <c:SquircleBorder Margin="32,16,28,0" Padding="14,10" CornerRadius="14"
                   Background="{DynamicResource Brush.BannerBackground}" BorderBrush="{DynamicResource Brush.BannerBorder}" BorderThickness="1"
                   Visibility="{Binding ShowLimitedModeBanner, Converter={StaticResource BoolToVisibility}}">
             <Grid>
@@ -325,11 +336,11 @@
         <!-- Page -->
         <c:PageHost Grid.Row="3" Page="{Binding CurrentPage}" Margin="0,8,0,0" />
 
-        <!-- A message over the page ("Export failed"), instead of a dialog; it leaves after five seconds. Since 1.9.0 a
-             light pill with dark text, the one bright thing on the page, rising from the bottom. -->
-        <c:SquircleBorder Grid.Row="3" Panel.ZIndex="10" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="32,0,28,24"
-                          MaxWidth="560" Padding="16,9,8,9" CornerRadius="99" Smoothing="0" Shadow="1.2"
-                          Background="{DynamicResource Brush.Toast}" BorderBrush="Transparent" BorderThickness="0"
+        <!-- A message over the page ("Export failed"), instead of a dialog; it leaves after five seconds, and rises from
+             the bottom when it comes (since 1.9.0). -->
+        <c:SquircleBorder Grid.Row="3" Panel.ZIndex="10" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="32,0,28,28"
+                          MaxWidth="560" Padding="14,10,8,10" CornerRadius="14" Shadow="1"
+                          Background="{DynamicResource Brush.Card}" BorderBrush="{DynamicResource Brush.CardBorder}" BorderThickness="1"
                           b:Reveal.Enabled="True" b:Reveal.FromBelow="True"
                           Visibility="{Binding HasToast, Converter={StaticResource BoolToVisibility}}"
                           AutomationProperties.LiveSetting="Assertive" AutomationProperties.Name="{Binding ToastText}">
@@ -339,13 +350,16 @@
               <ColumnDefinition Width="*" />
               <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Path Style="{StaticResource IconPath}" Width="15" Height="15" VerticalAlignment="Center"
+            <Path Style="{StaticResource IconPath}" Width="16" Height="16" VerticalAlignment="Top" Margin="0,1,0,0"
                   Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Elevated}" />
-            <TextBlock Grid.Column="1" Margin="12,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="13" Foreground="{DynamicResource Brush.ToastText}">
-              <Run Text="{Binding ToastTitle, Mode=OneWay}" FontWeight="Medium" /><Run Text=" · " /><Run Text="{Binding ToastText, Mode=OneWay}" />
-            </TextBlock>
-            <Button Grid.Column="2" Style="{StaticResource Button.Plain}" Padding="12,4" FontSize="12" Foreground="{DynamicResource Brush.ToastText}"
-                    Background="{DynamicResource Brush.ToastControl}" Content="Dismiss" Command="{Binding DismissToastCommand}" AutomationProperties.Name="Dismiss" />
+            <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+              <TextBlock Text="{Binding ToastTitle}" FontSize="12.5" FontWeight="SemiBold" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding ToastText}" FontSize="12.5" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.TextSecondary}" />
+            </StackPanel>
+            <Button Grid.Column="2" Style="{StaticResource Button.Icon}" Width="28" Height="28" VerticalAlignment="Top"
+                    Command="{Binding DismissToastCommand}" ToolTip="Dismiss" AutomationProperties.Name="Dismiss">
+              <Path Style="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Close}" />
+            </Button>
           </Grid>
         </c:SquircleBorder>
       </Grid>

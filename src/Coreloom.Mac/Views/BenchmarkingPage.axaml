@@ -54,10 +54,10 @@
 
     <!-- The trophy badge on the best result of each kind. -->
     <ControlTemplate x:Key="BestBadge" TargetType="ContentControl">
-      <Border CornerRadius="99" Padding="7,2" Background="{DynamicResource Brush.AccentSoft}" VerticalAlignment="Center">
+      <Border CornerRadius="7" Padding="7,2" Background="{DynamicResource Brush.AccentSoft}" VerticalAlignment="Center">
         <StackPanel Orientation="Horizontal">
           <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Trophy}" Stroke="{DynamicResource Brush.Accent}" StrokeThickness="1.6" />
-          <TextBlock Text="{TemplateBinding Content}" FontSize="10.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Accent}" Margin="5,0,0,0" />
+          <TextBlock Text="{TemplateBinding Content}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" Margin="5,0,0,0" />
         </StackPanel>
       </Border>
     </ControlTemplate>
@@ -103,7 +103,7 @@
           <StackPanel Grid.Row="1" Margin="0,16,0,0" IsVisible="{Binding IsIdle}">
             <TextBlock Text="{Binding Score}" Theme="{StaticResource Score}" FontSize="44" />
             <TextBlock Theme="{StaticResource Text.Caption}" Margin="0,2,0,0">
-              <Run Text="{Binding ScoreLabel, Mode=OneWay}" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" /><Run Text="  ·  " /><Run Text="{Binding ScoreDate, Mode=OneWay}" />
+              <Run Text="{Binding ScoreLabel, Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" /><Run Text="  ·  " /><Run Text="{Binding ScoreDate, Mode=OneWay}" />
             </TextBlock>
             <ItemsControl ItemsSource="{Binding Parts}" Margin="0,14,0,0" Focusable="False">
               <ItemsControl.ItemsPanel>
@@ -128,7 +128,7 @@
           <StackPanel Grid.Row="1" Margin="0,16,0,0" IsVisible="{Binding IsRunning}">
             <StackPanel Orientation="Horizontal">
               <c:RadialGauge Theme="{StaticResource RunSpinner}" b:Spin.IsSpinning="{Binding IsRunning}" VerticalAlignment="Center" />
-              <TextBlock Text="{Binding Step}" FontSize="20" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" Margin="10,0,0,0" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding Step}" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="10,0,0,0" VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock Text="{Binding StepDetail}" Theme="{StaticResource Text.Secondary}" Margin="28,2,0,0" />
             <ProgressBar Theme="{StaticResource ProgressBar.Thin}" Maximum="1" Margin="0,14,0,0" b:Smooth.Value="{Binding Progress}"
@@ -180,15 +180,15 @@
                   Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
           </Grid>
           <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
-            <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
+            <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
             <TextBlock Theme="{StaticResource Text.Caption}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis">
               <Run Text="{Binding Device, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding When, Mode=OneWay}" />
             </TextBlock>
           </StackPanel>
           <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
             <ContentControl Template="{StaticResource BestBadge}" Content="Best" Focusable="False" IsVisible="{Binding IsBest}" />
-            <Border CornerRadius="99" Padding="7,2" Background="{DynamicResource Brush.ControlHover}" IsVisible="{Binding IsStress}">
-              <TextBlock Text="{Binding VerdictText}" FontSize="10.5" FontWeight="Medium" Foreground="{Binding VerdictColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+            <Border CornerRadius="7" Padding="7,2" Background="{DynamicResource Brush.ControlHover}" IsVisible="{Binding IsStress}">
+              <TextBlock Text="{Binding VerdictText}" FontSize="10.5" FontWeight="SemiBold" Foreground="{Binding VerdictColorKey, Converter={StaticResource ColorKeyToBrush}}" />
             </Border>
           </StackPanel>
           <StackPanel Grid.Column="3" VerticalAlignment="Center">
@@ -286,9 +286,9 @@
               <TextBlock Text="Stress test" Theme="{StaticResource Text.CardTitle}" />
               <TextBlock Text="{Binding StressStatus}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="0,2,0,0" />
             </StackPanel>
-            <Border Grid.Column="2" CornerRadius="99" Padding="9,3" Background="{DynamicResource Brush.ControlHover}" VerticalAlignment="Top"
+            <Border Grid.Column="2" CornerRadius="8" Padding="9,3" Background="{DynamicResource Brush.ControlHover}" VerticalAlignment="Top"
                     IsVisible="{Binding HasStressVerdict}">
-              <TextBlock Text="{Binding StressVerdict}" FontSize="11.5" FontWeight="Medium" Foreground="{Binding StressVerdictColorKey, Converter={StaticResource ColorKeyToBrush}}"
+              <TextBlock Text="{Binding StressVerdict}" FontSize="11.5" FontWeight="SemiBold" Foreground="{Binding StressVerdictColorKey, Converter={StaticResource ColorKeyToBrush}}"
                          MaxWidth="420" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding StressVerdict}" />
             </Border>
           </Grid>
@@ -435,7 +435,7 @@
           <!-- Stress test: the verdict and the loops -->
           <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="16,12" Margin="0,14,0,0" IsVisible="{Binding Item.IsStress}">
             <StackPanel>
-              <TextBlock Text="{Binding Result.Verdict}" FontSize="13" FontWeight="Medium" TextWrapping="Wrap"
+              <TextBlock Text="{Binding Result.Verdict}" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"
                          Foreground="{Binding Item.VerdictColorKey, Converter={StaticResource ColorKeyToBrush}}" />
               <TextBlock Theme="{StaticResource Text.Caption}" Margin="0,3,0,0">
                 <Run Text="{Binding Errors, Mode=OneWay}" /><Run Text="  ·  each bar is a loop; 97 % of the best loop or more passes" />
@@ -487,7 +487,7 @@
                           <ColumnDefinition Width="90" />
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
-                          <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
+                          <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
                           <ProgressBar Theme="{StaticResource ProgressBar.Thin}" Maximum="1" Value="{Binding Fraction, Mode=OneWay}" Margin="0,4,0,0" MaxWidth="220" HorizontalAlignment="Left" Width="220" />
                         </StackPanel>
                         <TextBlock Grid.Column="1" Text="{Binding Category}" Theme="{StaticResource Text.Caption}" VerticalAlignment="Center" />
@@ -496,7 +496,7 @@
                         <TextBlock Grid.Column="3" Width="80" Text="{Binding SingleScore}" Theme="{StaticResource Cell}" TextAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}"
                                    IsVisible="{Binding DataContext.HasSingle, RelativeSource={RelativeSource AncestorType=ItemsControl}}" />
                         <TextBlock Grid.Column="4" Text="{Binding Rate}" Theme="{StaticResource Cell}" TextAlignment="Right" />
-                        <TextBlock Grid.Column="5" Text="{Binding Score}" Theme="{StaticResource Cell}" FontWeight="Medium" TextAlignment="Right" />
+                        <TextBlock Grid.Column="5" Text="{Binding Score}" Theme="{StaticResource Cell}" FontWeight="SemiBold" TextAlignment="Right" />
                       </Grid>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
@@ -520,12 +520,12 @@
                     <StackPanel>
                       <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Text="{Binding Label}" Theme="{StaticResource Text.Label}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Label}" />
-                        <Border Grid.Column="1" CornerRadius="99" Padding="6,1" Margin="8,0,0,0" Background="{DynamicResource Brush.ElevatedSoft}"
+                        <Border Grid.Column="1" CornerRadius="6" Padding="6,1" Margin="8,0,0,0" Background="{DynamicResource Brush.ElevatedSoft}"
                                 IsVisible="{Binding Raised}">
-                          <TextBlock Text="Raised" FontSize="10" FontWeight="Medium" Foreground="{DynamicResource Brush.Elevated}" />
+                          <TextBlock Text="Raised" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Elevated}" />
                         </Border>
                       </Grid>
-                      <TextBlock Text="{Binding Value}" FontSize="16" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" Margin="0,5,0,0" TextWrapping="Wrap" />
+                      <TextBlock Text="{Binding Value}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="0,5,0,0" TextWrapping="Wrap" />
                       <TextBlock Text="{Binding Detail}" Theme="{StaticResource Text.Caption}" Margin="0,4,0,0" TextWrapping="Wrap" TextTrimming="None" />
                     </StackPanel>
                   </c:SquircleBorder>
@@ -555,7 +555,7 @@
                         <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                         <TextBlock Grid.Column="2" Text="{Binding Min}" Theme="{StaticResource Cell}" TextAlignment="Right" Foreground="{DynamicResource Brush.TextSecondary}" />
                         <TextBlock Grid.Column="3" Text="{Binding Average}" Theme="{StaticResource Cell}" TextAlignment="Right" />
-                        <TextBlock Grid.Column="4" Text="{Binding Max}" Theme="{StaticResource Cell}" FontWeight="Medium" TextAlignment="Right" />
+                        <TextBlock Grid.Column="4" Text="{Binding Max}" Theme="{StaticResource Cell}" FontWeight="SemiBold" TextAlignment="Right" />
                       </Grid>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>

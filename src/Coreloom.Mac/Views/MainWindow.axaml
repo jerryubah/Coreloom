@@ -33,9 +33,31 @@
   </Window.DataTemplates>
 
   <Window.Resources>
-    <!-- The sidebar's update button (1.9.0: the accent pill, like every main action), with the version and its state. -->
-    <ControlTheme x:Key="Button.Update" TargetType="Button" BasedOn="{StaticResource Button.Primary}">
-      <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <!-- The sidebar's update button (since 1.8.3): charcoal glass like the banners' buttons, its rim lit along the top and
+         toward a soft light of the accent in the lower right corner, which grows under the pointer. White text. -->
+    <ControlTheme x:Key="Button.Update" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.OnGlow}" />
+      <Setter Property="Background" Value="{DynamicResource Brush.GlowButtonFill}" />
+      <Setter Property="RenderTransformOrigin" Value="50%,50%" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <c:SquircleBorder Name="Root" CornerRadius="14" Background="{TemplateBinding Background}" BorderBrush="{DynamicResource Brush.GlowButtonRim}"
+                            BorderThickness="1" ClipContent="True">
+            <Panel>
+              <Border Name="Light" Background="{DynamicResource Brush.GlowButtonLight}" Opacity="0.85" IsHitTestVisible="False" />
+              <ContentPresenter Margin="{TemplateBinding Padding}" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+            </Panel>
+          </c:SquircleBorder>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:pointerover /template/ Border#Light">
+        <Setter Property="Opacity" Value="1" />
+      </Style>
+      <Style Selector="^:pressed">
+        <Setter Property="RenderTransform" Value="scale(0.98)" />
+      </Style>
     </ControlTheme>
 
     <!-- A sidebar item: the icon, and the title beside it unless the sidebar is narrow (then a tool tip names it). -->
@@ -46,14 +68,13 @@
     </ControlTheme>
 
     <!-- The icons are drawn on their own 24-point grid (not stretched to fill a box), so each keeps the size it was
-         designed at, and the grid's middle sits on the title's middle. Settings gets a red dot when an update is out;
-         since 1.9.0 a page can show a count beside its name (Drivers on Windows). -->
+         designed at, and the grid's middle sits on the title's middle. Settings gets a red dot when an update is out. -->
     <DataTemplate x:Key="NavItemTemplate" DataType="pages:PageViewModel">
       <Grid ColumnDefinitions="Auto,*,Auto"
-            Margin="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0|10,0,10,0'}"
+            Margin="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0|11,0,10,0'}"
             HorizontalAlignment="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter=Center|Stretch}">
         <Panel Width="24" Height="24" VerticalAlignment="Center" Margin="0,0.5,0,0">
-          <Canvas Width="24" Height="24" RenderTransform="scale(0.92)" RenderTransformOrigin="50%,50%">
+          <Canvas Width="24" Height="24">
             <Path Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" Stroke="{Binding $parent[ListBoxItem].Foreground}"
                   StrokeThickness="1.7" StrokeJoin="Round" StrokeLineCap="Round" />
           </Canvas>
@@ -63,12 +84,10 @@
         </Panel>
         <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="12,0,8,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                    IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}" />
-        <!-- On the selected page's accent pill, the count is white on a lighter pill. -->
+        <!-- A count beside the name (since 1.9.0; Drivers on Windows) -->
         <Border Grid.Column="2" Theme="{StaticResource Badge.Count}" Margin="0,0,-2,0"
-                IsVisible="{Binding Badge, Converter={StaticResource HasValue}}"
-                Background="{Binding $parent[ListBoxItem].IsSelected, Converter={StaticResource BoolToBrush}, ConverterParameter=Brush.OnAccentSoft|Brush.AccentSoft}">
-          <TextBlock Text="{Binding Badge}" FontSize="11" FontWeight="Medium" HorizontalAlignment="Center" VerticalAlignment="Center"
-                     Foreground="{Binding $parent[ListBoxItem].IsSelected, Converter={StaticResource BoolToBrush}, ConverterParameter=Brush.OnAccent|Brush.Accent}" />
+                IsVisible="{Binding Badge, Converter={StaticResource HasValue}}">
+          <TextBlock Text="{Binding Badge}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </Border>
       </Grid>
     </DataTemplate>
@@ -99,7 +118,7 @@
                     HorizontalAlignment="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter=Center|Left}"
                     Margin="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0|10,0,0,0'}">
           <Image Source="{DynamicResource Image.AppIcon}" Width="26" Height="26" RenderOptions.BitmapInterpolationMode="HighQuality" />
-          <TextBlock Text="Coreloom" FontSize="16" FontWeight="Medium" Margin="10,0,0,0" VerticalAlignment="Center"
+          <TextBlock Text="Coreloom" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"
                      IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}" />
         </StackPanel>
 
@@ -120,14 +139,14 @@
                   Command="{Binding OpenUpdatesCommand}" ToolTip.Tip="{Binding Updates.BadgeToolTip}"
                   AutomationProperties.Name="{Binding Updates.BadgeToolTip}" IsVisible="{Binding Updates.ShowBadge}"
                   HorizontalContentAlignment="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter=Center|Left}"
-                  Padding="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0,5|6,5,12,5'}">
+                  Padding="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0,7|9,8,12,8'}">
             <StackPanel Orientation="Horizontal">
-              <Border Width="26" Height="26" CornerRadius="13" Background="#2EFFFFFF" VerticalAlignment="Center">
-                <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
+              <Border Width="28" Height="28" CornerRadius="9" Background="#1FFFFFFF" VerticalAlignment="Center">
+                <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnGlow}" />
               </Border>
-              <StackPanel Margin="9,0,0,0" VerticalAlignment="Center" IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
-                <TextBlock Text="{Binding Updates.BadgeText}" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource Brush.OnAccent}" TextTrimming="CharacterEllipsis" />
-                <TextBlock Text="{Binding Updates.BadgeDetail}" FontSize="11" Margin="0,1,0,0" Foreground="{DynamicResource Brush.OnAccent}" Opacity="0.8" TextTrimming="CharacterEllipsis" />
+              <StackPanel Margin="10,0,0,0" VerticalAlignment="Center" IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
+                <TextBlock Text="{Binding Updates.BadgeText}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.OnGlow}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding Updates.BadgeDetail}" FontSize="11" Margin="0,1,0,0" Foreground="{DynamicResource Brush.OnGlow}" Opacity="0.75" TextTrimming="CharacterEllipsis" />
               </StackPanel>
             </StackPanel>
           </Button>
@@ -152,8 +171,8 @@
 
         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
           <!-- Live indicator -->
-          <Border Theme="{StaticResource Badge}" Padding="11,5" Margin="0,0,12,0" Background="{DynamicResource Brush.Pill}"
-                  BorderBrush="{DynamicResource Brush.PillBorder}" BorderThickness="1" ToolTip.Tip="Monitoring status and polling interval">
+          <Border Theme="{StaticResource Badge}" Padding="10,5" Margin="0,0,12,0" Background="{DynamicResource Brush.Surface}"
+                  ToolTip.Tip="Monitoring status and polling interval">
             <StackPanel Orientation="Horizontal">
               <Panel Width="10" Height="10" VerticalAlignment="Center">
                 <Ellipse Name="LivePulse" Fill="{DynamicResource Brush.Success}" Opacity="0.35" RenderTransformOrigin="50%,50%">
@@ -172,8 +191,7 @@
                    SelectedValueBinding="{Binding Value}" SelectedValue="{Binding SelectedWindow}" ToolTip.Tip="Chart time range" />
 
           <!-- Freeze charts -->
-          <ToggleButton Name="FreezeButton" Theme="{StaticResource ToggleButton.Icon}" Margin="10,0,0,0" IsChecked="{Binding IsChartsFrozen}"
-                        Background="{DynamicResource Brush.Pill}" BorderBrush="{DynamicResource Brush.PillBorder}"
+          <ToggleButton Name="FreezeButton" Theme="{StaticResource ToggleButton.Icon}" Margin="8,0,0,0" IsChecked="{Binding IsChartsFrozen}"
                         ToolTip.Tip="Pause charts to inspect them (monitoring continues)">
             <Panel>
               <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Pause}" IsVisible="{Binding !IsChartsFrozen}" />
@@ -185,12 +203,12 @@
 
       <StackPanel Grid.Row="2">
         <!-- "Updated to …" banner (first launches after an update, until dismissed) -->
-        <c:SquircleBorder Margin="32,16,28,0" Padding="14,10" CornerRadius="18"
+        <c:SquircleBorder Margin="32,16,28,0" Padding="14,10" CornerRadius="14"
                           Background="{DynamicResource Brush.AccentSoft}" BorderBrush="{DynamicResource Brush.CardBorder}" BorderThickness="1"
                           IsVisible="{Binding Updates.ShowUpdatedBanner}">
           <Grid ColumnDefinitions="Auto,*,Auto,Auto">
             <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.Accent}" />
-            <TextBlock Grid.Column="1" Margin="12,0" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12.5" FontWeight="Medium"
+            <TextBlock Grid.Column="1" Margin="12,0" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12.5" FontWeight="SemiBold"
                        Text="{Binding Updates.UpdatedBannerText}" />
             <Button Grid.Column="2" Theme="{StaticResource Button.Secondary}" Content="See what's new" Padding="12,5"
                     Command="{Binding ShowWhatsNewCommand}" />
@@ -202,7 +220,7 @@
         </c:SquircleBorder>
 
         <!-- Limited-readings banner (Windows: no PawnIO driver; never shown on macOS, where nothing extra is needed) -->
-        <c:SquircleBorder Margin="32,16,28,0" Padding="14,10" CornerRadius="18"
+        <c:SquircleBorder Margin="32,16,28,0" Padding="14,10" CornerRadius="14"
                           Background="{DynamicResource Brush.BannerBackground}" BorderBrush="{DynamicResource Brush.BannerBorder}" BorderThickness="1"
                           IsVisible="{Binding ShowLimitedModeBanner}">
           <Grid ColumnDefinitions="Auto,*,Auto">
@@ -218,20 +236,23 @@
       <!-- Page -->
       <c:PageHost Name="Host" Grid.Row="3" Page="{Binding CurrentPage}" Margin="0,8,0,0" />
 
-      <!-- A message over the page ("Export failed"), instead of an alert; it leaves after five seconds. Since 1.9.0 a light
-           pill with dark text, the one bright thing on the page, rising from the bottom (MainWindow.axaml.cs). -->
-      <c:SquircleBorder Name="Toast" Grid.Row="3" ZIndex="10" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="32,0,28,24"
-                        MaxWidth="560" Padding="16,9,8,9" CornerRadius="99" Smoothing="0" Shadow="1.2"
-                        Background="{DynamicResource Brush.Toast}" BorderThickness="0"
+      <!-- A message over the page ("Export failed"), instead of an alert; it leaves after five seconds, and rises from the
+           bottom when it comes (since 1.9.0; MainWindow.axaml.cs). -->
+      <c:SquircleBorder Name="Toast" Grid.Row="3" ZIndex="10" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="32,0,28,28"
+                        MaxWidth="560" Padding="14,10,8,10" CornerRadius="14" Shadow="1"
+                        Background="{DynamicResource Brush.Card}" BorderBrush="{DynamicResource Brush.CardBorder}" BorderThickness="1"
                         IsVisible="{Binding HasToast}" AutomationProperties.LiveSetting="Assertive" AutomationProperties.Name="{Binding ToastText}">
         <Grid ColumnDefinitions="Auto,*,Auto">
-          <Path Theme="{StaticResource IconPath}" Width="15" Height="15" VerticalAlignment="Center"
+          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" VerticalAlignment="Top" Margin="0,1,0,0"
                 Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Elevated}" />
-          <TextBlock Grid.Column="1" Margin="12,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="13" Foreground="{DynamicResource Brush.ToastText}">
-            <Run Text="{Binding ToastTitle}" FontWeight="Medium" /><Run Text=" · " /><Run Text="{Binding ToastText}" />
-          </TextBlock>
-          <Button Grid.Column="2" Theme="{StaticResource Button.Plain}" Padding="12,4" FontSize="12" Foreground="{DynamicResource Brush.ToastText}"
-                  Background="{DynamicResource Brush.ToastControl}" Content="Dismiss" Command="{Binding DismissToastCommand}" AutomationProperties.Name="Dismiss" />
+          <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+            <TextBlock Text="{Binding ToastTitle}" FontSize="12.5" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding ToastText}" FontSize="12.5" Margin="0,2,0,0" TextWrapping="Wrap" TextTrimming="None" Foreground="{DynamicResource Brush.TextSecondary}" />
+          </StackPanel>
+          <Button Grid.Column="2" Theme="{StaticResource Button.Icon}" Width="28" Height="28" VerticalAlignment="Top"
+                  Command="{Binding DismissToastCommand}" ToolTip.Tip="Dismiss" AutomationProperties.Name="Dismiss">
+            <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Close}" />
+          </Button>
         </Grid>
       </c:SquircleBorder>
     </Grid>

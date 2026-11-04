@@ -7,6 +7,25 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.9.1] - 2026-11-04
+
+The type, corners, sidebar highlight and gauges of 1.8.6 are back, by request; the rest of 1.9.0 stays. The core scheduling details are coloured by what they mean.
+
+### Highlights
+
+- **The previous type.** Inter for the interface and JetBrains Mono for readings, with the sizes and weights of 1.8.6; Outfit is gone from both apps and the phone app.
+- **The previous corners.** Buttons, badges, status tags, the range picker, the search box, inputs and the toast have their 1.8.6 rounded corners again instead of fully round pills (the short ones read as eyes). Cards keep their 18 pt corners.
+- **The sidebar's highlight** is the 1.8.6 one: a soft rounded bar with a thin accent line at its left, white text.
+- **The gradient dials are back** on the metric cards, the Overview, the speed tests and the benchmarks: the ring of fine ticks brightening toward the head, with its glow and, on the cards, the orb inside.
+- **Core scheduling details in colour.** In Intelligent CPU core scheduling's Details, nothing is grey any more: a check is green when it's fine, blue for something to know, yellow for something to fix, red for what breaks the scheduling. The power plan is green when it works for Coreloom, Balanced included; a plan that stops core parking (High or Ultimate Performance) is fine too, since CPU cache optimization keeps the game on the cache cores itself.
+
+### Kept from 1.9.0
+
+- Cards of dark glass with a hairline rim that still glow in their colour; the deeper blue accent (the old blue stays on offer as *Sky*); green switches; the count beside Drivers in the sidebar; dotted chart grids.
+- The motion: the page you leave blurs away and the next rises in card by card, the title types itself in, charts draw their line in, messages rise from the bottom. *Reduce motion* turns it off.
+- The Windows splash's scene (soft drifting lights, the pane of dark glass), now with the wordmark in Inter.
+- Have 1.9.0 or 1.8.6? Choose *Check for Updates* (the Coreloom menu on a Mac, *Settings › Updates* on Windows), then *Install update*.
+
 ## [1.9.0] - 2026-11-04
 
 A new look, from the type up. Coreloom is redrawn in one design language on Windows, the Mac and your phone: Outfit for every word and number, cards of dark glass with a hairline rim, pill buttons and switches, thin ring gauges, and pages that settle into place as you open them. Everything is where it was; it just looks and moves differently. Windows gets a new splash in the same look.

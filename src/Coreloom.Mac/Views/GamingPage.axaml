@@ -44,14 +44,14 @@
                     Theme="{StaticResource IconPath}" Width="17" Height="17" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
             </Grid>
             <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
-              <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
               <WrapPanel Orientation="Horizontal" Margin="0,4,0,0">
                 <Border Classes="pill status" Classes.on="{Binding IsOn}" Margin="0,0,6,2">
-                  <TextBlock Text="{Binding StatusText}" FontSize="10.5" FontWeight="Medium" />
+                  <TextBlock Text="{Binding StatusText}" FontSize="10.5" FontWeight="SemiBold" />
                 </Border>
                 <!-- what it helps with -->
                 <Border Classes="pill" Margin="0,0,6,2" Background="{DynamicResource Brush.ControlHover}" IsVisible="{Binding HasCategory}">
-                  <TextBlock Text="{Binding Category}" FontSize="10.5" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" />
+                  <TextBlock Text="{Binding Category}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
                 </Border>
                 <Border Theme="{StaticResource Badge}" Margin="0,0,6,2" IsVisible="{Binding HasTag}">
                   <TextBlock Text="{Binding Tag}" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
@@ -86,7 +86,7 @@
           <Grid Width="164" Height="77">
             <Border CornerRadius="9" Background="{Binding PlaceholderColor, Converter={StaticResource HexToBrush}}" Opacity="0.9" />
             <Border CornerRadius="9" Background="{DynamicResource Brush.Card}" Opacity="0.18" />
-            <TextBlock Text="{Binding Initials}" FontSize="24" FontWeight="Medium" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.92" />
+            <TextBlock Text="{Binding Initials}" FontSize="24" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.92" />
             <Border Width="44" Height="44" HorizontalAlignment="Center" VerticalAlignment="Center" b:AsyncImage.DecodeWidth="88" b:AsyncImage.Path="{Binding Icon}"
                     IsVisible="{Binding HasIconOnly}" />
             <Border CornerRadius="9" b:AsyncImage.DecodeWidth="330" b:AsyncImage.Path="{Binding ListPicture}" />
@@ -94,13 +94,13 @@
           </Grid>
 
           <StackPanel Grid.Column="1" Margin="14,0,10,0" VerticalAlignment="Center">
-            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
+            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
             <TextBlock Text="{Binding Detail}" Theme="{StaticResource Text.Secondary}" FontSize="12" Margin="0,3,0,0" />
             <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-              <Border CornerRadius="99" Padding="7,1" Margin="0,0,8,0" Background="{DynamicResource Brush.SuccessSoft}" IsVisible="{Binding IsRunning}">
+              <Border CornerRadius="6" Padding="7,1" Margin="0,0,8,0" Background="{DynamicResource Brush.SuccessSoft}" IsVisible="{Binding IsRunning}">
                 <StackPanel Orientation="Horizontal">
                   <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" b:Pulse.IsPulsing="{Binding IsRunning}" />
-                  <TextBlock Text="Playing" FontSize="10.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Success}" Margin="5,0,0,0" />
+                  <TextBlock Text="Playing" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Success}" Margin="5,0,0,0" />
                 </StackPanel>
               </Border>
               <TextBlock Text="{Binding LastPlayedText}" Theme="{StaticResource Text.Caption}" VerticalAlignment="Center" />
@@ -149,7 +149,7 @@
           <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12">
             <Border Width="64" Height="64" HorizontalAlignment="Center" Margin="0,0,0,10" b:AsyncImage.DecodeWidth="128" b:AsyncImage.Path="{Binding Icon}"
                     IsVisible="{Binding HasIconOnly}" />
-            <TextBlock Text="{Binding Initials}" FontSize="34" FontWeight="Medium" Foreground="White" HorizontalAlignment="Center" Opacity="0.92" />
+            <TextBlock Text="{Binding Initials}" FontSize="34" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" Opacity="0.92" />
           </StackPanel>
           <c:SquircleBorder CornerRadius="14" b:AsyncImage.DecodeWidth="360" b:AsyncImage.Path="{Binding GridPicture}" />
 
@@ -180,16 +180,16 @@
             <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Edit}" Stroke="White" />
           </Button>
 
-          <Border CornerRadius="99" Padding="8,3" Margin="8" HorizontalAlignment="Left" VerticalAlignment="Top" Background="#CC0B1A10" IsVisible="{Binding IsRunning}">
+          <Border CornerRadius="7" Padding="8,3" Margin="8" HorizontalAlignment="Left" VerticalAlignment="Top" Background="#CC0B1A10" IsVisible="{Binding IsRunning}">
             <StackPanel Orientation="Horizontal">
               <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" b:Pulse.IsPulsing="{Binding IsRunning}" />
-              <TextBlock Text="Playing" FontSize="11" FontWeight="Medium" Foreground="White" Margin="6,0,0,0" />
+              <TextBlock Text="Playing" FontSize="11" FontWeight="SemiBold" Foreground="White" Margin="6,0,0,0" />
             </StackPanel>
           </Border>
           <c:SquircleBorder Classes="outline" Classes.running="{Binding IsRunning}" CornerRadius="14" IsHitTestVisible="False" />
         </Grid>
 
-        <TextBlock Grid.Row="1" Text="{Binding Name}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" Margin="2,10,2,0" TextTrimming="CharacterEllipsis" />
+        <TextBlock Grid.Row="1" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="2,10,2,0" TextTrimming="CharacterEllipsis" />
         <TextBlock Grid.Row="2" Text="{Binding StoreName}" Theme="{StaticResource Text.Caption}" Margin="2,2,2,0" />
       </Grid>
     </DataTemplate>
@@ -206,7 +206,7 @@
     <DataTemplate x:Key="ShaderCacheRow" DataType="{x:Type pages:ShaderCacheRow}">
       <Grid Margin="0,3" Background="Transparent" ToolTip.Tip="{Binding Path}" ColumnDefinitions="*,Auto">
         <TextBlock Text="{Binding Name}" FontSize="12.5" Foreground="{DynamicResource Brush.TextSecondary}" TextTrimming="CharacterEllipsis" />
-        <TextBlock Grid.Column="1" Text="{Binding SizeText}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" Margin="12,0,0,0" />
+        <TextBlock Grid.Column="1" Text="{Binding SizeText}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="12,0,0,0" />
       </Grid>
     </DataTemplate>
 
@@ -317,7 +317,7 @@
                 <c:HeroDial Value="{Binding Readiness}" StartLabel="0" EndLabel="{Binding BoostsAvailable}" DialSize="228" />
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                   <Path Theme="{StaticResource IconPath}" Width="26" Height="26" Data="{StaticResource Icon.Controller}" Stroke="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" />
-                  <TextBlock Text="{Binding ReadinessText}" FontSize="34" FontWeight="Light" HorizontalAlignment="Center" Margin="0,6,0,0"
+                  <TextBlock Text="{Binding ReadinessText}" FontSize="34" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,6,0,0"
                              Foreground="{DynamicResource Brush.Text}" TextElement.FontFeatures="+tnum" />
                   <TextBlock Text="boosts on" Theme="{StaticResource Text.Label}" HorizontalAlignment="Center" Opacity="0.85" />
                 </StackPanel>
@@ -332,7 +332,7 @@
                   <TextBlock Text="boost · play" FontSize="10.5" Foreground="{DynamicResource Brush.Accent}" />
                 </Border>
               </StackPanel>
-              <TextBlock Text="{Binding HeroTitle}" FontSize="21" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" Margin="0,8,0,0" />
+              <TextBlock Text="{Binding HeroTitle}" FontSize="21" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" Margin="0,8,0,0" />
               <TextBlock Text="{Binding HeroDetail}" Theme="{StaticResource Text.Secondary}" TextWrapping="Wrap" TextTrimming="None" Margin="0,6,0,0" />
               <TextBlock Text="{Binding HeroMessage}" FontSize="12.5" Foreground="{DynamicResource Brush.Success}" TextWrapping="Wrap" Margin="0,8,0,0"
                          b:Pop.Trigger="{Binding HasHeroMessage}" IsVisible="{Binding HasHeroMessage}" />
@@ -357,7 +357,7 @@
                 <StackPanel Orientation="Horizontal">
                   <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" b:Pulse.IsPulsing="{Binding IsPlaying}" />
                   <TextBlock Text="Now playing" Theme="{StaticResource Text.Label}" Margin="8,0,0,0" VerticalAlignment="Center" />
-                  <TextBlock Text="{Binding NowPlayingName}" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" Margin="8,0,0,0" VerticalAlignment="Center" MaxWidth="260" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{Binding NowPlayingName}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="8,0,0,0" VerticalAlignment="Center" MaxWidth="260" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
               </c:SquircleBorder>
 
@@ -466,7 +466,7 @@
         <StackPanel Orientation="Horizontal">
           <TextBlock Text="Your games" Theme="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
           <Border Theme="{StaticResource Badge}" Margin="10,1,0,0">
-            <TextBlock Text="{Binding GameCount}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" />
+            <TextBlock Text="{Binding GameCount}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
           </Border>
         </StackPanel>
         <TextBlock Text="{Binding LibrarySummary}" Theme="{StaticResource Text.Secondary}" Margin="0,3,0,0" />
@@ -551,7 +551,7 @@
           <StackPanel>
             <Grid Width="96" Height="128">
               <c:SquircleBorder CornerRadius="12" Background="{DynamicResource Brush.AccentSoft}" />
-              <TextBlock Text="{Binding Initials}" FontSize="28" FontWeight="Medium" Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"
+              <TextBlock Text="{Binding Initials}" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"
                          IsVisible="{Binding !HasPreview}" />
               <c:SquircleBorder CornerRadius="12" b:AsyncImage.DecodeWidth="200" b:AsyncImage.Path="{Binding Preview}"
                                 Margin="{Binding HasChosenPicture, Converter={StaticResource BoolToThickness}, ConverterParameter='0;18,34'}" />

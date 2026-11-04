@@ -116,13 +116,13 @@
         </Grid.ColumnDefinitions>
         <TextBlock Text="{Binding TimeText}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Top" Margin="0,1,0,0" />
         <Border x:Name="LevelPill" Grid.Column="1" Style="{StaticResource Badge}" HorizontalAlignment="Left" VerticalAlignment="Top" Background="{DynamicResource Brush.ControlHover}">
-          <TextBlock x:Name="LevelText" Text="{Binding LevelText}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" />
+          <TextBlock x:Name="LevelText" Text="{Binding LevelText}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
         </Border>
-        <TextBlock Grid.Column="2" Text="{Binding Category}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis"
+        <TextBlock Grid.Column="2" Text="{Binding Category}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis"
                    VerticalAlignment="Top" Margin="0,1,8,0" ToolTip="{Binding Category}" />
         <StackPanel Grid.Column="3">
           <TextBlock Text="{Binding Message}" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
-          <TextBlock Text="{Binding Details}" FontFamily="{StaticResource CodeFont}" FontSize="11" Foreground="{DynamicResource Brush.TextTertiary}" TextWrapping="Wrap"
+          <TextBlock Text="{Binding Details}" FontFamily="{StaticResource MonoFont}" FontSize="11" Foreground="{DynamicResource Brush.TextTertiary}" TextWrapping="Wrap"
                      Margin="0,3,0,0" MaxHeight="120" TextTrimming="CharacterEllipsis"
                      Visibility="{Binding HasDetails, Converter={StaticResource BoolToVisibility}}" />
         </StackPanel>
@@ -192,7 +192,7 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate>
               <Border CornerRadius="9" Padding="9,3" Margin="0,0,6,6" Background="#14FFFFFF" BorderBrush="{DynamicResource Brush.AccentEdge}" BorderThickness="1">
-                <TextBlock Text="{Binding}" FontSize="11.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" />
+                <TextBlock Text="{Binding}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
               </Border>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
@@ -228,7 +228,7 @@
                     <Border Style="{StaticResource Badge}" Background="{DynamicResource Brush.AccentSoft}" Padding="8,2" Margin="0,0,12,0"
                             VerticalAlignment="Top" HorizontalAlignment="Left"
                             Visibility="{Binding HasCategory, Converter={StaticResource BoolToVisibility}}">
-                      <TextBlock Text="{Binding Category}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.Accent}" />
+                      <TextBlock Text="{Binding Category}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
                     </Border>
                     <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.AccentGradient}" Margin="2,7,14,0" VerticalAlignment="Top" HorizontalAlignment="Left"
                              Visibility="{Binding HasCategory, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
@@ -843,7 +843,7 @@
                         <ColumnDefinition Width="Auto" />
                       </Grid.ColumnDefinitions>
                       <StackPanel>
-                        <TextBox Style="{StaticResource TextBox.Default}" Text="{Binding Name}" FontWeight="Medium" MaxWidth="360" HorizontalAlignment="Left" MinWidth="200"
+                        <TextBox Style="{StaticResource TextBox.Default}" Text="{Binding Name}" FontWeight="SemiBold" MaxWidth="360" HorizontalAlignment="Left" MinWidth="200"
                                  AutomationProperties.Name="Rule name" KeyDown="OnCommitOnEnter" />
                         <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding MetricName}" Margin="2,4,0,0" />
                       </StackPanel>
@@ -968,7 +968,7 @@
                     <StackPanel Margin="0,0,32,8">
                       <TextBlock Style="{StaticResource Text.Label}" Text="Address" />
                       <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                        <TextBlock Text="{Binding DisplayAddress}" FontSize="17" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}"
+                        <TextBlock Text="{Binding DisplayAddress}" FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}"
                                    Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
                         <Button Style="{StaticResource Button.Icon}" Width="28" Height="28" Margin="6,0,0,0" Command="{Binding CopyAddressCommand}"
                                 ToolTip="Copy address" AutomationProperties.Name="Copy address">
@@ -1151,8 +1151,8 @@
                       </Grid>
                     </c:SquircleBorder>
                     <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
-                      <TextBlock Text="{Binding BadgeText}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource Brush.Accent}" />
-                      <TextBlock FontSize="30" FontWeight="Light" Margin="0,1,0,0" Foreground="{DynamicResource Brush.Text}">
+                      <TextBlock Text="{Binding BadgeText}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
+                      <TextBlock FontSize="30" FontWeight="Bold" Margin="0,1,0,0" Foreground="{DynamicResource Brush.Text}">
                         <Run Text="Coreloom " /><Run Text="{Binding UpdateVersion, Mode=OneWay}" Foreground="{DynamicResource Brush.AccentGradient}" />
                       </TextBlock>
                     </StackPanel>
@@ -1172,7 +1172,7 @@
                               ToolTip="Downloads the update if needed, closes Coreloom, installs it and opens Coreloom again.">
                         <StackPanel Orientation="Horizontal">
                           <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Download}" Stroke="{DynamicResource Brush.OnGlow}" />
-                          <TextBlock Text="Install update" Margin="8,0,0,0" FontWeight="Medium" />
+                          <TextBlock Text="Install update" Margin="8,0,0,0" FontWeight="SemiBold" />
                         </StackPanel>
                       </Button>
                       <Button Style="{StaticResource Button.Subtle}" Content="Skip this version" Command="{Binding SkipCommand}" Padding="14,10"
@@ -1206,8 +1206,8 @@
                       <Path Style="{StaticResource IconPath}" Width="24" Height="24" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.Accent}" />
                     </c:SquircleBorder>
                     <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
-                      <TextBlock Text="New in this version" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource Brush.Accent}" />
-                      <TextBlock FontSize="30" FontWeight="Light" Margin="0,1,0,0" Foreground="{DynamicResource Brush.Text}">
+                      <TextBlock Text="New in this version" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
+                      <TextBlock FontSize="30" FontWeight="Bold" Margin="0,1,0,0" Foreground="{DynamicResource Brush.Text}">
                         <Run Text="Coreloom " /><Run Text="{Binding CurrentVersion, Mode=OneWay}" Foreground="{DynamicResource Brush.AccentGradient}" />
                       </TextBlock>
                     </StackPanel>
@@ -1313,7 +1313,7 @@
                     </Grid.ColumnDefinitions>
                     <Ellipse x:Name="Dot" Width="8" Height="8" Fill="{DynamicResource Brush.Elevated}" VerticalAlignment="Top" Margin="0,5,0,0" />
                     <StackPanel Grid.Column="1" Margin="10,0,12,0">
-                      <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" />
+                      <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
                       <TextBlock Text="{Binding State}" Style="{StaticResource Text.Caption}" />
                     </StackPanel>
                     <TextBlock Grid.Column="2" Text="{Binding Message}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" VerticalAlignment="Center" />
@@ -1500,7 +1500,7 @@
               <StackPanel Orientation="Horizontal">
                 <Image Source="{DynamicResource Image.AppIconLarge}" Width="56" Height="56" RenderOptions.BitmapScalingMode="HighQuality" />
                 <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
-                  <TextBlock Text="Coreloom" FontSize="22" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" />
+                  <TextBlock Text="Coreloom" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
                   <TextBlock Text="{Binding VersionText}" Style="{StaticResource Text.Secondary}" Margin="0,2,0,0" />
                 </StackPanel>
               </StackPanel>

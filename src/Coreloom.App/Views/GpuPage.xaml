@@ -64,7 +64,7 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="CheckBox">
-            <Border x:Name="Chip" CornerRadius="99" Padding="9,4" Background="{DynamicResource Brush.ControlHover}" BorderBrush="Transparent" BorderThickness="1">
+            <Border x:Name="Chip" CornerRadius="8" Padding="9,4" Background="{DynamicResource Brush.ControlHover}" BorderBrush="Transparent" BorderThickness="1">
               <StackPanel Orientation="Horizontal">
                 <Path x:Name="Tick" Style="{StaticResource IconPath}" Width="10" Height="10" Data="{StaticResource Icon.Check}" Stroke="{DynamicResource Brush.Accent}"
                       Margin="0,0,5,0" Visibility="Collapsed" />
@@ -151,7 +151,7 @@
             </CheckBox>
             <Border Style="{StaticResource Badge}" Margin="10,0,0,0" Padding="7,2" BorderBrush="{DynamicResource Brush.InputBorder}" BorderThickness="1"
                     Visibility="{Binding OverlaySettings.HasHotkey, Converter={StaticResource BoolToVisibility}}">
-              <TextBlock Text="{Binding OverlaySettings.HotkeyText}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" />
+              <TextBlock Text="{Binding OverlaySettings.HotkeyText}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
             </Border>
             <Button Style="{StaticResource Button.Subtle}" Margin="6,0,0,0" Padding="9,5" Command="{Binding OverlaySettings.OpenCommand}"
                     ToolTip="What the overlay shows, where, and how it looks" AutomationProperties.Name="Customize the overlay">
@@ -364,7 +364,7 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                       </Grid.ColumnDefinitions>
-                      <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" Margin="0,4,8,0" VerticalAlignment="Top" />
+                      <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="0,4,8,0" VerticalAlignment="Top" />
                       <ItemsControl Grid.Column="1" ItemsSource="{Binding Items}" Focusable="False">
                         <ItemsControl.ItemsPanel>
                           <ItemsPanelTemplate>
@@ -482,7 +482,7 @@
                   </ItemsControl.ItemsPanel>
                   <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type overlay:OverlayGamePlacementChip}">
-                      <c:SquircleBorder CornerRadius="99" Background="{DynamicResource Brush.ControlHover}" Padding="8,2,2,2" Margin="0,0,6,4">
+                      <c:SquircleBorder CornerRadius="8" Background="{DynamicResource Brush.ControlHover}" Padding="8,2,2,2" Margin="0,0,6,4">
                         <StackPanel Orientation="Horizontal">
                           <TextBlock Text="{Binding PlaceText}" FontSize="11.5" VerticalAlignment="Center" />
                           <Button Style="{StaticResource Button.Icon}" Width="20" Height="20" Margin="4,0,0,0" Command="{Binding RemoveCommand}"

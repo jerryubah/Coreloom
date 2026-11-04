@@ -109,7 +109,7 @@
                   <StackPanel>
                     <Grid>
                       <TextBlock Text="{Binding Label}" Style="{StaticResource Text.Caption}" />
-                      <TextBlock Text="{Binding ValueText}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" FontWeight="Medium" HorizontalAlignment="Right" />
+                      <TextBlock Text="{Binding ValueText}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" FontWeight="SemiBold" HorizontalAlignment="Right" />
                     </Grid>
                     <c:Sparkline Height="30" Margin="0,6,0,0" MetricId="{Binding MetricId}" ColorKey="Cpu" Maximum="100" FillOpacity="0.22" StrokeThickness="1.2"
                                  Timeline="{Binding DataContext.Timeline, RelativeSource={RelativeSource AncestorType=UserControl}}" />
@@ -135,7 +135,7 @@
             </StackPanel>
             <Border Grid.Column="1" Style="{StaticResource Badge}" Padding="8,2" Background="{DynamicResource Brush.AccentSoft}"
                     Visibility="{Binding Architecture, Converter={StaticResource HasValueToVisibility}}" ToolTip="{Binding Signature}">
-              <TextBlock Text="{Binding Architecture}" FontSize="11.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Accent}" />
+              <TextBlock Text="{Binding Architecture}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
             </Border>
           </Grid>
 
@@ -171,7 +171,7 @@
                         <ColumnDefinition Width="Auto" />
                       </Grid.ColumnDefinitions>
                       <StackPanel Margin="0,5,12,5">
-                        <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                         <TextBlock Text="{Binding Summary}" Style="{StaticResource Text.Caption}" TextTrimming="CharacterEllipsis" Margin="0,1,0,0" />
                       </StackPanel>
                       <Border Grid.Column="1" Style="{StaticResource TuningPill}" VerticalAlignment="Center">

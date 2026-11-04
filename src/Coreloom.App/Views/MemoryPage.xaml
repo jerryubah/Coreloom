@@ -25,7 +25,7 @@
               <Grid Width="190" Height="190" VerticalAlignment="Center">
                 <c:DonutChart Segments="{Binding Segments}" Thickness="16" />
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                  <TextBlock Text="{Binding CenterText}" FontFamily="{StaticResource MonoFont}" FontSize="28" FontWeight="Light" HorizontalAlignment="Center" />
+                  <TextBlock Text="{Binding CenterText}" FontFamily="{StaticResource MonoFont}" FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Center" />
                   <TextBlock Text="{Binding CenterCaption}" Style="{StaticResource Text.Caption}" HorizontalAlignment="Center" />
                 </StackPanel>
               </Grid>
@@ -82,7 +82,7 @@
                         <ColumnDefinition Width="Auto" />
                       </Grid.ColumnDefinitions>
                       <StackPanel>
-                        <TextBlock Text="{Binding Slot}" FontWeight="Medium" FontSize="12.5" />
+                        <TextBlock Text="{Binding Slot}" FontWeight="SemiBold" FontSize="12.5" />
                         <TextBlock Text="{Binding Part}" Style="{StaticResource Text.Caption}" Margin="0,2,0,0" />
                       </StackPanel>
                       <StackPanel Grid.Column="1" HorizontalAlignment="Right">

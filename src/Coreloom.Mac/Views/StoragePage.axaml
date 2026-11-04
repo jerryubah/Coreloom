@@ -122,7 +122,7 @@
                           ToolTip.Tip="{Binding Temperature.ToolTip}">
                     <StackPanel Orientation="Horizontal">
                       <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Temperature}" />
-                      <TextBlock Margin="4,0,0,0" FontFamily="{StaticResource MonoFont}" FontSize="11.5" FontWeight="Medium">
+                      <TextBlock Margin="4,0,0,0" FontFamily="{StaticResource MonoFont}" FontSize="11.5" FontWeight="SemiBold">
                         <Run Text="{Binding Temperature.Number, Mode=OneWay}" /><Run Text="{Binding Temperature.Unit, Mode=OneWay}" />
                       </TextBlock>
                     </StackPanel>

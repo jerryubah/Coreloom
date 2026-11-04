@@ -1028,6 +1028,24 @@ Main's CI for the release commit (run 41905442232) failed once in the Windows jo
 - **The accent move.** Settings saved by 1.8.x with the old default accent moving to the new blue on the first start (unit-tested, not watched on a real PC).
 - The 1.8.6 items still open (real driver installs, real uninstalls).
 
+## 1.9.1: the 1.8.6 type, corners, sidebar highlight and gradient dials back; the core scheduling details in colour
+
+### Verified
+
+| What | How | Result |
+|---|---|---|
+| Tests | Core (`CoreSchedulingTests`: a plan that stops core parking is Good since CPU cache optimization handles it, Power saver a note; `ConnectTests` back to the phone's Inter font), view models (`Release191ViewModelTests`: the core scheduling checks are green, blue, yellow or red by what they mean, nothing grey; `CoreSchedulingViewModelTests`: the power plan green with Ultimate Performance) and every earlier test with the 1.8.6 pages back | ✅ in the container (Core 770, view models 223) and on GitHub (CI_RUNS) |
+| The look on Windows | Page shots SHOTS_RUNS: every page and the whole window in Inter and JetBrains Mono, the 1.8.6 corners on buttons, badges, tags, the range picker and the search box, the sidebar's bar with its accent line, the tick-ring gauges with their gradient; the core scheduling details with the power plan line in green; the splash with its wordmark in Inter; the clip check 0 cut off | ✅ |
+| The look on the Mac | MacShots of every page and dialog with 0 binding errors; Mac verify MACVERIFY_RUNS on Apple silicon and Intel, Connect serving the phone app with its Inter font again | ✅ |
+| The phone app | Playwright at iPhone size against the demo (its 1.8.6 type and tick rings, the desktop's deeper blue); `connect.js` in Node: 16 of 16; the mockups checked pixel by pixel for the orange edge: none | ✅ |
+| Website | Playwright as a Mac, a Windows and a phone-sized visitor at four widths: *New in 1.9.1* and the badge, nothing cut off, every section with room, the swatches, no overflow or errors; every picture on the site and in the README redrawn, the link preview and the disk image's background in Inter again | ✅ |
+
+UPDATE_191
+
+### Not verified yet
+
+- The 1.9.0 items still open: the look and the motion on real screens, the splash on 4K, the accent move on real saved settings. The core scheduling details' colours were checked with the fake service, not on a real Ryzen X3D.
+
 ## How to re-run the checks that can run anywhere
 
 ```bash

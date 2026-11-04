@@ -98,11 +98,11 @@
           <!-- Live text: the pump screen and the graphics card -->
           <Canvas IsHitTestVisible="False" TextOptions.TextFormattingMode="Ideal" TextOptions.TextRenderingMode="Grayscale">
             <TextBlock Canvas.Left="220" Canvas.Top="214.78" Width="90" TextAlignment="Center" Text="{Binding ScreenValue}"
-                       FontSize="24.74" FontWeight="Medium" Foreground="#F5FFFFFF" />
+                       FontSize="24.74" FontWeight="SemiBold" Foreground="#F5FFFFFF" />
             <TextBlock Canvas.Left="233" Canvas.Top="242.1" Width="60" TextAlignment="Center" Text="{Binding ScreenLabel}"
-                       FontSize="11" FontWeight="Medium" Foreground="#E6FFFFFF" />
+                       FontSize="11" FontWeight="SemiBold" Foreground="#E6FFFFFF" />
             <TextBlock Canvas.Left="154" Canvas.Top="318.94" Width="166" TextTrimming="CharacterEllipsis" Text="{Binding GpuLabel}"
-                       FontSize="19.93" FontWeight="Medium" Foreground="#F2FFFFFF"
+                       FontSize="19.93" FontWeight="SemiBold" Foreground="#F2FFFFFF"
                        Visibility="{Binding ShowGpuLabel, Converter={StaticResource BoolToVisibility}}" />
           </Canvas>
         </Grid>

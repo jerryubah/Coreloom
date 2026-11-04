@@ -83,7 +83,7 @@
                                  IsVisible="{Binding Metric.StatsText, Converter={StaticResource HasValue}}" />
                     </StackPanel>
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                      <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="19" FontWeight="Light"
+                      <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="19" FontWeight="SemiBold"
                                  b:AnimatedText.Formatter="{Binding Metric.NumberFormatter}"
                                  b:AnimatedText.Value="{Binding Metric.Value}" Foreground="{DynamicResource Brush.Text}" />
                       <TextBlock Theme="{StaticResource Text.Unit}" Text="{Binding Metric.Unit}" VerticalAlignment="Bottom" Margin="4,0,0,3" />

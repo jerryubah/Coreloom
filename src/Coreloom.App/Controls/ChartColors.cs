@@ -9,17 +9,17 @@ internal static class ChartFonts
 {
     private static readonly Uri BaseUri = new("pack://application:,,,/");
 
-    /// <summary>Outfit (since 1.9.0): axis captions, values and tooltip text; the digits are drawn tabular.</summary>
-    public static FontFamily Ui { get; } = new(BaseUri, "./Fonts/#Outfit");
+    /// <summary>Inter: axis captions and tooltip labels.</summary>
+    public static FontFamily Ui { get; } = new(BaseUri, "./Fonts/#Inter");
 
-    /// <summary>The same face for numbers (it was JetBrains Mono): one voice on the charts, as on the cards.</summary>
-    public static FontFamily Mono => Ui;
+    /// <summary>JetBrains Mono: numbers (axis values, tooltip readings).</summary>
+    public static FontFamily Mono { get; } = new(BaseUri, "./Fonts/#JetBrains Mono");
 
     public static Typeface UiRegular { get; } = new(Ui, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
 
-    public static Typeface MonoRegular { get; } = new(Ui, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+    public static Typeface MonoRegular { get; } = new(Mono, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
 
-    public static Typeface MonoSemiBold { get; } = new(Ui, FontStyles.Normal, FontWeights.Medium, FontStretches.Normal);
+    public static Typeface MonoSemiBold { get; } = new(Mono, FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
 }
 
 /// <summary>Resolves theme colors for custom-drawn controls and caches frozen pens/brushes per color.</summary>

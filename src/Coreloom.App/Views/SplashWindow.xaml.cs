@@ -14,7 +14,7 @@ namespace Coreloom.App.Views;
 
 /// <summary>
 /// Borderless 16:9 startup splash (redrawn for 1.9.0): a near-black canvas with soft drifting lights, a pane of dark
-/// glass with the app icon (the dark-mode icon with the dark theme) on a breathing halo, the wordmark in Outfit, a thin
+/// glass with the app icon (the dark-mode icon with the dark theme) on a breathing halo, the wordmark in Inter, a thin
 /// glowing loading bar with a sliding sheen and the current step. Created and driven by
 /// <see cref="Services.SplashScreenHost"/> on its own UI thread, so it keeps moving while the main thread builds the
 /// dashboard. It never decides when to close; the app hands off when its window has painted.

@@ -60,7 +60,7 @@ public class CoreSchedulingViewModelTests
 {
     private const string Cyberpunk = @"D:\Steam\steamapps\common\Cyberpunk 2077\bin\x64\Cyberpunk2077.exe";
 
-    private static (GamingViewModel Page, FakeGaming Gaming, FakeCores Cores, SettingsService Settings) Create(Action<FakeCores>? cores = null, Action<FakeGaming>? gaming = null)
+    internal static (GamingViewModel Page, FakeGaming Gaming, FakeCores Cores, SettingsService Settings) Create(Action<FakeCores>? cores = null, Action<FakeGaming>? gaming = null)
     {
         var (monitor, settings, _) = Fixture.Create();
         var fakeGaming = new FakeGaming();
@@ -143,7 +143,7 @@ public class CoreSchedulingViewModelTests
         var (page, gaming, _, settings) = Create(gaming: g => g.Plan = new PowerPlan(Guid.NewGuid(), "Ultimate Performance", true));
         var ultimate = page.Boosts.Single(b => b.Tweak == GamingTweak.UltimatePower);
         Assert.Equal("2/12", page.ReadinessText); // Game Mode and no background recording
-        Assert.Equal(ColorKeys.Neutral, page.CoreScheduling.Checks.Single(c => c.Name == "Power plan").ColorKey); // grey, not red
+        Assert.Equal(ColorKeys.ToneCool, page.CoreScheduling.Checks.Single(c => c.Name == "Power plan").ColorKey); // green: a valid plan (1.9.1)
 
         ultimate.IsOn = true;
         await Task.Yield();

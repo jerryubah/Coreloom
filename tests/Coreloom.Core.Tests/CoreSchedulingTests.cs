@@ -280,8 +280,10 @@ public class CoreSchedulingChecksTests
         Assert.DoesNotContain(checks, c => c.Name == "AMD preference");
         Assert.Equal(CheckState.Bad, checks.Single(c => c.Name == "Game Mode").State);
         var plan = checks.Single(c => c.Name == "Power plan");
-        Assert.Equal(CheckState.Info, plan.State); // shown in grey: a trade-off to know about, not an error
+        Assert.Equal(CheckState.Good, plan.State); // fine since 1.8.5: CPU cache optimization moves the apps itself (green since 1.9.1)
         Assert.Contains("core parking", plan.Detail);
+        var saver = CoreScheduling.Checks(X3D, AmdVCacheStatus.None, gameModeOn: false, new PowerPlan(Guid.NewGuid(), "Power saver", false)).Single(c => c.Name == "Power plan");
+        Assert.Equal(CheckState.Info, saver.State); // a note, not an error
         Assert.True(CoreScheduling.StopsParking(ultimate));
         Assert.True(CoreScheduling.StopsParking(new PowerPlan(PowerPlans.HighPerformance, "High performance", true)));
         Assert.False(CoreScheduling.StopsParking(Balanced));

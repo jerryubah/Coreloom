@@ -177,7 +177,7 @@ then
   else
     fail "Connect didn't answer on port 47101"
   fi
-  for path in / /app.js /app.css /connect.js /gauge.js /chart.js /vendor/crypto.js /manifest.webmanifest /icons/apple-touch-icon.png /fonts/Outfit-Medium.woff2; do
+  for path in / /app.js /app.css /connect.js /gauge.js /chart.js /vendor/crypto.js /manifest.webmanifest /icons/apple-touch-icon.png /fonts/Inter-SemiBold.woff2; do
     code="$(curl -sS -o /dev/null -w '%{http_code}' --compressed --max-time 10 "$connect$path")"
     echo "- \`GET $path\`: $code" >> "$OUT/app.md"
     [[ "$code" == 200 ]] || fail "Connect's $path"

@@ -34,9 +34,9 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="Pill" CornerRadius="99" Padding="7,1" Background="{DynamicResource Brush.AccentSoft}">
+            <Border x:Name="Pill" CornerRadius="6" Padding="7,1" Background="{DynamicResource Brush.AccentSoft}">
               <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{TemplateBinding Content}" FontSize="10.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
+                <TextBlock Text="{TemplateBinding Content}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
                 <Path Data="M0,0 L3,3 0,6" Stroke="{DynamicResource Brush.Accent}" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                       Margin="5,1,0,0" VerticalAlignment="Center" />
               </StackPanel>
@@ -82,16 +82,16 @@
               <Path x:Name="Glyph" Style="{StaticResource IconPath}" Width="17" Height="17" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
                     Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
             </Grid>
-            <TextBlock Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center" Text="{Binding Title}" FontSize="13.5" FontWeight="Medium"
+            <TextBlock Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center" Text="{Binding Title}" FontSize="13.5" FontWeight="SemiBold"
                        Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
             <WrapPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="12,3,0,0">
-              <Border x:Name="StatusPill" CornerRadius="99" Padding="7,1" Margin="0,0,6,2" Background="{DynamicResource Brush.ControlHover}">
-                <TextBlock x:Name="StatusText" Text="{Binding StatusText}" FontSize="10.5" FontWeight="Medium" Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+              <Border x:Name="StatusPill" CornerRadius="6" Padding="7,1" Margin="0,0,6,2" Background="{DynamicResource Brush.ControlHover}">
+                <TextBlock x:Name="StatusText" Text="{Binding StatusText}" FontSize="10.5" FontWeight="SemiBold" Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
               </Border>
               <!-- what it helps with: green for smoothness, neutral for the rest -->
-              <Border x:Name="CategoryPill" CornerRadius="99" Padding="7,1" Margin="0,0,6,2" Background="{DynamicResource Brush.ControlHover}"
+              <Border x:Name="CategoryPill" CornerRadius="6" Padding="7,1" Margin="0,0,6,2" Background="{DynamicResource Brush.ControlHover}"
                       Visibility="{Binding HasCategory, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock x:Name="CategoryText" Text="{Binding Category}" FontSize="10.5" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" />
+                <TextBlock x:Name="CategoryText" Text="{Binding Category}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
               </Border>
               <Border Style="{StaticResource Badge}" Margin="0,0,6,2" Visibility="{Binding HasTag, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Text="{Binding Tag}" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
@@ -158,7 +158,7 @@
           <Grid Width="164" Height="77">
             <Border CornerRadius="9" Background="{Binding PlaceholderColor, Converter={StaticResource HexToBrush}}" Opacity="0.9" />
             <Border CornerRadius="9" Background="{DynamicResource Brush.Card}" Opacity="0.18" />
-            <TextBlock Text="{Binding Initials}" FontSize="24" FontWeight="Medium" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.92" />
+            <TextBlock Text="{Binding Initials}" FontSize="24" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.92" />
             <Border Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center" b:AsyncImage.DecodeWidth="80" b:AsyncImage.Path="{Binding Icon}"
                     Visibility="{Binding HasIconOnly, Converter={StaticResource BoolToVisibility}}" />
             <Border CornerRadius="9" b:AsyncImage.DecodeWidth="330" b:AsyncImage.Path="{Binding ListPicture}" />
@@ -166,13 +166,13 @@
           </Grid>
 
           <StackPanel Grid.Column="1" Margin="14,0,10,0" VerticalAlignment="Center">
-            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" />
+            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" />
             <TextBlock Text="{Binding Detail}" Style="{StaticResource Text.Secondary}" FontSize="12" Margin="0,3,0,0" />
             <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-              <Border x:Name="Playing" CornerRadius="99" Padding="7,1" Margin="0,0,8,0" Background="{DynamicResource Brush.SuccessSoft}" Visibility="Collapsed">
+              <Border x:Name="Playing" CornerRadius="6" Padding="7,1" Margin="0,0,8,0" Background="{DynamicResource Brush.SuccessSoft}" Visibility="Collapsed">
                 <StackPanel Orientation="Horizontal">
                   <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" b:Pulse.IsPulsing="{Binding IsRunning}" />
-                  <TextBlock Text="Playing" FontSize="10.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Success}" Margin="5,0,0,0" />
+                  <TextBlock Text="Playing" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Success}" Margin="5,0,0,0" />
                 </StackPanel>
               </Border>
               <TextBlock Text="{Binding LastPlayedText}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" />
@@ -234,7 +234,7 @@
           <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12">
             <Border Width="56" Height="56" HorizontalAlignment="Center" Margin="0,0,0,10" b:AsyncImage.DecodeWidth="112" b:AsyncImage.Path="{Binding Icon}"
                     Visibility="{Binding HasIconOnly, Converter={StaticResource BoolToVisibility}}" />
-            <TextBlock Text="{Binding Initials}" FontSize="34" FontWeight="Medium" Foreground="White" HorizontalAlignment="Center" Opacity="0.92" />
+            <TextBlock Text="{Binding Initials}" FontSize="34" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" Opacity="0.92" />
           </StackPanel>
           <c:SquircleBorder CornerRadius="14" b:AsyncImage.DecodeWidth="360" b:AsyncImage.Path="{Binding GridPicture}" />
 
@@ -266,16 +266,16 @@
             <Path Style="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Edit}" Stroke="White" />
           </Button>
 
-          <Border x:Name="Playing" CornerRadius="99" Padding="8,3" Margin="8" HorizontalAlignment="Left" VerticalAlignment="Top" Background="#CC0B1A10" Visibility="Collapsed">
+          <Border x:Name="Playing" CornerRadius="7" Padding="8,3" Margin="8" HorizontalAlignment="Left" VerticalAlignment="Top" Background="#CC0B1A10" Visibility="Collapsed">
             <StackPanel Orientation="Horizontal">
               <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" b:Pulse.IsPulsing="{Binding IsRunning}" />
-              <TextBlock Text="Playing" FontSize="11" FontWeight="Medium" Foreground="White" Margin="6,0,0,0" />
+              <TextBlock Text="Playing" FontSize="11" FontWeight="SemiBold" Foreground="White" Margin="6,0,0,0" />
             </StackPanel>
           </Border>
           <c:SquircleBorder x:Name="Outline" CornerRadius="14" BorderThickness="1" BorderBrush="{DynamicResource Brush.CardBorder}" IsHitTestVisible="False" />
         </Grid>
 
-        <TextBlock Grid.Row="1" Text="{Binding Name}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" Margin="2,10,2,0" TextTrimming="CharacterEllipsis" />
+        <TextBlock Grid.Row="1" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="2,10,2,0" TextTrimming="CharacterEllipsis" />
         <TextBlock Grid.Row="2" Text="{Binding StoreName}" Style="{StaticResource Text.Caption}" Margin="2,2,2,0" />
       </Grid>
       <DataTemplate.Triggers>
@@ -349,7 +349,7 @@
                 <c:HeroDial Value="{Binding Readiness}" StartLabel="0" EndLabel="{Binding BoostsAvailable}" DialSize="228" />
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                   <Path Style="{StaticResource IconPath}" Width="26" Height="26" Data="{StaticResource Icon.Controller}" Stroke="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" />
-                  <TextBlock Text="{Binding ReadinessText}" FontFamily="{StaticResource UiFont}" FontSize="34" FontWeight="Light" HorizontalAlignment="Center" Margin="0,6,0,0"
+                  <TextBlock Text="{Binding ReadinessText}" FontFamily="{StaticResource UiFont}" FontSize="34" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,6,0,0"
                              Foreground="{DynamicResource Brush.Text}" Typography.NumeralAlignment="Tabular" TextOptions.TextFormattingMode="Ideal" />
                   <TextBlock Text="boosts on" Style="{StaticResource Text.Label}" HorizontalAlignment="Center" Opacity="0.85" />
                 </StackPanel>
@@ -364,7 +364,7 @@
                   <TextBlock Text="boost · check · play" FontSize="10.5" Foreground="{DynamicResource Brush.Accent}" />
                 </Border>
               </StackPanel>
-              <TextBlock Text="{Binding HeroTitle}" FontSize="21" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" Margin="0,8,0,0" />
+              <TextBlock Text="{Binding HeroTitle}" FontSize="21" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" Margin="0,8,0,0" />
               <TextBlock Text="{Binding HeroDetail}" Style="{StaticResource Text.Secondary}" TextWrapping="Wrap" TextTrimming="None" Margin="0,6,0,0" />
               <TextBlock Text="{Binding HeroMessage}" FontSize="12.5" Foreground="{DynamicResource Brush.Success}" TextWrapping="Wrap" Margin="0,8,0,0"
                          b:Pop.Trigger="{Binding HasHeroMessage}" Visibility="{Binding HasHeroMessage, Converter={StaticResource BoolToVisibility}}" />
@@ -391,9 +391,9 @@
                 <StackPanel Orientation="Horizontal">
                   <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" b:Pulse.IsPulsing="{Binding IsPlaying}" />
                   <TextBlock Text="Now playing" Style="{StaticResource Text.Label}" Margin="8,0,0,0" VerticalAlignment="Center" />
-                  <TextBlock Text="{Binding NowPlayingName}" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" Margin="8,0,0,0" VerticalAlignment="Center" MaxWidth="260" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{Binding NowPlayingName}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="8,0,0,0" VerticalAlignment="Center" MaxWidth="260" TextTrimming="CharacterEllipsis" />
                   <StackPanel Orientation="Horizontal" Margin="12,0,0,0" Visibility="{Binding HasLive, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="{Binding LiveFps}" FontFamily="{StaticResource MonoFont}" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding LiveFps}" FontFamily="{StaticResource MonoFont}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center" />
                     <TextBlock Text=" FPS" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" />
                   </StackPanel>
                 </StackPanel>
@@ -471,7 +471,7 @@
         <StackPanel Orientation="Horizontal">
           <TextBlock Text="Your games" Style="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
           <Border Style="{StaticResource Badge}" Margin="10,1,0,0">
-            <TextBlock Text="{Binding GameCount}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" />
+            <TextBlock Text="{Binding GameCount}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
           </Border>
         </StackPanel>
         <TextBlock Text="{Binding LibrarySummary}" Style="{StaticResource Text.Secondary}" Margin="0,3,0,0" />
@@ -612,10 +612,10 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                       </Grid.ColumnDefinitions>
-                      <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                      <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                       <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
                         <Ellipse Width="7" Height="7" Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding Value}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" Margin="7,0,0,0" />
+                        <TextBlock Text="{Binding Value}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" Margin="7,0,0,0" />
                       </StackPanel>
                     </Grid>
                     <TextBlock Text="{Binding Detail}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="0,4,0,0"
@@ -701,11 +701,11 @@
                           </Grid.ColumnDefinitions>
                           <Ellipse Width="8" Height="8" Margin="0,0,10,0" VerticalAlignment="Center" Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
                           <TextBlock Grid.Column="1" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
-                            <Run Text="{Binding Name, Mode=OneWay}" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" /><Run Text="  " /><Run Text="{Binding Description, Mode=OneWay}" FontSize="11.5" Foreground="{DynamicResource Brush.TextTertiary}" />
+                            <Run Text="{Binding Name, Mode=OneWay}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" /><Run Text="  " /><Run Text="{Binding Description, Mode=OneWay}" FontSize="11.5" Foreground="{DynamicResource Brush.TextTertiary}" />
                           </TextBlock>
                           <ProgressBar Grid.Column="2" Style="{StaticResource ProgressBar.Thin}" Maximum="1" Margin="12,0,0,0" VerticalAlignment="Center"
                                        Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" b:Smooth.Value="{Binding Share}" />
-                          <TextBlock Grid.Column="3" Text="{Binding ShareText}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="Medium" HorizontalAlignment="Right"
+                          <TextBlock Grid.Column="3" Text="{Binding ShareText}" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right"
                                      VerticalAlignment="Center" Foreground="{DynamicResource Brush.Text}" />
                         </Grid>
                       </DataTemplate>
@@ -734,9 +734,9 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                   <DataTemplate DataType="{x:Type pages:CoreCheckRow}">
-                    <Border CornerRadius="99" Padding="9,3" Margin="0,0,6,6" Background="{DynamicResource Brush.ControlHover}" ToolTip="{Binding Detail}" ToolTipService.ShowDuration="30000">
+                    <Border CornerRadius="8" Padding="9,3" Margin="0,0,6,6" Background="{DynamicResource Brush.ControlHover}" ToolTip="{Binding Detail}" ToolTipService.ShowDuration="30000">
                       <TextBlock FontSize="11.5">
-                        <Run Text="{Binding Name, Mode=OneWay}" Foreground="{DynamicResource Brush.TextSecondary}" /><Run Text="  " /><Run Text="{Binding Status, Mode=OneWay}" FontWeight="Medium" Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+                        <Run Text="{Binding Name, Mode=OneWay}" Foreground="{DynamicResource Brush.TextSecondary}" /><Run Text="  " /><Run Text="{Binding Status, Mode=OneWay}" FontWeight="SemiBold" Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
                       </TextBlock>
                     </Border>
                   </DataTemplate>
@@ -790,7 +790,7 @@
                     <c:SquircleBorder CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}" Padding="10,2,2,2" Margin="0,0,8,8">
                       <StackPanel Orientation="Horizontal">
                         <TextBlock FontSize="12" VerticalAlignment="Center">
-                          <Run Text="{Binding Name, Mode=OneWay}" Foreground="{DynamicResource Brush.Text}" /><Run Text="  " /><Run Text="{Binding Text, Mode=OneWay}" FontWeight="Medium" Foreground="{DynamicResource Brush.Accent}" />
+                          <Run Text="{Binding Name, Mode=OneWay}" Foreground="{DynamicResource Brush.Text}" /><Run Text="  " /><Run Text="{Binding Text, Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
                         </TextBlock>
                         <Button Style="{StaticResource Button.Icon}" Width="24" Height="24" Margin="4,0,0,0" Command="{Binding RemoveCommand}"
                                 ToolTip="Remove this game's profile" AutomationProperties.Name="{Binding Name, StringFormat='Remove the core profile for {0}'}">
@@ -844,7 +844,7 @@
           <StackPanel>
             <Grid Width="96" Height="128">
               <c:SquircleBorder CornerRadius="12" Background="{DynamicResource Brush.AccentSoft}" />
-              <TextBlock Text="{Binding Initials}" FontSize="28" FontWeight="Medium" Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"
+              <TextBlock Text="{Binding Initials}" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"
                          Visibility="{Binding HasPreview, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
               <c:SquircleBorder x:Name="EditorPicture" CornerRadius="12" b:AsyncImage.DecodeWidth="200" b:AsyncImage.Path="{Binding Preview}">
                 <c:SquircleBorder.Style>

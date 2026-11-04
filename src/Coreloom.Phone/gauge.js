@@ -1,5 +1,5 @@
-// The ring gauge of Coreloom's desktop app (Controls/RadialGauge.cs), drawn on a canvas: since 1.9.0 a thin smooth arc
-// with round ends over a 270° sweep on a faint track, its head glowing softly (it was a ring of fine ticks). Colours
+// The tick-ring gauge of Coreloom's desktop app (Controls/RadialGauge.cs, RenderTicks), drawn on a canvas: fine radial
+// ticks over a 270° sweep, the lit ones brightening toward the head, whose last ticks reach further and glow. Colours
 // follow the desktop's scale (GaugeTone: green, blue, orange, red) or, for temperatures, its thermometer gradients.
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -159,13 +159,23 @@ export class Ring {
     if (size < 20) return;
     const metric = this.metric;
     const available = metric && metric.v !== undefined;
-    const thickness = clamp(size * this.thicknessRatio * 0.6, 3, 9);
-    const radius = (size - thickness) / 2 - 3;
+    const thickness = size * this.thicknessRatio;
+    const reach = thickness * 0.26;
+    const radius = (size - thickness) / 2 - reach - 2;
     const cx = w / 2, cy = h / 2;
     const sweep = 270;
     const start = 90 + (360 - sweep) / 2;
-    const value = available ? clamp(this.value, 0, 1) : 0;
-    const rad = (deg) => deg * Math.PI / 180;
+    const value = available ? this.value : 0;
+
+    const pitch = clamp(size * 0.058, 3.3, 6.4);
+    const count = Math.max(8, Math.round(radius * sweep * Math.PI / 180 / pitch)) + 1;
+    const step = sweep / (count - 1);
+    const width = clamp(pitch * 0.44, 1.2, 2.9);
+    const inner = radius - thickness / 2 + width / 2;
+    const outer = radius + thickness / 2 - width / 2;
+    const lit = clamp(value, 0, 1) * (count - 1);
+    const full = value <= 0.002 ? -1 : Math.floor(lit + 1e-6);
+    const partial = lit - Math.floor(lit + 1e-6);
 
     // Colours: a temperature's gradient, the scale's colour at the reading, or the metric's own colour.
     let colorAt;
@@ -173,7 +183,7 @@ export class Ring {
       const tone = toneAt(value, ...metric.g);
       if (metric.t) {
         const [tail, head] = temperatureColors(tone);
-        colorAt = (along) => lerp(tail, head, along);
+        colorAt = (_, along) => lerp(tail, head, along);
       } else {
         const c = scaleColor(tone);
         colorAt = () => c;
@@ -183,40 +193,46 @@ export class Ring {
       colorAt = () => c;
     }
 
-    if (this.orb && available) this.drawOrb(ctx, cx, cy, radius - thickness * 1.1, colorAt(1));
+    const head = colorAt(clamp(lit / Math.max(count - 1, 1), 0, 1), 1);
+    const tick = (degrees, from, to) => {
+      const a = degrees * Math.PI / 180;
+      ctx.moveTo(cx + from * Math.cos(a), cy + from * Math.sin(a));
+      ctx.lineTo(cx + to * Math.cos(a), cy + to * Math.sin(a));
+    };
 
-    // The track.
+    if (this.orb && available) this.drawOrb(ctx, cx, cy, inner - thickness * 0.55, head);
+
     ctx.lineCap = 'round';
-    ctx.lineWidth = thickness;
+    ctx.lineWidth = width;
     ctx.strokeStyle = cssColor('--track');
     ctx.beginPath();
-    ctx.arc(cx, cy, radius, rad(start), rad(start + sweep));
+    for (let i = Math.max(full + 1, 0); i < count; i++) tick(start + i * step, inner, outer);
     ctx.stroke();
 
-    if (value <= 0.002) return;
+    if (full < 0 && partial <= 0.01) return;
 
-    // The arc, in short pieces so a temperature's colour can run along it; only the two ends are round.
-    const arcSweep = sweep * value;
-    const pieces = Math.max(1, Math.ceil(arcSweep / 4));
-    const step = arcSweep / pieces;
-    for (let i = 0; i < pieces; i++) {
-      const last = i === pieces - 1;
-      ctx.strokeStyle = rgba(colorAt((i + 0.5) / pieces));
-      ctx.lineCap = pieces === 1 ? 'round' : i === 0 || last ? 'round' : 'butt';
+    const headIndex = partial > 0.01 ? full + 1 : full;
+    for (let i = 0; i <= headIndex && i < count; i++) {
+      const t = count > 1 ? i / (count - 1) : 1;
+      const along = headIndex > 0 ? i / headIndex : 1;
+      let color = colorAt(t, along);
+      const fromHead = headIndex - i;
+      if (fromHead <= 2) color = lerp(color, shift(color, 0, 0.16), 1 - fromHead / 3);
+      let alpha = 0.5 + 0.5 * Math.pow(along, 1.5);
+      if (i === headIndex && partial > 0.01) alpha *= partial;
+      const extend = fromHead <= 1 ? reach : fromHead === 2 ? reach * 0.45 : 0;
+      ctx.strokeStyle = rgba(color, alpha);
       ctx.beginPath();
-      const from = start + i * step;
-      ctx.arc(cx, cy, radius, rad(from), rad(from + step + (last ? 0 : 0.6)));
+      tick(start + i * step, inner - extend * 0.35, outer + extend);
       ctx.stroke();
     }
 
-    // A soft light at the head.
-    const head = colorAt(1);
-    const headAngle = rad(start + arcSweep);
+    const headAngle = (start + Math.min(lit, count - 1) * step) * Math.PI / 180;
     const hx = cx + radius * Math.cos(headAngle), hy = cy + radius * Math.sin(headAngle);
-    const glow = Math.max(thickness * 1.6, 7);
+    const glow = Math.max(thickness * 1.5, 7);
     const halo = ctx.createRadialGradient(hx, hy, 0, hx, hy, glow);
-    halo.addColorStop(0, rgba(shift(head, 0, 0.12), 0.34));
-    halo.addColorStop(0.5, rgba(head, 0.1));
+    halo.addColorStop(0, rgba(shift(head, 0, 0.12), 0.44));
+    halo.addColorStop(0.5, rgba(head, 0.14));
     halo.addColorStop(1, rgba(head, 0));
     ctx.fillStyle = halo;
     ctx.beginPath();

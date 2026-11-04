@@ -148,20 +148,23 @@ Work through each area and tick what works.
       *Save*, *Done*. Banner buttons (*Boost now*, *Smart Scan*, *Install update*) stay glass. The internet and drive
       speed tests and the Memory page's top card (the memory ring) have the Gaming banner's light from the top edge,
       and the speed tests' *Start test* is glass like *Boost now*.
-- [ ] (1.9.0) The new look, at your scaling and in both themes: every word and number is Outfit (big readings light
-      and open, titles medium); readings keep their width as they count (nothing beside them jumps); cards are dark
-      glass with a hairline rim and still glow in their colour, more under the pointer; the current page is a solid
-      blue pill in the sidebar, and Drivers shows its count of updates beside its name (white on the pill when it's
-      the current page); every button is a pill (*Connect*, *Boost now*, *Check for updates* in the deeper blue; the
-      rest dark), the range picker, status tags, badges and the search box are pills, switches are round and green when
-      on, check boxes round; gauges are thin arcs with a soft light at the head.
+- [ ] (1.9.0, 1.9.1) The look, at your scaling and in both themes: Inter and JetBrains Mono as in 1.8.6, with the
+      1.8.6 corners on buttons, badges, status tags, the range picker and the search box (nothing short is a round
+      pill); cards are dark glass with a hairline rim and still glow in their colour, more under the pointer; the
+      current page in the sidebar is the soft bar with the thin accent line at its left, and Drivers shows its count
+      of updates beside its name; *Connect*, *Boost now* and *Check for updates* are the deeper blue; switches turn
+      green when on; the gauges are the tick rings with their gradient and glow, the orb inside on the cards.
+- [ ] (1.9.1) Gaming › Intelligent CPU core scheduling › Details: every check has a colour, none grey. With Ultimate
+      Performance or High performance the *Power plan* line is green (CPU cache optimization keeps the game on the
+      cache cores itself); with Balanced it's green too; with another plan it's blue; a stopped AMD service is yellow,
+      a missing driver red.
 - [ ] (1.9.0) Motion: open another page and the one you leave blurs away while the next clears from a blur, its cards
       rising into place one after another; the title types itself in; a chart draws its line in from the left when
       its page appears; an export error shows as a light pill rising from the bottom. *Settings › Appearance › Reduce
       motion* turns every one of these off.
 - [ ] (1.9.0) The splash: soft blue, amber and teal lights drifting on a near-black canvas, a pane of dark glass with
-      the icon on its halo, "Coreloom" with "loom" in blue, a thin loading line that moves with each step. Nothing
-      cut off at 100–200 % scaling.
+      the icon on its halo, "Coreloom" in Inter with "loom" in blue, a thin loading line that moves with each step.
+      Nothing cut off at 100–200 % scaling.
 - [ ] (1.9.0) Had the default accent before? It is the deeper blue now (*Settings › Appearance › Accent color*, the
       first swatch); the old blue is the second, *Sky*. An accent you had chosen is unchanged.
 
@@ -896,10 +899,10 @@ GitHub's Macs check every build of Coreloom for Mac, but they are virtual machin
 13. **Smooth gradients (1.8.6).** Over the Coreloom gradient and over a picture, look closely at the glass cards, the
    banners' light, the dials' glow and the graphs' fills: no blocks or steps, in dark and light. (A very faint grain
    over the window is what keeps them smooth.)
-14. **The new look (1.9.0).** Outfit everywhere, light readings over thin ring gauges, the current page as a blue pill
-   in the sidebar, pill buttons and pickers, green switches, dark glass cards with a hairline rim that still glow in
-   their colour; pages blur away and rise in card by card, titles type themselves in, charts draw their lines in.
-   *Reduce motion* turns the motion off. On a Retina screen, nothing looks soft or misaligned.
+14. **The look (1.9.0, 1.9.1).** Inter and the 1.8.6 corners, the sidebar's bar with its accent line, tick-ring gauges
+   with their gradient, green switches, dark glass cards with a hairline rim that still glow in their colour; pages
+   blur away and rise in card by card, titles type themselves in, charts draw their lines in. *Reduce motion* turns
+   the motion off. On a Retina screen, nothing looks soft or misaligned.
 15. **Updates.** When a newer version is out, Settings has a red dot and the sidebar's *New update available* button
    opens *Settings › Updates*. Once a newer version is out, *Coreloom › Check for Updates…* downloads it; *Install update* quits
    Coreloom, replaces it and opens the new version (`~/Library/Logs/Coreloom/update.log` says what happened).

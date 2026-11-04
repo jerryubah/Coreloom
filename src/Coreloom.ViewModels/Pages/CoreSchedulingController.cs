@@ -400,12 +400,14 @@ public sealed class CoreSchedulingController : ObservableObject
         var status = _page.CurrentStatus;
         bool gameMode = _page.Boosts.FirstOrDefault(b => b.Tweak == GamingTweak.GameMode)?.IsOn ?? false;
         var rows = CoreScheduling.Checks(Layout, _amd, gameMode, status.ActivePowerPlan)
+            // Since 1.9.1 every check has a colour: green when it's fine, blue for something to know, yellow for something
+            // to fix, red for what breaks the scheduling (none of them grey).
             .Select(c => new CoreCheckRow(c.Name, c.Status, c.State switch
             {
                 CheckState.Good => ColorKeys.ToneCool,
-                CheckState.Warn => ColorKeys.Neutral, // said in words; nothing in the boosts is yellow since 1.8.5
-                CheckState.Bad => ColorKeys.ToneHot,
-                _ => ColorKeys.Neutral,
+                CheckState.Info => ColorKeys.ToneNormal,
+                CheckState.Warn => ColorKeys.ToneWarm,
+                _ => ColorKeys.ToneHot,
             }, c.Detail))
             .ToList();
         if (Checks.Count != rows.Count || !Checks.Zip(rows).All(p => p.First == p.Second))

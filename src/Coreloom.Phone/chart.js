@@ -58,7 +58,7 @@ export function drawChart(canvas, series, { now, scale = 'auto', label = null, s
     ctx.setLineDash([]);
     if (label) {
       ctx.fillStyle = cssColor('--text-3');
-      ctx.font = '500 10.5px Outfit, system-ui, sans-serif';
+      ctx.font = '500 10.5px Inter, system-ui, sans-serif';
       ctx.textBaseline = 'top';
       ctx.fillText(label(hi), 2, 0);
       ctx.textBaseline = 'bottom';

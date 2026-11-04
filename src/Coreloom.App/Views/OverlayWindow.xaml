@@ -34,13 +34,13 @@
             TextElement.FontFamily="{StaticResource UiFont}" TextElement.FontSize="11.5" TextElement.Foreground="#FFE6EAF2">
       <StackPanel Orientation="Horizontal">
         <TextBlock Text="Drag to move · handle to resize" VerticalAlignment="Center" />
-        <TextBlock Text="{Binding ScaleText}" Margin="10,0,0,0" FontWeight="Medium" VerticalAlignment="Center" />
+        <TextBlock Text="{Binding ScaleText}" Margin="10,0,0,0" FontWeight="SemiBold" VerticalAlignment="Center" />
         <TextBlock Text="{Binding MovingText}" Margin="10,0,0,0" Opacity="0.7" VerticalAlignment="Center" />
         <Button Content="Done" Margin="10,0,0,0" Padding="10,2" Focusable="False" Cursor="Hand" Command="{Binding FinishMovingCommand}">
           <Button.Template>
             <ControlTemplate TargetType="Button">
               <Border Background="#FF5B8CFF" CornerRadius="6" Padding="{TemplateBinding Padding}">
-                <ContentPresenter TextElement.Foreground="#FFFFFFFF" TextElement.FontWeight="Medium" />
+                <ContentPresenter TextElement.Foreground="#FFFFFFFF" TextElement.FontWeight="SemiBold" />
               </Border>
             </ControlTemplate>
           </Button.Template>

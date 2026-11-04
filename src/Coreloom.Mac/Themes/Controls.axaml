@@ -34,46 +34,40 @@
   <!-- ================================================================================= -->
   <!-- Typography                                                                          -->
   <!-- ================================================================================= -->
-  <!-- Outfit for the interface (since 1.9.0; it was Inter), JetBrains Mono for logs and code; both ship with the app
-       (SIL OFL 1.1). Readings are Outfit too, with tabular digits, so a value keeps its width as it counts. -->
-  <FontFamily x:Key="UiFont">avares://Coreloom/Assets/Fonts#Outfit</FontFamily>
-  <!-- "MonoFont" is what readings were set in before 1.9.0; it is Outfit now (with tabular digits where it matters), so the
-       numbers speak with the same voice as the words. Code and logs use CodeFont. -->
-  <FontFamily x:Key="MonoFont">avares://Coreloom/Assets/Fonts#Outfit</FontFamily>
-  <FontFamily x:Key="CodeFont">avares://Coreloom/Assets/Fonts#JetBrains Mono</FontFamily>
-  <FontFamily x:Key="ContentControlThemeFontFamily">avares://Coreloom/Assets/Fonts#Outfit</FontFamily>
+  <!-- Inter for the interface, JetBrains Mono for measured values; both ship with the app (SIL OFL 1.1). -->
+  <FontFamily x:Key="UiFont">avares://Coreloom/Assets/Fonts#Inter</FontFamily>
+  <FontFamily x:Key="MonoFont">avares://Coreloom/Assets/Fonts#JetBrains Mono</FontFamily>
+  <FontFamily x:Key="ContentControlThemeFontFamily">avares://Coreloom/Assets/Fonts#Inter</FontFamily>
 
   <ControlTheme x:Key="Text.Mono" TargetType="TextBlock">
-    <Setter Property="FontFamily" Value="{StaticResource CodeFont}" />
+    <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
     <Setter Property="FontSize" Value="12" />
     <Setter Property="FontWeight" Value="Medium" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
   </ControlTheme>
 
-  <!-- The type scale (1.9.0): page titles 26 SemiBold, card titles 14 Medium, body 13, labels 12 Medium, captions 11.5;
-       the big numbers are light (Light at 34 pt), the way a figure reads on a dashboard rather than a headline. -->
   <ControlTheme x:Key="Text.PageTitle" TargetType="TextBlock">
-    <Setter Property="FontSize" Value="26" />
-    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontSize" Value="27" />
+    <Setter Property="FontWeight" Value="Bold" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
   </ControlTheme>
 
   <ControlTheme x:Key="Text.Section" TargetType="TextBlock">
     <Setter Property="FontSize" Value="15" />
-    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
   </ControlTheme>
 
   <ControlTheme x:Key="Text.SectionTitle" TargetType="TextBlock">
     <Setter Property="FontSize" Value="17" />
-    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
   </ControlTheme>
 
   <ControlTheme x:Key="Text.CardTitle" TargetType="TextBlock">
-    <Setter Property="FontSize" Value="14" />
-    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
   </ControlTheme>
@@ -103,20 +97,11 @@
     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
   </ControlTheme>
 
-  <!-- A small label in capitals over a group (the sidebar's sections), its letters spaced a little. -->
-  <ControlTheme x:Key="Text.Overline" TargetType="TextBlock">
-    <Setter Property="FontSize" Value="10.5" />
-    <Setter Property="FontWeight" Value="Medium" />
-    <Setter Property="LetterSpacing" Value="1.3" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.TextTertiary}" />
-    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-  </ControlTheme>
-
-  <!-- A card's headline number: big and light, with tabular digits (they keep their width as the value counts). -->
+  <!-- A card's headline number: big, bold Inter with tabular digits (they keep their width as the value counts). -->
   <ControlTheme x:Key="Text.ValueLarge" TargetType="TextBlock">
     <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
-    <Setter Property="FontSize" Value="34" />
-    <Setter Property="FontWeight" Value="Light" />
+    <Setter Property="FontSize" Value="32" />
+    <Setter Property="FontWeight" Value="Bold" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
     <Setter Property="FontFeatures" Value="+tnum" />
     <Setter Property="LineHeight" Value="38" />
@@ -124,23 +109,22 @@
 
   <ControlTheme x:Key="Text.Value" TargetType="TextBlock">
     <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
-    <Setter Property="FontSize" Value="22" />
-    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="FontSize" Value="21" />
+    <Setter Property="FontWeight" Value="Bold" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
     <Setter Property="FontFeatures" Value="+tnum" />
   </ControlTheme>
 
   <ControlTheme x:Key="Text.ValueSmall" TargetType="TextBlock">
-    <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+    <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
     <Setter Property="FontSize" Value="14" />
-    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
-    <Setter Property="FontFeatures" Value="+tnum" />
   </ControlTheme>
 
   <ControlTheme x:Key="Text.Unit" TargetType="TextBlock">
     <Setter Property="FontSize" Value="13" />
-    <Setter Property="FontWeight" Value="Normal" />
+    <Setter Property="FontWeight" Value="Medium" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
     <Setter Property="Margin" Value="4,0,0,0" />
   </ControlTheme>
@@ -171,7 +155,7 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="18" />
     <Setter Property="Padding" Value="18,16" />
-    <Setter Property="Sheen" Value="0.25" />
+    <Setter Property="Sheen" Value="0.6" />
     <Setter Property="Frosted" Value="True" />
   </ControlTheme>
 
@@ -184,12 +168,12 @@
   <ControlTheme x:Key="Card.Hero" TargetType="c:SquircleBorder" BasedOn="{StaticResource Card.Glow}">
     <Setter Property="GlowKey" Value="Accent" />
     <Setter Property="GlowStrength" Value="1.5" />
-    <Setter Property="Sheen" Value="0.4" />
+    <Setter Property="Sheen" Value="0.8" />
   </ControlTheme>
 
   <ControlTheme x:Key="Card.Inset" TargetType="c:SquircleBorder">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
-    <Setter Property="CornerRadius" Value="14" />
+    <Setter Property="CornerRadius" Value="12" />
     <Setter Property="Padding" Value="12,10" />
   </ControlTheme>
 
@@ -199,18 +183,17 @@
     <Setter Property="Margin" Value="0,12" />
   </ControlTheme>
 
-  <!-- Badges and status pills are fully round (1.9.0). -->
   <ControlTheme x:Key="Badge" TargetType="Border">
     <Setter Property="Background" Value="{DynamicResource Brush.ControlHover}" />
-    <Setter Property="CornerRadius" Value="99" />
-    <Setter Property="Padding" Value="8,2" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="6,1" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </ControlTheme>
 
-  <!-- A small count beside a label (the sidebar's "3"): a dark round badge with the accent's light text. -->
+  <!-- A small count beside a label (the sidebar's "4" on Drivers, since 1.9.0): a round badge with the accent's light text. -->
   <ControlTheme x:Key="Badge.Count" TargetType="Border">
     <Setter Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
-    <Setter Property="CornerRadius" Value="99" />
+    <Setter Property="CornerRadius" Value="10" />
     <Setter Property="MinWidth" Value="20" />
     <Setter Property="Height" Value="20" />
     <Setter Property="Padding" Value="6,0" />
@@ -220,22 +203,20 @@
   <!-- ================================================================================= -->
   <!-- Buttons                                                                            -->
   <!-- ================================================================================= -->
-  <!-- Every button is a pill (1.9.0). The base: no fill until hovered. Icon buttons keep it; text buttons are the dark
-       pill or the accent pill (below). -->
+  <!-- The base of every button: no fill until hovered. Icon buttons keep it; text buttons are glass (below). -->
   <ControlTheme x:Key="Button.Plain" TargetType="Button">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderBrush" Value="Transparent" />
-    <Setter Property="Padding" Value="14,7" />
+    <Setter Property="Padding" Value="12,7" />
     <Setter Property="FontSize" Value="13" />
-    <Setter Property="FontWeight" Value="Medium" />
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="HorizontalContentAlignment" Value="Center" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
     <Setter Property="Template">
       <ControlTemplate>
         <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                          BorderThickness="1" CornerRadius="99" Smoothing="0" Padding="{TemplateBinding Padding}">
+                          BorderThickness="1" CornerRadius="10" Padding="{TemplateBinding Padding}">
           <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
                             HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                             RecognizesAccessKey="True" />
@@ -256,14 +237,15 @@
     </Style>
   </ControlTheme>
 
-  <!-- The dark pill (1.9.0; it was the charcoal glass button with a corner light): a little lighter than the glass it
-       sits on, a hairline rim, white text; lighter still under the pointer. Every secondary action is one. -->
+  <!-- Every text button (since 1.8.4; the banners' buttons since 1.8.3): charcoal glass with white text, its rim lit
+       along the top and toward a soft light of the accent in its lower right corner, which grows on hover. Primary,
+       Secondary, Subtle and the banners' AccentGradient are all this button now, so they look the same everywhere. -->
   <ControlTheme x:Key="Button.Glass" TargetType="Button">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Pill}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PillBorder}" />
-    <Setter Property="FontWeight" Value="Medium" />
-    <Setter Property="Padding" Value="14,7" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.OnGlow}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.GlowButtonFill}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.GlowButtonRim}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Padding" Value="12,7" />
     <Setter Property="FontSize" Value="13" />
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="HorizontalContentAlignment" Value="Center" />
@@ -271,21 +253,25 @@
     <Setter Property="RenderTransformOrigin" Value="50%,50%" />
     <Setter Property="Template">
       <ControlTemplate>
-        <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
-                          CornerRadius="99" Smoothing="0" Padding="{TemplateBinding Padding}">
-          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
-                            Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
-        </c:SquircleBorder>
+        <Panel>
+          <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                            CornerRadius="11" ClipContent="True">
+            <Border Name="Light" Background="{DynamicResource Brush.GlowButtonLight}" Opacity="0.85" IsHitTestVisible="False" />
+          </c:SquircleBorder>
+          <ContentPresenter Name="PART_ContentPresenter" Margin="{TemplateBinding Padding}" Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}"
+                            HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+        </Panel>
       </ControlTemplate>
     </Setter>
-    <Style Selector="^:pointerover /template/ c|SquircleBorder#Root">
-      <Setter Property="Background" Value="{DynamicResource Brush.PillHover}" />
+    <Style Selector="^:pointerover /template/ Border#Light">
+      <Setter Property="Opacity" Value="1" />
     </Style>
     <Style Selector="^:pressed">
       <Setter Property="RenderTransform" Value="scale(0.98)" />
     </Style>
-    <Style Selector="^:pressed /template/ c|SquircleBorder#Root">
-      <Setter Property="Background" Value="{DynamicResource Brush.ControlPressed}" />
+    <Style Selector="^:pressed /template/ Border#Light">
+      <Setter Property="Opacity" Value="0.6" />
     </Style>
     <Style Selector="^:disabled">
       <Setter Property="Opacity" Value="0.45" />
@@ -295,20 +281,22 @@
     </Style>
   </ControlTheme>
 
-  <!-- A card's main action (Connect, Play, Clean, Save, Boost now…): the accent pill with white text. -->
+  <ControlTheme x:Key="Button.AccentGradient" TargetType="Button" BasedOn="{StaticResource Button.Glass}" />
+
+  <!-- A card's main action (Connect, Play, Clean, Save…): filled with the accent, white text (back in 1.8.5, so an
+       action such as Connect doesn't look like the glass Secondary beside it). -->
   <ControlTheme x:Key="Button.Primary" TargetType="Button">
     <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}" />
     <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
-    <Setter Property="FontWeight" Value="Medium" />
-    <Setter Property="Padding" Value="16,7" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Padding" Value="12,7" />
     <Setter Property="FontSize" Value="13" />
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="HorizontalContentAlignment" Value="Center" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
-    <Setter Property="RenderTransformOrigin" Value="50%,50%" />
     <Setter Property="Template">
       <ControlTemplate>
-        <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" CornerRadius="99" Smoothing="0" Padding="{TemplateBinding Padding}">
+        <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
           <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
                             HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
         </c:SquircleBorder>
@@ -317,25 +305,19 @@
     <Style Selector="^:pointerover /template/ c|SquircleBorder#Root">
       <Setter Property="Background" Value="{DynamicResource Brush.AccentHover}" />
     </Style>
-    <Style Selector="^:pressed">
-      <Setter Property="RenderTransform" Value="scale(0.98)" />
-    </Style>
     <Style Selector="^:pressed /template/ c|SquircleBorder#Root">
-      <Setter Property="Opacity" Value="0.88" />
+      <Setter Property="Opacity" Value="0.85" />
     </Style>
     <Style Selector="^:disabled">
       <Setter Property="Opacity" Value="0.45" />
     </Style>
   </ControlTheme>
 
-  <!-- The banners' main button (Boost now, Smart Scan) is the accent pill too. -->
-  <ControlTheme x:Key="Button.AccentGradient" TargetType="Button" BasedOn="{StaticResource Button.Primary}" />
-
-  <ControlTheme x:Key="Button.Secondary" TargetType="Button" BasedOn="{StaticResource Button.Glass}" />
+  <ControlTheme x:Key="Button.Secondary" TargetType="Button" BasedOn="{StaticResource Button.Glass}">
+    <Setter Property="FontWeight" Value="Normal" />
+  </ControlTheme>
 
   <ControlTheme x:Key="Button.Subtle" TargetType="Button" BasedOn="{StaticResource Button.Glass}">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PillBorder}" />
     <Setter Property="FontWeight" Value="Normal" />
   </ControlTheme>
 
@@ -355,25 +337,15 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
   </ControlTheme>
 
-  <!-- A round icon button with a faint fill (the header's search, bell and pause; 1.9.0). -->
-  <ControlTheme x:Key="Button.Round" TargetType="Button" BasedOn="{StaticResource Button.Icon}">
-    <Setter Property="Width" Value="36" />
-    <Setter Property="Height" Value="36" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Pill}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PillBorder}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
-  </ControlTheme>
-
   <ControlTheme x:Key="ToggleButton.Icon" TargetType="ToggleButton">
     <Setter Property="Width" Value="34" />
     <Setter Property="Height" Value="34" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
     <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="Template">
       <ControlTemplate>
-        <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="99" Smoothing="0">
+        <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" CornerRadius="10">
           <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </c:SquircleBorder>
       </ControlTemplate>
@@ -408,9 +380,9 @@
   <!-- ================================================================================= -->
   <!-- Toggle switch (CheckBox)                                                           -->
   <!-- ================================================================================= -->
-  <!-- Liquid toggle: a pill track and a round white knob. Pressing it turns the knob into a lens of clear glass that swells
+  <!-- Liquid toggle: a pill track and a white pill knob. Pressing it turns the knob into a lens of clear glass that swells
        over the track; letting go, it flows across with a springy overshoot and turns white again while the track floods
-       with green (1.9.0; it was the accent: on is a state, not an action). -->
+       with the accent. -->
   <ControlTheme x:Key="ToggleSwitch" TargetType="CheckBox">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
     <Setter Property="Background" Value="Transparent" />
@@ -421,17 +393,17 @@
         <Grid Background="Transparent" ColumnDefinitions="*,Auto">
           <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
                             VerticalAlignment="Center" Margin="0,0,16,0" IsVisible="{TemplateBinding Content, Converter={x:Static ObjectConverters.IsNotNull}}" />
-          <Panel Name="Switch" Grid.Column="1" Width="44" Height="24" VerticalAlignment="Center">
-            <Border Name="TrackOff" CornerRadius="12" Background="{DynamicResource Brush.Track}"
+          <Panel Name="Switch" Grid.Column="1" Width="46" Height="26" VerticalAlignment="Center">
+            <Border Name="TrackOff" CornerRadius="13" Background="{DynamicResource Brush.Track}"
                     BorderBrush="{DynamicResource Brush.InputBorder}" BorderThickness="1" />
-            <Border Name="TrackOn" CornerRadius="12" Background="{DynamicResource Brush.Success}" Opacity="0">
+            <Border Name="TrackOn" CornerRadius="13" Background="{DynamicResource Brush.Success}" Opacity="0">
               <Border.Transitions>
                 <Transitions>
                   <DoubleTransition Property="Opacity" Duration="0:0:0.22" />
                 </Transitions>
               </Border.Transitions>
             </Border>
-            <Border CornerRadius="12" IsHitTestVisible="False">
+            <Border CornerRadius="13" IsHitTestVisible="False">
               <Border.Background>
                 <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
                   <GradientStop Color="#2EFFFFFF" Offset="0" />
@@ -440,7 +412,7 @@
               </Border.Background>
             </Border>
             <!-- the knob: slides across (the outer panel), swells when pressed (the inner one) -->
-            <Panel Name="KnobSlide" Width="20" Height="20" HorizontalAlignment="Left" Margin="2,0,0,0" RenderTransform="translateX(0px)">
+            <Panel Name="KnobSlide" Width="28" Height="22" HorizontalAlignment="Left" Margin="2,0,0,0" RenderTransform="translateX(0px)">
               <Panel.Transitions>
                 <Transitions>
                   <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.45" Easing="BackEaseOut" />
@@ -452,14 +424,14 @@
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
                   </Transitions>
                 </Panel.Transitions>
-                <Border Name="KnobShadow" CornerRadius="11" Margin="-1,0,-1,-2" Background="#30000000">
+                <Border Name="KnobShadow" CornerRadius="12" Margin="-1,0,-1,-2" Background="#30000000">
                   <Border.Transitions>
                     <Transitions>
                       <DoubleTransition Property="Opacity" Duration="0:0:0.18" />
                     </Transitions>
                   </Border.Transitions>
                 </Border>
-                <Border Name="KnobGlass" CornerRadius="10" Opacity="0" BorderThickness="1.2">
+                <Border Name="KnobGlass" CornerRadius="11" Opacity="0" BorderThickness="1.2">
                   <Border.Transitions>
                     <Transitions>
                       <DoubleTransition Property="Opacity" Duration="0:0:0.18" />
@@ -480,7 +452,7 @@
                     </LinearGradientBrush>
                   </Border.BorderBrush>
                 </Border>
-                <Border Name="KnobCover" CornerRadius="10" Background="#FFFFFFFF">
+                <Border Name="KnobCover" CornerRadius="11" Background="#FFFFFFFF">
                   <Border.Transitions>
                     <Transitions>
                       <DoubleTransition Property="Opacity" Duration="0:0:0.18" />
@@ -497,10 +469,10 @@
       <Setter Property="Opacity" Value="1" />
     </Style>
     <Style Selector="^:checked /template/ Panel#KnobSlide">
-      <Setter Property="RenderTransform" Value="translateX(20px)" />
+      <Setter Property="RenderTransform" Value="translateX(14px)" />
     </Style>
     <Style Selector="^:pressed /template/ Panel#Knob">
-      <Setter Property="RenderTransform" Value="scale(1.35, 1.3)" />
+      <Setter Property="RenderTransform" Value="scale(1.5, 1.4)" />
     </Style>
     <Style Selector="^:pressed /template/ Border#KnobCover">
       <Setter Property="Opacity" Value="0" />
@@ -525,11 +497,11 @@
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="Template">
       <ControlTemplate>
-        <Border Name="Row" Background="Transparent" CornerRadius="99" Padding="6,5">
+        <Border Name="Row" Background="Transparent" CornerRadius="6" Padding="6,5">
           <Grid ColumnDefinitions="Auto,*">
-            <Border Name="Box" Width="18" Height="18" CornerRadius="9" BorderThickness="1.5"
-                    BorderBrush="{DynamicResource Brush.TextTertiary}" Background="{DynamicResource Brush.Surface}" VerticalAlignment="Center">
-              <Path Name="Mark" Data="M4.5,9.5 L7.5,12.5 13.5,5.5" Stroke="{DynamicResource Brush.OnAccent}" StrokeThickness="1.8"
+            <Border Name="Box" Width="16" Height="16" CornerRadius="4" BorderThickness="1.5"
+                    BorderBrush="{DynamicResource Brush.TextTertiary}" Background="Transparent" VerticalAlignment="Center">
+              <Path Name="Mark" Data="M3.5,8.5 L6.5,11.5 12.5,4.5" Stroke="{DynamicResource Brush.OnAccent}" StrokeThickness="1.8"
                     StrokeLineCap="Round" StrokeJoin="Round" IsVisible="False" />
             </Border>
             <ContentPresenter Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
@@ -559,13 +531,13 @@
     <Setter Property="CaretBrush" Value="{DynamicResource Brush.Text}" />
     <Setter Property="SelectionBrush" Value="{DynamicResource Brush.AccentSoft}" />
     <Setter Property="SelectionForegroundBrush" Value="{DynamicResource Brush.Text}" />
-    <Setter Property="Padding" Value="13,7" />
+    <Setter Property="Padding" Value="10,7" />
     <Setter Property="FontSize" Value="13" />
     <Setter Property="MinHeight" Value="0" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
     <Setter Property="Template">
       <ControlTemplate>
-        <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="99" Smoothing="0">
+        <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="10">
           <Panel Margin="{TemplateBinding Padding}">
             <TextBlock Name="PART_Watermark" Text="{TemplateBinding Watermark}" Foreground="{DynamicResource Brush.TextTertiary}"
                        IsVisible="{TemplateBinding Text, Converter={x:Static StringConverters.IsNullOrEmpty}}" IsHitTestVisible="False" VerticalAlignment="Center" />
@@ -654,17 +626,17 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Panel>
-          <c:SquircleBorder Name="Ring" Margin="-3" CornerRadius="99" Smoothing="0" BorderThickness="3" BorderBrush="{DynamicResource Brush.AccentSoft}" Opacity="0" IsHitTestVisible="False" />
-          <c:SquircleBorder Name="Field" CornerRadius="99" Smoothing="0" Background="{DynamicResource Brush.Input}" BorderBrush="{DynamicResource Brush.InputBorder}" BorderThickness="1">
+          <c:SquircleBorder Name="Ring" Margin="-3" CornerRadius="15" BorderThickness="3" BorderBrush="{DynamicResource Brush.AccentSoft}" Opacity="0" IsHitTestVisible="False" />
+          <c:SquircleBorder Name="Field" CornerRadius="12" Background="{DynamicResource Brush.Input}" BorderBrush="{DynamicResource Brush.InputBorder}" BorderThickness="1">
             <Grid ColumnDefinitions="Auto,*,Auto">
-              <Path Name="Glass" Theme="{StaticResource IconPath}" Width="14" Height="14" Margin="15,0,0,0" Data="{StaticResource Icon.Search}"
+              <Path Name="Glass" Theme="{StaticResource IconPath}" Width="14" Height="14" Margin="13,0,0,0" Data="{StaticResource Icon.Search}"
                     Stroke="{DynamicResource Brush.TextTertiary}" IsHitTestVisible="False" />
               <TextBox Name="PART_TextBox" Grid.Column="1" Theme="{StaticResource TextBox.Bare}" Margin="9,0,4,0"
                        Text="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
                        AutomationProperties.Name="{TemplateBinding Placeholder}" />
               <TextBlock Name="Placeholder" Grid.Column="1" Margin="9,0,4,0" VerticalAlignment="Center" IsHitTestVisible="False"
                          Text="{TemplateBinding Placeholder}" Foreground="{DynamicResource Brush.TextTertiary}" TextTrimming="CharacterEllipsis" />
-              <Button Name="ClearButton" Grid.Column="2" Theme="{StaticResource Button.Icon}" Width="26" Height="26" Margin="0,0,7,0" IsVisible="False"
+              <Button Name="ClearButton" Grid.Column="2" Theme="{StaticResource Button.Icon}" Width="26" Height="26" Margin="0,0,5,0" IsVisible="False"
                       Command="{Binding ClearCommand, RelativeSource={RelativeSource TemplatedParent}}" ToolTip.Tip="Clear" AutomationProperties.Name="Clear search">
                 <Path Theme="{StaticResource IconPath}" Width="10" Height="10" Data="{StaticResource Icon.Close}" />
               </Button>
@@ -794,7 +766,7 @@
     <Setter Property="Template">
       <ControlTemplate>
         <c:SquircleBorder Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
-                          CornerRadius="12" Padding="{TemplateBinding Padding}">
+                          CornerRadius="10" Padding="{TemplateBinding Padding}">
           <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}">
             <ContentPresenter.Styles>
               <Style Selector="TextBlock">
@@ -836,7 +808,7 @@
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="Template">
       <ControlTemplate>
-        <Border Name="Root" Background="Transparent" CornerRadius="10" Padding="{TemplateBinding Padding}" Margin="4,1">
+        <Border Name="Root" Background="Transparent" CornerRadius="6" Padding="{TemplateBinding Padding}" Margin="4,1">
           <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
         </Border>
       </ControlTemplate>
@@ -860,11 +832,11 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Panel>
-          <c:SquircleBorder Name="Root" Background="{DynamicResource Brush.Pill}" BorderBrush="{DynamicResource Brush.PillBorder}" BorderThickness="1" CornerRadius="99" Smoothing="0">
+          <c:SquircleBorder Name="Root" Background="{DynamicResource Brush.Input}" BorderBrush="{DynamicResource Brush.InputBorder}" BorderThickness="1" CornerRadius="10">
             <Path Data="M0,0 L4,4 8,0" Stroke="{DynamicResource Brush.TextSecondary}" StrokeThickness="1.5"
                   StrokeLineCap="Round" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0" />
           </c:SquircleBorder>
-          <ContentControl Name="ContentSite" IsHitTestVisible="False" Margin="14,0,32,0" VerticalAlignment="Center" HorizontalAlignment="Left"
+          <ContentControl Name="ContentSite" IsHitTestVisible="False" Margin="12,0,32,0" VerticalAlignment="Center" HorizontalAlignment="Left"
                           Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding ItemTemplate}" />
           <Popup Name="PART_Popup" WindowManagerAddShadowHint="False" IsOpen="{TemplateBinding IsDropDownOpen, Mode=TwoWay}"
                  MinWidth="{Binding Bounds.Width, RelativeSource={RelativeSource TemplatedParent}}" MaxHeight="{TemplateBinding MaxDropDownHeight}"
@@ -900,7 +872,7 @@
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="Template">
       <ControlTemplate>
-        <c:SquircleBorder Name="Root" Background="Transparent" CornerRadius="99" Smoothing="0" Padding="12,5" Margin="1">
+        <c:SquircleBorder Name="Root" Background="Transparent" CornerRadius="8" Padding="11,5" Margin="1">
           <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </c:SquircleBorder>
       </ControlTemplate>
@@ -909,7 +881,7 @@
       <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
     </Style>
     <Style Selector="^:selected /template/ c|SquircleBorder#Root">
-      <Setter Property="Background" Value="{DynamicResource Brush.PillHover}" />
+      <Setter Property="Background" Value="{DynamicResource Brush.Card}" />
     </Style>
     <Style Selector="^:selected">
       <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
@@ -919,7 +891,7 @@
   <ControlTheme x:Key="Segmented" TargetType="ListBox">
     <!-- A choice in a row of options: selecting one must never scroll the page to it. -->
     <Setter Property="AutoScrollToSelectedItem" Value="False" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Pill}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="ItemContainerTheme" Value="{StaticResource SegmentItem}" />
     <Setter Property="SelectionMode" Value="Single,AlwaysSelected" />
@@ -930,7 +902,7 @@
     </Setter>
     <Setter Property="Template">
       <ControlTemplate>
-        <c:SquircleBorder Background="{TemplateBinding Background}" BorderBrush="{DynamicResource Brush.PillBorder}" BorderThickness="1" CornerRadius="99" Smoothing="0" Padding="2">
+        <c:SquircleBorder Background="{TemplateBinding Background}" CornerRadius="11" Padding="2">
           <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" />
         </c:SquircleBorder>
       </ControlTemplate>
@@ -940,19 +912,21 @@
   <!-- ================================================================================= -->
   <!-- Navigation (ListBox)                                                               -->
   <!-- ================================================================================= -->
-  <!-- The current page is a solid pill of the accent with white text (1.9.0); the others light up faintly under the pointer. -->
   <ControlTheme x:Key="NavItem" TargetType="ListBoxItem">
     <Setter Property="Foreground" Value="{DynamicResource Brush.TextSecondary}" />
     <Setter Property="FontSize" Value="13.5" />
-    <Setter Property="FontWeight" Value="Medium" />
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="Margin" Value="0,1" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="Template">
       <ControlTemplate>
-        <c:SquircleBorder Name="Root" Background="Transparent" CornerRadius="99" Smoothing="0" Height="36">
-          <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" VerticalAlignment="Center" />
-        </c:SquircleBorder>
+        <Panel>
+          <c:SquircleBorder Name="Root" Background="Transparent" CornerRadius="11" Height="38">
+            <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" VerticalAlignment="Center" />
+          </c:SquircleBorder>
+          <Border Name="Indicator" Width="3" Height="16" CornerRadius="1.5" HorizontalAlignment="Left"
+                  Background="{DynamicResource Brush.Accent}" Opacity="0" />
+        </Panel>
       </ControlTemplate>
     </Setter>
     <Style Selector="^:pointerover /template/ c|SquircleBorder#Root">
@@ -962,10 +936,13 @@
       <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
     </Style>
     <Style Selector="^:selected /template/ c|SquircleBorder#Root">
-      <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
+      <Setter Property="Background" Value="{DynamicResource Brush.NavSelected}" />
+    </Style>
+    <Style Selector="^:selected /template/ Border#Indicator">
+      <Setter Property="Opacity" Value="1" />
     </Style>
     <Style Selector="^:selected">
-      <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
     </Style>
     <Style Selector="^:disabled">
       <Setter Property="IsVisible" Value="False" />
