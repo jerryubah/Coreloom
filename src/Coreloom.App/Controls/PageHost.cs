@@ -60,6 +60,7 @@ public sealed class PageHost : ContentControl
 
         if (host.Content is FrameworkElement leaving && !Motion.ReducedMotion && host.IsVisible && leaving.Opacity > 0)
         {
+            host.ViewFor(page); // built now, while the old page is still up, so the swap itself is quick
             host._pending = page;
             host.Leave(leaving);
             return;
@@ -97,23 +98,25 @@ public sealed class PageHost : ContentControl
         view.BeginAnimation(UIElement.OpacityProperty, fade);
     }
 
-    private void Show(object page)
+    /// <summary>The view kept for a page, made from its template the first time (null when there is no template).</summary>
+    private FrameworkElement? ViewFor(object page)
     {
         if (!_views.TryGetValue(page, out var view))
         {
             view = CreateView(page);
             if (view is null)
             {
-                Content = page; // no template: let the ContentControl show whatever it can
-                return;
+                return null;
             }
 
             view.DataContext = page;
             _views[page] = view;
         }
 
-        Content = view;
+        return view;
     }
+
+    private void Show(object page) => Content = ViewFor(page) ?? page; // no template: let the ContentControl show whatever it can
 
     private FrameworkElement? CreateView(object page)
     {

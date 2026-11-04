@@ -509,6 +509,7 @@ public sealed class PageHost : ContentControl
 
         if (Content is Control leaving && !Behaviors.Motion.ReducedMotion && IsEffectivelyVisible)
         {
+            Build(page); // built now, while the old page is still up, so the swap itself is quick
             _pending = page;
             Leave(leaving);
             return;
@@ -545,7 +546,8 @@ public sealed class PageHost : ContentControl
         });
     }
 
-    private void Show(object page)
+    /// <summary>The view kept for a page, made from its template the first time (null when there is no template).</summary>
+    private Control? Build(object page)
     {
         if (!_views.TryGetValue(page, out var view))
         {
@@ -553,14 +555,15 @@ public sealed class PageHost : ContentControl
             view = template?.Build(page);
             if (view is null)
             {
-                Content = page;
-                return;
+                return null;
             }
 
             view.DataContext = page;
             _views[page] = view;
         }
 
-        Content = view;
+        return view;
     }
+
+    private void Show(object page) => Content = Build(page) ?? page;
 }

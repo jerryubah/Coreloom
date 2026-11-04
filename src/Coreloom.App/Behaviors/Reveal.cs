@@ -216,14 +216,16 @@ public static class TypeIn
         var measured = new FormattedText(text, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, typeface, block.FontSize, Brushes.Black, pixelsPerDip);
         block.MinWidth = Math.Ceiling(measured.WidthIncludingTrailingWhitespace) + 2;
 
-        int shown = 1;
+        // The letters come by the clock, not by the tick: when the page being built keeps the timer waiting, the title
+        // catches up at once instead of arriving late one letter at a time.
         double perLetter = Math.Clamp(240.0 / text.Length, 12, 36);
+        var started = System.Diagnostics.Stopwatch.StartNew();
         var timer = new DispatcherTimer(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(perLetter) };
         block.SetValue(TimerProperty, timer);
-        block.Text = text[..shown];
+        block.Text = text[..1];
         timer.Tick += (_, _) =>
         {
-            shown++;
+            int shown = 1 + (int)(started.Elapsed.TotalMilliseconds / perLetter);
             if (shown >= text.Length)
             {
                 timer.Stop();
