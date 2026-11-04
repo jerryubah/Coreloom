@@ -25,7 +25,8 @@ public enum UpdateCheckFrequency
 /// fields take defaults, so files from older/newer versions load safely.</summary>
 public sealed class AppSettings
 {
-    public const int CurrentSchemaVersion = 1;
+    /// <summary>2 since 1.9.0: the look's new defaults (the Orbs background, the deeper blue) replace the old ones once.</summary>
+    public const int CurrentSchemaVersion = 2;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
 
@@ -59,6 +60,7 @@ public sealed class AppSettings
     /// <summary>Repairs out-of-range or missing values. Returns the same instance for chaining.</summary>
     public AppSettings Normalize()
     {
+        int loaded = SchemaVersion;
         SchemaVersion = CurrentSchemaVersion;
         Appearance ??= new AppearanceSettings();
         Monitoring ??= new MonitoringSettings();
@@ -86,6 +88,20 @@ public sealed class AppSettings
 
         Appearance.Backdrop ??= new BackdropSettings();
         Appearance.Backdrop.Normalize();
+        if (loaded < 2)
+        {
+            // Settings saved before 1.9.0: whoever kept the old defaults gets the new look's defaults (a choice made on
+            // purpose, another gradient or accent, is kept).
+            if (Appearance.Backdrop.Kind == BackdropKind.Gradient && Appearance.Backdrop.Gradient == Coreloom.Core.Appearance.BackdropPresets.PreviousDefaultGradient)
+            {
+                Appearance.Backdrop.Gradient = Coreloom.Core.Appearance.BackdropPresets.DefaultGradient;
+            }
+
+            if (string.Equals(Appearance.Accent, AccentPalette.PreviousDefault, StringComparison.OrdinalIgnoreCase))
+            {
+                Appearance.Accent = AccentPalette.Default;
+            }
+        }
 
         Monitoring.PollingIntervalMs = Math.Clamp(Monitoring.PollingIntervalMs, (int)TelemetryEngine.MinimumInterval.TotalMilliseconds, (int)TelemetryEngine.MaximumInterval.TotalMilliseconds);
         Monitoring.GamingIntervalMs = AdaptiveMonitoring.NormalizeGamingInterval(Monitoring.GamingIntervalMs);
@@ -431,11 +447,15 @@ public sealed class WindowPlacement
 /// <summary>Accent colors offered in Settings (any valid #RRGGBB is accepted).</summary>
 public static class AccentPalette
 {
-    public const string Default = "#5B8CFF";
+    /// <summary>The deeper blue of the 1.9.0 look (it was the lighter #5B8CFF before).</summary>
+    public const string Default = "#2E7CF6";
+
+    public const string PreviousDefault = "#5B8CFF";
 
     public static IReadOnlyList<(string Name, string Hex)> Presets { get; } =
     [
-        ("Blue", "#5B8CFF"),
+        ("Blue", Default),
+        ("Sky", PreviousDefault),
         ("Green", "#45D6A0"),
         ("Orange", "#FFB454"),
         ("Purple", "#AA86FF"),

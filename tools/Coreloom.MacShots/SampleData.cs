@@ -131,6 +131,7 @@ internal sealed class SampleData
 
         return new ShellViewModel(new ShellDependencies
         {
+            Account = new Coreloom.ViewModels.Infrastructure.AccountInfo("jerry", "Jerry’s MacBook Pro", "Jerry Ubah"),
             Connect = new ConnectEnvironment
             {
                 DataDirectory = connectFolder,

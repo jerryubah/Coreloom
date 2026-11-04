@@ -47,6 +47,9 @@ public sealed class ShellDependencies
 
     /// <summary>Coreloom Connect (phones on the local network); null leaves it out (tests, tools).</summary>
     public Connect.ConnectEnvironment? Connect { get; init; }
+
+    /// <summary>Who's signed in and the machine's name; Environment's when not given.</summary>
+    public AccountInfo? Account { get; init; }
 }
 
 /// <summary>
@@ -64,6 +67,7 @@ public sealed class ShellViewModel : ObservableObject
     private bool _coveredByGame;
     private bool _pageActive = true;
     private bool _bannerDismissed;
+    private string _jumpSearch = string.Empty;
     private bool _bannerTiming;
     private readonly Dismissal _bannerDismissal = new();
     private string? _toastTitle;
@@ -122,10 +126,11 @@ public sealed class ShellViewModel : ObservableObject
             Navigate(Settings);
         };
 
-        // Drivers and Applications (1.8.6) read and change Windows' own lists, so they're Windows-only pages.
+        // The sidebar's order since 1.9.0 is by group: what you watch (Monitor), what you play (Play) and what you look
+        // after (Maintain). Drivers and Applications (1.8.6) read and change Windows' own lists, so they're Windows-only.
         Pages = context.IsMac
-            ? [Overview, Gaming, Benchmarking, Gpu, Cpu, Memory, Storage, Devices, Network, Optimize, History]
-            : [Overview, Gaming, Benchmarking, Gpu, Cpu, Memory, Storage, Devices, Drivers, Network, Applications, Optimize, History];
+            ? [Overview, Gpu, Cpu, Memory, Storage, Network, History, Gaming, Benchmarking, Devices, Optimize]
+            : [Overview, Gpu, Cpu, Memory, Storage, Network, History, Gaming, Benchmarking, Devices, Drivers, Applications, Optimize];
         _currentPage = Overview;
         NavigateCommand = new RelayCommand<PageViewModel>(page =>
         {
@@ -152,6 +157,10 @@ public sealed class ShellViewModel : ObservableObject
             DismissBannerLater();
         });
         DismissToastCommand = new RelayCommand(HideToast);
+        JumpCommand = new RelayCommand<SearchSuggestion>(JumpTo);
+        ToggleDarkModeCommand = new RelayCommand(() => IsDarkMode = !IsDarkMode);
+        OpenSettingsCommand = new RelayCommand(() => Navigate(Settings));
+        Account = deps.Account ?? new AccountInfo(Environment.UserName, Environment.MachineName);
         OpenUpdatesCommand = new RelayCommand(() =>
         {
             Settings.SelectedSection = "Updates";
@@ -230,7 +239,13 @@ public sealed class ShellViewModel : ObservableObject
     public PageViewModel CurrentPage
     {
         get => _currentPage;
-        private set => SetProperty(ref _currentPage, value);
+        private set
+        {
+            if (SetProperty(ref _currentPage, value))
+            {
+                OnPropertyChanged(nameof(DateLine));
+            }
+        }
     }
 
     public IRelayCommand<PageViewModel> NavigateCommand { get; }
@@ -298,6 +313,92 @@ public sealed class ShellViewModel : ObservableObject
                 DismissBannerCommand.Execute(null);
             });
         }
+    }
+
+    /// <summary>Who's signed in and which machine this is, for the greeting and the sidebar's chip (since 1.9.0).</summary>
+    public AccountInfo Account { get; }
+
+    /// <summary>"Good morning, Jerry" (afternoon from noon, evening from six; without a name when there isn't one).</summary>
+    public string Greeting => Greetings.For(DateTime.Now.Hour, Account.FirstName);
+
+    /// <summary>"Wednesday, November 4 · Overview": today and the page, under the greeting.</summary>
+    public string DateLine => $"{DateTime.Now.ToString("dddd, MMMM d", System.Globalization.CultureInfo.CurrentCulture)} · {CurrentPage.Title}";
+
+    /// <summary>The sidebar's Dark mode switch: the dark theme on, the light one off (System counts as whatever it shows).</summary>
+    public bool IsDarkMode
+    {
+        get => _deps.Theme.IsDark;
+        set
+        {
+            if (_deps.Theme.IsDark != value)
+            {
+                _deps.Settings.Update("Appearance", s => s.Appearance.Theme = value ? ThemePreference.Dark : ThemePreference.Light);
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public IRelayCommand ToggleDarkModeCommand { get; }
+
+    /// <summary>The sidebar's account chip opens Settings.</summary>
+    public IRelayCommand OpenSettingsCommand { get; }
+
+    /// <summary>The sidebar's search: what's typed, and the pages and settings it matches.</summary>
+    public string JumpSearch
+    {
+        get => _jumpSearch;
+        set
+        {
+            if (SetProperty(ref _jumpSearch, value ?? string.Empty))
+            {
+                OnPropertyChanged(nameof(JumpSuggestions));
+            }
+        }
+    }
+
+    public IReadOnlyList<SearchSuggestion> JumpSuggestions => SearchSuggestions.Rank(
+        JumpTargets(),
+        _jumpSearch,
+        t => t.Title,
+        t => t.Title.Contains(_jumpSearch.Trim(), StringComparison.CurrentCultureIgnoreCase) || t.Detail.Contains(_jumpSearch.Trim(), StringComparison.CurrentCultureIgnoreCase),
+        t => t);
+
+    /// <summary>Opens the page (or the settings section) a search result names, and clears the search.</summary>
+    public IRelayCommand<SearchSuggestion> JumpCommand { get; }
+
+    private IEnumerable<SearchSuggestion> JumpTargets()
+    {
+        foreach (var page in Pages.Where(p => p.IsEnabled))
+        {
+            yield return new SearchSuggestion(page.Title, page.Tagline, page.IconKey);
+        }
+
+        yield return new SearchSuggestion(Settings.Title, Settings.Tagline, Settings.IconKey);
+        foreach (string section in Settings.Sections)
+        {
+            yield return new SearchSuggestion($"Settings › {section}", "A settings section", Settings.IconKey);
+        }
+    }
+
+    private void JumpTo(SearchSuggestion? target)
+    {
+        if (target is null)
+        {
+            return;
+        }
+
+        const string prefix = "Settings › ";
+        if (target.Title.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            Settings.SelectedSection = target.Title[prefix.Length..];
+            Navigate(Settings);
+        }
+        else if (Pages.Append(Settings).FirstOrDefault(p => p.Title == target.Title) is { } page)
+        {
+            Navigate(page);
+        }
+
+        JumpSearch = string.Empty;
     }
 
     public IRelayCommand OpenUpdatesCommand { get; }
@@ -627,6 +728,7 @@ public sealed class ShellViewModel : ObservableObject
             Timeline.SmoothScrolling = s.Appearance.SmoothChartScrolling && !s.Appearance.ReducedMotion;
             Timeline.AnimateValues = s.Appearance.AnimateValues && !s.Appearance.ReducedMotion;
             _deps.Theme.Apply(s.Appearance);
+            OnPropertyChanged(nameof(IsDarkMode));
         }
 
         if (all || section == "Sidebar")

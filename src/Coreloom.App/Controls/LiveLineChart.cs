@@ -325,7 +325,7 @@ public sealed class LiveLineChart : FrameworkElement
 
         using (var dc = _grid.RenderOpen())
         {
-            var gridPen = ChartColors.Pen(gridColor, 1, round: false);
+            var gridPen = ChartColors.DottedPen(gridColor, 1.2);
             double step = AxisScale.NiceStep(_yMax - _yMin, axes ? 4 : 2);
             for (double v = _yMin; v <= _yMax + (step * 0.001); v += step)
             {

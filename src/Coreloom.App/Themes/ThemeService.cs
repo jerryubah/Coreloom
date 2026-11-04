@@ -100,7 +100,7 @@ public sealed class ThemeService : IThemeService
         SetColor("Brush.OnAccent", ThemePalette.ContrastingText(AccentColor), duration);
         SetColor("Brush.AccentTrack", ThemePalette.WithAlpha(AccentColor, (byte)(_isDark ? 0x33 : 0x29)), duration);
         PublishAccentGradients(palette);
-        byte soft = (byte)(_isDark ? 0x26 : 0x1C); // tinted backgrounds for notices and results
+        byte soft = (byte)(_isDark ? 0x2C : 0x1E); // tinted backgrounds for notices, results and status pills
         SetColor("Brush.SuccessSoft", ThemePalette.WithAlpha(palette["Success"], soft), duration);
         SetColor("Brush.InfoSoft", ThemePalette.WithAlpha(palette["Info"], soft), duration);
         SetColor("Brush.ElevatedSoft", ThemePalette.WithAlpha(palette["Elevated"], soft), duration);
@@ -223,9 +223,9 @@ public sealed class ThemeService : IThemeService
     }
 
     /// <summary>
-    /// The glass every card and the sidebar are made of (since 1.8.2): over the frosted background behind it, a faint
-    /// fill (a little of the accent where the light enters, top left), a bevelled rim bright along the top-left and
-    /// bottom-right edges, and two soft lights.
+    /// The glass every card and the sidebar are made of: over the frosted background behind it, a dark, nearly opaque,
+    /// neutral fill (since 1.9.0; it was a faint tint lit by the accent) so what's behind shows only as soft colour, a
+    /// hairline rim a shade lighter than the fill, and two very soft lights.
     /// </summary>
     private void PublishGlass()
     {
@@ -233,24 +233,25 @@ public sealed class ThemeService : IThemeService
         var (_, warm) = AccentNeighbours(accent);
         Color White(byte alpha) => Color.FromArgb(alpha, 255, 255, 255);
         Color Black(byte alpha) => Color.FromArgb(alpha, 0, 0, 0);
+        static Color Ink(byte alpha) => Color.FromArgb(alpha, 0x0B, 0x10, 0x17);
 
         if (_isDark)
         {
-            Publish("Brush.GlassFill", Gradient(new Point(0, 0), new Point(0.8, 1),
-                (ThemePalette.WithAlpha(Blend(accent, Colors.White, 0.35), 0x18), 0), (White(0x0E), 0.3), (White(0x09), 0.75), (White(0x0C), 1)));
-            Publish("Brush.GlassRim", Gradient(new Point(0, 0), new Point(1, 1),
-                (White(0x52), 0), (White(0x18), 0.3), (White(0x0A), 0.62), (White(0x26), 1)));
+            Publish("Brush.GlassFill", Gradient(new Point(0, 0), new Point(0.6, 1),
+                (Ink(0xC4), 0), (Ink(0xCC), 0.5), (Ink(0xD2), 1)));
+            Publish("Brush.GlassRim", Gradient(new Point(0, 0), new Point(0.3, 1),
+                (White(0x22), 0), (White(0x14), 0.4), (White(0x10), 1)));
         }
         else
         {
             Publish("Brush.GlassFill", Gradient(new Point(0, 0), new Point(0.8, 1),
-                (White(0xC8), 0), (White(0xA8), 0.5), (White(0x9A), 1)));
+                (White(0xD4), 0), (White(0xC2), 0.5), (White(0xB8), 1)));
             Publish("Brush.GlassRim", Gradient(new Point(0, 0), new Point(1, 1),
-                (White(0xFF), 0), (White(0x90), 0.35), (Black(0x0E), 0.7), (Black(0x18), 1)));
+                (White(0xFF), 0), (White(0x90), 0.35), (Black(0x10), 0.7), (Black(0x18), 1)));
         }
 
-        Publish("Brush.GlassLightA", Glow(accent, _isDark ? (byte)0x46 : (byte)0x30));
-        Publish("Brush.GlassLightB", Glow(warm, _isDark ? (byte)0x30 : (byte)0x22));
+        Publish("Brush.GlassLightA", Glow(accent, _isDark ? (byte)0x16 : (byte)0x1E));
+        Publish("Brush.GlassLightB", Glow(warm, _isDark ? (byte)0x10 : (byte)0x16));
 
         static RadialGradientBrush Glow(Color color, byte alpha) => new(new GradientStopCollection
         {

@@ -391,6 +391,9 @@ public sealed class DriversViewModel : PageViewModel
 
     public bool HasUpdates => Updates.Count > 0;
 
+    /// <summary>The sidebar's count: updates still to install (none shown once they're all done).</summary>
+    public override string? Badge => PendingCount > 0 ? PendingCount.ToString(System.Globalization.CultureInfo.CurrentCulture) : null;
+
     public int SelectedCount => Updates.Count(u => u.IsSelected && u.CanSelect);
 
     public int PendingCount => Updates.Count(u => !u.IsDone);
@@ -670,6 +673,7 @@ public sealed class DriversViewModel : PageViewModel
         OnPropertyChanged(nameof(SelectAll));
         OnPropertyChanged(nameof(InstallText));
         OnPropertyChanged(nameof(HasUpdates));
+        OnPropertyChanged(nameof(Badge));
         OnPropertyChanged(nameof(PendingCount));
         OnPropertyChanged(nameof(UpdatesCountText));
         InstallSelectedCommand.NotifyCanExecuteChanged();
@@ -730,6 +734,7 @@ public sealed class DriversViewModel : PageViewModel
         OnPropertyChanged(nameof(LastCheckedText));
         OnPropertyChanged(nameof(UpdatesCountText));
         OnPropertyChanged(nameof(HasUpdates));
+        OnPropertyChanged(nameof(Badge));
     }
 
     private void Commands()

@@ -66,13 +66,25 @@ public sealed record BackdropColor(string Id, string Name, string Hex);
 public sealed record BackdropGlow(double X, double Y, double RadiusX, double RadiusY, string Color, double Strength);
 
 /// <summary>
+/// A glossy sphere lying on the background (since 1.9.0): where its centre sits (0–1 across and down), its radius (in
+/// heights) and its color; it is shaded as a ball lit from the top left, sharp in the open and a soft wash of color
+/// behind the glass.
+/// </summary>
+/// <param name="Color">#RRGGBB, or "accent", "accent-cool", "accent-warm".</param>
+public sealed record BackdropOrb(double X, double Y, double Radius, string Color);
+
+/// <summary>
 /// A suggested dark gradient: a base, a linear sweep (<paramref name="Angle"/> in degrees, 0 = left to right, 90 = top
-/// to bottom) and a few soft lights on top.
+/// to bottom), a few soft lights on top and, since 1.9.0, glossy spheres on it (Orbs).
 /// </summary>
 public sealed record BackdropGradient(string Id, string Name, double Angle, string From, string To, IReadOnlyList<BackdropGlow> Glows)
 {
-    /// <summary>Whether its lights follow the accent color.</summary>
-    public bool UsesAccent => Glows.Any(g => g.Color.StartsWith("accent", StringComparison.Ordinal));
+    /// <summary>The spheres lying on it, if any (the default "Orbs" background).</summary>
+    public IReadOnlyList<BackdropOrb> Orbs { get; init; } = [];
+
+    /// <summary>Whether its lights or spheres follow the accent color.</summary>
+    public bool UsesAccent => Glows.Any(g => g.Color.StartsWith("accent", StringComparison.Ordinal))
+        || Orbs.Any(o => o.Color.StartsWith("accent", StringComparison.Ordinal));
 }
 
 /// <summary>A suggested picture (assets/backdrops/<c>Id</c>.jpg and <c>Id</c>-thumb.jpg, drawn by build/backdrops/make-backdrops.py).</summary>
@@ -81,13 +93,17 @@ public sealed record BackdropPicture(string Id, string Name);
 /// <summary>The suggested dark colors, gradients and pictures for the window's background.</summary>
 public static class BackdropPresets
 {
-    public const string DefaultColor = "#0A0B0E";
-    public const string DefaultGradient = "coreloom";
+    public const string DefaultColor = "#070A10";
+    public const string DefaultGradient = "orbs";
+
+    /// <summary>The gradient every version before 1.9.0 started with (its settings are moved to Orbs once).</summary>
+    public const string PreviousDefaultGradient = "coreloom";
     public const string DefaultImage = "silk";
 
     public static IReadOnlyList<BackdropColor> Colors { get; } =
     [
         new("black", "Coreloom black", DefaultColor),
+        new("ink", "Ink", "#0A0B0E"),
         new("midnight", "Midnight", "#0B1020"),
         new("navy", "Navy", "#0A1630"),
         new("plum", "Plum", "#170E22"),
@@ -99,7 +115,24 @@ public static class BackdropPresets
 
     public static IReadOnlyList<BackdropGradient> Gradients { get; } =
     [
-        new(DefaultGradient, "Coreloom", 115, "#0A0D17", "#06070B",
+        // The 1.9.0 look: a near-black canvas with glossy spheres on it (an orange one up by the header, a big cyan one in
+        // the lower right, green and silver ones in the middle, a blue one half under the sidebar); the glass cards turn
+        // them into soft colour.
+        new(DefaultGradient, "Orbs", 100, "#070B12", "#03050A",
+        [
+            new(0.06, 0.72, 0.60, 0.55, "accent", 0.10),
+        ])
+        {
+            Orbs =
+            [
+                new(0.805, 0.02, 0.20, "#F2A23A"),
+                new(0.955, 0.90, 0.27, "#36C4E2"),
+                new(0.105, 0.70, 0.21, "accent"),
+                new(0.525, 0.74, 0.115, "#2DB36B"),
+                new(0.645, 0.53, 0.082, "#C9D1DB"),
+            ],
+        },
+        new(PreviousDefaultGradient, "Coreloom", 115, "#0A0D17", "#06070B",
         [
             new(0.10, -0.05, 0.95, 0.80, "accent", 0.30),
             new(0.98, 1.02, 0.80, 0.70, "accent-warm", 0.22),

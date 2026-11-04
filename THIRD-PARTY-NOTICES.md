@@ -28,14 +28,17 @@ files in a build is determined by NuGet; run `dotnet list package --include-tran
 | Mono.Posix.NETStandard | MIT (Mono project) | https://github.com/mono/mono |
 | System.Management, System.IO.Ports, System.IO.FileSystem.AccessControl | MIT (.NET Foundation) | https://github.com/dotnet/runtime |
 
-## Fonts: Inter and JetBrains Mono
+## Fonts: Outfit, Inter and JetBrains Mono
 
 - License: SIL Open Font License 1.1 (OFL-1.1), https://openfontlicense.org
-- Inter: © 2016 The Inter Project Authors, https://github.com/rsms/inter (Regular, Medium, SemiBold, Bold)
-- JetBrains Mono: © 2020 The JetBrains Mono Project Authors, https://github.com/JetBrains/JetBrainsMono
+- Outfit (the interface since 1.9.0): © 2021 The Outfit Project Authors, https://github.com/Outfitio/Outfit-Fonts
+  (Light, Regular, Medium, SemiBold, Bold; the project's own static files)
+- Inter (the Mac's menu bar readings): © 2016 The Inter Project Authors, https://github.com/rsms/inter
+  (Regular, Medium, SemiBold, Bold)
+- JetBrains Mono (logs and code): © 2020 The JetBrains Mono Project Authors, https://github.com/JetBrains/JetBrainsMono
   (Regular, Medium, SemiBold)
 - The font files are embedded unmodified in `Coreloom.exe`'s assembly resources. Each license text is
-  also installed next to the app as `LICENSE-Inter.txt` and `LICENSE-JetBrainsMono.txt`.
+  also installed next to the app as `LICENSE-Outfit.txt`, `LICENSE-Inter.txt` and `LICENSE-JetBrainsMono.txt`.
 
 ## The phone app (Coreloom Connect): noble cryptography and Inter
 

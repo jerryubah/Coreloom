@@ -9,17 +9,17 @@ internal static class ChartFonts
 {
     private static readonly Uri BaseUri = new("pack://application:,,,/");
 
-    /// <summary>Inter: axis captions and tooltip labels.</summary>
-    public static FontFamily Ui { get; } = new(BaseUri, "./Fonts/#Inter");
+    /// <summary>Outfit (since 1.9.0): axis captions, values and tooltip text; the digits are drawn tabular.</summary>
+    public static FontFamily Ui { get; } = new(BaseUri, "./Fonts/#Outfit");
 
-    /// <summary>JetBrains Mono: numbers (axis values, tooltip readings).</summary>
-    public static FontFamily Mono { get; } = new(BaseUri, "./Fonts/#JetBrains Mono");
+    /// <summary>The same face for numbers (it was JetBrains Mono): one voice on the charts, as on the cards.</summary>
+    public static FontFamily Mono => Ui;
 
     public static Typeface UiRegular { get; } = new(Ui, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
 
-    public static Typeface MonoRegular { get; } = new(Mono, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+    public static Typeface MonoRegular { get; } = new(Ui, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
 
-    public static Typeface MonoSemiBold { get; } = new(Mono, FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
+    public static Typeface MonoSemiBold { get; } = new(Ui, FontStyles.Normal, FontWeights.Medium, FontStretches.Normal);
 }
 
 /// <summary>Resolves theme colors for custom-drawn controls and caches frozen pens/brushes per color.</summary>
@@ -69,6 +69,20 @@ internal static class ChartColors
                 StartLineCap = round ? PenLineCap.Round : PenLineCap.Flat,
                 EndLineCap = round ? PenLineCap.Round : PenLineCap.Flat,
             };
+            pen.Freeze();
+            Pens[key] = pen;
+        }
+
+        return pen;
+    }
+
+    /// <summary>A dotted pen for grid lines (1.9.0): round dots a few points apart.</summary>
+    public static Pen DottedPen(Color color, double thickness)
+    {
+        var key = (Pack(color) ^ 0x80000000u, thickness + 1000);
+        if (!Pens.TryGetValue(key, out var pen))
+        {
+            pen = new Pen(Solid(color), thickness) { DashStyle = new DashStyle([0.01, 3.2], 0), DashCap = PenLineCap.Round };
             pen.Freeze();
             Pens[key] = pen;
         }

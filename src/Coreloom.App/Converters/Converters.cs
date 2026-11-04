@@ -33,6 +33,14 @@ public sealed class InverseBoolConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => !(value is bool b && b);
 }
 
+/// <summary>"Monitor" → "MONITOR" (the sidebar's group labels).</summary>
+public sealed class UpperCaseConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) => value?.ToString()?.ToUpper(culture) ?? string.Empty;
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
 /// <summary>Non-null / non-empty string / non-empty collection → Visible ("Invert" to invert).</summary>
 public sealed class HasValueToVisibilityConverter : IValueConverter
 {

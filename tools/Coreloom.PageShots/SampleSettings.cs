@@ -70,6 +70,7 @@ internal static class SampleSettings
         var app = new AppVersionInfo(SemanticVersion.Parse("1.8.0"), "1.8.0", "jerryubah/Coreloom", null);
         return new ShellViewModel(new ShellDependencies
         {
+            Account = new Coreloom.ViewModels.Infrastructure.AccountInfo("jerry", "JERRY-PC", "Jerry Ubah"),
             Monitor = data.Monitor,
             Settings = data.Settings,
             Alerts = new Coreloom.Core.Alerts.AlertEngine(TimeSpan.FromMinutes(10)),

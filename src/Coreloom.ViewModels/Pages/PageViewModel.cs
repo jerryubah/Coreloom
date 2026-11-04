@@ -58,6 +58,17 @@ public abstract partial class PageViewModel : ObservableObject
     /// <summary>A red dot on the page's icon in the sidebar (Settings: a new version of Coreloom is available).</summary>
     public virtual bool HasNotice => false;
 
+    /// <summary>
+    /// A small count beside the page's name in the sidebar (Drivers: updates found), or null for none (since 1.9.0).
+    /// </summary>
+    public virtual string? Badge => null;
+
+    /// <summary>The sidebar's group the page sits under (since 1.9.0): "Monitor", "Play" or "Maintain".</summary>
+    public string Group => PageGroups.Of(Key);
+
+    /// <summary>A sentence under the page's name in the header: what the page is for (since 1.9.0).</summary>
+    public virtual string Tagline => PageGroups.Tagline(Key);
+
     public TimelineViewModel Timeline => Context.Timeline;
 
     protected PageContext Context { get; }
@@ -214,4 +225,40 @@ public sealed class PageContext
 
     /// <summary>Opens Settings › Logs filtered to a category and search (set by the shell; null in tests).</summary>
     public Action<string?, string?>? OpenLogs { get; set; }
+}
+
+/// <summary>How the sidebar groups the pages (since 1.9.0), and a line about each.</summary>
+public static class PageGroups
+{
+    public const string Monitor = "Monitor";
+    public const string Play = "Play";
+    public const string Maintain = "Maintain";
+
+    public static IReadOnlyList<string> Order { get; } = [Monitor, Play, Maintain];
+
+    public static string Of(string key) => key switch
+    {
+        "gaming" or "benchmarking" => Play,
+        "devices" or "drivers" or "applications" or "optimize" => Maintain,
+        _ => Monitor,
+    };
+
+    public static string Tagline(string key) => key switch
+    {
+        "overview" => "The whole machine at a glance.",
+        "gpu" => "The graphics card, clock by clock.",
+        "cpu" => "Every core, its load, clock and heat.",
+        "memory" => "What's using the memory, and how fast it is.",
+        "storage" => "Every drive: space, health and speed.",
+        "network" => "What's moving over the wire and the air.",
+        "history" => "How the machine behaved over the hours.",
+        "gaming" => "Your games, ready to play at their best.",
+        "benchmarking" => "Scores and stability, measured here.",
+        "devices" => "Everything plugged in or paired.",
+        "drivers" => "Every driver, and the updates for them.",
+        "applications" => "Every installed app and what it costs.",
+        "optimize" => "A lighter, faster machine on your terms.",
+        "settings" => "How Coreloom looks and behaves.",
+        _ => string.Empty,
+    };
 }

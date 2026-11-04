@@ -127,29 +127,7 @@ public static class Motion
 
     private static void OnLoaded(object sender, RoutedEventArgs e)
     {
-        var element = (FrameworkElement)sender;
-        if (ReducedMotion)
-        {
-            return;
-        }
-
-        if (element.RenderTransform is not System.Windows.Media.TranslateTransform translate || translate.IsFrozen)
-        {
-            translate = new System.Windows.Media.TranslateTransform(0, 8);
-            element.RenderTransform = translate;
-        }
-
-        element.Opacity = 0;
-        var duration = TimeSpan.FromMilliseconds(240);
-        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
-        var fade = new DoubleAnimation(0, 1, duration) { EasingFunction = ease };
-        var rise = new DoubleAnimation(8, 0, duration) { EasingFunction = ease };
-        fade.Completed += (_, _) =>
-        {
-            element.BeginAnimation(UIElement.OpacityProperty, null);
-            element.Opacity = 1;
-        };
-        element.BeginAnimation(UIElement.OpacityProperty, fade);
-        translate.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, rise);
+        // Since 1.9.0 the panel clears from a blur as its cards rise into place one after another (Stagger).
+        Stagger.Play((FrameworkElement)sender);
     }
 }

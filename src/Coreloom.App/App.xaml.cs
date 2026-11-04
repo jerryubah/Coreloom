@@ -277,6 +277,7 @@ public partial class App : Application
         var frameRates = _frameRates = new Overlay.EtwFrameRateSource();
         var shell = new ShellViewModel(new ShellDependencies
         {
+            Account = Interop.UserAccount.Current(),
             Monitor = monitor,
             Settings = settingsService,
             Alerts = alerts,
