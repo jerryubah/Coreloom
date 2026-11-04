@@ -1034,13 +1034,27 @@ Main's CI for the release commit (run 41905442232) failed once in the Windows jo
 
 | What | How | Result |
 |---|---|---|
-| Tests | Core (`CoreSchedulingTests`: a plan that stops core parking is Good since CPU cache optimization handles it, Power saver a note; `ConnectTests` back to the phone's Inter font), view models (`Release191ViewModelTests`: the core scheduling checks are green, blue, yellow or red by what they mean, nothing grey; `CoreSchedulingViewModelTests`: the power plan green with Ultimate Performance) and every earlier test with the 1.8.6 pages back | ✅ in the container (Core 770, view models 223) and on GitHub (CI run 41915751637 on the release branch: Windows Core 770, view models 223, Hardware 85; Linux; macOS 188 on Intel, 187 + 1 skipped on Apple silicon) |
+| Tests | Core (`CoreSchedulingTests`: a plan that stops core parking is Good since CPU cache optimization handles it, Power saver a note; `ConnectTests` back to the phone's Inter font), view models (`Release191ViewModelTests`: the core scheduling checks are green, blue, yellow or red by what they mean, nothing grey; `CoreSchedulingViewModelTests`: the power plan green with Ultimate Performance) and every earlier test with the 1.8.6 pages back | ✅ in the container (Core 770, view models 223) and on GitHub (CI run 41915751637 on the release branch: Windows Core 770, view models 223, Hardware 84 + 1 skipped timer test; Linux; macOS 188 on Intel, 187 + 1 skipped on Apple silicon) |
 | The look on Windows | Page shots run 41914291619 (`shots-191`): every page and the whole window in Inter and JetBrains Mono, the 1.8.6 corners on buttons, badges, tags, the range picker and the search box, the sidebar's bar with its accent line, the tick-ring gauges with their gradient; the core scheduling details with the power plan line in green; the splash with its wordmark in Inter; the clip check 0 cut off | ✅ |
 | The look on the Mac | MacShots of every page and dialog with 0 binding errors; Mac verify run 41914294664 (`macverify-191`) on Apple silicon and Intel, Connect serving the phone app with its Inter font again | ✅ |
 | The phone app | Playwright at iPhone size against the demo (its 1.8.6 type and tick rings, the desktop's deeper blue); `connect.js` in Node: 16 of 16; the mockups checked pixel by pixel for the orange edge: none | ✅ |
 | Website | Playwright as a Mac, a Windows and a phone-sized visitor at four widths: *New in 1.9.1* and the badge, nothing cut off, every section with room, the swatches, no overflow or errors; every picture on the site and in the README redrawn, the link preview and the disk image's background in Inter again | ✅ |
 
-UPDATE_191
+### Updating to 1.9.1 on a Mac
+
+| Run | Result |
+|---|---|
+| 0.9.0 (built from 1.9.1's code) and the published 1.9.0 → the published 1.9.1, run 41920183025 (`macupdatetest-191`) | ✅ Apple silicon and Intel, all four the first time: found and verified in 24–31 s, replaced after quitting, 1.9.1 started with `--updated` |
+
+### The release, and the Intel Mac's readings-window check
+
+The release commit's run on the release branch (41917155788) failed on the Intel Mac in *Package and open the app*: the
+annotation added in 1.8.6 said *the readings window wasn't shown*. The same commit passed on main (CI 41917158584) and in
+the Release build (41917158717), so the published apps aren't affected. The check gave the app a fixed 10 s after
+opening; it now waits for the log line for up to 40 s (and the background check waits for its line too), and a failure
+says what the log had about the overlay. Mac verify run 41920285149 with the change passed on both Macs (readings window
+shown, Aurora drawn in 159 ms on Apple silicon and 429 ms on Intel). The same fixed wait is the likeliest cause of the
+Intel failures seen in 1.8.6, whose reason couldn't be read then.
 
 ### Not verified yet
 
