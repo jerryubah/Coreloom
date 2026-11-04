@@ -285,7 +285,7 @@
                     <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Success}" VerticalAlignment="Center" />
                     <TextBlock Text="Connected" Theme="{StaticResource Text.Label}" Margin="7,0,0,0" />
                   </StackPanel>
-                  <TextBlock Text="{Binding ConnectedCount}" FontFamily="{StaticResource MonoFont}" FontSize="26" FontWeight="SemiBold" Margin="0,6,0,0" Foreground="{DynamicResource Brush.Text}" />
+                  <TextBlock Text="{Binding ConnectedCount}" FontFamily="{StaticResource MonoFont}" FontSize="26" FontWeight="Light" Margin="0,6,0,0" Foreground="{DynamicResource Brush.Text}" />
                   <TextBlock Text="Bluetooth" Theme="{StaticResource Text.Caption}" />
                 </StackPanel>
               </c:SquircleBorder>
@@ -295,7 +295,7 @@
                     <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Info}" VerticalAlignment="Center" />
                     <TextBlock Text="Paired" Theme="{StaticResource Text.Label}" Margin="7,0,0,0" />
                   </StackPanel>
-                  <TextBlock Text="{Binding PairedCount}" FontFamily="{StaticResource MonoFont}" FontSize="26" FontWeight="SemiBold" Margin="0,6,0,0" Foreground="{DynamicResource Brush.Text}" />
+                  <TextBlock Text="{Binding PairedCount}" FontFamily="{StaticResource MonoFont}" FontSize="26" FontWeight="Light" Margin="0,6,0,0" Foreground="{DynamicResource Brush.Text}" />
                   <TextBlock Text="Bluetooth" Theme="{StaticResource Text.Caption}" />
                 </StackPanel>
               </c:SquircleBorder>
@@ -305,7 +305,7 @@
                     <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Accent}" VerticalAlignment="Center" />
                     <TextBlock Text="Plugged in" Theme="{StaticResource Text.Label}" Margin="7,0,0,0" />
                   </StackPanel>
-                  <TextBlock Text="{Binding WiredCount}" FontFamily="{StaticResource MonoFont}" FontSize="26" FontWeight="SemiBold" Margin="0,6,0,0" Foreground="{DynamicResource Brush.Text}" />
+                  <TextBlock Text="{Binding WiredCount}" FontFamily="{StaticResource MonoFont}" FontSize="26" FontWeight="Light" Margin="0,6,0,0" Foreground="{DynamicResource Brush.Text}" />
                   <TextBlock Text="USB and displays" Theme="{StaticResource Text.Caption}" />
                 </StackPanel>
               </c:SquircleBorder>

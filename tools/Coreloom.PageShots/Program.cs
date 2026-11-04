@@ -69,6 +69,16 @@ internal static class Program
             File.WriteAllText(Path.Combine(output, "windows-overview-error.txt"), e.ToString());
         }
 
+        try
+        {
+            await ShootSplashAsync(output);
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine($"The splash shot failed: {e}");
+            File.WriteAllText(Path.Combine(output, "splash-error.txt"), e.ToString());
+        }
+
         var data = new SampleData();
 
         var (settings, connect) = SampleSettings.Create(data);
@@ -277,6 +287,38 @@ internal static class Program
     /// The whole window at twice its size, for the website's pictures of Coreloom on Windows: the Overview dark and light
     /// (windows-overview.png, windows-overview-light.png), Gaming and Smart Optimize.
     /// </summary>
+    /// <summary>The startup splash (1.9.0's look), a second into its entrance and with its bar part way.</summary>
+    private static async Task ShootSplashAsync(string output)
+    {
+        var splash = new SplashWindow(reducedMotion: true, status: "Reading your hardware", darkIcon: true)
+        {
+            WindowStartupLocation = WindowStartupLocation.Manual,
+            Left = -3000,
+            Top = 0,
+        };
+        splash.Show();
+        splash.ShowProgress(0.62);
+        for (int i = 0; i < 10; i++)
+        {
+            await Task.Delay(100);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        }
+
+        var root = (FrameworkElement)splash.Content;
+        root.UpdateLayout();
+        const double dpi = 192;
+        var bitmap = new RenderTargetBitmap((int)Math.Ceiling(root.ActualWidth * dpi / 96), (int)Math.Ceiling(root.ActualHeight * dpi / 96), dpi, dpi, PixelFormats.Pbgra32);
+        bitmap.Render(root);
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using (var stream = File.Create(Path.Combine(output, "windows-splash.png")))
+        {
+            encoder.Save(stream);
+        }
+
+        splash.Close();
+    }
+
     private static async Task ShootWindowAsync(string output)
     {
         var data = new SampleData(sampleClock: true);

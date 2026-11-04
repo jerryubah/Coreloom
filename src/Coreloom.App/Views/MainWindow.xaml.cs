@@ -255,6 +255,11 @@ public partial class MainWindow : Window
 
     private void SyncNavigationSelection()
     {
+        if (NavList is null || SettingsNav is null)
+        {
+            return; // still loading the window
+        }
+
         _syncingNavigation = true;
         try
         {
@@ -270,7 +275,7 @@ public partial class MainWindow : Window
 
     private void OnNavigationSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_syncingNavigation)
+        if (_syncingNavigation || _shell is null)
         {
             return;
         }

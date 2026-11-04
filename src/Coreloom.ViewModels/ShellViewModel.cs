@@ -236,6 +236,13 @@ public sealed class ShellViewModel : ObservableObject
     /// <summary>Navigation pages (Settings is shown separately at the bottom of the sidebar).</summary>
     public ObservableCollection<PageViewModel> Pages { get; }
 
+    /// <summary>The sidebar's groups (1.9.0): what you watch, what you play, what you look after.</summary>
+    public IReadOnlyList<PageViewModel> MonitorPages => Pages.Where(p => p.Group == PageGroups.Monitor).ToList();
+
+    public IReadOnlyList<PageViewModel> PlayPages => Pages.Where(p => p.Group == PageGroups.Play).ToList();
+
+    public IReadOnlyList<PageViewModel> MaintainPages => Pages.Where(p => p.Group == PageGroups.Maintain).ToList();
+
     public PageViewModel CurrentPage
     {
         get => _currentPage;

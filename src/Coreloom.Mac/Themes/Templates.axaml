@@ -29,7 +29,7 @@
           </Border>
         </Grid>
         <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="18" FontWeight="SemiBold"
+          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="18" FontWeight="Light"
                      b:AnimatedText.Formatter="{Binding NumberFormatter}" b:AnimatedText.Value="{Binding Value}">
             <TextBlock.Foreground>
               <MultiBinding Converter="{StaticResource LevelToBrush}" ConverterParameter="Text">
@@ -416,7 +416,7 @@
                    Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" b:Pulse.IsPulsing="{Binding IsActive}" IsVisible="{Binding IsActive}" />
         </Grid>
         <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}"
+          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="22" FontWeight="Light" Foreground="{DynamicResource Brush.Text}"
                      b:AnimatedText.Formatter="{Binding NumberFormatter}" b:AnimatedText.Value="{Binding Value}" />
           <TextBlock Theme="{StaticResource Text.Unit}" Text="{Binding Unit}" VerticalAlignment="Bottom" Margin="5,0,0,3" />
         </StackPanel>
@@ -451,7 +451,7 @@
     <StackPanel>
       <Grid>
         <StackPanel Orientation="Horizontal">
-          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}"
+          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="16" FontWeight="Light" Foreground="{DynamicResource Brush.Text}"
                      b:AnimatedText.Formatter="{Binding NumberFormatter}" b:AnimatedText.Value="{Binding Value}" />
           <TextBlock Theme="{StaticResource Text.Unit}" Text="{Binding Unit}" VerticalAlignment="Bottom" Margin="4,0,0,1" />
         </StackPanel>

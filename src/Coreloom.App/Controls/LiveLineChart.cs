@@ -69,7 +69,11 @@ public sealed class LiveLineChart : FrameworkElement
         _plotHost.Clip = _clip;
         ClipToBounds = true;
         Focusable = false;
-        Loaded += (_, _) => Attach();
+        Loaded += (_, _) =>
+        {
+            Attach();
+            DrawIn();
+        };
         Unloaded += (_, _) => Detach();
         IsVisibleChanged += (_, _) =>
         {
@@ -166,6 +170,57 @@ public sealed class LiveLineChart : FrameworkElement
     }
 
     private static void OnAppearanceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((LiveLineChart)d).Render();
+
+    /// <summary>
+    /// The line draws itself in from the left when the chart appears (1.9.0): a clip over the plot widens over most of a
+    /// second, then comes off. Nothing with reduced motion.
+    /// </summary>
+    private void DrawIn()
+    {
+        if (Behaviors.Motion.ReducedMotion || !IsVisible)
+        {
+            return;
+        }
+
+        void Start()
+        {
+            double width = ActualWidth, height = ActualHeight;
+            if (width <= 0 || height <= 0)
+            {
+                return;
+            }
+
+            var reveal = new RectangleGeometry(new Rect(0, 0, 0, height));
+            Clip = reveal;
+            var sweep = new RectAnimation(new Rect(0, 0, 0, height), new Rect(0, 0, width + 4, height), TimeSpan.FromMilliseconds(850))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+            };
+            sweep.Completed += (_, _) =>
+            {
+                if (ReferenceEquals(Clip, reveal))
+                {
+                    Clip = null;
+                }
+            };
+            reveal.BeginAnimation(RectangleGeometry.RectProperty, sweep);
+        }
+
+        if (ActualWidth > 0)
+        {
+            Start();
+        }
+        else
+        {
+            void OnSized(object sender, SizeChangedEventArgs e)
+            {
+                SizeChanged -= OnSized;
+                Start();
+            }
+
+            SizeChanged += OnSized;
+        }
+    }
 
     private void Attach()
     {

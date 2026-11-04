@@ -38,7 +38,7 @@
           </Border>
         </Grid>
         <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="18" FontWeight="SemiBold"
+          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="18" FontWeight="Light"
                      b:AnimatedText.Formatter="{Binding NumberFormatter}"
                      b:AnimatedText.Value="{Binding Value}">
             <TextBlock.Foreground>
@@ -664,7 +664,7 @@
                    b:Pulse.IsPulsing="{Binding IsActive}" Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}" />
         </Grid>
         <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}"
+          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="22" FontWeight="Light" Foreground="{DynamicResource Brush.Text}"
                      b:AnimatedText.Formatter="{Binding NumberFormatter}" b:AnimatedText.Value="{Binding Value}" />
           <TextBlock Style="{StaticResource Text.Unit}" Text="{Binding Unit}" VerticalAlignment="Bottom" Margin="5,0,0,3" />
         </StackPanel>
@@ -703,7 +703,7 @@
     <StackPanel>
       <Grid>
         <StackPanel Orientation="Horizontal">
-          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}"
+          <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="16" FontWeight="Light" Foreground="{DynamicResource Brush.Text}"
                      b:AnimatedText.Formatter="{Binding NumberFormatter}" b:AnimatedText.Value="{Binding Value}" />
           <TextBlock Style="{StaticResource Text.Unit}" Text="{Binding Unit}" VerticalAlignment="Bottom" Margin="4,0,0,1" />
         </StackPanel>

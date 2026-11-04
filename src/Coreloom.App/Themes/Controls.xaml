@@ -17,11 +17,14 @@
        file is ever missing it silently falls back to the system UI font instead of failing. Readings are Outfit too, with
        tabular digits, so a value keeps its width as it counts. -->
   <FontFamily x:Key="UiFont">pack://application:,,,/Fonts/#Outfit</FontFamily>
-  <FontFamily x:Key="MonoFont">pack://application:,,,/Fonts/#JetBrains Mono</FontFamily>
+  <!-- "MonoFont" is what readings were set in before 1.9.0; it is Outfit now (with tabular digits where it matters), so the
+       numbers speak with the same voice as the words. Code and logs use CodeFont. -->
+  <FontFamily x:Key="MonoFont">pack://application:,,,/Fonts/#Outfit</FontFamily>
+  <FontFamily x:Key="CodeFont">pack://application:,,,/Fonts/#JetBrains Mono</FontFamily>
 
   <!-- Logs and code: monospaced. -->
   <Style x:Key="Text.Mono" TargetType="TextBlock">
-    <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+    <Setter Property="FontFamily" Value="{StaticResource CodeFont}" />
     <Setter Property="FontSize" Value="12" />
     <Setter Property="FontWeight" Value="Medium" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />

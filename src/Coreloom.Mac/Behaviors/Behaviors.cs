@@ -109,27 +109,135 @@ public static class Motion
 
     private static void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        if (sender is not Control element || ReducedMotion)
+        // Since 1.9.0 the panel clears from a blur as its cards rise into place one after another (Stagger).
+        if (sender is Control element)
+        {
+            Stagger.Play(element);
+        }
+    }
+}
+
+/// <summary>
+/// The 1.9.0 motion: a page's content comes in from a blur to sharp while its cards rise into place one after another;
+/// an element that appears (the toast) rises from below (<see cref="Rise"/>). Nothing moves with reduced motion.
+/// </summary>
+public static class Stagger
+{
+    public static readonly TimeSpan ItemDuration = TimeSpan.FromMilliseconds(300);
+
+    public static readonly TimeSpan Step = TimeSpan.FromMilliseconds(42);
+
+    public const int MaxSteps = 10;
+
+    public static void Play(Control root)
+    {
+        if (Motion.ReducedMotion || !root.IsEffectivelyVisible)
+        {
+            return;
+        }
+
+        if (root.RenderTransform is not TranslateTransform translate)
+        {
+            translate = new TranslateTransform(0, 0);
+            root.RenderTransform = translate;
+        }
+
+        // The panel: a blur that clears as it rises (the effect is dropped when done).
+        var blur = new BlurEffect { Radius = 8 };
+        root.Effect = blur;
+        root.Opacity = 0;
+        Animator.Run(TimeSpan.FromMilliseconds(280), Ease.CubicOut, t =>
+        {
+            blur.Radius = 8 * (1 - t);
+            root.Opacity = Math.Min(1, t * 1.3);
+            translate.Y = 6 * (1 - t);
+        }, () =>
+        {
+            root.Opacity = 1;
+            translate.Y = 0;
+            if (ReferenceEquals(root.Effect, blur))
+            {
+                root.Effect = null;
+            }
+        });
+
+        int i = 0;
+        foreach (var item in Items(root))
+        {
+            Rise(item, TimeSpan.FromMilliseconds(Step.TotalMilliseconds * Math.Min(i, MaxSteps)), 14);
+            i++;
+        }
+    }
+
+    /// <summary>The things to stagger: each child of the panel, or the children of a child that is itself just a panel.</summary>
+    private static IEnumerable<Control> Items(Control root)
+    {
+        if (root is not Panel panel)
+        {
+            yield break;
+        }
+
+        foreach (var child in panel.Children)
+        {
+            if (!child.IsVisible)
+            {
+                continue;
+            }
+
+            if (child is Panel inner && inner.Children.Count > 1 && inner.Children.Count <= 24)
+            {
+                foreach (var grandchild in inner.Children)
+                {
+                    if (grandchild.IsVisible)
+                    {
+                        yield return grandchild;
+                    }
+                }
+            }
+            else
+            {
+                yield return child;
+            }
+        }
+    }
+
+    /// <summary>One element rising into place after <paramref name="delay"/>, from <paramref name="from"/> points low and clear.</summary>
+    public static void Rise(Control element, TimeSpan delay, double from)
+    {
+        if (Motion.ReducedMotion)
         {
             return;
         }
 
         if (element.RenderTransform is not TranslateTransform translate)
         {
-            translate = new TranslateTransform(0, 8);
+            translate = new TranslateTransform(0, 0);
             element.RenderTransform = translate;
         }
 
         element.Opacity = 0;
-        Animator.Run(TimeSpan.FromMilliseconds(240), Ease.CubicOut, t =>
+        translate.Y = from;
+        void Go()
         {
-            element.Opacity = t;
-            translate.Y = 8 * (1 - t);
-        }, () =>
+            Animator.Run(ItemDuration, Ease.CubicOut, t =>
+            {
+                element.Opacity = t;
+                translate.Y = from * (1 - t);
+            }, () =>
+            {
+                element.Opacity = 1;
+                translate.Y = 0;
+            });
+        }
+
+        if (delay <= TimeSpan.Zero)
         {
-            element.Opacity = 1;
-            translate.Y = 0;
-        });
+            Go();
+        }
+        else
+        {
+            Avalonia.Threading.DispatcherTimer.RunOnce(Go, delay);
+        }
     }
 }
 

@@ -49,7 +49,10 @@ public partial class SplashWindow : Window
         InitializeComponent();
         ShowStatus(status);
         LogoImage.Source = LoadIcon(darkIcon);
-        Waves.IsAnimated = !reducedMotion;
+        if (!reducedMotion)
+        {
+            BeginDrift();
+        }
         Root.SizeChanged += (_, _) => ShapeCorners();
 
         SourceInitialized += (_, _) =>
@@ -216,11 +219,26 @@ public partial class SplashWindow : Window
         SetFill(_progress);
     }
 
+    /// <summary>Shows the bar part way (the page shots' picture of the splash).</summary>
+    internal void ShowProgress(double fraction)
+    {
+        _progress = Math.Clamp(fraction, 0, 1);
+        SetFill(_progress);
+    }
+
     private void SetFill(double fraction)
     {
         double width = Math.Round(Bar.Width * Math.Clamp(fraction, 0, 1), 1);
         Fill.Width = Math.Max(width, Fill.CornerRadius.TopLeft * 2 * Math.Min(1, fraction * 20));
         FillGlow.Width = Fill.Width + 12;
+    }
+
+    /// <summary>The orbs drift a few points, slowly, for as long as the splash is up (1.9.0).</summary>
+    private void BeginDrift()
+    {
+        var ease = new SineEase { EasingMode = EasingMode.EaseInOut };
+        Drift.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(-6, 6, TimeSpan.FromSeconds(9)) { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever, EasingFunction = ease });
+        Drift.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(4, -4, TimeSpan.FromSeconds(7)) { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever, EasingFunction = ease });
     }
 
     private void BeginEntrance()
@@ -249,7 +267,7 @@ public partial class SplashWindow : Window
         BodyOffset.BeginAnimation(TranslateTransform.YProperty, rise);
 
         // The bar's stripes slide along, and the icon's halo breathes.
-        StripeOffset.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(0, 14, TimeSpan.FromMilliseconds(700)) { RepeatBehavior = RepeatBehavior.Forever });
+        StripeOffset.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(0, 28, TimeSpan.FromMilliseconds(1400)) { RepeatBehavior = RepeatBehavior.Forever });
         var breathe = new DoubleAnimation(0.92, 1.08, TimeSpan.FromSeconds(2.2))
         {
             AutoReverse = true,

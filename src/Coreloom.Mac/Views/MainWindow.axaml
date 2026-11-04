@@ -33,31 +33,9 @@
   </Window.DataTemplates>
 
   <Window.Resources>
-    <!-- The sidebar's update button (since 1.8.3): charcoal glass like the banners' buttons, its rim lit along the top and
-         toward a soft light of the accent in the lower right corner, which grows under the pointer. White text. -->
-    <ControlTheme x:Key="Button.Update" TargetType="Button">
-      <Setter Property="Cursor" Value="Hand" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.OnGlow}" />
-      <Setter Property="Background" Value="{DynamicResource Brush.GlowButtonFill}" />
-      <Setter Property="RenderTransformOrigin" Value="50%,50%" />
-      <Setter Property="Template">
-        <ControlTemplate>
-          <c:SquircleBorder Name="Root" CornerRadius="14" Background="{TemplateBinding Background}" BorderBrush="{DynamicResource Brush.GlowButtonRim}"
-                            BorderThickness="1" ClipContent="True">
-            <Panel>
-              <Border Name="Light" Background="{DynamicResource Brush.GlowButtonLight}" Opacity="0.85" IsHitTestVisible="False" />
-              <ContentPresenter Margin="{TemplateBinding Padding}" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
-                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
-            </Panel>
-          </c:SquircleBorder>
-        </ControlTemplate>
-      </Setter>
-      <Style Selector="^:pointerover /template/ Border#Light">
-        <Setter Property="Opacity" Value="1" />
-      </Style>
-      <Style Selector="^:pressed">
-        <Setter Property="RenderTransform" Value="scale(0.98)" />
-      </Style>
+    <!-- The sidebar's update button (1.9.0: the accent pill, like every main action), with the version and its state. -->
+    <ControlTheme x:Key="Button.Update" TargetType="Button" BasedOn="{StaticResource Button.Primary}">
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
     </ControlTheme>
 
     <!-- A sidebar item: the icon, and the title beside it unless the sidebar is narrow (then a tool tip names it). -->
@@ -68,13 +46,14 @@
     </ControlTheme>
 
     <!-- The icons are drawn on their own 24-point grid (not stretched to fill a box), so each keeps the size it was
-         designed at, and the grid's middle sits on the title's middle. Settings gets a red dot when an update is out. -->
+         designed at, and the grid's middle sits on the title's middle. Settings gets a red dot when an update is out;
+         Drivers a count of the updates waiting. -->
     <DataTemplate x:Key="NavItemTemplate" DataType="pages:PageViewModel">
-      <StackPanel Orientation="Horizontal"
-                  Margin="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0|11,0,10,0'}"
-                  HorizontalAlignment="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter=Center|Left}">
+      <Grid ColumnDefinitions="Auto,*,Auto"
+            Margin="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0|10,0,10,0'}"
+            HorizontalAlignment="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter=Center|Stretch}">
         <Panel Width="24" Height="24" VerticalAlignment="Center" Margin="0,0.5,0,0">
-          <Canvas Width="24" Height="24">
+          <Canvas Width="24" Height="24" RenderTransform="scale(0.92)" RenderTransformOrigin="50%,50%">
             <Path Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" Stroke="{Binding $parent[ListBoxItem].Foreground}"
                   StrokeThickness="1.7" StrokeJoin="Round" StrokeLineCap="Round" />
           </Canvas>
@@ -82,24 +61,45 @@
                    Fill="{DynamicResource Brush.Critical}" Stroke="{DynamicResource Brush.Surface}" StrokeThickness="1.5"
                    IsVisible="{Binding HasNotice}" ToolTip.Tip="A new version of Coreloom is available" />
         </Panel>
-        <TextBlock Text="{Binding Title}" Margin="12,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+        <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="12,0,8,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                    IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}" />
-      </StackPanel>
+        <Border Grid.Column="2" Theme="{StaticResource Badge.Count}" Margin="0,0,-2,0"
+                IsVisible="{Binding Badge, Converter={StaticResource HasValue}}">
+          <TextBlock Text="{Binding Badge}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+      </Grid>
     </DataTemplate>
+
+    <!-- A group's small label; collapsed, a thin line stands in for it. -->
+    <ControlTheme x:Key="NavGroupLabel" TargetType="TextBlock" BasedOn="{StaticResource Text.Overline}">
+      <Setter Property="Margin" Value="14,12,0,6" />
+      <Setter Property="IsVisible" Value="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}" />
+    </ControlTheme>
+    <ControlTheme x:Key="NavGroupLine" TargetType="Border">
+      <Setter Property="Height" Value="1" />
+      <Setter Property="Margin" Value="12,8,12,6" />
+      <Setter Property="Background" Value="{DynamicResource Brush.Divider}" />
+      <Setter Property="IsVisible" Value="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}" />
+    </ControlTheme>
+
+    <!-- A round header button (search, bell) at the top right. -->
+    <ControlTheme x:Key="Button.Header" TargetType="Button" BasedOn="{StaticResource Button.Round}">
+      <Setter Property="Margin" Value="6,0,0,0" />
+    </ControlTheme>
   </Window.Resources>
 
   <Grid ColumnDefinitions="Auto,*">
     <!-- =========================== Sidebar =========================== -->
-    <!-- One background spans the whole window (the color, gradient or picture chosen in Settings › Appearance); the
-         sidebar floats on it as a pane of frosted glass, inset from the window's edges and lit along its rim, the same
-         glass as every card. The window's own close, minimize and zoom buttons sit inside the glass, in its top row
-         (MainWindow.axaml.cs places them, left-aligned with the glass's inset and centred on the row), with the collapse
-         button on their line at the right. -->
+    <!-- One background spans the whole window (the Orbs, a gradient, a colour or a picture chosen in Settings › Appearance);
+         the sidebar floats on it as a pane of the same dark glass as every card, inset from the window's edges. The
+         window's own close, minimize and zoom buttons sit inside the glass, in its top row (MainWindow.axaml.cs places
+         them, left-aligned with the glass's inset and centred on the row), with the collapse button on their line at
+         the right. -->
     <c:WindowBackdrop Name="Backdrop" Grid.ColumnSpan="2" Background="{DynamicResource Brush.ContentLayer}" />
     <c:SquircleBorder Name="Sidebar" Width="232" Margin="10" CornerRadius="22" Smoothing="0.7"
                       Background="{DynamicResource Brush.GlassFill}" BorderBrush="{DynamicResource Brush.GlassRim}" BorderThickness="1"
-                      Sheen="1" Shadow="1" Frosted="True">
-      <Grid Margin="10,0,10,12" RowDefinitions="40,46,*,Auto">
+                      Sheen="0.5" Shadow="1" Frosted="True">
+      <Grid Margin="10,0,10,10" RowDefinitions="40,52,Auto,*,Auto">
         <!-- The window buttons' row: drag the window from here too; collapse on the right, on the buttons' centre line -->
         <Border Name="SidebarDrag" Margin="-10,0" Background="Transparent" />
         <Button Name="CollapseButton" Theme="{StaticResource Button.Icon}" HorizontalAlignment="Right" VerticalAlignment="Center" Width="28" Height="28"
@@ -108,102 +108,180 @@
           <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Sidebar}" />
         </Button>
 
-        <!-- Brand -->
+        <!-- Brand: the app's icon, its name and this Mac's -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center"
                     HorizontalAlignment="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter=Center|Left}"
-                    Margin="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0|10,0,0,0'}">
-          <Image Source="{DynamicResource Image.AppIcon}" Width="26" Height="26" RenderOptions.BitmapInterpolationMode="HighQuality" />
-          <TextBlock Text="Coreloom" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"
-                     IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}" />
+                    Margin="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0|6,0,0,0'}">
+          <Image Source="{DynamicResource Image.AppIcon}" Width="30" Height="30" RenderOptions.BitmapInterpolationMode="HighQuality" VerticalAlignment="Center" />
+          <StackPanel Margin="10,0,0,0" VerticalAlignment="Center" IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
+            <TextBlock Text="Coreloom" FontSize="16" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding Account.MachineName}" FontSize="11" Margin="0,1,0,0" Foreground="{DynamicResource Brush.TextSecondary}" TextTrimming="CharacterEllipsis" MaxWidth="150" />
+          </StackPanel>
         </StackPanel>
 
-        <!-- Navigation -->
-        <StackPanel Grid.Row="2" Margin="0,4,0,0">
-          <Button Theme="{StaticResource Button.Icon}" HorizontalAlignment="Center" Margin="0,0,0,8" Command="{Binding ToggleSidebarCommand}"
+        <!-- Jump anywhere: a page or a settings section -->
+        <Panel Grid.Row="2" Margin="0,4,0,4">
+          <c:QuickSearch Name="JumpSearch" Height="36" Placeholder="Search…" Hint="Type a page or a setting"
+                         Text="{Binding JumpSearch}" Suggestions="{Binding JumpSuggestions}" ChooseCommand="{Binding JumpCommand}"
+                         AutomationProperties.Name="Search pages and settings"
+                         IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}" />
+          <Border Theme="{StaticResource Badge}" Padding="6,1" Margin="0,0,10,0" HorizontalAlignment="Right" VerticalAlignment="Center" IsHitTestVisible="False"
+                  Background="{DynamicResource Brush.Pill}" IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
+            <TextBlock Text="⌘K" FontSize="10.5" FontWeight="Medium" Foreground="{DynamicResource Brush.TextTertiary}" />
+          </Border>
+          <Button Theme="{StaticResource Button.Icon}" HorizontalAlignment="Center" Command="{Binding ToggleSidebarCommand}"
                   ToolTip.Tip="Show sidebar (⌃⌘S)" IsVisible="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
             <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Sidebar}" />
           </Button>
-          <ListBox Name="NavList" Theme="{StaticResource NavList}" ItemsSource="{Binding Pages}"
-                   ItemContainerTheme="{StaticResource NavItemBound}" ItemTemplate="{StaticResource NavItemTemplate}" />
-        </StackPanel>
+        </Panel>
 
-        <!-- Footer -->
-        <StackPanel Grid.Row="3">
-          <!-- A newer version is available, downloading or ready to install: the brand's gradient with a soft glow under it. -->
-          <Button Name="UpdateButton" Theme="{StaticResource Button.Update}" Margin="0,0,0,8" HorizontalAlignment="Stretch"
+        <!-- Navigation, in its groups -->
+        <ScrollViewer Grid.Row="3" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <StackPanel>
+            <TextBlock Theme="{StaticResource NavGroupLabel}" Text="MONITOR" Margin="14,4,0,6" />
+            <ListBox Name="NavList" Theme="{StaticResource NavList}" ItemsSource="{Binding MonitorPages}"
+                     ItemContainerTheme="{StaticResource NavItemBound}" ItemTemplate="{StaticResource NavItemTemplate}" />
+            <TextBlock Theme="{StaticResource NavGroupLabel}" Text="PLAY" />
+            <Border Theme="{StaticResource NavGroupLine}" />
+            <ListBox Name="NavPlay" Theme="{StaticResource NavList}" ItemsSource="{Binding PlayPages}"
+                     ItemContainerTheme="{StaticResource NavItemBound}" ItemTemplate="{StaticResource NavItemTemplate}" />
+            <TextBlock Theme="{StaticResource NavGroupLabel}" Text="MAINTAIN" />
+            <Border Theme="{StaticResource NavGroupLine}" />
+            <ListBox Name="NavMaintain" Theme="{StaticResource NavList}" ItemsSource="{Binding MaintainPages}"
+                     ItemContainerTheme="{StaticResource NavItemBound}" ItemTemplate="{StaticResource NavItemTemplate}" />
+          </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer: Settings, an update when one is out, Dark mode and who's signed in -->
+        <StackPanel Grid.Row="4">
+          <Border Height="1" Margin="4,6,4,8" Background="{DynamicResource Brush.Divider}" />
+          <ListBox Name="SettingsNav" Theme="{StaticResource NavList}" ItemContainerTheme="{StaticResource NavItemBound}"
+                   ItemTemplate="{StaticResource NavItemTemplate}" />
+
+          <!-- A newer version is available, downloading or ready to install -->
+          <Button Name="UpdateButton" Theme="{StaticResource Button.Update}" Margin="0,8,0,0" HorizontalAlignment="Stretch"
                   Command="{Binding OpenUpdatesCommand}" ToolTip.Tip="{Binding Updates.BadgeToolTip}"
                   AutomationProperties.Name="{Binding Updates.BadgeToolTip}" IsVisible="{Binding Updates.ShowBadge}"
                   HorizontalContentAlignment="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter=Center|Left}"
-                  Padding="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0,7|9,8,12,8'}">
+                  Padding="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0,5|6,5,12,5'}">
             <StackPanel Orientation="Horizontal">
-              <Border Width="28" Height="28" CornerRadius="9" Background="#1FFFFFFF" VerticalAlignment="Center">
-                <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnGlow}" />
+              <Border Width="26" Height="26" CornerRadius="13" Background="#2EFFFFFF" VerticalAlignment="Center">
+                <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
               </Border>
-              <StackPanel Margin="10,0,0,0" VerticalAlignment="Center" IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
-                <TextBlock Text="{Binding Updates.BadgeText}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.OnGlow}" TextTrimming="CharacterEllipsis" />
-                <TextBlock Text="{Binding Updates.BadgeDetail}" FontSize="11" Margin="0,1,0,0" Foreground="{DynamicResource Brush.OnGlow}" Opacity="0.75" TextTrimming="CharacterEllipsis" />
+              <StackPanel Margin="9,0,0,0" VerticalAlignment="Center" IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
+                <TextBlock Text="{Binding Updates.BadgeText}" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource Brush.OnAccent}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding Updates.BadgeDetail}" FontSize="11" Margin="0,1,0,0" Foreground="{DynamicResource Brush.OnAccent}" Opacity="0.8" TextTrimming="CharacterEllipsis" />
               </StackPanel>
             </StackPanel>
           </Button>
-          <ListBox Name="SettingsNav" Theme="{StaticResource NavList}" ItemContainerTheme="{StaticResource NavItemBound}"
-                   ItemTemplate="{StaticResource NavItemTemplate}" />
+
+          <!-- Dark mode -->
+          <Grid Height="36" Margin="13,8,8,0" IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
+            <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding IsDarkMode}" AutomationProperties.Name="Dark mode" ToolTip.Tip="The dark theme; off is the light one">
+              <StackPanel Orientation="Horizontal">
+                <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Moon}" Stroke="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center" />
+                <TextBlock Text="Dark mode" Margin="13,0,0,0" FontSize="13.5" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center" />
+              </StackPanel>
+            </CheckBox>
+          </Grid>
+          <Button Theme="{StaticResource Button.Icon}" Width="36" Height="36" HorizontalAlignment="Center" Margin="0,8,0,0" Command="{Binding ToggleDarkModeCommand}" ToolTip.Tip="Dark mode"
+                  IsVisible="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
+            <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Moon}" />
+          </Button>
+
+          <!-- Who's signed in, on which Mac (opens Settings) -->
+          <Button Name="AccountChip" Theme="{StaticResource Button.Plain}" Margin="0,8,0,0" Padding="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                  Command="{Binding OpenSettingsCommand}" ToolTip.Tip="Settings" AutomationProperties.Name="{Binding Account.DisplayName}"
+                  Background="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToBrush}, ConverterParameter=Transparent|Brush.Pill}"
+                  BorderBrush="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToBrush}, ConverterParameter=Transparent|Brush.PillBorder}">
+            <Grid ColumnDefinitions="Auto,*,Auto" Margin="4,4,10,4">
+              <Panel Width="34" Height="34">
+                <Ellipse Fill="{DynamicResource Brush.AccentSoft}" />
+                <TextBlock Text="{Binding Account.Initials}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Ellipse Width="9" Height="9" Fill="{DynamicResource Brush.Success}" Stroke="{DynamicResource Brush.Card}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+              </Panel>
+              <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
+                <TextBlock Text="{Binding Account.DisplayName}" FontSize="12.5" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding Account.MachineName}" FontSize="11" Margin="0,1,0,0" Foreground="{DynamicResource Brush.TextSecondary}" TextTrimming="CharacterEllipsis" />
+              </StackPanel>
+              <Path Grid.Column="2" Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.ChevronDown}" Stroke="{DynamicResource Brush.TextTertiary}" VerticalAlignment="Center"
+                    IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}" />
+            </Grid>
+          </Button>
         </StackPanel>
       </Grid>
     </c:SquircleBorder>
 
     <!-- =========================== Content =========================== -->
-    <Grid Grid.Column="1" RowDefinitions="40,Auto,Auto,*">
-      <!-- The title bar: drag the window from it; a double-click zooms it, as everywhere on macOS. -->
+    <Grid Grid.Column="1" RowDefinitions="56,Auto,Auto,*">
+      <!-- The title bar: drag the window from it; a double-click zooms it, as everywhere on macOS. The greeting and the day
+           sit at its left, the header's buttons at its right. -->
       <Border Name="TitleBar" Background="Transparent" />
-
-      <!-- Page header -->
-      <Grid Grid.Row="1" Margin="32,0,28,0" ColumnDefinitions="*,Auto">
-        <StackPanel VerticalAlignment="Center">
-          <TextBlock Theme="{StaticResource Text.PageTitle}" Text="{Binding CurrentPage.Title}" />
-          <TextBlock Theme="{StaticResource Text.Secondary}" Text="{Binding CurrentPage.Subtitle}" Margin="0,4,0,0" FontSize="13"
-                     IsVisible="{Binding CurrentPage.Subtitle, Converter={StaticResource HasValue}}" />
+      <StackPanel Margin="32,9,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" IsHitTestVisible="False">
+        <TextBlock Name="GreetingText" Theme="{StaticResource Text.Greeting}" Text="{Binding Greeting}" />
+        <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+          <Panel Width="10" Height="10" VerticalAlignment="Center">
+            <Ellipse Name="LivePulse" Fill="{DynamicResource Brush.Success}" Opacity="0.35" RenderTransformOrigin="50%,50%">
+              <Ellipse.RenderTransform>
+                <ScaleTransform ScaleX="1" ScaleY="1" />
+              </Ellipse.RenderTransform>
+            </Ellipse>
+            <Ellipse Width="7" Height="7" Fill="{Binding IsChartsFrozen, Converter={StaticResource BoolToBrush}, ConverterParameter=Brush.Elevated|Brush.Success}" />
+          </Panel>
+          <TextBlock Text="{Binding DateLine}" Margin="8,0,0,0" FontSize="12" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center" />
+          <TextBlock Text=" · " FontSize="12" Foreground="{DynamicResource Brush.TextTertiary}" VerticalAlignment="Center" />
+          <TextBlock Text="{Binding StatusText}" FontSize="12" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center" ToolTip.Tip="Monitoring status and polling interval" />
         </StackPanel>
+      </StackPanel>
 
-        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-          <!-- Live indicator -->
-          <Border Theme="{StaticResource Badge}" Padding="10,5" Margin="0,0,12,0" Background="{DynamicResource Brush.Surface}"
-                  ToolTip.Tip="Monitoring status and polling interval">
-            <StackPanel Orientation="Horizontal">
-              <Panel Width="10" Height="10" VerticalAlignment="Center">
-                <Ellipse Name="LivePulse" Fill="{DynamicResource Brush.Success}" Opacity="0.35" RenderTransformOrigin="50%,50%">
-                  <Ellipse.RenderTransform>
-                    <ScaleTransform ScaleX="1" ScaleY="1" />
-                  </Ellipse.RenderTransform>
-                </Ellipse>
-                <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Success}" />
-              </Panel>
-              <TextBlock Text="{Binding StatusText}" Margin="8,0,0,0" FontSize="12" Foreground="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center" />
-            </StackPanel>
-          </Border>
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,11,28,0">
+        <!-- Time window -->
+        <ListBox Name="RangePicker" Theme="{StaticResource Segmented}" ItemsSource="{Binding WindowOptions}" DisplayMemberBinding="{Binding Label}" Height="34"
+                 SelectedValueBinding="{Binding Value}" SelectedValue="{Binding SelectedWindow}" ToolTip.Tip="Chart time range" />
 
-          <!-- Time window -->
-          <ListBox Name="RangePicker" Theme="{StaticResource Segmented}" ItemsSource="{Binding WindowOptions}" DisplayMemberBinding="{Binding Label}"
-                   SelectedValueBinding="{Binding Value}" SelectedValue="{Binding SelectedWindow}" ToolTip.Tip="Chart time range" />
+        <!-- Freeze charts -->
+        <ToggleButton Name="FreezeButton" Theme="{StaticResource ToggleButton.Icon}" Width="36" Height="36" Margin="8,0,0,0" IsChecked="{Binding IsChartsFrozen}"
+                      Background="{DynamicResource Brush.Pill}" BorderBrush="{DynamicResource Brush.PillBorder}" Foreground="{DynamicResource Brush.Text}"
+                      ToolTip.Tip="Pause charts to inspect them (monitoring continues)">
+          <Panel>
+            <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Pause}" IsVisible="{Binding !IsChartsFrozen}" />
+            <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Play}" IsVisible="{Binding IsChartsFrozen}" />
+          </Panel>
+        </ToggleButton>
 
-          <!-- Freeze charts -->
-          <ToggleButton Name="FreezeButton" Theme="{StaticResource ToggleButton.Icon}" Margin="8,0,0,0" IsChecked="{Binding IsChartsFrozen}"
-                        ToolTip.Tip="Pause charts to inspect them (monitoring continues)">
-            <Panel>
-              <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Pause}" IsVisible="{Binding !IsChartsFrozen}" />
-              <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Play}" IsVisible="{Binding IsChartsFrozen}" />
-            </Panel>
-          </ToggleButton>
+        <!-- Search (the sidebar's) -->
+        <Button Name="SearchButton" Theme="{StaticResource Button.Header}" ToolTip.Tip="Search pages and settings (⌘K)" AutomationProperties.Name="Search">
+          <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Search}" />
+        </Button>
+
+        <!-- Updates: a count on the bell while one waits -->
+        <Button Theme="{StaticResource Button.Header}" Command="{Binding OpenUpdatesCommand}" ToolTip.Tip="Updates" AutomationProperties.Name="Updates">
+          <Panel>
+            <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Bell}" />
+            <Border Width="16" Height="16" CornerRadius="8" Background="{DynamicResource Brush.Accent}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-9,-10,0"
+                    IsVisible="{Binding Updates.ShowBadge}">
+              <TextBlock Text="1" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.OnAccent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+          </Panel>
+        </Button>
+      </StackPanel>
+
+      <!-- Page header: the page's name (it types in as the page changes) and what it's for -->
+      <Grid Grid.Row="1" Margin="32,10,28,0">
+        <StackPanel VerticalAlignment="Center">
+          <TextBlock Name="PageTitle" Theme="{StaticResource Text.PageTitle}" c:TypeIn.Text="{Binding CurrentPage.Title}" />
+          <TextBlock Theme="{StaticResource Text.Secondary}" Margin="0,3,0,0" FontSize="13" Text="{Binding CurrentPage.HeaderLine}" />
         </StackPanel>
       </Grid>
 
       <StackPanel Grid.Row="2">
         <!-- "Updated to …" banner (first launches after an update, until dismissed) -->
-        <c:SquircleBorder Margin="32,16,28,0" Padding="14,10" CornerRadius="14"
+        <c:SquircleBorder Margin="32,16,28,0" Padding="14,10" CornerRadius="16"
                           Background="{DynamicResource Brush.AccentSoft}" BorderBrush="{DynamicResource Brush.CardBorder}" BorderThickness="1"
                           IsVisible="{Binding Updates.ShowUpdatedBanner}">
           <Grid ColumnDefinitions="Auto,*,Auto,Auto">
             <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.Accent}" />
-            <TextBlock Grid.Column="1" Margin="12,0" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12.5" FontWeight="SemiBold"
+            <TextBlock Grid.Column="1" Margin="12,0" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12.5" FontWeight="Medium"
                        Text="{Binding Updates.UpdatedBannerText}" />
             <Button Grid.Column="2" Theme="{StaticResource Button.Secondary}" Content="See what's new" Padding="12,5"
                     Command="{Binding ShowWhatsNewCommand}" />
@@ -215,7 +293,7 @@
         </c:SquircleBorder>
 
         <!-- Limited-readings banner (Windows: no PawnIO driver; never shown on macOS, where nothing extra is needed) -->
-        <c:SquircleBorder Margin="32,16,28,0" Padding="14,10" CornerRadius="14"
+        <c:SquircleBorder Margin="32,16,28,0" Padding="14,10" CornerRadius="16"
                           Background="{DynamicResource Brush.BannerBackground}" BorderBrush="{DynamicResource Brush.BannerBorder}" BorderThickness="1"
                           IsVisible="{Binding ShowLimitedModeBanner}">
           <Grid ColumnDefinitions="Auto,*,Auto">
@@ -231,22 +309,20 @@
       <!-- Page -->
       <c:PageHost Name="Host" Grid.Row="3" Page="{Binding CurrentPage}" Margin="0,8,0,0" />
 
-      <!-- A message over the page ("Export failed"), instead of an alert; it leaves after five seconds. -->
-      <c:SquircleBorder Grid.Row="3" ZIndex="10" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="32,0,28,28"
-                        MaxWidth="560" Padding="14,10,8,10" CornerRadius="14" Shadow="1"
-                        Background="{DynamicResource Brush.Card}" BorderBrush="{DynamicResource Brush.CardBorder}" BorderThickness="1"
+      <!-- A message over the page ("Export failed"), instead of an alert; it leaves after five seconds. Since 1.9.0 a
+           light pill with dark text, the one bright thing on the page. -->
+      <c:SquircleBorder Name="Toast" Grid.Row="3" ZIndex="10" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="32,0,28,24"
+                        MaxWidth="560" Padding="16,9,8,9" CornerRadius="99" Smoothing="0" Shadow="1.2"
+                        Background="{DynamicResource Brush.Toast}" BorderThickness="0"
                         IsVisible="{Binding HasToast}" AutomationProperties.LiveSetting="Assertive" AutomationProperties.Name="{Binding ToastText}">
         <Grid ColumnDefinitions="Auto,*,Auto">
-          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" VerticalAlignment="Top" Margin="0,1,0,0"
+          <Path Theme="{StaticResource IconPath}" Width="15" Height="15" VerticalAlignment="Center"
                 Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Elevated}" />
-          <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
-            <TextBlock Text="{Binding ToastTitle}" FontSize="12.5" FontWeight="SemiBold" TextWrapping="Wrap" />
-            <TextBlock Text="{Binding ToastText}" FontSize="12.5" Margin="0,2,0,0" TextWrapping="Wrap" TextTrimming="None" Foreground="{DynamicResource Brush.TextSecondary}" />
-          </StackPanel>
-          <Button Grid.Column="2" Theme="{StaticResource Button.Icon}" Width="28" Height="28" VerticalAlignment="Top"
-                  Command="{Binding DismissToastCommand}" ToolTip.Tip="Dismiss" AutomationProperties.Name="Dismiss">
-            <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Close}" />
-          </Button>
+          <TextBlock Grid.Column="1" Margin="12,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="13" Foreground="{DynamicResource Brush.ToastText}">
+            <Run Text="{Binding ToastTitle}" FontWeight="Medium" /><Run Text=" · " /><Run Text="{Binding ToastText}" />
+          </TextBlock>
+          <Button Grid.Column="2" Theme="{StaticResource Button.Plain}" Padding="12,4" FontSize="12" Foreground="{DynamicResource Brush.ToastText}"
+                  Background="{DynamicResource Brush.ToastControl}" Content="Dismiss" Command="{Binding DismissToastCommand}" AutomationProperties.Name="Dismiss" />
         </Grid>
       </c:SquircleBorder>
     </Grid>

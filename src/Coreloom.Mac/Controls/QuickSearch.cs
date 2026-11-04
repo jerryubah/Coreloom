@@ -76,6 +76,12 @@ public sealed class QuickSearch : TemplatedControl
 
     public static readonly StyledProperty<bool> IsDropDownOpenProperty = AvaloniaProperty.Register<QuickSearch, bool>(nameof(IsDropDownOpen));
 
+    /// <summary>
+    /// When set, picking a result runs this with its <see cref="SearchSuggestion"/> and clears the box (the sidebar's search
+    /// jumps to a page) instead of keeping the result's name as the filter.
+    /// </summary>
+    public static readonly StyledProperty<ICommand?> ChooseCommandProperty = AvaloniaProperty.Register<QuickSearch, ICommand?>(nameof(ChooseCommand));
+
     private TextBox? _box;
     private ListBox? _list;
     private Control? _panel;
@@ -118,6 +124,12 @@ public sealed class QuickSearch : TemplatedControl
     {
         get => GetValue(SuggestionsProperty);
         set => SetValue(SuggestionsProperty, value);
+    }
+
+    public ICommand? ChooseCommand
+    {
+        get => GetValue(ChooseCommandProperty);
+        set => SetValue(ChooseCommandProperty, value);
     }
 
     public bool IsDropDownOpen
@@ -267,7 +279,11 @@ public sealed class QuickSearch : TemplatedControl
         else
         {
             var results = Suggestions?.OfType<SearchSuggestion>().ToList() ?? [];
-            rows.Add(new QuickSearchRow(QuickSearchRowKind.Filter, $"Show all matches for “{text}”", "Filter the list on this page", "Icon.Search"));
+            if (ChooseCommand is null)
+            {
+                rows.Add(new QuickSearchRow(QuickSearchRowKind.Filter, $"Show all matches for “{text}”", "Filter the list on this page", "Icon.Search"));
+            }
+
             if (results.Count == 0)
             {
                 rows.Add(new QuickSearchRow(QuickSearchRowKind.Empty, $"No matches for “{text}”", "Try another name or type", "Icon.Info"));
@@ -327,6 +343,23 @@ public sealed class QuickSearch : TemplatedControl
 
         if (row.Kind == QuickSearchRowKind.Result && row.Suggestion is { } suggestion)
         {
+            if (ChooseCommand is { } choose)
+            {
+                IsDropDownOpen = false;
+                Text = string.Empty;
+                if (TopLevel.GetTopLevel(this)?.FocusManager is { } focus)
+                {
+                    focus.ClearFocus();
+                }
+
+                if (choose.CanExecute(suggestion))
+                {
+                    choose.Execute(suggestion);
+                }
+
+                return;
+            }
+
             Text = suggestion.Title;
             if (_box is not null)
             {

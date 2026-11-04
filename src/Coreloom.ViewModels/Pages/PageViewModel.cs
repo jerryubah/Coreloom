@@ -39,8 +39,17 @@ public abstract partial class PageViewModel : ObservableObject
     public string? Subtitle
     {
         get => _subtitle;
-        protected set => SetProperty(ref _subtitle, value);
+        protected set
+        {
+            if (SetProperty(ref _subtitle, value))
+            {
+                OnPropertyChanged(nameof(HeaderLine));
+            }
+        }
     }
+
+    /// <summary>The line under the page's name in the header: its subtitle when it has one, else its tagline.</summary>
+    public string HeaderLine => string.IsNullOrWhiteSpace(Subtitle) ? Tagline : Subtitle;
 
     public bool IsActive
     {

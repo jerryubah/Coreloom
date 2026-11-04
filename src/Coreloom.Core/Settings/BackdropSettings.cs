@@ -52,8 +52,8 @@ public sealed class BackdropSettings
     /// <summary>The background blur in points (0–48).</summary>
     public double BlurPoints => Math.Clamp(Blur, 0, 100) * 0.48;
 
-    /// <summary>How much the glass cards and sidebar blur what is behind them, in points: always well frosted.</summary>
-    public double FrostPoints => 30 + (BlurPoints * 0.5);
+    /// <summary>How much the glass cards and sidebar blur what is behind them, in points: always well frosted (deeper since 1.9.0).</summary>
+    public double FrostPoints => 44 + (BlurPoints * 0.5);
 
     internal void Normalize()
     {

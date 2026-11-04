@@ -238,7 +238,7 @@ public sealed class ThemeService : IThemeService
         if (_isDark)
         {
             Publish("Brush.GlassFill", Gradient(new Point(0, 0), new Point(0.6, 1),
-                (Ink(0xC4), 0), (Ink(0xCC), 0.5), (Ink(0xD2), 1)));
+                (Ink(0xD2), 0), (Ink(0xD8), 0.5), (Ink(0xDC), 1)));
             Publish("Brush.GlassRim", Gradient(new Point(0, 0), new Point(0.3, 1),
                 (White(0x22), 0), (White(0x14), 0.4), (White(0x10), 1)));
         }

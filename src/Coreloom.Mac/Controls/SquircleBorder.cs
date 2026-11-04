@@ -588,8 +588,8 @@ public class SquircleBorder : Decorator, ICustomHitTest
         var center = Abs(size.Width * 0.5, size.Height * 1.08);
         var lamp = new ImmutableRadialGradientBrush(
             [
-                new ImmutableGradientStop(0, ChartColors.WithAlpha(color, Alpha(0x46, 0x2A))),
-                new ImmutableGradientStop(0.45, ChartColors.WithAlpha(color, Alpha(0x1A, 0x10))),
+                new ImmutableGradientStop(0, ChartColors.WithAlpha(color, Alpha(0x22, 0x16))),
+                new ImmutableGradientStop(0.45, ChartColors.WithAlpha(color, Alpha(0x0C, 0x08))),
                 new ImmutableGradientStop(1, ChartColors.WithAlpha(color, 0)),
             ],
             center: center,
@@ -610,7 +610,7 @@ public class SquircleBorder : Decorator, ICustomHitTest
         var edge = new ImmutableLinearGradientBrush(
             [
                 new ImmutableGradientStop(0.45, ChartColors.WithAlpha(bright, 0)),
-                new ImmutableGradientStop(1, ChartColors.WithAlpha(bright, (byte)Math.Clamp((dark ? 0x70 : 0x50) * strength, 0, 255))),
+                new ImmutableGradientStop(1, ChartColors.WithAlpha(bright, (byte)Math.Clamp((dark ? 0x48 : 0x38) * strength, 0, 255))),
             ],
             startPoint: Abs(0, 0),
             endPoint: Abs(0, size.Height));

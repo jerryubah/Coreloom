@@ -570,8 +570,8 @@ public class SquircleBorder : Border
             RadiusY = Math.Max(size.Height * 0.95, 60),
             GradientStops =
             {
-                new GradientStop(ThemePalette.WithAlpha(color, Alpha(0x46, 0x2A)), 0),
-                new GradientStop(ThemePalette.WithAlpha(color, Alpha(0x1A, 0x10)), 0.45),
+                new GradientStop(ThemePalette.WithAlpha(color, Alpha(0x22, 0x16)), 0),
+                new GradientStop(ThemePalette.WithAlpha(color, Alpha(0x0C, 0x08)), 0.45),
                 new GradientStop(ThemePalette.WithAlpha(color, 0), 1),
             },
         };
@@ -594,7 +594,7 @@ public class SquircleBorder : Border
             GradientStops =
             {
                 new GradientStop(ThemePalette.WithAlpha(bright, 0), 0.45),
-                new GradientStop(ThemePalette.WithAlpha(bright, (byte)Math.Clamp((dark ? 0x70 : 0x50) * strength, 0, 255)), 1),
+                new GradientStop(ThemePalette.WithAlpha(bright, (byte)Math.Clamp((dark ? 0x48 : 0x38) * strength, 0, 255)), 1),
             },
         };
         edge.Freeze();

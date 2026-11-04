@@ -103,7 +103,7 @@ public sealed class ThemeService : IThemeService
         SetColor("Brush.OnAccent", ThemePalette.ContrastingText(AccentColor), animate);
         SetColor("Brush.AccentTrack", ThemePalette.WithAlpha(AccentColor, (byte)(_isDark ? 0x33 : 0x29)), animate);
         PublishAccentGradients(palette);
-        byte soft = (byte)(_isDark ? 0x26 : 0x1C); // tinted backgrounds for notices and results
+        byte soft = (byte)(_isDark ? 0x2C : 0x1E); // tinted backgrounds for notices, results and status pills
         SetColor("Brush.SuccessSoft", ThemePalette.WithAlpha(palette["Success"], soft), animate);
         SetColor("Brush.InfoSoft", ThemePalette.WithAlpha(palette["Info"], soft), animate);
         SetColor("Brush.ElevatedSoft", ThemePalette.WithAlpha(palette["Elevated"], soft), animate);
@@ -223,23 +223,26 @@ public sealed class ThemeService : IThemeService
         static Color Black(byte alpha) => Color.FromArgb(alpha, 0, 0, 0);
         var start = new RelativePoint(0, 0, RelativeUnit.Relative);
 
+        static Color Ink(byte alpha) => Color.FromArgb(alpha, 0x0B, 0x10, 0x17);
         if (_isDark)
         {
-            _resources["Brush.GlassFill"] = Linear(start, new RelativePoint(0.8, 1, RelativeUnit.Relative),
-                (ThemePalette.WithAlpha(Blend(accent, Colors.White, 0.35), 0x18), 0), (White(0x0E), 0.3), (White(0x09), 0.75), (White(0x0C), 1));
-            _resources["Brush.GlassRim"] = Linear(start, new RelativePoint(1, 1, RelativeUnit.Relative),
-                (White(0x52), 0), (White(0x18), 0.3), (White(0x0A), 0.62), (White(0x26), 1));
+            // Since 1.9.0 a dark, nearly opaque, neutral fill (it was a faint tint lit by the accent), so what's behind
+            // shows only as soft colour, and a hairline rim a shade lighter than the fill.
+            _resources["Brush.GlassFill"] = Linear(start, new RelativePoint(0.6, 1, RelativeUnit.Relative),
+                (Ink(0xD2), 0), (Ink(0xD8), 0.5), (Ink(0xDC), 1));
+            _resources["Brush.GlassRim"] = Linear(start, new RelativePoint(0.3, 1, RelativeUnit.Relative),
+                (White(0x22), 0), (White(0x14), 0.4), (White(0x10), 1));
         }
         else
         {
             _resources["Brush.GlassFill"] = Linear(start, new RelativePoint(0.8, 1, RelativeUnit.Relative),
-                (White(0xC8), 0), (White(0xA8), 0.5), (White(0x9A), 1));
+                (White(0xD4), 0), (White(0xC2), 0.5), (White(0xB8), 1));
             _resources["Brush.GlassRim"] = Linear(start, new RelativePoint(1, 1, RelativeUnit.Relative),
-                (White(0xFF), 0), (White(0x90), 0.35), (Black(0x0E), 0.7), (Black(0x18), 1));
+                (White(0xFF), 0), (White(0x90), 0.35), (Black(0x10), 0.7), (Black(0x18), 1));
         }
 
-        _resources["Brush.GlassLightA"] = Glow(accent, _isDark ? (byte)0x46 : (byte)0x30);
-        _resources["Brush.GlassLightB"] = Glow(warm, _isDark ? (byte)0x30 : (byte)0x22);
+        _resources["Brush.GlassLightA"] = Glow(accent, _isDark ? (byte)0x16 : (byte)0x1E);
+        _resources["Brush.GlassLightB"] = Glow(warm, _isDark ? (byte)0x10 : (byte)0x16);
 
         static RadialGradientBrush Glow(Color color, byte alpha) =>
             Radial((ThemePalette.WithAlpha(color, alpha), 0), (ThemePalette.WithAlpha(color, (byte)(alpha * 0.4)), 0.5), (ThemePalette.WithAlpha(color, 0), 1));

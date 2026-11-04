@@ -224,7 +224,7 @@
           <!-- Navigation, in its groups -->
           <ListBox x:Name="NavList" Grid.Row="2" Style="{StaticResource NavList}" ItemsSource="{Binding Source={StaticResource GroupedPages}}"
                    ItemContainerStyle="{StaticResource NavItemBound}" ItemTemplate="{StaticResource NavItemTemplate}"
-                   SelectionChanged="OnNavigationSelectionChanged">
+                   IsSynchronizedWithCurrentItem="False" SelectionChanged="OnNavigationSelectionChanged">
             <ListBox.GroupStyle>
               <GroupStyle ContainerStyle="{StaticResource NavGroup}" />
             </ListBox.GroupStyle>
@@ -383,14 +383,7 @@
         <Grid Grid.Row="1" Margin="32,10,28,0">
           <StackPanel VerticalAlignment="Center">
             <TextBlock Style="{StaticResource Text.PageTitle}" b:TypeIn.Text="{Binding CurrentPage.Title}" />
-            <TextBlock Style="{StaticResource Text.Secondary}" Margin="0,3,0,0" FontSize="13">
-              <TextBlock.Text>
-                <PriorityBinding>
-                  <Binding Path="CurrentPage.Subtitle" />
-                  <Binding Path="CurrentPage.Tagline" />
-                </PriorityBinding>
-              </TextBlock.Text>
-            </TextBlock>
+            <TextBlock Style="{StaticResource Text.Secondary}" Margin="0,3,0,0" FontSize="13" Text="{Binding CurrentPage.HeaderLine}" />
           </StackPanel>
         </Grid>
 

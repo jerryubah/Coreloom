@@ -95,8 +95,37 @@ public sealed class LiveLineChart : Control
         _overlay.Draw = DrawOverlay;
         ClipToBounds = true;
         Focusable = false;
-        Loaded += (_, _) => Attach();
+        Loaded += (_, _) =>
+        {
+            Attach();
+            DrawIn();
+        };
         Unloaded += (_, _) => Detach();
+    }
+
+    /// <summary>
+    /// The line draws itself in from the left when the chart appears (1.9.0): a clip over the control widens over most
+    /// of a second, then comes off. Nothing with reduced motion.
+    /// </summary>
+    private void DrawIn()
+    {
+        if (Behaviors.Motion.ReducedMotion || !IsEffectivelyVisible || Bounds.Width <= 0)
+        {
+            return;
+        }
+
+        double width = Bounds.Width + 4, height = Bounds.Height;
+        var reveal = new RectangleGeometry(new Rect(0, 0, 0, height));
+        Clip = reveal;
+        Behaviors.Animator.Run(TimeSpan.FromMilliseconds(850), Behaviors.Ease.CubicOut,
+            t => reveal.Rect = new Rect(0, 0, width * t, height),
+            () =>
+            {
+                if (ReferenceEquals(Clip, reveal))
+                {
+                    Clip = null;
+                }
+            });
     }
 
     public ChartViewModel? Chart
