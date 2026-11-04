@@ -63,7 +63,7 @@
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                   <ContentControl Content="{Binding Live}" ContentTemplate="{StaticResource ToneGauge}" />
                   <Border Theme="{StaticResource Badge}" HorizontalAlignment="Center" Margin="0,8,0,0" Padding="10,3">
-                    <TextBlock Text="{Binding Phase}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+                    <TextBlock Text="{Binding Phase}" FontSize="11.5" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" />
                   </Border>
                 </StackPanel>
               </c:SquircleBorder>
@@ -106,7 +106,7 @@
                   <Grid ColumnDefinitions="*,110,110,Auto">
                     <StackPanel>
                       <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12.5" />
+                        <TextBlock Text="{Binding Name}" FontWeight="Medium" FontSize="12.5" />
                         <Border Theme="{StaticResource Badge}" Margin="8,0,0,0" Background="{DynamicResource Brush.AccentSoft}"
                                 IsVisible="{Binding IsActive}">
                           <TextBlock Text="active" FontSize="10" Foreground="{DynamicResource Brush.Accent}" />
@@ -118,13 +118,13 @@
                     </StackPanel>
                     <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
                       <TextBlock Text="Down" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Right" />
-                      <TextBlock HorizontalAlignment="Right" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold">
+                      <TextBlock HorizontalAlignment="Right" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="Medium">
                         <Run Text="{Binding Download.Number, Mode=OneWay}" /><Run Text=" " /><Run Text="{Binding Download.Unit, Mode=OneWay}" />
                       </TextBlock>
                     </StackPanel>
                     <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
                       <TextBlock Text="Up" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Right" />
-                      <TextBlock HorizontalAlignment="Right" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold">
+                      <TextBlock HorizontalAlignment="Right" FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="Medium">
                         <Run Text="{Binding Upload.Number, Mode=OneWay}" /><Run Text=" " /><Run Text="{Binding Upload.Unit, Mode=OneWay}" />
                       </TextBlock>
                     </StackPanel>

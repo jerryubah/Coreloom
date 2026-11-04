@@ -25,7 +25,7 @@ public enum UpdateCheckFrequency
 /// fields take defaults, so files from older/newer versions load safely.</summary>
 public sealed class AppSettings
 {
-    /// <summary>2 since 1.9.0: the look's new defaults (the Orbs background, the deeper blue) replace the old ones once.</summary>
+    /// <summary>2 since 1.9.0: the look's deeper blue replaces the old default accent once.</summary>
     public const int CurrentSchemaVersion = 2;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
@@ -88,19 +88,11 @@ public sealed class AppSettings
 
         Appearance.Backdrop ??= new BackdropSettings();
         Appearance.Backdrop.Normalize();
-        if (loaded < 2)
+        if (loaded < 2 && string.Equals(Appearance.Accent, AccentPalette.PreviousDefault, StringComparison.OrdinalIgnoreCase))
         {
-            // Settings saved before 1.9.0: whoever kept the old defaults gets the new look's defaults (a choice made on
-            // purpose, another gradient or accent, is kept).
-            if (Appearance.Backdrop.Kind == BackdropKind.Gradient && Appearance.Backdrop.Gradient == Coreloom.Core.Appearance.BackdropPresets.PreviousDefaultGradient)
-            {
-                Appearance.Backdrop.Gradient = Coreloom.Core.Appearance.BackdropPresets.DefaultGradient;
-            }
-
-            if (string.Equals(Appearance.Accent, AccentPalette.PreviousDefault, StringComparison.OrdinalIgnoreCase))
-            {
-                Appearance.Accent = AccentPalette.Default;
-            }
+            // Settings saved before 1.9.0: whoever kept the old default accent gets the new look's blue (an accent chosen
+            // on purpose is kept).
+            Appearance.Accent = AccentPalette.Default;
         }
 
         Monitoring.PollingIntervalMs = Math.Clamp(Monitoring.PollingIntervalMs, (int)TelemetryEngine.MinimumInterval.TotalMilliseconds, (int)TelemetryEngine.MaximumInterval.TotalMilliseconds);

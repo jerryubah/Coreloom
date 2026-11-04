@@ -13,8 +13,9 @@ using Coreloom.Core.Startup;
 namespace Coreloom.App.Views;
 
 /// <summary>
-/// Borderless 16:9 startup splash: flowing ribbons of light, the app icon (the dark-mode icon with the dark theme) on a
-/// breathing halo, the wordmark, a glowing loading bar with moving stripes and the current step. Created and driven by
+/// Borderless 16:9 startup splash (redrawn for 1.9.0): a near-black canvas with soft drifting lights, a pane of dark
+/// glass with the app icon (the dark-mode icon with the dark theme) on a breathing halo, the wordmark in Outfit, a thin
+/// glowing loading bar with a sliding sheen and the current step. Created and driven by
 /// <see cref="Services.SplashScreenHost"/> on its own UI thread, so it keeps moving while the main thread builds the
 /// dashboard. It never decides when to close; the app hands off when its window has painted.
 /// <para>
@@ -233,7 +234,7 @@ public partial class SplashWindow : Window
         FillGlow.Width = Fill.Width + 12;
     }
 
-    /// <summary>The orbs drift a few points, slowly, for as long as the splash is up (1.9.0).</summary>
+    /// <summary>The lights drift a few points, slowly, for as long as the splash is up (1.9.0).</summary>
     private void BeginDrift()
     {
         var ease = new SineEase { EasingMode = EasingMode.EaseInOut };

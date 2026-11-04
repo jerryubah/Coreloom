@@ -35,9 +35,6 @@ public interface IThemeService
 
     /// <summary>Where a copy of your own background picture is kept; null where backgrounds can't be changed.</summary>
     string? BackdropFolder => null;
-
-    /// <summary>Whether the dark theme is showing now (System resolved to what the system shows).</summary>
-    bool IsDark => true;
 }
 
 /// <summary>

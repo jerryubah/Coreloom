@@ -42,15 +42,6 @@
     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
   </Style>
 
-  <!-- A greeting over the page ("Good morning, Jerry"), a little smaller than a page title. -->
-  <Style x:Key="Text.Greeting" TargetType="TextBlock">
-    <Setter Property="FontSize" Value="17" />
-    <Setter Property="FontWeight" Value="Medium" />
-    <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
-    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-  </Style>
-
   <Style x:Key="Text.Section" TargetType="TextBlock">
     <Setter Property="FontSize" Value="15" />
     <Setter Property="FontWeight" Value="Medium" />
@@ -731,7 +722,7 @@
                       Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
               </c:SquircleBorder>
               <StackPanel Grid.Column="1" Margin="11,0,8,0" VerticalAlignment="Center">
-                <TextBlock x:Name="Title" Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
+                <TextBlock x:Name="Title" Text="{Binding Title}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
                 <TextBlock Text="{Binding Detail}" FontSize="11.5" Foreground="{DynamicResource Brush.TextTertiary}" TextTrimming="CharacterEllipsis" Margin="0,1,0,0"
                            Visibility="{Binding Detail, Converter={StaticResource HasValueToVisibility}}" />
               </StackPanel>

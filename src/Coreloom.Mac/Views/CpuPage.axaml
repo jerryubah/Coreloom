@@ -75,7 +75,7 @@
                   <StackPanel>
                     <Grid>
                       <TextBlock Text="{Binding Label}" Theme="{StaticResource Text.Caption}" />
-                      <TextBlock Text="{Binding ValueText}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                      <TextBlock Text="{Binding ValueText}" FontFamily="{StaticResource MonoFont}" FontSize="11.5" FontWeight="Medium" HorizontalAlignment="Right" />
                     </Grid>
                     <c:Sparkline Height="30" Margin="0,6,0,0" MetricId="{Binding MetricId}" ColorKey="Cpu" Maximum="100" FillOpacity="0.22" StrokeThickness="1.2"
                                  Timeline="{Binding DataContext.Timeline, RelativeSource={RelativeSource AncestorType=UserControl}}" />

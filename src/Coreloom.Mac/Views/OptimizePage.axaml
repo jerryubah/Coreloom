@@ -28,7 +28,7 @@
           </Grid>
           <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
             <TextBlock Text="{Binding Title}" Theme="{StaticResource Text.Label}" />
-            <TextBlock Text="{Binding Status}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="0,2,0,0"
+            <TextBlock Text="{Binding Status}" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" Margin="0,2,0,0"
                        TextTrimming="CharacterEllipsis" />
             <TextBlock Text="{Binding Detail}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,2,0,0"
                        IsVisible="{Binding Detail, Converter={StaticResource HasValue}}" />
@@ -62,7 +62,7 @@
           <Path Grid.Column="1" Theme="{StaticResource IconPath}" Width="16" Height="16" Margin="2,0,10,0" VerticalAlignment="Center"
                 Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
           <StackPanel Grid.Column="2" VerticalAlignment="Center">
-            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
+            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" />
             <TextBlock Text="{Binding Description}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,1,0,0" />
             <TextBlock Text="{Binding Caution}" FontSize="11.5" Foreground="{DynamicResource Brush.Elevated}" TextWrapping="Wrap" Margin="0,2,0,0"
                        IsVisible="{Binding Caution, Converter={StaticResource HasValue}}" />
@@ -88,12 +88,12 @@
           <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Warning}" VerticalAlignment="Top" Margin="0,1,10,0"
                 Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
           <StackPanel Grid.Column="1">
-            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
+            <TextBlock Text="{Binding Name}" FontWeight="Medium" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
             <TextBlock Text="{Binding Resource}" Theme="{StaticResource Text.Caption}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Resource}"
                        IsVisible="{Binding Resource, Converter={StaticResource HasValue}}" />
           </StackPanel>
           <Border Grid.Column="2" Theme="{StaticResource Badge}" Margin="10,0,0,0" VerticalAlignment="Top">
-            <TextBlock Text="{Binding Severity}" FontSize="10.5" FontWeight="SemiBold" Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+            <TextBlock Text="{Binding Severity}" FontSize="10.5" FontWeight="Medium" Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
           </Border>
         </Grid>
       </Border>
@@ -119,7 +119,7 @@
           <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Margin="0,0,12,0" VerticalAlignment="Center"
                 Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
           <StackPanel Grid.Column="1" VerticalAlignment="Center">
-            <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
+            <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" />
             <TextBlock Text="{Binding Description}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" />
             <TextBlock Text="{Binding Message}" FontSize="11.5" Margin="0,2,0,0" TextWrapping="Wrap"
                        Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}"
@@ -173,7 +173,7 @@
                     <Path Theme="{StaticResource IconPath}" Width="28" Height="28" Data="{StaticResource Icon.Check}" Stroke="{DynamicResource Brush.Success}"
                           IsVisible="{Binding IsDone}" b:Pop.Trigger="{Binding IsDone}" />
                   </Grid>
-                  <TextBlock Text="{Binding Headline}" FontSize="22" FontWeight="SemiBold" HorizontalAlignment="Center" TextAlignment="Center"
+                  <TextBlock Text="{Binding Headline}" FontSize="22" FontWeight="Medium" HorizontalAlignment="Center" TextAlignment="Center"
                              TextWrapping="Wrap" Margin="0,8,0,0" Foreground="{DynamicResource Brush.Text}" />
                   <TextBlock Text="{Binding StageText}" Theme="{StaticResource Text.Label}" HorizontalAlignment="Center" Margin="0,4,0,0" Opacity="0.8"
                              IsVisible="{Binding StageText, Converter={StaticResource HasValue}}" />
@@ -304,7 +304,7 @@
 
             <c:SquircleBorder CornerRadius="12" Padding="14,12" Margin="0,12,0,0" Background="{DynamicResource Brush.Surface}">
               <StackPanel>
-                <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="SemiBold" Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
+                <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="Medium" Foreground="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
                 <TextBlock Text="{Binding Summary}" Theme="{StaticResource Text.Secondary}" TextWrapping="Wrap" Margin="0,2,0,0" />
               </StackPanel>
             </c:SquircleBorder>
@@ -318,10 +318,10 @@
                           Data="{Binding IsOn, Converter={StaticResource BoolToValue}, ConverterParameter='M5,12 L10,17 L19,7|M12,8 L12,13 M12,16.5 L12,16.6 M10.3,3.8 L2.4,18 C1.9,18.9 2.6,20 3.6,20 L20.4,20 C21.4,20 22.1,18.9 21.6,18 L13.7,3.8 C13.2,2.9 10.8,2.9 10.3,3.8 Z'}"
                           Stroke="{Binding IsOn, Converter={StaticResource BoolToBrush}, ConverterParameter='Brush.Success|Brush.Elevated'}" />
                     <StackPanel Grid.Column="1">
-                      <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
+                      <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" />
                       <TextBlock Text="{Binding Detail}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,1,0,0" />
                     </StackPanel>
-                    <TextBlock Grid.Column="2" Text="{Binding IsOn, Converter={StaticResource BoolToValue}, ConverterParameter=On|Off}" FontSize="12" FontWeight="SemiBold"
+                    <TextBlock Grid.Column="2" Text="{Binding IsOn, Converter={StaticResource BoolToValue}, ConverterParameter=On|Off}" FontSize="12" FontWeight="Medium"
                                Margin="12,0,0,0" Foreground="{Binding IsOn, Converter={StaticResource BoolToBrush}, ConverterParameter='Brush.Success|Brush.Elevated'}" />
                   </Grid>
                 </DataTemplate>
@@ -361,11 +361,11 @@
 
             <Grid Grid.Row="1" Margin="0,16,0,0" ColumnDefinitions="Auto,*">
               <Grid Width="150" Height="150">
-                <c:RadialGauge Thickness="14" Orb="True" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True" CoolAt="0.4" WarmAt="0.8" HotAt="0.92"
+                <c:RadialGauge Thickness="9" Orb="False" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True" CoolAt="0.4" WarmAt="0.8" HotAt="0.92"
                                Value="{Binding Fraction}" />
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                   <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <TextBlock FontFamily="{StaticResource UiFont}" FontSize="31" FontWeight="Bold" Foreground="{DynamicResource Brush.Text}" FontFeatures="+tnum"
+                    <TextBlock FontFamily="{StaticResource UiFont}" FontSize="31" FontWeight="Light" Foreground="{DynamicResource Brush.Text}" FontFeatures="+tnum"
                                b:AnimatedText.Formatter="{Binding PercentFormatter}" b:AnimatedText.Value="{Binding Load}" />
                     <TextBlock Text="%" Theme="{StaticResource Text.Unit}" VerticalAlignment="Bottom" Margin="2,0,0,5" />
                   </StackPanel>
@@ -373,7 +373,7 @@
                 </StackPanel>
               </Grid>
               <StackPanel Grid.Column="1" Margin="22,0,0,0" VerticalAlignment="Center">
-                <TextBlock Text="{Binding UsedText}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding UsedText}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
                 <TextBlock Text="{Binding AvailableText}" Theme="{StaticResource Text.Secondary}" Margin="0,2,0,0" />
                 <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                   <Button Theme="{StaticResource Button.Primary}" Padding="16,7" Command="{Binding FreeUpCommand}">

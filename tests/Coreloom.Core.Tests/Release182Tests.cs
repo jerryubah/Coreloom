@@ -110,8 +110,8 @@ public class Release182Tests
         Assert.True(topRight.B > topLeft.B + 0.05);
         Assert.All(Enumerable.Range(0, plain.Bgra.Length / 4), i => Assert.Equal(255, plain.Bgra[(i * 4) + 3]));
 
-        // Coreloom's own gradient (the default before 1.9.0) follows the accent color: its light sits at the top left.
-        var coreloom = BackdropPresets.FindGradient(BackdropPresets.PreviousDefaultGradient)!;
+        // Coreloom's own gradient follows the accent color.
+        var coreloom = BackdropPresets.FindGradient(BackdropPresets.DefaultGradient)!;
         var blue = BackdropRenderer.Gradient(coreloom, 80, 50, Rgb.Parse("#5B8CFF"), true, Light, false).At(8, 2);
         var green = BackdropRenderer.Gradient(coreloom, 80, 50, Rgb.Parse("#45D6A0"), true, Light, false).At(8, 2);
         Assert.True(blue.B > blue.G);

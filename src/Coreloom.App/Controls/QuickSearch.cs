@@ -66,13 +66,6 @@ public sealed class QuickSearch : Control
     public static readonly DependencyProperty SuggestionsProperty = DependencyProperty.Register(
         nameof(Suggestions), typeof(IEnumerable), typeof(QuickSearch), new PropertyMetadata(null, (d, _) => ((QuickSearch)d).Rebuild()));
 
-    /// <summary>
-    /// When set, picking a result runs this with its <see cref="SearchSuggestion"/> and clears the box (the sidebar's search
-    /// jumps to a page) instead of keeping the result's name as the filter.
-    /// </summary>
-    public static readonly DependencyProperty ChooseCommandProperty = DependencyProperty.Register(
-        nameof(ChooseCommand), typeof(ICommand), typeof(QuickSearch), new PropertyMetadata(null));
-
     public static readonly DependencyProperty IsDropDownOpenProperty = DependencyProperty.Register(
         nameof(IsDropDownOpen), typeof(bool), typeof(QuickSearch), new PropertyMetadata(false, OnIsDropDownOpenChanged));
 
@@ -133,12 +126,6 @@ public sealed class QuickSearch : Control
     {
         get => (IEnumerable?)GetValue(SuggestionsProperty);
         set => SetValue(SuggestionsProperty, value);
-    }
-
-    public ICommand? ChooseCommand
-    {
-        get => (ICommand?)GetValue(ChooseCommandProperty);
-        set => SetValue(ChooseCommandProperty, value);
     }
 
     public bool IsDropDownOpen
@@ -276,11 +263,7 @@ public sealed class QuickSearch : Control
         else
         {
             var results = Suggestions?.OfType<SearchSuggestion>().ToList() ?? [];
-            if (ChooseCommand is null)
-            {
-                rows.Add(new QuickSearchRow(QuickSearchRowKind.Filter, $"Show all matches for “{text}”", "Filter the list on this page", "Icon.Search"));
-            }
-
+            rows.Add(new QuickSearchRow(QuickSearchRowKind.Filter, $"Show all matches for “{text}”", "Filter the list on this page", "Icon.Search"));
             if (results.Count == 0)
             {
                 rows.Add(new QuickSearchRow(QuickSearchRowKind.Empty, $"No matches for “{text}”", "Try another name or type", "Icon.Info"));
@@ -341,19 +324,6 @@ public sealed class QuickSearch : Control
 
         if (row.Kind == QuickSearchRowKind.Result && row.Suggestion is { } suggestion)
         {
-            if (ChooseCommand is { } choose)
-            {
-                IsDropDownOpen = false;
-                Text = string.Empty;
-                Keyboard.ClearFocus();
-                if (choose.CanExecute(suggestion))
-                {
-                    choose.Execute(suggestion);
-                }
-
-                return;
-            }
-
             Text = suggestion.Title;
             _box?.Select(_box.Text.Length, 0);
         }

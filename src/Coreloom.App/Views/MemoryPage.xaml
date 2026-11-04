@@ -82,7 +82,7 @@
                         <ColumnDefinition Width="Auto" />
                       </Grid.ColumnDefinitions>
                       <StackPanel>
-                        <TextBlock Text="{Binding Slot}" FontWeight="SemiBold" FontSize="12.5" />
+                        <TextBlock Text="{Binding Slot}" FontWeight="Medium" FontSize="12.5" />
                         <TextBlock Text="{Binding Part}" Style="{StaticResource Text.Caption}" Margin="0,2,0,0" />
                       </StackPanel>
                       <StackPanel Grid.Column="1" HorizontalAlignment="Right">

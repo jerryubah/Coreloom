@@ -44,10 +44,10 @@
           <Path Style="{StaticResource IconPath}" Width="18" Height="18" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" Stroke="{DynamicResource Brush.Accent}" />
         </Grid>
         <StackPanel Grid.Column="2" Margin="14,0,14,0" VerticalAlignment="Center">
-          <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" />
+          <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" />
           <WrapPanel Margin="0,4,0,0">
             <Border Style="{StaticResource Badge}" Margin="0,0,6,2">
-              <TextBlock Text="{Binding CategoryText}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+              <TextBlock Text="{Binding CategoryText}" FontSize="10.5" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" />
             </Border>
             <Border Style="{StaticResource Badge}" Margin="0,0,8,2">
               <TextBlock Text="{Binding SourceText}" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
@@ -98,7 +98,7 @@
           </Border>
           <Border Style="{StaticResource Badge}" Margin="8,0,0,0" Visibility="{Binding HasProblem, Converter={StaticResource BoolToVisibility}}"
                   ToolTip="Device Manager reports a problem with this device">
-            <TextBlock Text="Problem" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+            <TextBlock Text="Problem" FontSize="10.5" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" />
           </Border>
         </StackPanel>
         <TextBlock Grid.Column="1" Text="{Binding ProviderText}" Style="{StaticResource Text.Secondary}" FontSize="12.5" TextTrimming="CharacterEllipsis" ToolTip="{Binding ProviderText}" Margin="0,0,12,0" VerticalAlignment="Center" />
@@ -118,7 +118,7 @@
             </Grid>
             <TextBlock Text="{Binding Label}" Style="{StaticResource Text.CardTitle}" Margin="11,0,0,0" VerticalAlignment="Center" />
             <Border Style="{StaticResource Badge}" Margin="9,0,0,0">
-              <TextBlock Text="{Binding CountText}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+              <TextBlock Text="{Binding CountText}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" />
             </Border>
           </StackPanel>
           <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource DriverRow}" Focusable="False">
@@ -163,11 +163,11 @@
                   <Path Style="{StaticResource IconPath}" Width="22" Height="22" Data="{StaticResource Icon.Driver}" Stroke="{DynamicResource Brush.Accent}" />
                 </Grid>
                 <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
-                  <TextBlock Text="Driver updates" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
+                  <TextBlock Text="Driver updates" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.Accent}" />
                   <TextBlock Text="{Binding LastCheckedText}" Style="{StaticResource Text.Caption}" Margin="0,2,0,0" />
                 </StackPanel>
               </StackPanel>
-              <TextBlock Text="{Binding HeroTitle}" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" Margin="0,18,0,0" />
+              <TextBlock Text="{Binding HeroTitle}" FontSize="24" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" Margin="0,18,0,0" />
               <TextBlock Text="{Binding HeroDetail}" Style="{StaticResource Text.Secondary}" TextWrapping="Wrap" Margin="0,6,0,0" LineHeight="19" />
               <WrapPanel Margin="0,18,0,0">
                 <Button Style="{StaticResource Button.AccentGradient}" Padding="20,9" Margin="0,0,10,8" Command="{Binding CheckCommand}">
@@ -254,7 +254,7 @@
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="Updates" Style="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
               <Border Style="{StaticResource Badge}" Margin="10,1,0,0">
-                <TextBlock Text="{Binding PendingCount}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+                <TextBlock Text="{Binding PendingCount}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" />
               </Border>
             </StackPanel>
             <TextBlock Text="Tick the ones to install. A graphics driver goes last: the screen may go dark for a moment while it installs." Style="{StaticResource Text.Secondary}" TextWrapping="Wrap" Margin="0,3,0,0" />
@@ -269,7 +269,7 @@
               </Grid.ColumnDefinitions>
               <CheckBox Style="{StaticResource CheckBox.Compact}" IsChecked="{Binding SelectAll}" VerticalAlignment="Center" HorizontalAlignment="Left"
                         AutomationProperties.Name="Select all updates">
-                <TextBlock Text="Select all" FontWeight="SemiBold" />
+                <TextBlock Text="Select all" FontWeight="Medium" />
               </CheckBox>
               <Button Grid.Column="1" Style="{StaticResource Button.Primary}" Padding="18,8" Command="{Binding InstallSelectedCommand}">
                 <StackPanel Orientation="Horizontal">
@@ -286,7 +286,7 @@
                 </Style>
               </ItemsControl.ItemContainerStyle>
             </ItemsControl>
-            <TextBlock Text="{Binding ResultText}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap"
+            <TextBlock Text="{Binding ResultText}" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap"
                        Visibility="{Binding HasResult, Converter={StaticResource BoolToVisibility}}" />
           </StackPanel>
         </c:SquircleBorder>
@@ -304,7 +304,7 @@
           <StackPanel Orientation="Horizontal">
             <TextBlock Text="Installed drivers" Style="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
             <Border Style="{StaticResource Badge}" Margin="10,1,0,0">
-              <TextBlock Text="{Binding DriverCount}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+              <TextBlock Text="{Binding DriverCount}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" />
             </Border>
           </StackPanel>
           <TextBlock Text="Grouped by what they're for, with each driver's maker, version and date." Style="{StaticResource Text.Secondary}" Margin="0,3,0,0" />

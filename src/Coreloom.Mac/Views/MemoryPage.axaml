@@ -35,7 +35,7 @@
                   <StackPanel Orientation="Horizontal" Spacing="8">
                     <Ellipse Width="9" Height="9" VerticalAlignment="Center" Fill="{Binding PressureColorKey, Converter={StaticResource ColorKeyToBrush}}" />
                     <TextBlock Text="Memory pressure" Theme="{StaticResource Text.Secondary}" VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding PressureText}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding PressureText}" FontWeight="Medium" VerticalAlignment="Center" />
                   </StackPanel>
                 </c:SquircleBorder>
               </StackPanel>

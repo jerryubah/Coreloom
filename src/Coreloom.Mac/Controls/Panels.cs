@@ -454,13 +454,20 @@ public sealed class HeightCap : Decorator
 
 /// <summary>
 /// Hosts the current page view and keeps one view per page view model, so navigating back to a page is instant (no
-/// re-creation of dozens of charts). Views come from the data template registered for the view model's type.
+/// re-creation of dozens of charts). Views come from the data template registered for the view model's type. Since
+/// 1.9.0 the page you leave blurs and fades out over a sixth of a second before the next one comes in (its own entrance
+/// brings it from a blur to sharp); nothing moves with reduced motion.
 /// </summary>
 public sealed class PageHost : ContentControl
 {
     public static readonly StyledProperty<object?> PageProperty = AvaloniaProperty.Register<PageHost, object?>(nameof(Page));
 
+    /// <summary>How long the page you leave takes to go.</summary>
+    public static readonly TimeSpan LeaveDuration = TimeSpan.FromMilliseconds(150);
+
     private readonly Dictionary<object, Control> _views = new(ReferenceEqualityComparer.Instance);
+    private object? _pending;
+    private bool _leaving;
 
     public PageHost()
     {
@@ -489,10 +496,57 @@ public sealed class PageHost : ContentControl
         object? page = change.NewValue;
         if (page is null)
         {
+            _pending = null;
             Content = null;
             return;
         }
 
+        if (_leaving)
+        {
+            _pending = page; // the one that counts is the last asked for while the old page goes
+            return;
+        }
+
+        if (Content is Control leaving && !Behaviors.Motion.ReducedMotion && IsEffectivelyVisible)
+        {
+            _pending = page;
+            Leave(leaving);
+            return;
+        }
+
+        Show(page);
+    }
+
+    /// <summary>The page you leave: a blur and a fade, then the next page.</summary>
+    private void Leave(Control view)
+    {
+        _leaving = true;
+        var blur = new Avalonia.Media.BlurEffect { Radius = 0 };
+        view.Effect = blur;
+        Behaviors.Animator.Run(LeaveDuration, t => t * t, t =>
+        {
+            blur.Radius = 6 * t;
+            view.Opacity = 1 - t;
+        }, () =>
+        {
+            view.Opacity = 1;
+            if (ReferenceEquals(view.Effect, blur))
+            {
+                view.Effect = null;
+            }
+
+            _leaving = false;
+            object? next = _pending;
+            _pending = null;
+            if (next is not null)
+            {
+                Show(next);
+            }
+        });
+    }
+
+    private void Show(object page)
+    {
         if (!_views.TryGetValue(page, out var view))
         {
             var template = this.FindDataTemplate(page);

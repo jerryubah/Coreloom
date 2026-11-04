@@ -13,11 +13,12 @@
         TextOptions.TextHintingMode="Fixed"
         AutomationProperties.Name="Coreloom is starting">
   <!--
-    Startup splash (16:9), redrawn for 1.9.0 in the app's own look: the near-black canvas with its glossy orbs (orange,
-    cyan, green, the accent's blue and a small silver one, drifting a little), a pane of dark glass in the middle with
-    the app icon on a soft halo, the "Coreloom" wordmark in Outfit, a thin loading line and the current step. It runs on
-    its own UI thread, so it must stay self-contained: no StaticResource/DynamicResource keys and no implicit styles
-    from App.xaml (the window also blocks those lookups in code). The corners are clipped to a squircle in code.
+    Startup splash (16:9), redrawn for 1.9.0 in the app's own look: a near-black canvas with soft, out-of-focus lights
+    (the accent's blue low on the left, a little amber up on the right, teal in the lower right corner) drifting a
+    little, a pane of dark glass in the middle with the app icon on a soft halo, the "Coreloom" wordmark in Outfit, a thin
+    loading line and the current step. It runs on its own UI thread, so it must stay self-contained: no
+    StaticResource/DynamicResource keys and no implicit styles from App.xaml (the window also blocks those lookups in
+    code). The corners are clipped to a squircle in code.
   -->
 
   <Grid x:Name="Root" TextElement.FontFamily="pack://application:,,,/Fonts/#Outfit">
@@ -32,104 +33,42 @@
       </Rectangle.Fill>
     </Rectangle>
 
-    <!-- The orbs: each a ball lit from the top left (a radial fill from its highlight to a dark rim) on a soft halo of its
-         own colour. The canvas drifts a few points over the splash's life (Drift, in code). -->
-    <Canvas x:Name="Orbs" IsHitTestVisible="False">
+    <!-- The lights: wide, soft washes of colour, the way the window's background lights the glass in the app. The canvas
+         drifts a few points over the splash's life (Drift, in code). -->
+    <Canvas x:Name="Lights" IsHitTestVisible="False">
       <Canvas.RenderTransform>
         <TranslateTransform x:Name="Drift" X="0" Y="0" />
       </Canvas.RenderTransform>
 
-      <!-- orange, up at the right -->
-      <Ellipse Canvas.Left="520" Canvas.Top="-200" Width="380" Height="380">
+      <!-- the accent's blue, low on the left -->
+      <Ellipse Canvas.Left="-260" Canvas.Top="60" Width="640" Height="560">
         <Ellipse.Fill>
           <RadialGradientBrush>
-            <GradientStop Color="#50F2A23A" Offset="0" />
-            <GradientStop Color="#1AF2A23A" Offset="0.55" />
-            <GradientStop Color="#00F2A23A" Offset="1" />
-          </RadialGradientBrush>
-        </Ellipse.Fill>
-      </Ellipse>
-      <Ellipse Canvas.Left="590" Canvas.Top="-130" Width="240" Height="240">
-        <Ellipse.Fill>
-          <RadialGradientBrush GradientOrigin="0.32,0.28" Center="0.5,0.5" RadiusX="0.62" RadiusY="0.62">
-            <GradientStop Color="#FFE2A6" Offset="0" />
-            <GradientStop Color="#F5B24A" Offset="0.3" />
-            <GradientStop Color="#D98524" Offset="0.72" />
-            <GradientStop Color="#5A3410" Offset="1" />
-          </RadialGradientBrush>
-        </Ellipse.Fill>
-      </Ellipse>
-
-      <!-- cyan, big, down at the right -->
-      <Ellipse Canvas.Left="470" Canvas.Top="190" Width="480" Height="480">
-        <Ellipse.Fill>
-          <RadialGradientBrush>
-            <GradientStop Color="#4A36C4E2" Offset="0" />
-            <GradientStop Color="#1636C4E2" Offset="0.55" />
-            <GradientStop Color="#0036C4E2" Offset="1" />
-          </RadialGradientBrush>
-        </Ellipse.Fill>
-      </Ellipse>
-      <Ellipse Canvas.Left="560" Canvas.Top="280" Width="300" Height="300">
-        <Ellipse.Fill>
-          <RadialGradientBrush GradientOrigin="0.32,0.28" Center="0.5,0.5" RadiusX="0.62" RadiusY="0.62">
-            <GradientStop Color="#D6FAFF" Offset="0" />
-            <GradientStop Color="#5CD6EE" Offset="0.3" />
-            <GradientStop Color="#1C9DBB" Offset="0.72" />
-            <GradientStop Color="#0A3A48" Offset="1" />
-          </RadialGradientBrush>
-        </Ellipse.Fill>
-      </Ellipse>
-
-      <!-- the accent's blue, at the left -->
-      <Ellipse Canvas.Left="-200" Canvas.Top="80" Width="420" Height="420">
-        <Ellipse.Fill>
-          <RadialGradientBrush>
-            <GradientStop Color="#4A2E7CF6" Offset="0" />
-            <GradientStop Color="#162E7CF6" Offset="0.55" />
+            <GradientStop Color="#5C2E7CF6" Offset="0" />
+            <GradientStop Color="#242E7CF6" Offset="0.45" />
             <GradientStop Color="#002E7CF6" Offset="1" />
           </RadialGradientBrush>
         </Ellipse.Fill>
       </Ellipse>
-      <Ellipse Canvas.Left="-120" Canvas.Top="160" Width="260" Height="260">
-        <Ellipse.Fill>
-          <RadialGradientBrush GradientOrigin="0.32,0.28" Center="0.5,0.5" RadiusX="0.62" RadiusY="0.62">
-            <GradientStop Color="#CFE2FF" Offset="0" />
-            <GradientStop Color="#5E9BFF" Offset="0.3" />
-            <GradientStop Color="#1F5FD6" Offset="0.72" />
-            <GradientStop Color="#0A2456" Offset="1" />
-          </RadialGradientBrush>
-        </Ellipse.Fill>
-      </Ellipse>
 
-      <!-- green, small, low in the middle -->
-      <Ellipse Canvas.Left="250" Canvas.Top="330" Width="200" Height="200">
+      <!-- amber, small, up on the right -->
+      <Ellipse Canvas.Left="560" Canvas.Top="-220" Width="420" Height="420">
         <Ellipse.Fill>
           <RadialGradientBrush>
-            <GradientStop Color="#402DB36B" Offset="0" />
-            <GradientStop Color="#002DB36B" Offset="1" />
-          </RadialGradientBrush>
-        </Ellipse.Fill>
-      </Ellipse>
-      <Ellipse Canvas.Left="300" Canvas.Top="380" Width="100" Height="100">
-        <Ellipse.Fill>
-          <RadialGradientBrush GradientOrigin="0.32,0.28" Center="0.5,0.5" RadiusX="0.62" RadiusY="0.62">
-            <GradientStop Color="#C8F5DA" Offset="0" />
-            <GradientStop Color="#4FD68A" Offset="0.3" />
-            <GradientStop Color="#1E8F52" Offset="0.72" />
-            <GradientStop Color="#0A3A22" Offset="1" />
+            <GradientStop Color="#44F2A23A" Offset="0" />
+            <GradientStop Color="#14F2A23A" Offset="0.5" />
+            <GradientStop Color="#00F2A23A" Offset="1" />
           </RadialGradientBrush>
         </Ellipse.Fill>
       </Ellipse>
 
-      <!-- silver, tiny -->
-      <Ellipse Canvas.Left="536" Canvas.Top="318" Width="34" Height="34">
+      <!-- teal, in the lower right corner -->
+      <Ellipse Canvas.Left="470" Canvas.Top="220" Width="560" Height="520">
         <Ellipse.Fill>
-          <RadialGradientBrush GradientOrigin="0.32,0.28" Center="0.5,0.5" RadiusX="0.62" RadiusY="0.62">
-            <GradientStop Color="#FFFFFF" Offset="0" />
-            <GradientStop Color="#D5DCE5" Offset="0.3" />
-            <GradientStop Color="#8C96A3" Offset="0.72" />
-            <GradientStop Color="#3A414B" Offset="1" />
+          <RadialGradientBrush>
+            <GradientStop Color="#4A36C4E2" Offset="0" />
+            <GradientStop Color="#1836C4E2" Offset="0.5" />
+            <GradientStop Color="#0036C4E2" Offset="1" />
           </RadialGradientBrush>
         </Ellipse.Fill>
       </Ellipse>
@@ -146,7 +85,7 @@
       </Path.Stroke>
     </Path>
 
-    <!-- The pane of glass with everything on it: dark, nearly opaque, a hairline rim, the orbs' colour just showing. -->
+    <!-- The pane of glass with everything on it: dark, nearly opaque, a hairline rim, the lights' colour just showing. -->
     <StackPanel x:Name="Body" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,2" Opacity="0">
       <StackPanel.RenderTransform>
         <TranslateTransform x:Name="BodyOffset" Y="12" />

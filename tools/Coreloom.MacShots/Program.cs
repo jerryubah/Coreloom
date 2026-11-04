@@ -193,6 +193,9 @@ internal static class Program
         window.Height = WindowHeight * Scale;
         window.Show();
         Settle(window, data, 4);
+        // Re-parenting the content above re-binds the sidebar's list, which drops the selection the window made before
+        // its first layout; the app itself keeps it. Put it back so the current page shows as selected in the pictures.
+        window.FindControl<ListBox>("NavList")!.SelectedItem = shell.CurrentPage;
         if (FirstWidth is not null)
         {
             window.Width = WindowWidth * Scale;

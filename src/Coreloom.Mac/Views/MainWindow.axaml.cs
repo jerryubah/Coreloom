@@ -45,17 +45,13 @@ public partial class MainWindow : Window
         DataContext = shell;
         SettingsNav.ItemsSource = new[] { shell.Settings };
         SyncNavigationSelection();
-        foreach (var list in NavLists)
-        {
-            list.SelectionChanged += OnNavigationSelectionChanged;
-        }
-
-        SearchButton.Click += (_, _) => FocusJumpSearch();
+        NavList.SelectionChanged += OnNavigationSelectionChanged;
+        SettingsNav.SelectionChanged += OnNavigationSelectionChanged;
         Toast.PropertyChanged += (_, e) =>
         {
             if (e.Property == IsVisibleProperty && e.NewValue is true)
             {
-                Behaviors.Stagger.Rise(Toast, TimeSpan.Zero, 18); // the toast rises from below
+                Behaviors.Stagger.Rise(Toast, TimeSpan.Zero, 18); // the toast rises from below (1.9.0)
             }
         };
 
@@ -412,9 +408,6 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>The sidebar's lists (1.9.0: one per group, then Settings); the current page is selected in exactly one.</summary>
-    private ListBox[] NavLists => [NavList, NavPlay, NavMaintain, SettingsNav];
-
     private void SyncNavigationSelection()
     {
         if (_shell is null)
@@ -426,31 +419,13 @@ public partial class MainWindow : Window
         try
         {
             var page = _shell.CurrentPage;
-            foreach (var list in NavLists)
-            {
-                list.SelectedItem = list.ItemsSource?.Cast<object>().Contains(page) == true ? page : null;
-            }
+            NavList.SelectedItem = page is SettingsViewModel ? null : page;
+            SettingsNav.SelectedItem = page is SettingsViewModel ? page : null;
         }
         finally
         {
             _syncingNavigation = false;
         }
-    }
-
-    /// <summary>The header's search button (and ⌘K): the sidebar's search, expanded if it was collapsed.</summary>
-    public void FocusJumpSearch()
-    {
-        if (_shell is null)
-        {
-            return;
-        }
-
-        if (_shell.IsSidebarCollapsed)
-        {
-            _shell.IsSidebarCollapsed = false;
-        }
-
-        Avalonia.Threading.Dispatcher.UIThread.Post(() => JumpSearch.FocusSearch(), Avalonia.Threading.DispatcherPriority.Input);
     }
 
     private void OnNavigationSelectionChanged(object? sender, SelectionChangedEventArgs e)

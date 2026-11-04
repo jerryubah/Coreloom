@@ -288,16 +288,12 @@ public sealed class SettingsViewModel : PageViewModel
             if (e.PropertyName == nameof(UpdatesViewModel.ShowBadge))
             {
                 OnPropertyChanged(nameof(HasNotice));
-                OnPropertyChanged(nameof(Badge));
             }
         };
     }
 
     /// <summary>A new version of Coreloom is available, downloading or ready: a red dot on Settings in the sidebar.</summary>
     public override bool HasNotice => _deps.Updates.ShowBadge;
-
-    /// <summary>"1" beside Settings while an update waits (since 1.9.0).</summary>
-    public override string? Badge => _deps.Updates.ShowBadge ? "1" : null;
 
     // ---- Navigation within settings ----------------------------------------------------------
 

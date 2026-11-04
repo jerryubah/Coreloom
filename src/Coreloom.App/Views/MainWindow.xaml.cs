@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Windows;
-using System.Windows.Threading;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -255,11 +254,6 @@ public partial class MainWindow : Window
 
     private void SyncNavigationSelection()
     {
-        if (NavList is null || SettingsNav is null)
-        {
-            return; // still loading the window
-        }
-
         _syncingNavigation = true;
         try
         {
@@ -275,7 +269,7 @@ public partial class MainWindow : Window
 
     private void OnNavigationSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_syncingNavigation || _shell is null)
+        if (_syncingNavigation)
         {
             return;
         }
@@ -285,17 +279,6 @@ public partial class MainWindow : Window
             _shell.Navigate(page);
             SyncNavigationSelection();
         }
-    }
-
-    /// <summary>The header's search button: the sidebar's search, expanded if it was collapsed.</summary>
-    private void OnSearchClick(object sender, RoutedEventArgs e)
-    {
-        if (_shell.IsSidebarCollapsed)
-        {
-            _shell.IsSidebarCollapsed = false;
-        }
-
-        Dispatcher.BeginInvoke(DispatcherPriority.Input, () => JumpSearch.FocusSearch());
     }
 
     private void OnMinimizeClick(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;

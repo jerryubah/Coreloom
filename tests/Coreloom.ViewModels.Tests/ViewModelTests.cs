@@ -410,13 +410,12 @@ public class ShellViewModelTests
         Assert.Same(shell.Overview, shell.CurrentPage);
         Assert.NotNull(stubs.Applied);
         Assert.Equal(13, shell.Pages.Count); // Drivers and Applications since 1.8.6 (Windows only)
-        // Since 1.9.0 the sidebar is in groups: Monitor, then Play, then Maintain.
-        Assert.Equal(["Overview", "Graphics", "Processor", "Memory", "Storage", "Network", "Performance History"], shell.Pages.Where(p => p.Group == PageGroups.Monitor).Select(p => p.Title));
-        Assert.Equal(["Gaming", "Benchmarking"], shell.Pages.Where(p => p.Group == PageGroups.Play).Select(p => p.Title));
-        Assert.Equal(["Devices", "Drivers", "Applications", "Smart Optimize"], shell.Pages.Where(p => p.Group == PageGroups.Maintain).Select(p => p.Title));
-        Assert.Equal(PageGroups.Order, shell.Pages.Select(p => p.Group).Distinct());
-        Assert.Same(shell.Gaming, shell.Pages[shell.Pages.IndexOf(shell.History) + 1]); // Play follows Monitor
-        Assert.Same(shell.Optimize, shell.Pages[^1]);
+        Assert.Same(shell.Gaming, shell.Pages[1]);
+        Assert.Same(shell.Benchmarking, shell.Pages[shell.Pages.IndexOf(shell.Gaming) + 1]); // Benchmarking sits below Gaming
+        Assert.Same(shell.Benchmarking, shell.Pages[shell.Pages.IndexOf(shell.Gpu) - 1]); // and above Graphics
+        Assert.Same(shell.History, shell.Pages[^1]);
+        Assert.Same(shell.Optimize, shell.Pages[^2]); // Smart Optimize sits above Performance History
+        Assert.Same(shell.Devices, shell.Pages[shell.Pages.IndexOf(shell.Storage) + 1]); // Devices sits below Storage
         Assert.Same(shell.Drivers, shell.Pages[shell.Pages.IndexOf(shell.Devices) + 1]); // Drivers below Devices
         Assert.Same(shell.Applications, shell.Pages[shell.Pages.IndexOf(shell.Optimize) - 1]); // Applications above Smart Optimize
         Assert.Equal("Updates", shell.Settings.Sections[^1]); // Updates sits at the bottom of Settings, below About

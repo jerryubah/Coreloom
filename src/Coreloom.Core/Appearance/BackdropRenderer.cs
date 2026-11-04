@@ -222,11 +222,7 @@ public static class BackdropRenderer
         double t1 = Math.Max(Math.Max(0, aspect * dx), Math.Max(dy, (aspect * dx) + dy));
         double span = Math.Max(1e-6, t1 - t0);
 
-        // Each sphere also lays a soft halo of its colour on the canvas around it (a light, like the others).
-        var orbs = gradient.Orbs.Select(o => new Orb(o, width, height, aspect, BackdropPresets.Resolve(o.Color, accent))).ToArray();
-        var glows = gradient.Glows
-            .Concat(gradient.Orbs.Select(o => new BackdropGlow(o.X, o.Y, o.Radius * 1.9, o.Radius * 1.9, o.Color, dark ? 0.16 : 0.10)))
-            .Select(g => (Glow: g, Color: BackdropPresets.Resolve(g.Color, accent))).ToArray();
+        var glows = gradient.Glows.Select(g => (Glow: g, Color: BackdropPresets.Resolve(g.Color, accent))).ToArray();
         var across = new float[glows.Length][];
         var down = new float[glows.Length][];
         for (int i = 0; i < glows.Length; i++)
@@ -279,11 +275,6 @@ public static class BackdropRenderer
                     }
                 }
 
-                for (int i = 0; i < orbs.Length; i++)
-                {
-                    orbs[i].Shade(x, y, dark, ref r, ref g, ref b);
-                }
-
                 float noise = 0;
                 if (dither)
                 {
@@ -299,72 +290,6 @@ public static class BackdropRenderer
         });
 
         return image;
-    }
-
-    /// <summary>
-    /// A glossy sphere, shaded per pixel: lit from the top left, a little light bounced up from below, a small bright
-    /// highlight, and a dark rim; its edge is softened over a pixel and a half.
-    /// </summary>
-    private sealed class Orb
-    {
-        private const float LightX = -0.42f, LightY = -0.58f, LightZ = 0.70f; // from the top left, in front
-        private static readonly float HalfX, HalfY, HalfZ;                     // halfway between the light and the eye
-
-        private readonly float _cx, _cy, _r;
-        private readonly Rgb _color;
-        private readonly int _top, _bottom, _left, _right;
-
-        static Orb()
-        {
-            float hx = LightX, hy = LightY, hz = LightZ + 1;
-            float n = MathF.Sqrt((hx * hx) + (hy * hy) + (hz * hz));
-            HalfX = hx / n;
-            HalfY = hy / n;
-            HalfZ = hz / n;
-        }
-
-        public Orb(BackdropOrb orb, int width, int height, double aspect, Rgb color)
-        {
-            _ = aspect;
-            _cx = (float)(orb.X * width);
-            _cy = (float)(orb.Y * height);
-            _r = MathF.Max(1, (float)(orb.Radius * height));
-            _color = color;
-            _top = (int)MathF.Floor(_cy - _r - 2);
-            _bottom = (int)MathF.Ceiling(_cy + _r + 2);
-            _left = (int)MathF.Floor(_cx - _r - 2);
-            _right = (int)MathF.Ceiling(_cx + _r + 2);
-        }
-
-        public void Shade(int x, int y, bool dark, ref float r, ref float g, ref float b)
-        {
-            if (y < _top || y > _bottom || x < _left || x > _right)
-            {
-                return;
-            }
-
-            float dx = (x + 0.5f - _cx) / _r, dy = (y + 0.5f - _cy) / _r;
-            float d2 = (dx * dx) + (dy * dy);
-            float d = MathF.Sqrt(d2) * _r;
-            float cover = Math.Clamp((_r + 0.75f - d) / 1.5f, 0, 1);
-            if (cover <= 0)
-            {
-                return;
-            }
-
-            float nz = MathF.Sqrt(MathF.Max(0, 1 - d2));
-            float diffuse = MathF.Max(0, (dx * LightX) + (dy * LightY) + (nz * LightZ));
-            float spec = MathF.Pow(MathF.Max(0, (dx * HalfX) + (dy * HalfY) + (nz * HalfZ)), 32) * 0.52f;
-            float bounce = MathF.Max(0, dy) * 0.16f * (1 - diffuse);   // a little of its own colour from below
-            float rim = MathF.Pow(1 - nz, 3) * 0.22f;                    // the rim turns away into the dark
-            float ambient = dark ? 0.17f : 0.34f;                        // the light theme's canvas lights the shaded side too
-            float lit = (ambient + ((1 - ambient) * diffuse) + bounce) * (1 - rim);
-            float cr = (_color.R * lit) + spec, cg = (_color.G * lit) + spec, cb = (_color.B * lit) + spec;
-            float k = cover * (dark ? 1f : 0.92f);
-            r += (cr - r) * k;
-            g += (cg - g) * k;
-            b += (cb - b) * k;
-        }
     }
 
     /// <summary>The picture scaled (keeping its shape) to cover the size, centered, cropping what overflows.</summary>

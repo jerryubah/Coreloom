@@ -220,7 +220,6 @@ public partial class App : Application
         string userAgent = $"Coreloom/{app.DisplayVersion}";
         var shell = new ShellViewModel(new ShellDependencies
         {
-            Account = Native.UserAccount.Current(),
             Monitor = monitor,
             Settings = settingsService,
             Alerts = alerts,

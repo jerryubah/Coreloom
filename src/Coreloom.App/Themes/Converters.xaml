@@ -19,5 +19,4 @@
   <conv:BackdropGradientPreviewConverter x:Key="BackdropGradientPreview" />
   <conv:BackdropThumbnailConverter x:Key="BackdropThumbnail" />
   <conv:MultiEqualsToBoolConverter x:Key="MultiEqualsToBool" />
-  <conv:UpperCaseConverter x:Key="UpperCase" />
 </ResourceDictionary>

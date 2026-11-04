@@ -38,7 +38,7 @@
                     Stroke="{Binding IsConnected, Converter={StaticResource BoolToBrush}, ConverterParameter='Brush.Success|Brush.TextSecondary'}" />
             </Grid>
             <StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center" IsVisible="{Binding !IsRenaming}">
-              <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis"
+              <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis"
                          ToolTip.Tip="{Binding NameToolTip}" />
               <TextBlock Theme="{StaticResource Text.Caption}" Margin="0,1,0,0" TextTrimming="CharacterEllipsis">
                 <Run Text="{Binding KindText, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding TransportText, Mode=OneWay}" />
@@ -69,9 +69,9 @@
               <Grid ColumnDefinitions="Auto,*">
                 <Ellipse Classes="dot" Width="7" Height="7" VerticalAlignment="Center" Fill="{DynamicResource Brush.TextTertiary}" b:Pulse.IsPulsing="{Binding IsBusy}" />
                 <Panel Grid.Column="1" Margin="6,0,0,0">
-                  <TextBlock Classes="state" Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold" IsVisible="{Binding !IsBusy}"
+                  <TextBlock Classes="state" Text="{Binding StatusText}" FontSize="11" FontWeight="Medium" IsVisible="{Binding !IsBusy}"
                              Foreground="{DynamicResource Brush.TextSecondary}" TextTrimming="CharacterEllipsis" />
-                  <TextBlock Text="{Binding ActionText}" FontSize="11" FontWeight="SemiBold" IsVisible="{Binding IsBusy}"
+                  <TextBlock Text="{Binding ActionText}" FontSize="11" FontWeight="Medium" IsVisible="{Binding IsBusy}"
                              Foreground="{DynamicResource Brush.Accent}" TextTrimming="CharacterEllipsis" />
                 </Panel>
               </Grid>
@@ -85,7 +85,7 @@
                              Maximum="1" Background="Transparent" Foreground="{Binding BatteryColorKey, Converter={StaticResource ColorKeyToBrush}}"
                              b:Smooth.Value="{Binding BatteryFraction}" />
               </Grid>
-              <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Center"
+              <TextBlock FontFamily="{StaticResource MonoFont}" FontSize="12" FontWeight="Medium" Margin="6,0,0,0" VerticalAlignment="Center"
                          Foreground="{DynamicResource Brush.Text}" b:AnimatedText.Formatter="{Binding BatteryFormatter}" b:AnimatedText.Value="{Binding Battery}" />
               <TextBlock Text="%" Theme="{StaticResource Text.Caption}" VerticalAlignment="Center" Margin="1,0,0,0" />
             </StackPanel>
@@ -133,7 +133,7 @@
                   Stroke="{DynamicResource Brush.Accent}" />
           </Grid>
           <StackPanel Grid.Column="1" Margin="11,0,6,0" VerticalAlignment="Center">
-            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
+            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
             <TextBlock Text="{Binding Detail}" Theme="{StaticResource Text.Caption}" Margin="0,1,0,0" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Detail}" />
             <StackPanel Orientation="Horizontal" Margin="0,4,0,0" IsVisible="{Binding HasProblem}">
               <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Elevated}" />
@@ -162,9 +162,9 @@
         <StackPanel Orientation="Horizontal" Margin="2,0,0,10">
           <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
                 Stroke="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center" />
-          <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" Margin="8,0,0,0" VerticalAlignment="Center" />
+          <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" Margin="8,0,0,0" VerticalAlignment="Center" />
           <Border Theme="{StaticResource Badge}" Margin="8,0,0,0">
-            <TextBlock Text="{Binding CountText}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+            <TextBlock Text="{Binding CountText}" FontSize="10.5" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" />
           </Border>
         </StackPanel>
         <ItemsControl ItemsSource="{Binding Devices}" ItemTemplate="{StaticResource WiredCard}" Focusable="False">
@@ -325,7 +325,7 @@
         <StackPanel Orientation="Horizontal">
           <TextBlock Text="Bluetooth devices" Theme="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
           <Border Theme="{StaticResource Badge}" Margin="10,1,0,0">
-            <TextBlock Text="{Binding PairedCount}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+            <TextBlock Text="{Binding PairedCount}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" />
           </Border>
         </StackPanel>
         <TextBlock Text="Paired with this Mac. Connect or disconnect each one here." Theme="{StaticResource Text.Secondary}" Margin="0,3,0,0" />
@@ -355,7 +355,7 @@
         <StackPanel Orientation="Horizontal">
           <TextBlock Text="Wired and USB devices" Theme="{StaticResource Text.SectionTitle}" VerticalAlignment="Center" />
           <Border Theme="{StaticResource Badge}" Margin="10,1,0,0">
-            <TextBlock Text="{Binding WiredCount}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" />
+            <TextBlock Text="{Binding WiredCount}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.TextSecondary}" />
           </Border>
         </StackPanel>
         <TextBlock Text="Plugged in by USB, display cable or Thunderbolt, grouped by type." Theme="{StaticResource Text.Secondary}" Margin="0,3,0,0" />

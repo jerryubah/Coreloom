@@ -59,14 +59,6 @@
     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
   </ControlTheme>
 
-  <!-- A greeting over the page ("Good morning, Jerry"), a little smaller than a page title. -->
-  <ControlTheme x:Key="Text.Greeting" TargetType="TextBlock">
-    <Setter Property="FontSize" Value="17" />
-    <Setter Property="FontWeight" Value="Medium" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
-    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-  </ControlTheme>
-
   <ControlTheme x:Key="Text.Section" TargetType="TextBlock">
     <Setter Property="FontSize" Value="15" />
     <Setter Property="FontWeight" Value="Medium" />
