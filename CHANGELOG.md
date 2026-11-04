@@ -7,6 +7,31 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-11-04
+
+A new look, from the type up. Coreloom is redrawn in one design language on Windows, the Mac and your phone: Outfit for every word and number, cards of dark glass with a hairline rim, pill buttons and switches, thin ring gauges, and pages that settle into place as you open them. Everything is where it was; it just looks and moves differently. Windows gets a new splash in the same look.
+
+### Highlights
+
+- **Outfit.** One geometric typeface everywhere, replacing Inter and the monospaced numbers: readings are big and light, titles medium, captions quiet. Numbers keep their width as they count, so nothing beside them jumps.
+- **Cards, buttons and switches.** Cards are dark, nearly opaque glass with a hairline rim; what's behind them shows only as soft colour, and each still glows in its own colour, more so under the pointer. Every button is a pill: the main action in a deeper blue, the rest dark; pickers, badges, status tags and the search box are pills too; switches are round and turn green when on; check boxes are round. The current page in the sidebar is a solid blue pill, and Drivers shows how many updates are waiting beside its name.
+- **Thin rings.** The gauges are thin smooth arcs with round ends and a soft light at the head, on the cards, the Overview and the speed tests, instead of rings of ticks. The dials on the Gaming and Smart Optimize banners stay.
+- **Motion with a purpose.** Opening a page, the one you leave blurs away and the next one clears from a blur as its cards rise into place one after another; a chart draws its line in from the left; the page's title types itself in; a message rises from the bottom as a light pill. *Reduce motion* turns all of it off.
+- **A new splash on Windows.** A near-black canvas with soft, slowly drifting lights, a pane of dark glass with the icon on its halo, the wordmark in Outfit and a thin loading line.
+- **The phone app, too.** Coreloom on your phone has the same type, light numbers, thin rings and pill buttons.
+- **Website.** New pictures of everything, and the phone on it no longer shows a thin orange edge around its screen.
+
+### In detail
+
+- The default accent is a deeper blue. If you never changed yours, it moves to the new blue once; an accent you chose stays. The old blue is still on offer as *Sky*.
+- The frost behind the glass is deeper, and the cards and sidebar sit on it as a neutral, dark fill; the Coreloom gradient and every other background work as before.
+- The sidebar, the page headers and every card are where they were in 1.8.6.
+- Have 1.8.6? Choose *Check for Updates* (the Coreloom menu on a Mac, *Settings › Updates* on Windows), then *Install update*.
+
+### Feedback
+
+Anything that reads wrong in the new look (a label that's too faint, a number that jumps, a pill that doesn't fit its text), send a screenshot with the page and your scaling.
+
 ## [1.8.6] - 2026-10-31
 
 Two new pages on Windows: Drivers, which finds updates and installs the ones you pick, and Applications, with every app's size, its startup switch and Uninstall. Smooth gradients on the Mac, X buttons that aren't cut off, and a website with room to breathe.

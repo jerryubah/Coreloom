@@ -183,7 +183,7 @@
   <!-- A page's hero card: a stronger glow (GlowKey Accent unless set). -->
   <ControlTheme x:Key="Card.Hero" TargetType="c:SquircleBorder" BasedOn="{StaticResource Card.Glow}">
     <Setter Property="GlowKey" Value="Accent" />
-    <Setter Property="GlowStrength" Value="1" />
+    <Setter Property="GlowStrength" Value="1.5" />
     <Setter Property="Sheen" Value="0.4" />
   </ControlTheme>
 

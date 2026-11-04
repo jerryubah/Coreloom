@@ -17,7 +17,7 @@ pairing code shown there. "Add to Home Screen" keeps an icon that opens it full 
 | `gauge.js` | The desktop's tick-ring gauge on a canvas, colour scales and the memory donut. |
 | `chart.js` | Two-minute live charts and sparklines. |
 | `vendor/crypto.js` | P-256, HKDF, HMAC-SHA-256 and AES-GCM from the audited noble libraries (MIT), bundled by `build/phone/crypto`. |
-| `icons/`, `fonts/` | Home Screen icons from the brand tile and Inter (SIL OFL), made by `build/phone/make-assets.py`. |
+| `icons/`, `fonts/` | Home Screen icons from the brand tile and Outfit (SIL OFL; Inter before 1.9.0), made by `build/phone/make-assets.py`. |
 | `media/awake.mp4` | A 3 KB silent 16×16 video, looped while the overlay is full screen so the phone doesn't lock (pages over plain HTTP get no wake lock). |
 | `manifest.webmanifest` | Name, colours and icons for Android's "Add to Home screen". |
 

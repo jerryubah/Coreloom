@@ -101,6 +101,7 @@ public sealed class ThemeService : IThemeService
         SetColor("Brush.AccentSoft", ThemePalette.WithAlpha(AccentColor, (byte)(_isDark ? 0x2E : 0x24)), animate);
         SetColor("Brush.AccentHover", Blend(AccentColor, _isDark ? Colors.White : Colors.Black, 0.12), animate);
         SetColor("Brush.OnAccent", ThemePalette.ContrastingText(AccentColor), animate);
+        SetColor("Brush.OnAccentSoft", ThemePalette.WithAlpha(ThemePalette.ContrastingText(AccentColor), 0x3A), animate); // a count on the accent pill (1.9.0)
         SetColor("Brush.AccentTrack", ThemePalette.WithAlpha(AccentColor, (byte)(_isDark ? 0x33 : 0x29)), animate);
         PublishAccentGradients(palette);
         byte soft = (byte)(_isDark ? 0x2C : 0x1E); // tinted backgrounds for notices, results and status pills

@@ -1,17 +1,18 @@
 /* Coreloom on the phone: the desktop app's palette, type and shapes (Themes/ThemePalette.cs), sized for a hand. */
 
-@font-face { font-family: "Inter"; font-weight: 400; font-style: normal; font-display: swap; src: url("fonts/Inter-Regular.woff2") format("woff2"); }
-@font-face { font-family: "Inter"; font-weight: 500; font-style: normal; font-display: swap; src: url("fonts/Inter-Medium.woff2") format("woff2"); }
-@font-face { font-family: "Inter"; font-weight: 600; font-style: normal; font-display: swap; src: url("fonts/Inter-SemiBold.woff2") format("woff2"); }
-@font-face { font-family: "Inter"; font-weight: 700; font-style: normal; font-display: swap; src: url("fonts/Inter-Bold.woff2") format("woff2"); }
+/* Outfit since 1.9.0 (Inter before it): the desktop apps' type. Big numbers are light, titles medium. */
+@font-face { font-family: "Outfit"; font-weight: 300; font-style: normal; font-display: swap; src: url("fonts/Outfit-Light.woff2") format("woff2"); }
+@font-face { font-family: "Outfit"; font-weight: 400; font-style: normal; font-display: swap; src: url("fonts/Outfit-Regular.woff2") format("woff2"); }
+@font-face { font-family: "Outfit"; font-weight: 500; font-style: normal; font-display: swap; src: url("fonts/Outfit-Medium.woff2") format("woff2"); }
+@font-face { font-family: "Outfit"; font-weight: 600; font-style: normal; font-display: swap; src: url("fonts/Outfit-SemiBold.woff2") format("woff2"); }
 
 :root {
   color-scheme: dark;
-  --bg: #0A0B0E;
-  --surface: #111317;
-  --card: #15171C;
-  --card-raised: #1B1D23;
-  --border: rgba(255, 255, 255, 0.07);
+  --bg: #070A10;
+  --surface: #0E1218;
+  --card: #10141B;
+  --card-raised: #161B23;
+  --border: rgba(255, 255, 255, 0.08);
   --divider: rgba(255, 255, 255, 0.08);
   --text: #F4F5F7;
   --text-2: #9CA2AE;
@@ -21,10 +22,10 @@
   --input-border: rgba(255, 255, 255, 0.11);
   --scrim: rgba(4, 5, 6, 0.7);
   --glass: rgba(10, 11, 14, 0.72);
-  --accent: #5B8CFF;
+  --accent: #2E7CF6;
   --on-accent: #FFFFFF;
 
-  --success: #45D6A0;
+  --success: #3DCB73;
   --info: #5B8CFF;
   --warn: #FFB454;
   --critical: #FF5C5C;
@@ -97,10 +98,9 @@ html, body { margin: 0; min-height: 100%; background: var(--bg); }
 
 body {
   color: var(--text);
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: "Outfit", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-size: 15px;
   line-height: 1.4;
-  font-feature-settings: "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
@@ -118,13 +118,16 @@ button { cursor: pointer; }
 
 /* ---- Shapes: squircles where the browser draws them, the same radii otherwise ------------------------------------ */
 
-.card, .tile, .ring-card, .sheet__panel, .button, .code-input, .field__input, .chip, .icon-tile {
+.card, .tile, .ring-card, .sheet__panel, .code-input, .field__input, .icon-tile {
   border-radius: var(--radius-m);
 }
 
+/* Buttons and chips are pills (1.9.0). */
+.button, .chip { border-radius: 999px; }
+
 @supports (corner-shape: squircle) {
   .card, .ring-card, .sheet__panel { border-radius: 34px; corner-shape: squircle; }
-  .tile, .button, .code-input, .field__input, .icon-tile { border-radius: 24px; corner-shape: squircle; }
+  .tile, .code-input, .field__input, .icon-tile { border-radius: 24px; corner-shape: squircle; }
 }
 
 /* ---- App frame --------------------------------------------------------------------------------------------------- */
@@ -172,7 +175,7 @@ button { cursor: pointer; }
 
 .header__text { flex: 1; min-width: 0; }
 
-.header__name { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.header__name { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .header__model { margin: 0; color: var(--text-2); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -212,7 +215,7 @@ button { cursor: pointer; }
 
 .page[hidden] { display: none; }
 
-.page__title { margin: 6px 0 2px; font-size: 30px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.12; }
+.page__title { margin: 6px 0 2px; font-size: 30px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.12; }
 
 .page__subtitle { margin: 0 0 18px; color: var(--text-2); font-size: 14px; }
 
@@ -281,13 +284,13 @@ button { cursor: pointer; }
 
 .card__head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 
-.card__title { margin: 0; flex: 1; font-size: 15px; font-weight: 600; }
+.card__title { margin: 0; flex: 1; font-size: 15px; font-weight: 500; }
 
 .card__aside { color: var(--text-2); font-size: 13px; }
 
 .section { margin-top: 26px; }
 
-.section__title { margin: 0 4px 10px; font-size: 20px; font-weight: 700; letter-spacing: -0.015em; }
+.section__title { margin: 0 4px 10px; font-size: 20px; font-weight: 500; letter-spacing: -0.01em; }
 
 .section__note { margin: -6px 4px 12px; color: var(--text-2); font-size: 13.5px; }
 
@@ -315,13 +318,13 @@ button { cursor: pointer; }
   transition: background 0.6s;
 }
 
-.tile__head { display: flex; align-items: center; gap: 8px; color: var(--text-2); font-size: 13px; font-weight: 600; }
+.tile__head { display: flex; align-items: center; gap: 8px; color: var(--text-2); font-size: 13px; font-weight: 500; }
 
 .tile__value { margin-top: auto; display: flex; align-items: baseline; gap: 3px; }
 
-.tile__number { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
+.tile__number { font-size: 32px; font-weight: 300; letter-spacing: -0.01em; line-height: 1.05; font-variant-numeric: tabular-nums; }
 
-.tile__unit { color: var(--text-2); font-size: 14px; font-weight: 600; }
+.tile__unit { color: var(--text-2); font-size: 14px; font-weight: 400; }
 
 .tile__detail { margin-top: 3px; color: var(--text-3); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
 
@@ -357,7 +360,7 @@ button { cursor: pointer; }
 
 .hero__text { flex: 1; min-width: 0; }
 
-.hero__title { margin: 0; font-size: 21px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+.hero__title { margin: 0; font-size: 21px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2; }
 
 .hero__subtitle { margin: 2px 0 0; color: var(--text-2); font-size: 13.5px; }
 
@@ -393,11 +396,11 @@ button { cursor: pointer; }
 
 .ring__value { display: flex; align-items: baseline; gap: 2px; }
 
-.ring__number { font-size: 40px; font-weight: 700; letter-spacing: -0.035em; line-height: 1; }
+.ring__number { font-size: 42px; font-weight: 300; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums; }
 
-.ring__unit { color: var(--text-2); font-size: 16px; font-weight: 600; }
+.ring__unit { color: var(--text-2); font-size: 16px; font-weight: 400; }
 
-.ring__label { margin-top: 4px; color: var(--text-2); font-size: 13px; font-weight: 600; }
+.ring__label { margin-top: 4px; color: var(--text-2); font-size: 13px; font-weight: 500; }
 
 .ring__temp {
   position: absolute;
@@ -409,7 +412,7 @@ button { cursor: pointer; }
   background: color-mix(in srgb, var(--temp, var(--text-3)) 16%, transparent);
   color: var(--temp, var(--text-2));
   font-size: 12.5px;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -497,7 +500,7 @@ button { cursor: pointer; }
 
 .pair__icon { width: 76px; height: 76px; border-radius: 19px; box-shadow: 0 18px 50px rgba(32, 96, 255, 0.3); }
 
-.pair__title { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.15; }
+.pair__title { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.15; }
 
 .pair__lead { margin: 0; max-width: 32ch; color: var(--text-2); font-size: 15.5px; }
 
@@ -507,7 +510,7 @@ button { cursor: pointer; }
 
 .steps strong { color: var(--text); font-weight: 600; }
 
-.step-badge { display: grid; place-items: center; width: 24px; height: 24px; flex: none; border-radius: 50%; background: var(--card-raised); color: var(--text); font-size: 12.5px; font-weight: 700; }
+.step-badge { display: grid; place-items: center; width: 24px; height: 24px; flex: none; border-radius: 50%; background: var(--card-raised); color: var(--text); font-size: 12.5px; font-weight: 600; }
 
 .field { display: grid; gap: 7px; }
 
@@ -529,7 +532,7 @@ button { cursor: pointer; }
   border: 1px solid var(--input-border);
   background: var(--input);
   font-size: 34px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.6em;
   text-align: center;
   font-variant-numeric: tabular-nums;
@@ -741,7 +744,7 @@ button { cursor: pointer; }
 
 .hud__value { display: inline-flex; align-items: baseline; gap: 0.12em; }
 
-.hud__number { font-weight: 700; letter-spacing: -0.01em; }
+.hud__number { font-weight: 600; letter-spacing: -0.01em; }
 
 .hud__unit { font-size: 0.74em; font-weight: 600; opacity: 0.8; }
 
@@ -870,7 +873,7 @@ html.hud-full .header, html.hud-full .tabbar { visibility: hidden; }
   animation: rise 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.sheet__title { margin: 0 0 8px; font-size: 20px; font-weight: 700; }
+.sheet__title { margin: 0 0 8px; font-size: 20px; font-weight: 600; }
 
 .sheet__text { margin: 0 0 16px; color: var(--text-2); }
 

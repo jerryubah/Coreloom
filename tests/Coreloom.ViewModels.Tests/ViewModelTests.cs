@@ -306,7 +306,7 @@ public class SettingsServiceTests
 
 public class ShellViewModelTests
 {
-    private sealed class Stubs : IThemeService, IStartupService, IElevationService, IShellService, IAppLifetime, IDiagnosticsService, IUpdateInstaller
+    internal sealed class Stubs : IThemeService, IStartupService, IElevationService, IShellService, IAppLifetime, IDiagnosticsService, IUpdateInstaller
     {
         public AppearanceSettings? Applied;
         public bool IsMicaSupported => true;
@@ -346,7 +346,7 @@ public class ShellViewModelTests
         public bool LaunchAndExit(VerifiedPackage package, UpdateInstallOptions options) => false;
     }
 
-    private static (ShellViewModel Shell, MonitorContext Monitor, SettingsService Settings, Stubs Stubs) Create()
+    internal static (ShellViewModel Shell, MonitorContext Monitor, SettingsService Settings, Stubs Stubs) Create()
     {
         var (monitor, settings, _) = Fixture.Create();
         var stubs = new Stubs();

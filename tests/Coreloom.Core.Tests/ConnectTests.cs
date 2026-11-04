@@ -388,7 +388,7 @@ public class ConnectNetworkTests
     public void ThePhoneAppIsBuiltIn()
     {
         var assets = WebAssets.Embedded();
-        foreach (string path in new[] { "index.html", "app.js", "app.css", "connect.js", "gauge.js", "chart.js", "vendor/crypto.js", "manifest.webmanifest", "icons/apple-touch-icon.png", "fonts/Inter-Regular.woff2" })
+        foreach (string path in new[] { "index.html", "app.js", "app.css", "connect.js", "gauge.js", "chart.js", "vendor/crypto.js", "manifest.webmanifest", "icons/apple-touch-icon.png", "fonts/Outfit-Regular.woff2" })
         {
             Assert.True(assets.TryGet("/" + path, out var asset), path);
             Assert.NotEmpty(asset.Body);

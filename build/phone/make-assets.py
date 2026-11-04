@@ -51,12 +51,13 @@ def main() -> None:
 
     (OUT / "fonts").mkdir(parents=True, exist_ok=True)
     unicodes = "U+0020-007E,U+00A0-00FF,U+0131,U+0152-0153,U+02C6,U+02DA,U+02DC,U+2009,U+2013-2014,U+2018-201E,U+2022,U+2026,U+2032-2033,U+20AC,U+2122,U+2190-2193,U+2212,U+2215,U+00D7,U+2713,U+2715,U+00B7,U+00B0"
-    for weight in ["Regular", "Medium", "SemiBold", "Bold"]:
-        source = ROOT / "src/Coreloom.App/Fonts" / f"Inter-{weight}.ttf"
-        target = OUT / "fonts" / f"Inter-{weight}.woff2"
+    # Outfit since 1.9.0 (Inter before it): the desktop apps' type, subset to the characters the phone app uses.
+    for weight in ["Light", "Regular", "Medium", "SemiBold"]:
+        source = ROOT / "src/Coreloom.App/Fonts" / f"Outfit-{weight}.ttf"
+        target = OUT / "fonts" / f"Outfit-{weight}.woff2"
         options = subset.Options()
         options.flavor = "woff2"
-        options.layout_features = ["kern", "liga", "calt", "tnum", "case", "ss01", "cv11"]
+        options.layout_features = ["kern", "liga", "calt", "tnum", "pnum", "ccmp"]
         options.name_IDs = ["*"]
         options.notdef_outline = True
         font = subset.load_font(str(source), options)

@@ -293,8 +293,8 @@ Phones see a computer's readings through a small server inside Coreloom, on the 
   right-handed menu setting (right edges aligned) and lines up the panel itself, not its margin. Open anchored popups
   are tracked; when a `SmoothScroll` page scrolls, each one on it is placed again (an offset nudge) or, once its control
   is out of view, closed through its owner (`IsDropDownOpen`).
-- **Text.** Large text uses `TextFormattingMode.Ideal` (Display mode distorts big glyphs); headline numbers are Inter
-  Bold with tabular digits.
+- **Text.** Large text uses `TextFormattingMode.Ideal` (Display mode distorts big glyphs); headline numbers are Outfit
+  Light with tabular digits (since 1.9.0; Inter Bold before).
 - **Icons.** `build/dark-icon.py` makes the dark-mode icon from the approved one (the mark's shape found by colour with
   thin highlights closed in, its outline anti-aliased from the original, put on a navy glass tile with a blue rim) into
   `assets/branding/dark`. `ThemeService` publishes `Image.AppIcon`/`Image.AppIconLarge` and raises `AppIconChanged`, on
@@ -382,6 +382,49 @@ One background spans each app's main window; the sidebar and the cards are frost
 - **Graph fills.** `ChartColors.AreaFill` eases from the fill's strength at the line to nothing at the bottom along
   `FillCurve`; sparklines also fade their fill in and out at the ends (`ChartColors.EdgeFade` as an opacity mask), so
   no hard edge shows on the card.
+
+## The 1.9.0 look: Outfit, pills, dark glass, motion
+
+The design uplift of 1.9.0 keeps every page's layout where it was (the sidebar's order, the page headers, the cards'
+places) and redraws the language they're in, on Windows, the Mac and the phone alike.
+
+- **Type.** Outfit (SIL OFL, five static weights embedded) is the interface's only face; JetBrains Mono stays for logs
+  and code (`CodeFont`). The scale in `Controls.xaml`/`Controls.axaml`: page titles 26 SemiBold, card titles 14 Medium,
+  body 13, labels 12 Medium, captions 11.5; the big numbers (`Text.ValueLarge`, the rings' readings, the speed tests)
+  are Light, the way a figure reads on a dashboard rather than a headline, with tabular digits. `MonoFont` is Outfit
+  too (the key kept so every reading follows); the charts draw their captions and values in it (`ChartFonts`). Pages
+  set Medium where they used to set SemiBold.
+- **Palette.** The default accent is a deeper blue, `#2E7CF6` (`AccentPalette.Default`; the lighter `#5B8CFF` stays on
+  offer as *Sky*). Settings saved before 1.9.0 that kept the old default move to the new blue once
+  (`AppSettings.CurrentSchemaVersion` 2); an accent chosen on purpose is kept. The canvas is a shade darker
+  (`Background` `#070A10`), *Success* a truer green (`#3DCB73`), and `Pill`, `PillBorder`, `PillHover`, `Toast`,
+  `ToastText` and `ToastControl` are new tokens.
+- **Glass.** `ThemeService.PublishGlass` makes the cards and the sidebar a dark, nearly opaque, neutral fill over the
+  frost (`BackdropSettings.FrostPoints` is 44 and up) with a hairline rim a shade lighter, so what's behind shows only
+  as soft colour; the two glass lights are faint. The cards' own colour (`Card.Glow`'s lamp, lit edge and the pointer's
+  edge glow, `SquircleBorder`) stays as it was. Corners: cards 18, insets 14, every control a pill (`CornerRadius`
+  99 with `Smoothing` 0), status tags and badges fully round.
+- **Controls.** `Button.Primary` and the banners' `Button.AccentGradient` are the accent pill (white text, lighter on
+  hover, 98 % while pressed); `Button.Glass` (and `Button.Secondary`) the dark pill with the hairline rim; `Button.Subtle`
+  the outlined one; `Button.Round` a round icon button with the pill's fill (the header's pause). The toggle switch is
+  44 × 24 with a round knob and floods green when on (on is a state, not an action). Check boxes are round, inputs and
+  the search box pills, the segmented picker a pill of pills, combo boxes and menus rounder. The sidebar's current page
+  is a solid pill of the accent with white text; a page can show a count beside its name (`PageViewModel.Badge`:
+  Drivers' updates waiting), white on a lighter pill when the page is the current one. The update button in the
+  sidebar is the accent pill.
+- **Gauges.** `RadialGauge`'s `Auto` look is a thin smooth arc with round ends (`GaugeLook.Arc`; the tick ring stays
+  as `GaugeLook.Ticks`): 6 points on the metric cards, 5 on the Overview's, 10 on the speed tests, without the orb
+  inside. The phone's `gauge.js` draws the same arc with a soft light at its head.
+- **Motion** (nothing with *Reduce motion*). `PageHost` blurs and fades the page you leave over 150 ms (the next page
+  waits for it; the last page asked for while it goes wins). Each page's root panel has `Motion.Entrance`, which since
+  1.9.0 plays `Stagger.Play`: the panel clears from a blur and rises 6 points while its cards (or the cards of a panel
+  that is only a panel of cards) rise 14 points into place 42 ms apart, up to ten steps. The page title types itself
+  in (`TypeIn.Text`, about a quarter of a second, the block already as wide as the whole word). `LiveLineChart` draws
+  its line in from the left when it appears (a clip that widens over most of a second). The toast is a light pill
+  with dark text (`Brush.Toast`) that rises from below (`Reveal.FromBelow`); on the Mac the window rises it with
+  `Stagger.Rise`.
+- **The phone app.** `app.css` loads Outfit (`build/phone/make-assets.py` subsets it to WOFF2), its titles are Medium
+  and its numbers Light with tabular digits, its buttons and chips pills, and its palette the desktop's new one.
 
 ## Overview header
 
@@ -990,12 +1033,14 @@ recreated in native XAML; no browser or web view is involved.
   belong to the main thread; `check-xaml.py` enforces both.
 - **Window.** 800 × 450 (16:9) with squircle corners, borderless and layered (`AllowsTransparency`, so the whole
   window can fade), centred on the monitor with the mouse cursor, not topmost, no taskbar button,
-  `WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE` so it never appears in Alt+Tab or takes focus. `SplashWaves` draws six
-  ribbons of light from sine waves every frame (a lit edge in five widths over a sheet, faded toward the middle). The
-  icon is the dark-mode one with the dark theme, on a breathing halo; the wordmark uses the embedded Inter with
-  CSS-style letter spacing (`TrackedText`). The loading bar moves on with each status the app reports
-  (`SplashPolicy.ProgressTarget`: per-stage steps, a slow creep within a stage, never past 92 % until the handoff,
-  which fills it), with sliding stripes and a blurred glow.
+  `WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE` so it never appears in Alt+Tab or takes focus. Since 1.9.0 the scene is the
+  app's own look: a near-black canvas with three soft lights (the accent's blue low on the left, amber up on the right,
+  teal in the lower right corner) that drift a few points over the splash's life, and a pane of dark glass in the
+  middle with a hairline rim (the ribbons of light, `SplashWaves`, were the 1.4.1–1.8.6 splash). The icon is the
+  dark-mode one with the dark theme, on a breathing halo; the wordmark is the embedded Outfit with CSS-style letter
+  spacing (`TrackedText`), "loom" in the accent. The loading bar is a thin line that moves on with each status the app
+  reports (`SplashPolicy.ProgressTarget`: per-stage steps, a slow creep within a stage, never past 92 % until the
+  handoff, which fills it), with a sliding sheen and a blurred glow.
 - **Readiness.** `StartupHandoff` creates the main window's handle, cloaks it (`DWMWA_CLOAK`), and shows it: the
   window lays out and renders but isn't displayed. Its `ContentRendered` event, plus two composition frames, is
   the ready signal. The dashboard does not wait for sensor data or network calls.
@@ -1015,8 +1060,9 @@ recreated in native XAML; no browser or web view is involved.
 
 ## Rendering, fonts and lifetime
 
-- **Text:** Inter (UI) and JetBrains Mono (numbers and technical values) ship embedded in the assembly as
-  `Resource`s (SIL OFL 1.1; licence texts ship next to the app). `TextFormattingMode="Display"` with fixed
+- **Text:** Outfit (the interface and every number, since 1.9.0; Inter before) and JetBrains Mono (logs and code)
+  ship embedded in the assembly as `Resource`s (SIL OFL 1.1; licence texts ship next to the app). Readings use
+  tabular digits (`Typography.NumeralAlignment`), so a value keeps its width as it counts. `TextFormattingMode="Display"` with fixed
   hinting and ClearType hints on opaque cards keeps small text sharp; custom-drawn chart text uses
   `FormattedText` in Display mode.
 - **Animation rate:** WPF animates at 60 fps unless told otherwise, so `App` raises

@@ -19,7 +19,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[2]
 MOCKUP = ROOT / "assets" / "site-render" / "iphone-mockup.png"
-FONT = ROOT / "src" / "Coreloom.App" / "Fonts" / "Inter-SemiBold.ttf"
+FONT = ROOT / "src" / "Coreloom.App" / "Fonts" / "Inter-SemiBold.ttf"  # iOS's status bar, not the app's type
 OUT = ROOT / "site" / "assets"
 
 # Measured on the 1024 × 1536 mockup (pixel edges, with the anti-aliased fraction).
@@ -27,6 +27,7 @@ PHONE = (226.5, 177.5, 787.5, 1340.5)    # the frame's outside
 PHONE_RADIUS = 100.0
 SCREEN = (251.5, 200.5, 763.5, 1317.5)   # the display
 SCREEN_RADIUS = 72.0
+BEZEL = 2.5                               # how far past the screen's edge the black bezel is painted (mockup pixels)
 BUTTONS = [(218.0, 370.0, 227.0, 660.0), (787.0, 500.0, 797.0, 670.0)]  # where the side buttons stand out
 SCALE = 1.25                              # output size: the phone about 700 px wide
 SUPER = 4
@@ -94,6 +95,13 @@ def main():
         region = np.clip((lum[t:b, l:r] - 62) / 40, 0, 1)
         alpha[t:b, l:r] = np.maximum(alpha[t:b, l:r], region)
     screen_mask = rounded(size, SCREEN, SCREEN_RADIUS, SCALE)
+
+    # The mockup's own screen is orange, and a hair of it showed around the screenshot (the anti-aliased edge, and the
+    # corners where the two radii don't quite agree). Black out the display a little past its edge first: the sliver
+    # between the screenshot and the frame is then the bezel, black like a real one.
+    grown = (SCREEN[0] - BEZEL, SCREEN[1] - BEZEL, SCREEN[2] + BEZEL, SCREEN[3] + BEZEL)
+    bezel_mask = rounded(size, grown, SCREEN_RADIUS + BEZEL, SCALE)
+    phone = Image.composite(Image.new("RGBA", size, (0, 0, 0, 255)), phone, bezel_mask)
 
     l, t, r, b = (v * SCALE for v in PHONE)
     crop = (int(l) - 2, int(t) - 2, int(np.ceil(r)) + 2, int(np.ceil(b)) + 2)

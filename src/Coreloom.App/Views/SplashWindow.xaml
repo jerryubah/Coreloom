@@ -52,12 +52,12 @@
       </Ellipse>
 
       <!-- amber, small, up on the right -->
-      <Ellipse Canvas.Left="560" Canvas.Top="-220" Width="420" Height="420">
+      <Ellipse Canvas.Left="590" Canvas.Top="-190" Width="360" Height="360">
         <Ellipse.Fill>
           <RadialGradientBrush>
-            <GradientStop Color="#44F2A23A" Offset="0" />
-            <GradientStop Color="#14F2A23A" Offset="0.5" />
-            <GradientStop Color="#00F2A23A" Offset="1" />
+            <GradientStop Color="#3EFFB65A" Offset="0" />
+            <GradientStop Color="#12FFB65A" Offset="0.5" />
+            <GradientStop Color="#00FFB65A" Offset="1" />
           </RadialGradientBrush>
         </Ellipse.Fill>
       </Ellipse>

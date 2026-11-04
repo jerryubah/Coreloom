@@ -530,7 +530,7 @@ class Sheet {
 
 /** A tick-ring gauge with its reading in the middle and, optionally, a temperature chip under it. */
 class RingView {
-  constructor(label, { orb = true, small = false } = {}) {
+  constructor(label, { orb = false, small = false } = {}) {
     this.canvas = h('canvas', { 'aria-hidden': 'true' });
     this.number = h('span', { class: 'ring__number num', text: '—' });
     this.unit = h('span', { class: 'ring__unit' });

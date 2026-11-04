@@ -63,9 +63,12 @@
         </Panel>
         <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="12,0,8,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                    IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}" />
+        <!-- On the selected page's accent pill, the count is white on a lighter pill. -->
         <Border Grid.Column="2" Theme="{StaticResource Badge.Count}" Margin="0,0,-2,0"
-                IsVisible="{Binding Badge, Converter={StaticResource HasValue}}">
-          <TextBlock Text="{Binding Badge}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                IsVisible="{Binding Badge, Converter={StaticResource HasValue}}"
+                Background="{Binding $parent[ListBoxItem].IsSelected, Converter={StaticResource BoolToBrush}, ConverterParameter=Brush.OnAccentSoft|Brush.AccentSoft}">
+          <TextBlock Text="{Binding Badge}" FontSize="11" FontWeight="Medium" HorizontalAlignment="Center" VerticalAlignment="Center"
+                     Foreground="{Binding $parent[ListBoxItem].IsSelected, Converter={StaticResource BoolToBrush}, ConverterParameter=Brush.OnAccent|Brush.Accent}" />
         </Border>
       </Grid>
     </DataTemplate>

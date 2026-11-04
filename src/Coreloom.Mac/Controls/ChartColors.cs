@@ -4,20 +4,27 @@ using Coreloom.Mac.Themes;
 
 namespace Coreloom.Mac.Controls;
 
-/// <summary>Font families for custom-drawn text (the embedded Inter and JetBrains Mono).</summary>
+/// <summary>
+/// Font families for custom-drawn text: Outfit since 1.9.0 (it was Inter), for the charts' captions and values alike, so
+/// the numbers on a chart speak with the same voice as the cards' (the digits are drawn tabular). JetBrains Mono stays
+/// for code.
+/// </summary>
 internal static class ChartFonts
 {
-    public static FontFamily Ui { get; } = new("avares://Coreloom/Assets/Fonts#Inter");
+    public static FontFamily Ui { get; } = new("avares://Coreloom/Assets/Fonts#Outfit");
 
-    public static FontFamily Mono { get; } = new("avares://Coreloom/Assets/Fonts#JetBrains Mono");
+    public static FontFamily Code { get; } = new("avares://Coreloom/Assets/Fonts#JetBrains Mono");
+
+    /// <summary>The same face for numbers (it was JetBrains Mono).</summary>
+    public static FontFamily Mono => Ui;
 
     public static Typeface UiRegular { get; } = new(Ui, FontStyle.Normal, FontWeight.Normal);
 
-    public static Typeface UiSemiBold { get; } = new(Ui, FontStyle.Normal, FontWeight.SemiBold);
+    public static Typeface UiSemiBold { get; } = new(Ui, FontStyle.Normal, FontWeight.Medium);
 
-    public static Typeface MonoRegular { get; } = new(Mono, FontStyle.Normal, FontWeight.Normal);
+    public static Typeface MonoRegular { get; } = new(Ui, FontStyle.Normal, FontWeight.Normal);
 
-    public static Typeface MonoSemiBold { get; } = new(Mono, FontStyle.Normal, FontWeight.SemiBold);
+    public static Typeface MonoSemiBold { get; } = new(Ui, FontStyle.Normal, FontWeight.Medium);
 }
 
 /// <summary>Resolves theme colors for custom-drawn controls and caches immutable pens and brushes per color.</summary>

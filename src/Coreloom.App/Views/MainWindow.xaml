@@ -70,7 +70,7 @@
         <!-- A count beside the name (Drivers: updates waiting), since 1.9.0 -->
         <Border x:Name="Count" Grid.Column="2" Style="{StaticResource Badge.Count}" Margin="0,0,-2,0"
                 Visibility="{Binding Badge, Converter={StaticResource HasValueToVisibility}}">
-          <TextBlock Text="{Binding Badge}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          <TextBlock x:Name="CountText" Text="{Binding Badge}" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </Border>
       </Grid>
       <DataTemplate.Triggers>
@@ -79,8 +79,10 @@
           <Setter TargetName="Row" Property="HorizontalAlignment" Value="Center" />
           <Setter TargetName="Count" Property="Visibility" Value="Collapsed" />
         </DataTrigger>
+        <!-- On the selected page's accent pill, the count is white on a lighter pill. -->
         <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
-          <Setter TargetName="Count" Property="Background" Value="#33FFFFFF" />
+          <Setter TargetName="Count" Property="Background" Value="#3AFFFFFF" />
+          <Setter TargetName="CountText" Property="Foreground" Value="{DynamicResource Brush.OnAccent}" />
         </DataTrigger>
       </DataTemplate.Triggers>
     </DataTemplate>

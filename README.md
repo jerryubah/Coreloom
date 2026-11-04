@@ -9,9 +9,10 @@ storage and network telemetry, animated charts with up to an hour of history, a 
 clean-up, threshold alerts, a tray or menu bar icon and verified in-app updates.
 
 Coreloom only **reads** sensors. It never changes clocks, voltages, fan curves or firmware settings, never
-installs drivers or services, and never sends your data to the internet. New in 1.8.2: your own background behind
-frosted glass, a dark color, a gradient or a picture, with the sidebar and every card made of the same glass. And
-since 1.7.0, your computer's readings live on your phone, over your own network
+installs drivers or services, and never sends your data to the internet. New in 1.9.0: a new look from the type up,
+on Mac, Windows and your phone: Outfit for every word and number, cards of dark glass with a hairline rim, pill buttons
+and switches, thin ring gauges, and pages that settle into place as you open them. Since 1.8.2, your own background
+shows behind the frosted glass, and since 1.7.0 your computer's readings live on your phone, over your own network
 ([Coreloom on your phone](#coreloom-on-your-phone)).
 
 ## Download
@@ -50,12 +51,15 @@ Each button downloads the newest version. Once installed, Coreloom keeps itself 
   <img src="assets/readme/coreloom-backgrounds.webp" width="100%" alt="The same Coreloom window over three backgrounds, side by side: Coreloom's gradient, the Aurora picture and the Dunes picture, each showing through the frosted cards">
 </p>
 
-- **Design.** One background across the whole window, with the sidebar and every card made of frosted glass that
-  shows a soft copy of what's behind it (1.8.2); banners lit softly from their top edge, with a dial in its own tile
-  and dark glass buttons with white text (1.8.3), now every button (1.8.4); smooth squircle corners on every card and control; cards with data glow
-  in their own color, and their edge glows in that color under the pointer; temperatures shown like a thermometer (blue
-  when cool through to red when hot); a near-black dark mode; tick-ring gauges; liquid toggles; quick search with live
-  results (Ctrl+K); eased scrolling everywhere; and a dark-mode app icon, on Coreloom's shortcuts too.
+- **Design.** The 1.9.0 look: Outfit for the interface and every reading (light, open numbers; medium titles), cards
+  of dark glass with a hairline rim over one background across the whole window (1.8.2), the current page a blue pill
+  in the sidebar, pill buttons, pickers and badges, green switches, thin ring gauges, and motion with a purpose: a page
+  blurs away and the next rises in card by card, a chart draws its line, the title types itself in. Kept from before:
+  banners lit softly from their top edge with a dial in their own tile (1.8.3); smooth squircle corners; cards with data
+  glow in their own color, and their edge glows in that color under the pointer; temperatures shown like a thermometer
+  (blue when cool through to red when hot); a near-black dark mode; liquid toggles; quick search with live results
+  (Ctrl+K); eased scrolling everywhere; and a dark-mode app icon, on Coreloom's shortcuts too. Windows starts with a
+  new splash in the same look.
 - **Your background (1.8.2).** *Settings › Appearance › Background*: eight dark colors (or any color), eight dark
   gradients (Coreloom's own follows your accent color), six pictures drawn for Coreloom (Silk, Aurora, Nebula, Dunes,
   Bloom, Light trails) or a picture of your own, under a frosted layer with *Picture opacity* and *Frosted glass blur*

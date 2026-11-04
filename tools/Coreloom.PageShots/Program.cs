@@ -351,6 +351,9 @@ internal static class Program
         canvas.Children.Add(root);
         window.Content = canvas;
         window.IsCompactSidebar = false;
+        // Re-parenting the content re-binds the sidebar's list, which drops the selection the window made before its
+        // first layout; the app itself keeps it. Put it back so the first page shows as selected in its picture.
+        window.NavList.SelectedItem = shell.CurrentPage;
 
         // The build machine isn't an administrator: the note about it isn't part of the picture.
         shell.DismissBannerCommand.Execute(null);

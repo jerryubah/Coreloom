@@ -106,6 +106,9 @@ internal sealed class FakeApps : IAppService
 /// <summary>1.8.6: the Drivers and Applications pages (Windows only).</summary>
 public class Release186ViewModelTests
 {
+    /// <summary>A Windows page context with the fake driver, app and optimizer services (shared with later releases' tests).</summary>
+    internal static (PageContext Context, SettingsService Settings, FakeDrivers Drivers, FakeApps Apps, FakeOptimizer Optimizer) DriversContext() => Context();
+
     private static (PageContext Context, SettingsService Settings, FakeDrivers Drivers, FakeApps Apps, FakeOptimizer Optimizer) Context(HostPlatform platform = HostPlatform.Windows)
     {
         var (monitor, settings, _) = Fixture.Create();
