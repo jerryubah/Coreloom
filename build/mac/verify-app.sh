@@ -250,7 +250,13 @@ PY
     [[ -n "$pid" ]] && break
     sleep 1
   done
-  sleep 12
+  # The background's log line, waited for (up to 40 s) as the readings window's is below; then 2 s for it to show.
+  for _ in $(seq 1 40); do
+    [[ "$kind" != Image ]] && break
+    grep -h "Background:" "$HOME/Library/Logs/Coreloom/"*.log 2> /dev/null | tail -1 | grep -q "Image aurora" && break
+    sleep 1
+  done
+  sleep "$( [[ "$kind" == Image ]] && echo 2 || echo 12 )"
   shot="$( [[ "$kind" == Image ]] && echo 92-background-aurora || echo 93-background-translucent )"
   screencapture -x "$OUT/$shot.png" 2> /dev/null || true
   line="$(grep -h "Background:" "$HOME/Library/Logs/Coreloom/"*.log 2> /dev/null | tail -1 || true)"
@@ -287,12 +293,21 @@ for _ in $(seq 1 60); do
   [[ -n "$pid" ]] && break
   sleep 1
 done
-sleep 10
+# Wait for the log to say so (up to 40 s) rather than a fixed 10 s: the fixed wait failed now and then on GitHub's Intel
+# Macs while the same build passed in other runs. Waiting tells a slow start apart from a window that never shows, and
+# a failure now says what the log had about the overlay.
+shown=""
+for _ in $(seq 1 40); do
+  if grep -q "Readings window shown" "$HOME/Library/Logs/Coreloom/"*.log 2> /dev/null; then shown=yes; break; fi
+  sleep 1
+done
+sleep 1
 screencapture -x -R0,0,420,240 "$OUT/95-readings-window.png" 2> /dev/null || true
-if grep -q "Readings window shown" "$HOME/Library/Logs/Coreloom/"*.log 2> /dev/null; then
+if [[ -n "$shown" ]]; then
   echo "- Shown (log); picture: 95-readings-window.png" >> "$OUT/app.md"
 else
-  fail "the readings window wasn't shown"
+  overlay_log="$(grep -h -i "overlay\|readings window" "$HOME/Library/Logs/Coreloom/"*.log 2> /dev/null | tail -3 | tr '\n' ' ')"
+  fail "the readings window wasn't shown within 40 s (log: ${overlay_log:-nothing about it})"
 fi
 kill -TERM "$pid" 2> /dev/null
 for _ in $(seq 1 20); do kill -0 "$pid" 2> /dev/null || break; sleep 0.5; done
