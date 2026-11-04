@@ -1011,7 +1011,15 @@ and a PyPI hiccup installing dmgbuild no longer fails the step (a plain disk ima
 | The phone app | Playwright at iPhone size against the demo server, dark and light: pairing, every tab, the Add to Home Screen sheet, link pairing, reload resuming (the only console errors the deliberate wrong code's 403 and requests cut off by reloads); `connect.js` in Node against the demo: 16 of 16; the new type, light numbers, thin arcs and pill buttons in the pictures | ✅ |
 | Website | Playwright as a Mac, a Windows and a phone-sized visitor at 1440, 1100, 820 and 390 px: *New in 1.9.0* shows the system's picture and three points, the badge says what's new, nothing cut off, every section with room, the background swatches switch, no horizontal scrolling, failed requests or console errors; the phone mockups checked pixel by pixel for the orange that used to show around the screen: none. Every picture on the site and in the README redrawn from this version, and the link preview and the Mac disk image's background set in Outfit | ✅ |
 
-UPDATE_190
+### Updating to 1.9.0 on a Mac
+
+| Run | Result |
+|---|---|
+| 0.9.0 (built from 1.9.0's code) and the published 1.8.6 → the published 1.9.0, run 41907635602 (`macupdatetest-190`) | ✅ Apple silicon and Intel, all four the first time: found and verified in 23–31 s, replaced after quitting, 1.9.0 started with `--updated` |
+
+### The release
+
+Main's CI for the release commit (run 41905442232) failed once in the Windows job on `DevicesViewModelTests.ChangesFromWindows_RefreshTheList`, a test that waits up to five seconds for a Bluetooth list to refresh and hadn't changed since 1.8.0; the same commit had passed on the release branch minutes before (run 41903349047), and the job passed when run again (Core 770, view models 222, Hardware 85). The Release workflow (run 41905442153) built and published 1.9.0 from the same commit.
 
 ### Not verified yet
 
