@@ -1105,6 +1105,19 @@ nothing of 1.9.2 and isn't counted.)
 | The header | The selected range sits on a raised, lighter shape with a faint rim in both themes; the Live badge is exactly the picker's height (page shots, MacShots, and the real app on GitHub's Macs: Mac verify run 41963086021 (`macverify-193`) on Apple silicon and Intel, light theme, tests 187 + 1 skipped and 188 passed); the clip check 0 cut off | ✅ |
 | Website | Playwright as a Mac, a Windows and a phone-sized visitor at four widths: *New in 1.9.3* with its picture (Windows: the Overview with the new PC; Mac: Settings › Appearance with the noise slider), its points and badge, nothing cut off, every section with room, the backgrounds switcher, no overflow; every picture on the site and in the README redrawn, and the link preview | ✅ |
 
+### The release
+
+Branch CI 41964447518 on a58c45d (Linux; Windows build, tests and publish; macOS arm64 and x64) ✅. Pushed to main: CI
+41965211388 ✅, Website 41965211542 ✅ (the live site shows *New in 1.9.3* and the badge), Release 41965211407 ✅:
+**Coreloom 1.9.3**, Latest, tag v1.9.3 → a58c45d, ten assets (the Mac's dmg and zip for Apple silicon and Intel, the
+Windows installer and portable zip, the three stable names and SHA256SUMS.txt), notes from the changelog.
+
+### Updating to 1.9.3 on a Mac
+
+| Run | Result |
+|---|---|
+| 0.9.0 (built from 1.9.3's code) and the published 1.9.2 → the published 1.9.3, run 41966402083 (`macupdatetest-193`) | ✅ on Apple silicon and Intel, all four the first time: found and verified in 23–27 s, replaced after quitting, 1.9.3 started with `--updated` |
+
 ### Not verified yet
 
 - The new PC picture on real Windows screens at 100–200 % scaling, and the grain at none on a real screen (it can show faint steps in the darkest gradients).
