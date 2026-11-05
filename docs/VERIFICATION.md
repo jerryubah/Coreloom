@@ -1093,6 +1093,23 @@ nothing of 1.9.2 and isn't counted.)
 - The sidebar's four surfaces, its shadow and its blur on real screens (Windows at 100–200 % scaling, a Retina Mac), over a bright picture of your own, and how much a second frost costs on a slow GPU.
 - The 1.9.0 and 1.9.1 items still open (the look and the motion on real screens, the splash on 4K, the accent move on real saved settings, the core scheduling colours on a real Ryzen X3D).
 
+## 1.9.3: a new PC picture; a Gradient noise slider; the selected range shown again, a Live badge as tall as the picker
+
+### Verified
+
+| What | How | Result |
+|---|---|---|
+| Tests | Core (`Release193Tests`: noise defaults to the standard 50 with a factor of 1, 0 is none and 100 twice the standard, a 1.9.2 file gets the standard, odd values are clamped, a copy keeps it) and view models (`Release193ViewModelTests`: the slider starts at *Standard*, every change saved under Appearance, *Off* and percentages, rounded and clamped, *Reset noise*) and every earlier test | ✅ in the container (Core 778, view models 230) |
+| The new PC picture | `build/pc-render-cutout.py` cut the render out of its background (rembg's isnet model, then the case's outline filled so the glass, feet and perforated side stay solid); checked over magenta, a light and a dark background. `build/pc-render.py` rebuilt the layers for the new picture: the six fans' rings and blades fitted again, the glow split out so it takes the accent, the pump screen's and the card's text painted out and drawn live. Page shots run 41963083467 (`shots-193`): the Overview in the dark theme, light theme, Aurora and Dunes; the glow follows the accent, the pump shows the CPU temperature, the card reads *RTX 5090*; the warm glint on the glass edge is in the render itself | ✅ |
+| Gradient noise | Page shots: the Gaming banner at none, the standard and twice the standard (smooth, grain, strong grain); Settings › Appearance › Gradient noise with its slider and *Standard*. MacShots: the same banner at 0, 50 and 100, and the row in Appearance (scrolled to the Sidebar) | ✅ |
+| The header | The selected range sits on a raised, lighter shape with a faint rim in both themes; the Live badge is exactly the picker's height (page shots, MacShots, and the real app on GitHub's Macs: Mac verify run 41963086021 (`macverify-193`) on Apple silicon and Intel, light theme, tests 187 + 1 skipped and 188 passed); the clip check 0 cut off | ✅ |
+| Website | Playwright as a Mac, a Windows and a phone-sized visitor at four widths: *New in 1.9.3* with its picture (Windows: the Overview with the new PC; Mac: Settings › Appearance with the noise slider), its points and badge, nothing cut off, every section with room, the backgrounds switcher, no overflow; every picture on the site and in the README redrawn, and the link preview | ✅ |
+
+### Not verified yet
+
+- The new PC picture on real Windows screens at 100–200 % scaling, and the grain at none on a real screen (it can show faint steps in the darkest gradients).
+- The 1.9.0–1.9.2 items still open (the look and motion on real screens, the splash on 4K, the sidebar surfaces on real hardware, the core scheduling colours on a real Ryzen X3D).
+
 ## How to re-run the checks that can run anywhere
 
 ```bash
