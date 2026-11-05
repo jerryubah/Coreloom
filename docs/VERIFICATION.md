@@ -1072,6 +1072,22 @@ Intel failures seen in 1.8.6, whose reason couldn't be read then.
 | The phone app | Playwright at iPhone size against the demo: the memory ring is the tick dial, its number a size down to clear the ticks; the earlier green; `connect.js` in Node: 16 of 16; the mockups checked for an orange edge: none | ✅ |
 | Website | Playwright as a Mac, a Windows and a phone-sized visitor at four widths: *New in 1.9.2* with its picture (the Memory page over Bloom with the liquid glass sidebar), the badge, nothing cut off, every section with room, the swatches, no overflow or errors; every picture on the site and in the README redrawn, and the link preview | ✅ |
 
+
+### The release
+
+Branch CI 41944407131 on 90fea17 (Linux; Windows build, tests and publish; macOS arm64 and x64) ✅. Pushed to main: CI
+41945805168 ✅, Website 41945805201 ✅ (the live site shows *New in 1.9.2* and the badge), Release 41945805144 ✅:
+**Coreloom 1.9.2**, Latest, tag v1.9.2 → 90fea17, ten assets (the Mac's dmg and zip for Apple silicon and Intel, the
+Windows installer and portable zip, the three stable names and SHA256SUMS.txt), notes from the changelog.
+
+### Updating to 1.9.2 on a Mac
+
+| Run | Result |
+|---|---|
+| 0.9.0 (built from 1.9.2's code) and the published 1.9.1 → the published 1.9.2, run 41950628795 (`macupdatetest-192`) | ✅ Intel the first time: found, verified and replaced in under a minute each, 1.9.2 started with `--updated`. Apple silicon failed the first attempt only because GitHub refused the runner's update checks (*GitHub rate limit reached*, its address shared with other jobs; on the second launch it downloaded and verified 1.9.2 after the test's 10 minutes were up); the rerun of that job passed both paths: found, verified and replaced in about 20 s each, 1.9.2 started with `--updated` |
+
+(A first push of `macupdatetest-192` went out from a stale local `main` (1.8.2's aa759d0, run 41947135947); it tested
+nothing of 1.9.2 and isn't counted.)
 ### Not verified yet
 
 - The sidebar's four surfaces, its shadow and its blur on real screens (Windows at 100–200 % scaling, a Retina Mac), over a bright picture of your own, and how much a second frost costs on a slow GPU.
