@@ -7,6 +7,24 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.9.3] - 2026-11-04
+
+A new picture of the PC on Windows, one slider for the grain over the gradients, and a header in step: the selected range has its shape back and the Live badge is as tall as the picker.
+
+### Highlights
+
+- **A new PC on the Overview (Windows).** The picture beside your specs is a new render of a glass-sided PC, cut out of its background so it sits on your card's glass. Everything it did before still works: it's lit in the colour you choose under *Customize* (Rainbow too), its six fans turn with your real fan speeds, the pump screen shows your CPU temperature and the card shows your graphics card's name.
+- **Gradient noise.** *Settings › Appearance › Gradient noise* sets how strong the fine grain is over the lit banners (Game Boost, Smart Optimize, Drivers, Applications), the speed tests, the Memory card, *What's new* and, on a Mac, the whole window: from none, through the standard, to twice as strong. *Reset noise* puts it back in the middle.
+- **The selected range shows again.** In the header's range picker (60s, 5m, 15m, 1h), the selected one sits on a raised, lighter shape with a hairline rim that shows over any background, and so does the selected choice in every other picker.
+- **A Live badge in line.** The Live badge is now exactly as tall as the range picker beside it, with the same corners.
+
+### In detail
+
+- With the noise at none, very dark gradients can show faint steps on some screens; the standard grain is what keeps them smooth.
+- Settings saved by 1.9.2 and older open with the standard grain.
+- Website: *New in 1.9.3* and new pictures of the app; the README has them too.
+- Have 1.9.2 or older? Choose *Check for Updates* (the Coreloom menu on a Mac, *Settings › Updates* on Windows), then *Install update*.
+
 ## [1.9.2] - 2026-11-04
 
 Choose what the sidebar is made of. The memory and drive rings join the gradient dials, buttons take the 1.9.0 colours, and the switches, the green and the Windows splash are as they were before 1.9.0.

@@ -9,9 +9,9 @@ storage and network telemetry, animated charts with up to an hour of history, a 
 clean-up, threshold alerts, a tray or menu bar icon and verified in-app updates.
 
 Coreloom only **reads** sensors. It never changes clocks, voltages, fan curves or firmware settings, never
-installs drivers or services, and never sends your data to the internet. New in 1.9.2: choose what the sidebar is
-made of (solid, liquid glass, frosted glass or a translucent blend) and how much shadow and blur it has, gradient
-dials for memory and drives, and the 1.9.0 button colours; since 1.9.0, cards of dark glass with a hairline rim, a
+installs drivers or services, and never sends your data to the internet. New in 1.9.3: a new picture of the PC on
+the Overview, a slider for the grain over the gradients, and the selected range shown again; since 1.9.2, choose what
+the sidebar is made of and how much shadow and blur it has; since 1.9.0, cards of dark glass with a hairline rim, a
 deeper blue, and pages that settle into place as you open them. Since 1.8.2, your own background shows behind the frosted glass, and since 1.7.0
 your computer's readings live on your phone, over your own network ([Coreloom on your phone](#coreloom-on-your-phone)).
 
@@ -65,6 +65,8 @@ Each button downloads the newest version. Once installed, Coreloom keeps itself 
   sliders; or the desktop through the window (Mica on Windows 11, Translucent on a Mac).
 - **Your sidebar (1.9.2).** *Settings › Appearance › Sidebar*: a solid color, liquid glass, frosted glass (the
   standard) or a translucent blend with your background, with *Drop shadow* and *Blur strength* sliders.
+- **Gradient noise (1.9.3).** *Settings › Appearance › Gradient noise*: the fine grain over the lit banners, the speed
+  tests and *What's new* (and the whole window on a Mac), from none to twice the standard.
 - **Overview dashboard.** A header for your PC: motherboard, graphics card and key specs next to a rendered PC whose
   lighting color you choose (blue, purple, red, green, rainbow or your accent) and whose fans turn with your real fan
   speeds; or a render of your own build. Six summary cards (GPU utilization, GPU

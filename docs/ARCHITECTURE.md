@@ -382,7 +382,10 @@ Settings › Appearance › Sidebar sets what the sidebar is made of, its drop s
   top: `Brush.HeroGlow` (a radial light at the top centre in the accent, from a lighter shade to a deeper one, gone by
   about 60 % of the height), `GrainTexture` (`assets/textures/grain.png` from `build/textures/make-grain.py`, tiled at
   4.5 %, so the dark gradient doesn't show steps on 8-bit screens) and `Brush.HeroLine` (a bright hairline along the
-  top edge, fading at both ends). All from `ThemeService.PublishHeroLooks`, rebuilt with the theme and accent.
+  top edge, fading at both ends). All from `ThemeService.PublishHeroLooks`, rebuilt with the theme and accent. Since
+  1.9.3 every grain layer's opacity is the dynamic resource `Grain.Opacity` (and the Mac window's `Grain.WindowOpacity`),
+  4.5 % (3 %) times `AppearanceSettings.NoiseFactor`: *Settings › Appearance › Gradient noise* (`Noise` 0–100, 50 the
+  standard) takes it from none to twice.
 - **The dial.** `HeroDial` (both apps, drawn in code): a 270° arc open at the bottom, its track faint, its value from a
   deeper shade of its color to a lighter one in short pieces with round ends and a halo at the head, over eight wider,
   fainter copies for a glow without a blur effect; a 46-tick scale inside it lit up to the value; `StartLabel` and
@@ -460,6 +463,11 @@ colours (not its pills) for every button.
 - **The phone app.** 1.9.0 set it in Outfit with thin arcs and pill buttons; 1.9.1 restored its 1.8.6 files (Inter,
   the tick ring) and kept the desktop's deeper blue in its palette. Since 1.9.2 its green is the earlier one again and
   its memory ring is the tick dial (`Ring`) instead of a solid donut.
+- **Pickers (1.9.3).** The selected segment of every picker (the header's range picker, sizes, background kinds,
+  the sidebar's surfaces) is a raised thumb, `Brush.SegmentThumb` (white 11 % in the dark theme, white in the light)
+  with a `Brush.SegmentThumbRim` hairline; it was `Brush.Card`, which since 1.9.0's darker cards hardly differed from
+  the track on dark backgrounds. The header's Live badge takes the range picker's height (bound to it) and its
+  11-point corners.
 - **The version number (1.9.2).** *What's new* sets the version in `Brush.VersionGradient`: in the dark theme the
   accent blended 66 % → 42 % → 24 % toward white (a light, clear blue; `Brush.AccentGradient`'s deeper end sank into
   the dark card), in the light theme the accent to its deeper shade.
@@ -473,8 +481,12 @@ and driver strings into readable ones: board vendor names ("ASUSTeK COMPUTER INC
 model badge and whether the card is discrete (integrated graphics get no badge).
 
 **The picture** is a render (`assets/pc-render/render.png`) split into layers by `build/pc-render.py`, which also
-writes `Views/PcIllustration.xaml`; edit the script and regenerate rather than editing the XAML. The layers
-(`src/Coreloom.App/Assets/PcRender`, ~670 KB) are:
+writes `Views/PcIllustration.xaml`; edit the script and regenerate rather than editing the XAML. Since 1.9.3 the render
+is Jerry's newer one, which came on a dark background: `build/pc-render-cutout.py` cuts it out of
+`render-source.png` (rembg's isnet-general-use model, then the case made solid inside its convex outline above the
+bottom edge, the feet made solid, nothing of the floor's reflection) and the fans' ellipses are fitted to each lit
+ring's outer edge (the top fans seen from a little below, the bottom ones from above; 555 × 663 output). The layers
+(`src/Coreloom.App/Assets/PcRender`) are:
 
 - `base.png`: the render with its glow taken out. Each pixel is split by least squares into a neutral base and an
   amount of the render's blue; `glow.png` holds that amount as alpha. The app draws a rectangle in the chosen color

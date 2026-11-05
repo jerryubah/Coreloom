@@ -355,6 +355,20 @@ internal static class Program
                 Capture(window, Path.Combine(output, $"settings-{section.ToLowerInvariant()}.png"));
             }
 
+            // Settings › Appearance scrolled to the sidebar's look and the gradient noise (the website's "New in 1.9.3"
+            // picture for Mac visitors).
+            shell.Settings.SelectedSection = "Appearance";
+            Settle(window, data, 3);
+            if (window.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(b => b.Text == "Sidebar" && b.IsEffectivelyVisible) is { } sidebarTitle
+                && sidebarTitle.GetVisualAncestors().OfType<ScrollViewer>().FirstOrDefault() is { } settingsScroller
+                && settingsScroller.Content is Visual settingsContent && sidebarTitle.TranslatePoint(default, settingsContent) is { } sidebarAt)
+            {
+                settingsScroller.Offset = new Vector(0, Math.Max(0, sidebarAt.Y - 140));
+                Settle(window, data, 3);
+                Capture(window, Path.Combine(output, "settings-appearance-sidebar.png"));
+                settingsScroller.Offset = default;
+            }
+
             // Settings › Connect turned off, and in the light theme.
             if (shell.Settings.Connect is { } connect)
             {

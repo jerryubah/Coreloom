@@ -174,6 +174,15 @@ Work through each area and tick what works.
       rising into place one after another; the title types itself in; a chart draws its line in from the left when
       its page appears; an export error shows as a light pill rising from the bottom. *Settings › Appearance › Reduce
       motion* turns every one of these off.
+- [ ] (1.9.3) The Overview's PC is the new render (glass side, three fans on top and three below, the pump screen and
+      the card): no dark background or floor around it, no see-through patches inside the case, nothing cut off at the
+      feet. *Customize* recolours its lights (Blue, Purple, Red, Green, Rainbow, your accent); the fans turn with your
+      fan speeds and stop turning with *Reduce motion*; the pump screen shows your CPU temperature and the card your
+      graphics card's name, both inside their shapes at your scaling.
+- [ ] (1.9.3) *Settings › Appearance › Gradient noise*: at the far left the grain over Game Boost's banner, the speed
+      tests and *What's new* is gone; at the far right it's clearly grainier; *Reset noise* puts it in the middle.
+      Restart: kept. In the header, the selected range (60s/5m/15m/1h) sits on a lighter raised shape you can see on
+      your background, and the Live badge is exactly as tall as the range picker.
 - [ ] (1.9.2) The splash is the earlier one again: flowing ribbons of blue light on deep navy, the icon on its halo,
       "Coreloom" with "loom" in blue, a glowing loading bar with moving stripes. Nothing cut off at 100–200 % scaling.
 - [ ] (1.9.0) Had the default accent before? It is the deeper blue now (*Settings › Appearance › Accent color*, the
@@ -918,6 +927,9 @@ GitHub's Macs check every build of Coreloom for Mac, but they are virtual machin
    soft or misaligned.
    *Settings › Appearance › Sidebar* (1.9.2): the four surfaces, *Drop shadow* and *Blur strength* change the sidebar at
    once, over the Coreloom gradient and over a picture; restart and the choice is kept.
+   *Settings › Appearance › Gradient noise* (1.9.3): from the far left (no grain, over the banners or the window) to
+   the far right (twice the grain); the header's selected range on its lighter shape, the Live badge as tall as the
+   picker.
 15. **Updates.** When a newer version is out, Settings has a red dot and the sidebar's *New update available* button
    opens *Settings › Updates*. Once a newer version is out, *Coreloom › Check for Updates…* downloads it; *Install update* quits
    Coreloom, replaces it and opens the new version (`~/Library/Logs/Coreloom/update.log` says what happened).
