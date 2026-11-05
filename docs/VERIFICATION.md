@@ -1137,6 +1137,21 @@ Windows installer and portable zip, the three stable names and SHA256SUMS.txt), 
 | The smaller PC | Page shots run 42036892097 (`shots-194`): the Overview's PC at 174 × 208 with even room above, below and to its left, the fans, pump and card text in place; the clip check 0 cut off on all 29 shots | ✅ |
 | Website | Playwright as a Mac, a Windows and a phone-sized visitor at four widths: *New in 1.9.4* with its picture (Mac: the Gaming boosts; Windows: the Overview with the smaller PC), six points and the badge, nothing cut off, every section with room, the backgrounds switcher, no overflow; every picture on the site and in the README redrawn, and the link preview | ✅ |
 
+### The release
+
+Branch CI 42038793648 on d3fa2b8 (Linux; Windows build, tests and publish; macOS arm64 and x64) ✅. Pushed to main: CI
+42041811412 ✅, Website 42041811526 ✅ (the live site shows *New in 1.9.4* with the Mac boosts and the smaller PC),
+Release 42041811648 ✅: **Coreloom 1.9.4**, Latest, tag v1.9.4 → d3fa2b8, ten assets (the Mac's dmg and zip for Apple
+silicon and Intel, the Windows installer and portable zip, the three stable names and SHA256SUMS.txt), notes from the
+changelog.
+
+### Updating to 1.9.4 on a Mac
+
+| Run | Result |
+|---|---|
+| The published 1.9.3 → the published 1.9.4, run 42043795817 (`macupdatetest-194`) | ✅ on Intel (first attempt) and Apple silicon (second attempt; the first was refused by GitHub's rate limit): found and verified in 26–33 s, replaced after quitting, 1.9.4 started with `--updated` |
+| 0.9.0 (built from 1.9.4's code) → the published 1.9.4, same run | ✅ on Intel. On Apple silicon both attempts' first check was refused by GitHub's rate limit for the runner's shared address (`GitHub rate limit reached`), so the test's ten minutes ran out; after the reopen the app downloaded and verified 1.9.4 (it installs at the next start), the same path that passed from 1.9.3 |
+
 ### Not verified yet
 
 - High Power Mode automation on a MacBook Pro that has High Power Mode, plugged in: the password prompt, the sudoers rule, the switch while a game runs and the mode coming back after it.
