@@ -1123,6 +1123,28 @@ Windows installer and portable zip, the three stable names and SHA256SUMS.txt), 
 - The new PC picture on real Windows screens at 100–200 % scaling, and the grain at none on a real screen (it can show faint steps in the darkest gradients).
 - The 1.9.0–1.9.2 items still open (the look and motion on real screens, the splash on 4K, the sidebar surfaces on real hardware, the core scheduling colours on a real Ryzen X3D).
 
+## 1.9.4: eight Mac Gaming boosts in place of the Metal HUD; glows that aren't cut off; centred icons; no glow behind the Mac; a smaller PC
+
+### Verified
+
+| What | How | Result |
+|---|---|---|
+| Tests | Core (`Release194Tests`: a workload starts with a game or a long busy GPU and ends after a quiet spell; High Power Mode is raised on the charger, put back after, and a hand change is left alone; the sudoers rule allows only the charger's power mode for a safe user name; the memory guard suggests the biggest apps, never the game or macOS, and growing swap during a game counts; thermal headroom follows macOS's state and counts slowdowns, an idle chip running slow isn't throttling; the cores' time shared out and what competes with the game found; MetalFX found by class name, across two pieces of a stream and only where a program keeps names; a universal program's Apple silicon slice; displays; the governor lists heavy apps first and never the game, macOS or launchers; quit profiles kept tidy and older settings with the boosts off) and view models (`Release194ViewModelTests` with a fake Mac: the Metal HUD made way for eight boosts, each with Details; High Power Mode automation asks once, raises for a game and puts the mode back, waits on battery and is unavailable without High Power Mode; the memory guard's Details list the apps; MetalFX, displays and Rosetta report what they find; the governor quits ticked apps, keeps them for a game and reopens them after, also when quitting while a game runs; the core and Rosetta boosts don't apply on an Intel Mac; nothing changes on Windows) and every earlier test | ✅ in the container (Core 794, view models 239) |
+| Glows aren't cut off | MacShots measures every glowing card on every page against what's drawn around it (`glow-check.txt`): Overview 10 cards, Benchmarking 2, GPU 5, CPU 5, Memory, Storage and Devices 1 each, 0 cut off. With the fix taken out, 9 of the 10 Overview cards had their glow cut, so the check sees it. `overview-hover.png` shows a hovered card's full glow | ✅ |
+| Icons centred and scaled alike | All 156 Mac icons are drawn on one 18-point grid and centred in their boxes. Measured on the Overview's GPU, GPU temperature, CPU and CPU temperature tiles (MacShots at 2×, dark and light): every glyph's centre 0 px from its tile's centre, the thermometers and the chip the same height | ✅ |
+| No glow behind the Mac | MacShots (every Mac model drawing) and the real app on GitHub's Macs: the Overview's Mac stands on its own | ✅ |
+| The Mac's Gaming boosts | MacShots with a sample Mac: the boosts list, each boost's Details (memory, MetalFX, displays, cores, power, thermal, Rosetta) and the background-apps card with a game's quit list; strict run, 0 binding errors. The real app (Mac verify run 42036895995, `macverify-194`, on e801863): the Gaming page counts 9 boosts on a virtual Mac with no charger and no High Power Mode, the two power boosts *Not available*; tests 187 + 1 skipped (Apple silicon) and 188 (Intel); 12 pages, quits cleanly, no errors in the log beyond GitHub's rate limit for the update check | ✅ |
+| The smaller PC | Page shots run 42036892097 (`shots-194`): the Overview's PC at 174 × 208 with even room above, below and to its left, the fans, pump and card text in place; the clip check 0 cut off on all 29 shots | ✅ |
+| Website | Playwright as a Mac, a Windows and a phone-sized visitor at four widths: *New in 1.9.4* with its picture (Mac: the Gaming boosts; Windows: the Overview with the smaller PC), six points and the badge, nothing cut off, every section with room, the backgrounds switcher, no overflow; every picture on the site and in the README redrawn, and the link preview | ✅ |
+
+### Not verified yet
+
+- High Power Mode automation on a MacBook Pro that has High Power Mode, plugged in: the password prompt, the sudoers rule, the switch while a game runs and the mode coming back after it.
+- MetalFX found in real games that use it, GPU time per app (read from the GPU's IORegistry user clients, keys taken from Apple's driver as it was known), and the performance-core split from `proc_pid_rusage` on real macOS versions.
+- The displays' ProMotion, HDR and colour depth on real built-in and external displays.
+- The background governor quitting and reopening real apps (apps that ask to save are left to the person).
+- The 1.9.0–1.9.3 items still open.
+
 ## How to re-run the checks that can run anywhere
 
 ```bash
