@@ -479,9 +479,12 @@ button { cursor: pointer; }
 
 .core__fill { position: absolute; left: 0; right: 0; bottom: 0; height: 0; border-radius: 4px; background: var(--fill, var(--cpu)); transition: height 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
 
-/* ---- Memory donut ------------------------------------------------------------------------------------------------ */
+/* ---- Memory dial (a solid donut before 1.9.2) ------------------------------------------------------------------- */
 
 .donut-row { display: grid; grid-template-columns: 150px 1fr; gap: 18px; align-items: center; }
+
+/* The memory dial is smaller than the gauges' rings: its number a size down, so it clears the ticks (1.9.2). */
+.donut-row .ring__number { font-size: 32px; }
 
 .donut-legend { display: grid; gap: 10px; }
 

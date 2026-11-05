@@ -9,9 +9,10 @@ storage and network telemetry, animated charts with up to an hour of history, a 
 clean-up, threshold alerts, a tray or menu bar icon and verified in-app updates.
 
 Coreloom only **reads** sensors. It never changes clocks, voltages, fan curves or firmware settings, never
-installs drivers or services, and never sends your data to the internet. New in 1.9.0 and 1.9.1: cards of dark glass
-with a hairline rim, a deeper blue, green switches, and pages that settle into place as you open them, with the type,
-corners and gradient dials you know. Since 1.8.2, your own background shows behind the frosted glass, and since 1.7.0
+installs drivers or services, and never sends your data to the internet. New in 1.9.2: choose what the sidebar is
+made of (solid, liquid glass, frosted glass or a translucent blend) and how much shadow and blur it has, gradient
+dials for memory and drives, and the 1.9.0 button colours; since 1.9.0, cards of dark glass with a hairline rim, a
+deeper blue, and pages that settle into place as you open them. Since 1.8.2, your own background shows behind the frosted glass, and since 1.7.0
 your computer's readings live on your phone, over your own network ([Coreloom on your phone](#coreloom-on-your-phone)).
 
 ## Download
@@ -52,16 +53,18 @@ Each button downloads the newest version. Once installed, Coreloom keeps itself 
 
 - **Design.** Inter for the interface and JetBrains Mono for readings; cards of dark glass with a hairline rim (1.9.0)
   over one background across the whole window (1.8.2), with smooth squircle corners; cards with data glow in their own
-  color, and their edge glows in that color under the pointer; a deeper blue accent and green switches (1.9.0); motion
+  color, and their edge glows in that color under the pointer; a deeper blue accent (1.9.0) on the switches; motion
   with a purpose (1.9.0): a page blurs away and the next rises in card by card, a chart draws its line, the title types
   itself in; banners lit softly from their top edge with a dial in their own tile (1.8.3); tick-ring gauges with a
-  gradient; temperatures shown like a thermometer (blue when cool through to red when hot); a near-black dark mode;
+  gradient, the memory and drive rings too (1.9.2); buttons in light glass or your accent (1.9.2); temperatures shown like a thermometer (blue when cool through to red when hot); a near-black dark mode;
   liquid toggles; quick search with live results (Ctrl+K); eased scrolling everywhere; and a dark-mode app icon, on
-  Coreloom's shortcuts too. Windows starts with a splash of soft drifting lights and dark glass (1.9.0).
+  Coreloom's shortcuts too. Windows starts with a splash of flowing ribbons of blue light.
 - **Your background (1.8.2).** *Settings › Appearance › Background*: eight dark colors (or any color), eight dark
   gradients (Coreloom's own follows your accent color), six pictures drawn for Coreloom (Silk, Aurora, Nebula, Dunes,
   Bloom, Light trails) or a picture of your own, under a frosted layer with *Picture opacity* and *Frosted glass blur*
   sliders; or the desktop through the window (Mica on Windows 11, Translucent on a Mac).
+- **Your sidebar (1.9.2).** *Settings › Appearance › Sidebar*: a solid color, liquid glass, frosted glass (the
+  standard) or a translucent blend with your background, with *Drop shadow* and *Blur strength* sliders.
 - **Overview dashboard.** A header for your PC: motherboard, graphics card and key specs next to a rendered PC whose
   lighting color you choose (blue, purple, red, green, rainbow or your accent) and whose fans turn with your real fan
   speeds; or a render of your own build. Six summary cards (GPU utilization, GPU

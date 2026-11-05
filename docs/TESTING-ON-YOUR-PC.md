@@ -152,8 +152,20 @@ Work through each area and tick what works.
       1.8.6 corners on buttons, badges, status tags, the range picker and the search box (nothing short is a round
       pill); cards are dark glass with a hairline rim and still glow in their colour, more under the pointer; the
       current page in the sidebar is the soft bar with the thin accent line at its left, and Drivers shows its count
-      of updates beside its name; *Connect*, *Boost now* and *Check for updates* are the deeper blue; switches turn
-      green when on; the gauges are the tick rings with their gradient and glow, the orb inside on the cards.
+      of updates beside its name; *Connect*, *Boost now* and *Check for updates* are the deeper blue; the gauges are
+      the tick rings with their gradient and glow, the orb inside on the cards.
+- [ ] (1.9.2) Switches are your accent colour when on, not green. The Memory card's ring, the Overview's memory ring
+      and every drive's ring (Overview and Storage) are tick dials with the gradient, coloured green → blue → orange →
+      red as they fill. Buttons keep the 1.8.6 corners with 1.9.0's colours: secondary ones a light glass pill colour
+      with a hairline rim, lighter under the pointer, giving a little when pressed; *Skip this version* only a rim; main
+      actions, the banners' buttons and the sidebar's *New update available* filled with the accent, white text.
+      Green readings and checks are the earlier teal-green. In *Settings › Updates*, the version number in *What's new*
+      is a light, clear blue that reads on the dark card.
+- [ ] (1.9.2) *Settings › Appearance › Sidebar*: *Solid color*, *Liquid glass*, *Frosted glass* (the standard) and
+      *Translucent blend* change the sidebar at once (try them over a bright picture of your own: liquid glass shows it
+      lightly blurred behind a bright rim, translucent shows it sharp, solid hides it). *Drop shadow* goes from none to
+      about twice the standard, *Blur strength* from nearly clear to twice the cards' blur (greyed out for solid and
+      translucent); *Reset shadow and blur* puts both in the middle. Restart: the choice is kept.
 - [ ] (1.9.1) Gaming › Intelligent CPU core scheduling › Details: every check has a colour, none grey. With Ultimate
       Performance or High performance the *Power plan* line is green (CPU cache optimization keeps the game on the
       cache cores itself); with Balanced it's green too; with another plan it's blue; a stopped AMD service is yellow,
@@ -162,9 +174,8 @@ Work through each area and tick what works.
       rising into place one after another; the title types itself in; a chart draws its line in from the left when
       its page appears; an export error shows as a light pill rising from the bottom. *Settings › Appearance › Reduce
       motion* turns every one of these off.
-- [ ] (1.9.0) The splash: soft blue, amber and teal lights drifting on a near-black canvas, a pane of dark glass with
-      the icon on its halo, "Coreloom" in Inter with "loom" in blue, a thin loading line that moves with each step.
-      Nothing cut off at 100–200 % scaling.
+- [ ] (1.9.2) The splash is the earlier one again: flowing ribbons of blue light on deep navy, the icon on its halo,
+      "Coreloom" with "loom" in blue, a glowing loading bar with moving stripes. Nothing cut off at 100–200 % scaling.
 - [ ] (1.9.0) Had the default accent before? It is the deeper blue now (*Settings › Appearance › Accent color*, the
       first swatch); the old blue is the second, *Sky*. An accent you had chosen is unchanged.
 
@@ -899,10 +910,14 @@ GitHub's Macs check every build of Coreloom for Mac, but they are virtual machin
 13. **Smooth gradients (1.8.6).** Over the Coreloom gradient and over a picture, look closely at the glass cards, the
    banners' light, the dials' glow and the graphs' fills: no blocks or steps, in dark and light. (A very faint grain
    over the window is what keeps them smooth.)
-14. **The look (1.9.0, 1.9.1).** Inter and the 1.8.6 corners, the sidebar's bar with its accent line, tick-ring gauges
-   with their gradient, green switches, dark glass cards with a hairline rim that still glow in their colour; pages
-   blur away and rise in card by card, titles type themselves in, charts draw their lines in. *Reduce motion* turns
-   the motion off. On a Retina screen, nothing looks soft or misaligned.
+14. **The look (1.9.0–1.9.2).** Inter and the 1.8.6 corners, the sidebar's bar with its accent line, tick-ring gauges
+   with their gradient (the memory and drive rings too since 1.9.2), switches in your accent colour, buttons in 1.9.0's
+   colours (light glass for secondary actions, the accent for main ones and *New update available*), dark glass cards
+   with a hairline rim that still glow in their colour; pages blur away and rise in card by card, titles type
+   themselves in, charts draw their lines in. *Reduce motion* turns the motion off. On a Retina screen, nothing looks
+   soft or misaligned.
+   *Settings › Appearance › Sidebar* (1.9.2): the four surfaces, *Drop shadow* and *Blur strength* change the sidebar at
+   once, over the Coreloom gradient and over a picture; restart and the choice is kept.
 15. **Updates.** When a newer version is out, Settings has a red dot and the sidebar's *New update available* button
    opens *Settings › Updates*. Once a newer version is out, *Coreloom › Check for Updates…* downloads it; *Install update* quits
    Coreloom, replaces it and opens the new version (`~/Library/Logs/Coreloom/update.log` says what happened).

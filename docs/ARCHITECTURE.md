@@ -222,7 +222,9 @@ Phones see a computer's readings through a small server inside Coreloom, on the 
   3 (red) with short blends at each boundary (`At`). `RadialGauge` with `ToneScale` colors its arc from the
   *animated* value, so the color glides with the arc; `MetricViewModel.GaugeCoolAt/WarmAt/HotAt` feed it. For
   ratings where more is better (speeds), the view model sets `Tone` directly and the gauge animates between colors.
-  Usage donuts (memory, volumes) recolor their "in use" segment with `ColorKeys.ForLevel`. Mica uses `DWMWA_SYSTEMBACKDROP_TYPE` on Windows 11
+  The memory and drive rings are tick dials too since 1.9.2 (`MemoryPanelViewModel.Fraction` and `VolumeViewModel.Fraction`
+  with their `Gauge…At` stops from `Thresholds.Memory` and `Thresholds.DriveSpace`; the Memory page binds `Load`); the
+  "in use" dot beside them follows `ColorKeys.ForLevel`, and `DonutChart` is no longer used in a page. Mica uses `DWMWA_SYSTEMBACKDROP_TYPE` on Windows 11
   22H2 and later. The custom caption buttons support Snap Layouts by answering `WM_NCHITTEST` with
   `HTMAXBUTTON`.
 - **Cards in a row end on one line (1.4.7, 1.4.8).** Cards side by side share one bottom line, and the difference is
@@ -348,6 +350,32 @@ One background spans each app's main window; the sidebar and the cards are frost
   the previous copy deleted, at most 60 MB) and the two sliders, each change saved through `SettingsService` and applied
   by the theme at once.
 
+## The sidebar's look (1.9.2)
+
+Settings › Appearance › Sidebar sets what the sidebar is made of, its drop shadow and its blur, on both apps.
+
+- **Settings.** `AppearanceSettings.Sidebar` (`SidebarSettings`, Core, unit-tested): `Surface` (`Solid`, `LiquidGlass`,
+  `FrostedGlass`, `Translucent`; saved by name), `Shadow` and `Blur` (0–100 %, `Standard` 50 in the middle). A file
+  without it (1.9.1 and older) gets frosted glass at 50/50, which is the sidebar as it was. `ShadowDepth` is
+  `SquircleBorder.Shadow` (0 … 2, 1 the old shadow; past 1 `DrawShadow` spreads further as well as darkening).
+  `FrostPoints(cards)` is the cards' frost scaled by the blur (twice at 100 %, a light 4 points at 0 %), liquid glass
+  times `LiquidClarity` (0.45). `Blurs` is false for solid and translucent, `NeedsOwnFrost` true for liquid glass and
+  for a blur other than 50.
+- **Drawing.** `BackdropRequest.SidebarFrostPoints` asks `BackdropRenderer` for a second frosted copy
+  (`BackdropLayers.SidebarFrost`) only when the sidebar needs its own; each app's `Backdrop.SidebarFrost` is that copy
+  or the cards' frost. `SquircleBorder.SidebarFrost` picks it, and `SquircleBorder.Highlight` lays a brush over the
+  fill inside the shape.
+- **The four surfaces.** `ThemeService.PublishSidebar` publishes `Brush.SidebarFill`, `Brush.SidebarRim`,
+  `Brush.SidebarHighlight` and the numbers `Sidebar.Sheen`, `Sidebar.Shadow` and `Sidebar.Frosted`, which the sidebar's
+  `SquircleBorder` takes as dynamic resources. Frosted glass is the card glass (`Brush.GlassFill`, `Brush.GlassRim`,
+  sheen 1). Liquid glass is a thin tint (about 19–34 % ink in the dark theme) over its clearer frost, a rim bright at
+  the top left and again at the bottom right, a highlight down from the top and sheen 2.2. Translucent is a flat
+  see-through tint (about 35 % ink) with nothing blurred, so the background shows sharp. Solid is the theme's `Card`
+  colour with `CardBorder`.
+- **Settings › Appearance.** `SidebarLookViewModel` (ViewModels, unit-tested): the four surfaces as a segmented
+  choice with a line on each, the two sliders (the blur greyed out when there's nothing to blur) and *Reset shadow and
+  blur*; each change is saved under "Appearance", which applies the theme again.
+
 ## Banners, dials and glass buttons (1.8.3)
 
 - **Banners.** The Gaming and Smart Optimize banners and the *What's new* card are `Card` glass with three layers on
@@ -374,7 +402,11 @@ One background spans each app's main window; the sidebar and the cards are frost
   `Button.Primary` was glass too; 1.8.5 made it the accent-filled button again (`Brush.Accent`, `Brush.AccentHover`,
   `Brush.OnAccent` text and icons), so a card's main action such as *Connect* doesn't look like the glass *Disconnect*
   beside it. Banner buttons stay glass, and the speed tests' *Start test* is `Button.AccentGradient` since their cards
-  have the banner light.
+  have the banner light. Since 1.9.2 the buttons take 1.9.0's colours on these corners: `Button.Glass` (and Secondary)
+  is `Brush.Pill` with a `Brush.PillBorder` rim and the text colour, `Brush.PillHover` under the pointer, a press
+  scales it to 98 %; `Button.Subtle` is the rim alone; `Button.Primary`, `Button.AccentGradient` and the sidebar's
+  `Button.Update` are the accent with `Brush.OnAccent` text and icons (pressed: 88 % and 98 %). The charcoal glass
+  (`Brush.GlowButton…`) remains only for the *What's new* card's icon tile.
 - **Speed tests (1.8.4, 1.8.5).** The drive and internet speed tests are `Card` glass without a `Card.Glow` lamp, and
   their gauges (`ToneGauge`) have no colored orb; the arc keeps its rating color. Since 1.8.5 they carry the banners'
   three layers (`Brush.HeroGlow`, `GrainTexture`, `Brush.HeroLine`, card padding 0 with the content's margin inside),
@@ -383,7 +415,7 @@ One background spans each app's main window; the sidebar and the cards are frost
   `FillCurve`; sparklines also fade their fill in and out at the ends (`ChartColors.EdgeFade` as an opacity mask), so
   no hard edge shows on the card.
 
-## The 1.9.0 look: dark glass, a deeper blue, motion (and what 1.9.1 put back)
+## The 1.9.0 look: dark glass, a deeper blue, motion (and what 1.9.1 and 1.9.2 put back)
 
 The design uplift of 1.9.0 keeps every page's layout where it was (the sidebar's order, the page headers, the cards'
 places) and redraws the language they're in, on Windows, the Mac and the phone alike. 1.9.1, by request, put back
@@ -391,15 +423,18 @@ the 1.8.6 type (Inter and JetBrains Mono, the same scale and weights), the 1.8.6
 and status tags 6–8, the range picker 11, inputs 10, the search box 12, the toast 14; nothing is a fully round pill
 except the switches), the 1.8.6 sidebar highlight (`NavItem`: a soft rounded bar with a 3-point accent line at its
 left) and the tick-ring gauges with their gradient (`RadialGauge`'s `Auto` look, the orb inside on the metric cards).
-What stays of 1.9.0 is listed from *Palette* on; the paragraphs on type, pills and rings describe 1.9.0 only.
+What stays of 1.9.0 is listed from *Palette* on; the paragraphs on type, pills and rings describe 1.9.0 only. 1.9.2
+put back the green from before 1.9.0, the accent on the switches and the ribbons splash, and took 1.9.0's button
+colours (not its pills) for every button.
 
 - **Type (1.9.0 only).** Outfit was the interface's only face, Light for the big numbers; 1.9.1 removed it from both
   apps and the phone app and restored Inter (UI) and JetBrains Mono (readings) with the 1.8.6 sizes and weights.
 - **Palette.** The default accent is a deeper blue, `#2E7CF6` (`AccentPalette.Default`; the lighter `#5B8CFF` stays on
   offer as *Sky*). Settings saved before 1.9.0 that kept the old default move to the new blue once
   (`AppSettings.CurrentSchemaVersion` 2); an accent chosen on purpose is kept. The canvas is a shade darker
-  (`Background` `#070A10`), *Success* a truer green (`#3DCB73`), and `Pill`, `PillBorder`, `PillHover`, `Toast`,
-  `ToastText` and `ToastControl` are new tokens.
+  (`Background` `#070A10`), and `Pill`, `PillBorder`, `PillHover`, `Toast`, `ToastText` and `ToastControl` are new
+  tokens. 1.9.0 made *Success* a truer green (`#3DCB73`, light `#1D9E4E`); 1.9.2 put the earlier `#45D6A0` (light
+  `#169F70`) back in both apps and the phone app.
 - **Glass.** `ThemeService.PublishGlass` makes the cards and the sidebar a dark, nearly opaque, neutral fill over the
   frost (`BackdropSettings.FrostPoints` is 44 and up) with a hairline rim a shade lighter, so what's behind shows only
   as soft colour; the two glass lights are faint. The cards' own colour (`Card.Glow`'s lamp, lit edge and the pointer's
@@ -408,9 +443,10 @@ What stays of 1.9.0 is listed from *Palette* on; the paragraphs on type, pills a
 - **Controls (1.9.0, mostly undone in 1.9.1).** 1.9.0 made every button a pill, the switch 44 × 24 with a round
   knob, check boxes round, inputs and the search box pills and the sidebar's current page a solid accent pill. 1.9.1
   restored the 1.8.6 controls (`Button.Primary` accent-filled with 10-point corners, `Button.Glass` the charcoal glass
-  with the corner light, the 1.8.6 switch geometry and the `NavItem` bar with its accent line) and kept the switch's
-  green (`Brush.Success` floods the track when on: a state, not an action) and the count beside a page's name
-  (`PageViewModel.Badge`, `Badge.Count`: Drivers' updates waiting).
+  with the corner light, the 1.8.6 switch geometry and the `NavItem` bar with its accent line) and kept the count
+  beside a page's name (`PageViewModel.Badge`, `Badge.Count`: Drivers' updates waiting). 1.9.0 and 1.9.1 flooded the
+  switch's track with green when on; since 1.9.2 it is the accent again (`Brush.Accent`), and the buttons take 1.9.0's
+  colours (see *Glass buttons* above).
 - **Gauges (1.9.0 only).** 1.9.0 drew `RadialGauge` as a thin smooth arc; 1.9.1 put the tick ring with its gradient
   and glow back (`GaugeLook.Auto` is ticks for gauges 40 points and up, as in 1.8.6), on the phone too.
 - **Motion** (nothing with *Reduce motion*). `PageHost` blurs and fades the page you leave over 150 ms (the next page
@@ -422,7 +458,11 @@ What stays of 1.9.0 is listed from *Palette* on; the paragraphs on type, pills a
   (`Reveal.FromBelow`; on the Mac the window rises it with `Stagger.Rise`); it is the 1.8.6 card again since 1.9.1
   (1.9.0 made it a light pill). The chart grids are dotted (`ChartColors.DottedPen`).
 - **The phone app.** 1.9.0 set it in Outfit with thin arcs and pill buttons; 1.9.1 restored its 1.8.6 files (Inter,
-  the tick ring) and kept the desktop's deeper blue and green in its palette.
+  the tick ring) and kept the desktop's deeper blue in its palette. Since 1.9.2 its green is the earlier one again and
+  its memory ring is the tick dial (`Ring`) instead of a solid donut.
+- **The version number (1.9.2).** *What's new* sets the version in `Brush.VersionGradient`: in the dark theme the
+  accent blended 66 % → 42 % → 24 % toward white (a light, clear blue; `Brush.AccentGradient`'s deeper end sank into
+  the dark card), in the light theme the accent to its deeper shade.
 
 ## Overview header
 

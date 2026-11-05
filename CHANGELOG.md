@@ -7,6 +7,27 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.9.2] - 2026-11-04
+
+Choose what the sidebar is made of. The memory and drive rings join the gradient dials, buttons take the 1.9.0 colours, and the switches, the green and the Windows splash are as they were before 1.9.0.
+
+### Highlights
+
+- **Your sidebar, your way.** *Settings › Appearance › Sidebar* has four surfaces: *Solid color*, *Liquid glass* (clear glass with a bright rim and a highlight that catches the light, the background lightly blurred behind it), *Frosted glass* (the sidebar you know, still the standard) and *Translucent blend* (a see-through tint with no blur, so your background's colours or picture show through sharp). Two sliders beside them: *Drop shadow*, from none to about twice the standard, and *Blur strength*, from nearly clear to twice the cards' blur. *Reset shadow and blur* puts both back in the middle. On Windows and the Mac.
+- **Gradient dials for memory and drives.** The Memory card's ring, the Overview's memory ring and every drive's ring on the Overview and the Storage page are the tick dials with their gradient now, like every other reading: green while there's room, then blue, orange and red as they fill. The memory ring on your phone too.
+- **The 1.9.0 button colours.** Buttons keep the 1.8.6 corners and take the colours of 1.9.0: secondary actions are a light glass a shade above the card with a hairline rim, lighter under the pointer, and give a little when pressed; the quietest (*Skip this version*) are only the rim; main actions, the banners' *Boost now* and *Smart Scan*, *Install update* and the sidebar's *New update available* are filled with your accent, white text.
+- **Accent switches.** A switch that's on is your accent colour again, not green.
+- **The earlier green.** Every green (readings that are fine, checks that pass, the live dot, the phone app) is the teal-green from before 1.9.0.
+- **A clearer version number.** In *What's new*, the version is a light, clear blue that reads on the dark card instead of sinking into it.
+- **The earlier splash on Windows.** Coreloom starts with the flowing ribbons of blue light again, the icon on its halo and the loading bar with moving stripes.
+
+### In detail
+
+- Settings saved by 1.9.1 and older open with *Frosted glass* at the standard shadow and blur, which is the sidebar you had.
+- The sidebar's own blur is drawn only when it differs from the cards' (liquid glass, or a blur other than the middle), so the standard sidebar costs nothing extra.
+- Website: *New in 1.9.2* and new pictures of the app; the README and the release pages have them too.
+- Have 1.9.1 or older? Choose *Check for Updates* (the Coreloom menu on a Mac, *Settings › Updates* on Windows), then *Install update*.
+
 ## [1.9.1] - 2026-11-04
 
 The type, corners, sidebar highlight and gauges of 1.8.6 are back, by request; the rest of 1.9.0 stays. The core scheduling details are coloured by what they mean.
