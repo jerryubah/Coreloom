@@ -1,0 +1,36 @@
+2026-11-05 15:05:10.942 INF [App] Coreloom 1.9.3+a58c45d6c2e84853d0be62eb7415ed6ea80731e4 starting (args: ; bundle: /Applications/Coreloom.app; macOS 15.8.2, Arm64, .NET 10.0.14, PID 20749; Apple silicon: True; virtual machine: True).
+2026-11-05 15:05:11.058 INF [App] First launch: Mac defaults applied.
+2026-11-05 15:05:11.560 INF [Notifications] Notifications aren't allowed (System Settings › Notifications › Coreloom).
+2026-11-05 15:05:11.653 INF [Telemetry] Telemetry started (7 providers, interval 1000 ms).
+2026-11-05 15:05:11.654 INF [Telemetry] Coreloom process: Running in 1 ms
+2026-11-05 15:05:11.665 INF [Sensors] Sensors: no hardware sensors (virtual machine).
+2026-11-05 15:05:12.658 INF [Telemetry] Mac sensors: Running in 15 ms — Apple Virtual Machine 1 (VirtualMac2,1); no fans reported; 0 temperature groups; sensors: no hardware sensors (virtual machine)
+2026-11-05 15:05:12.658 INF [Telemetry] macOS processor counters: Running in 12 ms — Apple M1 (Virtual): 3 threads; sensors: no hardware sensors (virtual machine)
+2026-11-05 15:05:12.658 INF [Telemetry] macOS memory: Running in 12 ms — 7 GB physical memory
+2026-11-05 15:05:12.658 INF [Telemetry] macOS storage: Running in 27 ms — 1 disk(s), 1 volume(s)
+2026-11-05 15:05:12.658 INF [Telemetry] macOS network: Running in 24 ms — 2 interface(s), primary en0
+2026-11-05 15:05:12.658 INF [Telemetry] macOS graphics drivers: Running in 1 ms — Apple Paravirtual GPU
+2026-11-05 15:05:12.768 INF [Appearance] Background: Gradient coreloom drawn at 943×634 (frost 236×159) in 40 ms.
+2026-11-05 15:05:14.720 INF [Window] Title bar: glass 10,10 76×614; close 21,22 14×16; minimize 41,22 14×16; zoom 61,22 14×16; first page (48,163) → AvnView; range (784,57) → AvnView; freeze (898,57) → AvnView; glass top (48,14) → AvnView
+2026-11-05 15:05:43.164 INF [Updates] Coreloom 1.9.4 downloaded and verified (Coreloom-1.9.4-macos-arm64.zip).
+2026-11-05 15:05:46.832 INF [App] Coreloom 1.9.3+a58c45d6c2e84853d0be62eb7415ed6ea80731e4 starting (args: ; bundle: /Applications/Coreloom.app; macOS 15.8.2, Arm64, .NET 10.0.14, PID 21853; Apple silicon: True; virtual machine: True).
+2026-11-05 15:05:47.325 INF [Updates] Installing the downloaded update to 1.9.4 at startup.
+2026-11-05 15:05:47.362 INF [Updates] Installing Coreloom 1.9.4 from Coreloom-1.9.4-macos-arm64.zip.
+2026-11-05 15:05:48.067 INF [Updates] Replacing /Applications/Coreloom.app once Coreloom has quit.
+2026-11-05 15:05:48.067 INF [App] Quitting so the update can replace Coreloom; the new version opens when it's done.
+2026-11-05 15:05:48.122 INF [App] Quitting.
+2026-11-05 15:05:48.703 INF [App] Coreloom 1.9.4+d3fa2b8ceeae98a647b54de4d4c1b3e08fd23662 starting (args: --updated; bundle: /Applications/Coreloom.app; macOS 15.8.2, Arm64, .NET 10.0.14, PID 21874; Apple silicon: True; virtual machine: True).
+2026-11-05 15:05:49.176 INF [Updates] First start of 1.9.4 after an update.
+2026-11-05 15:05:49.178 INF [Updates] Update to 1.9.4 installed.
+2026-11-05 15:05:49.231 INF [Notifications] Notifications aren't allowed (System Settings › Notifications › Coreloom).
+2026-11-05 15:05:49.301 INF [Telemetry] Telemetry started (7 providers, interval 1000 ms).
+2026-11-05 15:05:49.309 INF [Sensors] Sensors: no hardware sensors (virtual machine).
+2026-11-05 15:05:49.981 INF [Appearance] Background: Gradient coreloom drawn at 943×634 (frost 236×159) in 35 ms.
+2026-11-05 15:05:50.303 INF [Telemetry] Coreloom process: Running in 2 ms
+2026-11-05 15:05:50.303 INF [Telemetry] Mac sensors: Running in 16 ms — Apple Virtual Machine 1 (VirtualMac2,1); no fans reported; 0 temperature groups; sensors: no hardware sensors (virtual machine)
+2026-11-05 15:05:50.303 INF [Telemetry] macOS processor counters: Running in 12 ms — Apple M1 (Virtual): 3 threads; sensors: no hardware sensors (virtual machine)
+2026-11-05 15:05:50.303 INF [Telemetry] macOS memory: Running in 11 ms — 7 GB physical memory
+2026-11-05 15:05:50.303 INF [Telemetry] macOS storage: Running in 17 ms — 1 disk(s), 1 volume(s)
+2026-11-05 15:05:50.303 INF [Telemetry] macOS network: Running in 11 ms — 2 interface(s), primary en0
+2026-11-05 15:05:50.303 INF [Telemetry] macOS graphics drivers: Running in 1 ms — Apple Paravirtual GPU
+2026-11-05 15:05:51.937 INF [Window] Title bar: glass 10,10 76×614; close 21,22 14×16; minimize 41,22 14×16; zoom 61,22 14×16; first page (48,163) → AvnView; range (784,57) → AvnView; freeze (898,57) → AvnView; glass top (48,14) → AvnView

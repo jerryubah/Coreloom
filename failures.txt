@@ -1,0 +1,4 @@
+FAILED: the update wasn't downloaded within 10 minutes
+FAILED: /Applications/Coreloom.app is 0.9.0, not 1.9.4
+FAILED: the update helper didn't log 'updated'
+FAILED: the new version didn't start with --updated

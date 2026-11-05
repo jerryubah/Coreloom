@@ -1,0 +1,34 @@
+2026-11-05 14:51:29.195 INF [App] Coreloom 0.9.0+d3fa2b8ceeae98a647b54de4d4c1b3e08fd23662 starting (args: ; bundle: /Applications/Coreloom.app; macOS 15.8.2, Arm64, .NET 10.0.14, PID 2328; Apple silicon: True; virtual machine: True).
+2026-11-05 14:51:29.329 INF [App] First launch: Mac defaults applied.
+2026-11-05 14:51:30.045 INF [Telemetry] Telemetry started (7 providers, interval 1000 ms).
+2026-11-05 14:51:30.055 INF [Sensors] Sensors: no hardware sensors (virtual machine).
+2026-11-05 14:51:31.047 INF [Telemetry] Coreloom process: Running in 1 ms
+2026-11-05 14:51:31.047 INF [Telemetry] Mac sensors: Running in 14 ms — Apple Virtual Machine 1 (VirtualMac2,1); no fans reported; 0 temperature groups; sensors: no hardware sensors (virtual machine)
+2026-11-05 14:51:31.047 INF [Telemetry] macOS processor counters: Running in 10 ms — Apple M1 (Virtual): 3 threads; sensors: no hardware sensors (virtual machine)
+2026-11-05 14:51:31.047 INF [Telemetry] macOS memory: Running in 9 ms — 7 GB physical memory
+2026-11-05 14:51:31.047 INF [Telemetry] macOS storage: Running in 29 ms — 1 disk(s), 1 volume(s)
+2026-11-05 14:51:31.047 INF [Telemetry] macOS network: Running in 32 ms — 2 interface(s), primary en0
+2026-11-05 14:51:31.047 INF [Telemetry] macOS graphics drivers: Running in 2 ms — Apple Paravirtual GPU
+2026-11-05 14:51:33.886 INF [Appearance] Background: Gradient coreloom drawn at 943×631 (frost 236×158) in 44 ms.
+2026-11-05 14:51:35.824 INF [Window] Title bar: glass 10,10 76×611; close 21,22 14×16; minimize 41,22 14×16; zoom 61,22 14×16; first page (48,163) → AvnView; range (784,57) → AvnView; freeze (898,57) → AvnView; glass top (48,14) → AvnView
+2026-11-05 14:51:50.511 WRN [Updates] Update check failed.
+    Coreloom.Core.Updates.UpdateException: GitHub rate limit reached. Try again later.
+   at Coreloom.Core.Updates.GitHubReleaseClient.ThrowIfRateLimited(HttpResponseMessage response)
+   at Coreloom.Core.Updates.GitHubReleaseClient.GetLatestAsync(Boolean includePreReleases, CancellationToken cancellationToken)
+   at Coreloom.ViewModels.UpdatesViewModel.<>c__DisplayClass143_0.<<CheckAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Coreloom.Core.Updates.UpdateChecker.CheckAsync(Boolean includePreReleases, String skippedVersion, CancellationToken cancellationToken)
+2026-11-05 15:01:41.037 INF [App] Coreloom 0.9.0+d3fa2b8ceeae98a647b54de4d4c1b3e08fd23662 starting (args: ; bundle: /Applications/Coreloom.app; macOS 15.8.2, Arm64, .NET 10.0.14, PID 15940; Apple silicon: True; virtual machine: True).
+2026-11-05 15:01:41.635 INF [Notifications] Notifications aren't allowed (System Settings › Notifications › Coreloom).
+2026-11-05 15:01:41.718 INF [Telemetry] Telemetry started (7 providers, interval 1000 ms).
+2026-11-05 15:01:41.731 INF [Sensors] Sensors: no hardware sensors (virtual machine).
+2026-11-05 15:01:42.489 INF [Appearance] Background: Gradient coreloom drawn at 943×634 (frost 236×159) in 65 ms.
+2026-11-05 15:01:42.722 INF [Telemetry] Coreloom process: Running in 1 ms
+2026-11-05 15:01:42.722 INF [Telemetry] Mac sensors: Running in 14 ms — Apple Virtual Machine 1 (VirtualMac2,1); no fans reported; 0 temperature groups; sensors: no hardware sensors (virtual machine)
+2026-11-05 15:01:42.722 INF [Telemetry] macOS processor counters: Running in 11 ms — Apple M1 (Virtual): 3 threads; sensors: no hardware sensors (virtual machine)
+2026-11-05 15:01:42.722 INF [Telemetry] macOS memory: Running in 11 ms — 7 GB physical memory
+2026-11-05 15:01:42.722 INF [Telemetry] macOS storage: Running in 21 ms — 1 disk(s), 1 volume(s)
+2026-11-05 15:01:42.722 INF [Telemetry] macOS network: Running in 32 ms — 2 interface(s), primary en0
+2026-11-05 15:01:42.722 INF [Telemetry] macOS graphics drivers: Running in 2 ms — Apple Paravirtual GPU
+2026-11-05 15:01:44.407 INF [Window] Title bar: glass 10,10 76×614; close 21,22 14×16; minimize 41,22 14×16; zoom 61,22 14×16; first page (48,163) → AvnView; range (784,57) → AvnView; freeze (898,57) → AvnView; glass top (48,14) → AvnView
+2026-11-05 15:02:14.719 INF [Updates] Coreloom 1.9.4 downloaded and verified (Coreloom-1.9.4-macos-arm64.zip).
