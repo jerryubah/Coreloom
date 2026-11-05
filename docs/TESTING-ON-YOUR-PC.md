@@ -174,6 +174,8 @@ Work through each area and tick what works.
       rising into place one after another; the title types itself in; a chart draws its line in from the left when
       its page appears; an export error shows as a light pill rising from the bottom. *Settings › Appearance › Reduce
       motion* turns every one of these off.
+- [ ] (1.9.4) The Overview's PC is a little smaller than the card is tall, with even room above, below and to its
+      left, at 100–200 % scaling; the fans and the text on the pump screen and card still sit where they should.
 - [ ] (1.9.3) The Overview's PC is the new render (glass side, three fans on top and three below, the pump screen and
       the card): no dark background or floor around it, no see-through patches inside the case, nothing cut off at the
       feet. *Customize* recolours its lights (Blue, Purple, Red, Green, Rainbow, your accent); the fans turn with your
@@ -930,7 +932,32 @@ GitHub's Macs check every build of Coreloom for Mac, but they are virtual machin
    *Settings › Appearance › Gradient noise* (1.9.3): from the far left (no grain, over the banners or the window) to
    the far right (twice the grain); the header's selected range on its lighter shape, the Live badge as tall as the
    picker.
-15. **Updates.** When a newer version is out, Settings has a red dot and the sidebar's *New update available* button
+15. **Glow and icons (1.9.4).** Move the pointer along the edge of any glowing card (the Overview's cards, the Graphics,
+   Processor, Memory, Storage and Devices pages): the light around the edge fades out softly, with no straight edge
+   where it stops, also at the corners. The icons in the cards' tiles sit in the middle, the thermometer too, and look
+   the same size. The Overview's Mac picture has no coloured glow behind it.
+16. **The Mac's Gaming boosts (1.9.4).** On the Gaming page, the eight new cards (High Power Mode automation … the
+   background application governor) and no Metal Performance HUD. Turn each on and open its *Details*:
+   - *High Power Mode automation* on a MacBook Pro (or another Mac) with High Power Mode: macOS asks for your password
+     once. Start a game on the charger: within a few seconds *System Settings › Battery* (or `pmset -g custom`) shows
+     High Power under *Power Adapter*; quit it and about a minute later your earlier mode is back. On battery nothing
+     changes. Turn the switch off: the password is asked again and `/etc/sudoers.d/coreloom-powermode` is gone. On a
+     Mac without High Power Mode the card says so and can't be turned on.
+   - *Unified memory pressure guard*: with a game and a few big apps open, the pressure, compressed memory and swap
+     match Activity Monitor's Memory tab, and the apps it suggests quitting are the big ones (never the game).
+   - *Thermal headroom optimizer*: during a long session the headroom changes as the Mac warms (on a MacBook Air most).
+   - *Performance core workload monitor*: with a game running, the apps listed and their share on performance cores
+     look plausible next to Activity Monitor's CPU tab; a busy browser shows as competing.
+   - *MetalFX graphics optimizer*: a game you know uses MetalFX (its graphics settings offer MetalFX upscaling or frame
+     generation) is listed with those features; a game without it shows *Not used*.
+   - *ProMotion & display pipeline optimizer*: each display's name, refresh rate (ProMotion on a MacBook Pro), HDR and
+     resolution match System Settings › Displays; setting the refresh rate to 60 Hz brings the suggestion back.
+   - *Native Apple silicon detection*: an Intel-only game or app shows as *Intel (Rosetta 2)*.
+   - *Background application governor*: tick an app, *Quit ticked apps*: it quits (an app with unsaved work asks
+     first and stays). Keep a couple of apps for a game, start that game: they quit; quit the game: about ten seconds
+     later they reopen in the background. Turning the governor off reopens anything it quit.
+   - If you had turned on the Metal Performance HUD in 1.9.3, it's off after updating.
+17. **Updates.** When a newer version is out, Settings has a red dot and the sidebar's *New update available* button
    opens *Settings › Updates*. Once a newer version is out, *Coreloom › Check for Updates…* downloads it; *Install update* quits
    Coreloom, replaces it and opens the new version (`~/Library/Logs/Coreloom/update.log` says what happened).
 

@@ -77,7 +77,25 @@ On a Mac the top and bottom layers are swapped for their macOS counterparts and 
   `deck.png`, the deck's mask.
 - **Permissions.** Coreloom asks macOS for nothing at launch. Bluetooth is requested from the Devices page when the
   person clicks *Allow Bluetooth* (through CoreBluetooth, which doesn't block); the power mode, `purge` and the DNS
-  cache use `osascript`'s administrator prompt, on a click.
+  cache use `osascript`'s administrator prompt, on a click. High Power Mode automation (1.9.4) uses that prompt once to
+  install `/etc/sudoers.d/coreloom-powermode` (written to a file with a dot, which sudo ignores, checked with
+  `visudo -cf`, then moved into place) allowing only `/usr/bin/pmset -c powermode 0|1|2` for the user; it then runs
+  `sudo -n` for those three commands, and removes the file when it's turned off.
+- **No glow behind the Mac picture (1.9.4).** `MacIllustration` no longer draws a halo in the lighting colour behind
+  the MacBook (or the light under the desktops and tower); the lighting colour stays on the screen when the desktop
+  picture is off, and on the status light.
+- **Icons (1.9.4).** Every icon is a `c:GridIcon` (a `Path` with the `IconPath` theme, `Stretch="None"`): it draws the
+  24-point grid's icon at one scale for every icon (18 grid points fill its box; most icons are 16–18 across, the
+  widest 19) with its outline centred in the box. Before, `Stretch="Uniform"` fitted each icon's own outline to the box
+  and Avalonia pinned it top-left, so narrow icons (the thermometer) sat left of centre and every icon had its own
+  scale. Glyphs that are a control of their own (close, chevrons, plus, play, pause) set `Fit="True"`: they fill their
+  box, centred.
+- **Glows aren't cut off (1.9.4).** Avalonia clips every templated control to its bounds (`TemplatedControl`
+  overrides `ClipToBounds` to true), so the two `ContentControl`s around each Overview card, and the `ItemsControl`s
+  holding cards, cut a card's pointer glow (which spreads 14 points outside it) at the card's rectangle. Styles.axaml
+  sets `ClipToBounds="False"` on plain `ContentControl` and `ItemsControl` (a type selector matches that type only, so
+  buttons and lists keep theirs). MacShots writes `glow-check.txt`: for each page, every card with `EdgeGlow` checked
+  against its clipping ancestors (a scroll viewer may cut it only at its top and bottom).
 - **Packaging.** `build/mac/bundle.sh` publishes a self-contained single file for `osx-arm64` or `osx-x64`, lays out
   `Coreloom.app` (only Mach-O code in Contents/MacOS; Info.plist, the icon, licenses and notices in Resources),
   signs it inside out (ad hoc, or Developer ID with the hardened runtime and notarization when the release has the
@@ -481,7 +499,8 @@ and driver strings into readable ones: board vendor names ("ASUSTeK COMPUTER INC
 model badge and whether the card is discrete (integrated graphics get no badge).
 
 **The picture** is a render (`assets/pc-render/render.png`) split into layers by `build/pc-render.py`, which also
-writes `Views/PcIllustration.xaml`; edit the script and regenerate rather than editing the XAML. Since 1.9.3 the render
+writes `Views/PcIllustration.xaml`; edit the script and regenerate rather than editing the XAML. The Overview shows it
+at 174 × 208 since 1.9.4 (196 × 234 before), with 6 points above and below it and 22 from the card's left edge. Since 1.9.3 the render
 is Jerry's newer one, which came on a dark background: `build/pc-render-cutout.py` cuts it out of
 `render-source.png` (rembg's isnet-general-use model, then the case made solid inside its convex outline above the
 bottom edge, the feet made solid, nothing of the floor's reflection) and the fans' ellipses are fitted to each lit
@@ -1002,6 +1021,60 @@ management learned; `DownloadArtwork` and the frame limiter's fields are only ke
 - **Shader cache.** NVAPI's `PS_SHADERDISKCACHE_MAX_SIZE` (0xFFFFFFFF = unlimited; off restores the driver default),
   sizes of the DirectX, NVIDIA, AMD, Intel and Steam pre-cache folders (`ShaderCaches.Locations`), and a notice when
   the driver version (NVAPI) differs from the last one seen. Nothing is pre-compiled by running code in games.
+
+### The Mac's own boosts (1.9.4)
+
+Eight boosts took the place of the Metal Performance HUD switch (`GamingTweak.MetalHud` stays for the numbering; the
+first status read of 1.9.4 deletes the `MetalForceHudEnabled` default once if it's on and sets
+`GamingSettings.MetalHudRetired`). They're Coreloom's own switches (`GamingSettings.HighPowerAutomation`, `MemoryGuard`,
+`ThermalHeadroom`, `CoreWorkload`, `MetalFx`, `DisplayPipeline`, `NativeApps`, `BackgroundGovernor`; off until turned
+on), run by `MacBoostsController` (ViewModels, owned by `GamingViewModel.MacBoosts`). `MacGameWatcher` hands it the
+running library game every two seconds (`MacBoostTick`), and only while a boost is on, a Details card is open or apps
+are waiting to reopen. What each one reads comes from `IMacPerformanceService` (`MacPerformanceService` in the Mac app,
+`SampleMacPerformance` in MacShots, `FakeMacPerformance` in the tests); what it decides and says is in Core
+(`Gaming/MacBoosts.cs`, unit-tested). Each card's pill and recommendation line show what it found
+(`MacBoostsController.Status`/`Note`), and its *Details* pill opens the shared `BoostDetailsViewModel` with
+`MacBoostsController.Details(tweak)`; the governor opens its own card (`BackgroundAppsViewModel`). Nothing is yellow:
+rows that are worth a look are blue (`Tone.Normal`), red only for critical memory pressure.
+
+- **High Power Mode automation.** `WorkloadDetector`: a library game (or a game app in front) starts a workload at
+  once, the GPU at ≥ 60 % for 20 s too; it ends after 45 s with no game and the GPU under 30 %. `HighPowerAutomation
+  .Decide` raises the charger's `powermode` to 2 on the charger only, remembers the mode before
+  (`AutomationRaisedFrom`, also across a restart of Coreloom), puts it back when the workload ends, and forgets it when
+  the mode was changed by hand meanwhile. Power state: `pmset -g custom` (the `powermode` key means the Mac has High
+  Power Mode), `pmset -g ps`, and `sudo -n -l` for the rule (see Permissions above).
+- **Unified memory pressure guard.** `kern.memorystatus_vm_pressure_level`, the page counts (`MemoryMath`),
+  `vm.swapusage` and each app's footprint (processes grouped by app bundle). `MemoryGuard`: Warning → Elevated,
+  Critical → High, and swap growing ≥ 64 MB a minute during a game is Elevated too; it suggests up to three apps of
+  400 MB or more (never the game, Coreloom or macOS's own).
+- **Thermal headroom optimizer.** `NSProcessInfo.thermalState` with the CPU/GPU temperatures, loads, clocks and the
+  fastest fan from the latest frame. `ThermalTracker` keeps ten minutes, each chip's peak clock while busy, and counts
+  slowdowns (Serious or worse, or a busy chip's clock ≥ 15 % under its peak); headroom Plenty/Some/Little/None.
+- **Performance core workload monitor** (Apple silicon). `proc_pid_rusage(RUSAGE_INFO_V6)` per process: total time,
+  time on performance cores (`ri_user_ptime + ri_system_ptime`) and per QoS class; the processor time itself comes from
+  `PROC_PIDTASKINFO` in timebase ticks, and the rusage figures are only used as shares (their unit doesn't matter).
+  `CoreWorkloadMonitor` groups processes by app and marks an app that uses ≥ 0.15 of a core on the performance cores at
+  a high or default QoS while a game plays as competing (never macOS's own).
+- **MetalFX graphics optimizer.** For each library game, its app bundle's main program and the Mach-O files in
+  `Contents/Frameworks`, `PlugIns` and `MacOS` (at most 80): `MachO.NameRegions` reads only the load commands,
+  `__LINKEDIT` and `__TEXT`'s string sections of the Apple silicon slice, and `MetalFx.Scan` looks for
+  `MetalFX.framework` and the `MTLFXSpatialScaler`, `MTLFXTemporalScaler`, `MTLFXFrameInterpolator` and
+  `MTLFXTemporalDenoisedScaler` class names. Once per game a run (again when the library changes).
+- **ProMotion & display pipeline optimizer.** CoreGraphics for each display's mode (points, backing pixels, refresh),
+  the fastest refresh at that size and the native mode (`kDisplayModeNativeFlag`); `NSScreen` (on the main thread) for
+  the name, EDR headroom, bits per sample and min/max refresh interval (variable refresh). `DisplayPipeline` suggests
+  the faster refresh rate, and the Default size when the backing store is larger than the panel.
+- **Native Apple silicon detection** (Apple silicon). The games' main programs' Mach-O CPU types (`MachO.Architecture`;
+  Intel only → Rosetta 2) and every running process's `P_TRANSLATED` flag (`sysctl` `KERN_PROC_PID`, `p_flag` at
+  offset 32 of `kinfo_proc`).
+- **Background application governor.** `NSWorkspace.runningApplications` (regular apps), their processes' CPU ticks
+  and footprints (processes inside the app's bundle count to it), and their GPU time from the I/O registry's
+  `AGXDeviceUserClient` entries (`IOUserClientCreator` "pid N, name" and `AppUsage`'s `accumulatedGPUTime`; none on
+  Intel). `BackgroundGovernor.Rank` leaves out macOS's own apps, Coreloom and game launchers, heavy first (≥ 5 % CPU,
+  ≥ 3 % GPU or ≥ 600 MB). The card's ticks quit apps now (`NSRunningApplication.terminate`, as the app's Quit would;
+  an app that asks to save is left alone) or are kept per game (`GamingSettings.QuitProfiles`): when that game starts
+  they quit, and their bundles go to `AppsToReopen`, reopened with `open -g -j` ten seconds after the game is gone, or
+  when the governor is turned off.
 
 ## Processor details (1.4.6)
 

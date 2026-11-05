@@ -7,6 +7,32 @@ into the GitHub release notes, so keep each version's heading in the form `## [x
 
 ## [Unreleased]
 
+## [1.9.4] - 2026-11-05
+
+Eight new Game Boost helpers on the Mac, a card glow that fades out instead of stopping at an edge, icons centred in their tiles, and a PC picture with room around it on Windows.
+
+### Highlights
+
+- **Eight new boosts on the Mac.** Game Boost has eight of Coreloom's own switches in place of the Metal Performance HUD: *High Power Mode automation*, the *Unified memory pressure guard*, the *Thermal headroom optimizer*, the *Performance core workload monitor*, the *MetalFX graphics optimizer*, the *ProMotion & display pipeline optimizer*, *Native Apple silicon detection* and the *Background application governor*. Each card says what it found, and *Details* shows the rest.
+- **High Power Mode that follows your games (Mac).** On a Mac with High Power Mode, it turns on while a game or a long graphics workload runs on the charger, and your own setting comes back when you stop. macOS asks for your password once, to let Coreloom switch the charger's power mode and nothing else.
+- **Background apps, quit for a game (Mac).** The governor lists the apps using the processor, graphics or memory while you play. Tick the ones to quit now, or keep them for a game: they quit each time it starts and reopen in the background when it ends.
+- **A glow that fades out, icons in the middle (Mac).** The light around a card under the pointer fades softly all the way out instead of stopping at a hard edge, and every icon sits centred in its tile at the same scale. The Mac picture on the Overview has no glow behind it any more.
+- **A smaller PC picture (Windows).** The PC on the Overview is a little smaller, with room around it in its card.
+
+### In detail
+
+- *Unified memory pressure guard*: memory pressure, compressed memory, swap and how fast it grows, and which apps to quit before a game starts to stutter. It recommends; it never quits anything itself.
+- *Thermal headroom optimizer*: macOS's thermal state, the temperatures, clocks and fans over a session, how much headroom is left and what helps when heat starts to slow the chip.
+- *Performance core workload monitor* (Apple silicon): how much of each app's processor time runs on the performance cores and at which priority (QoS), and which apps compete with your game for them.
+- *MetalFX graphics optimizer*: which of your games use MetalFX upscaling, frame interpolation or denoising (read from their program files, which aren't changed), and what to turn on in each. Games have to build MetalFX in themselves.
+- *ProMotion & display pipeline optimizer*: each display's refresh rate, ProMotion, HDR, resolution and colour depth, with a suggestion when one runs below its best refresh rate or draws more pixels than its panel has.
+- *Native Apple silicon detection* (Apple silicon): games built only for Intel, which run through Rosetta 2, and the Intel apps running now.
+- The Metal Performance HUD switch is gone. If you had turned it on, Coreloom turns the HUD off once; you can still turn it on yourself in Terminal with `defaults write -g MetalForceHudEnabled -bool YES`.
+- Turning *High Power Mode automation* off puts your power mode back and removes Coreloom's permission (macOS asks for your password again).
+- The new boosts are off until you turn them on (*Boost now* turns on all of them).
+- Website: *New in 1.9.4* and new pictures of the app; the README has them too.
+- Have 1.9.3 or older? Choose *Check for Updates* (the Coreloom menu on a Mac, *Settings › Updates* on Windows), then *Install update*.
+
 ## [1.9.3] - 2026-11-04
 
 A new picture of the PC on Windows, one slider for the grain over the gradients, and a header in step: the selected range has its shape back and the Live badge is as tall as the picker.

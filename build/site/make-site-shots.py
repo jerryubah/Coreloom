@@ -5,11 +5,12 @@
 Storage page scrolled to the drive speed test; and since 1.8.6 windows-drivers.webp and windows-applications.webp, the two
 new Windows pages, and mac-memory.webp, the Memory page with its lit ring card over the frosted glass; and since 1.9.2
 {mac,windows}-sidebar.webp, the Memory page over the Bloom picture with the liquid glass sidebar; and since 1.9.3
-mac-appearance.webp, Settings › Appearance scrolled to the sidebar's look and the gradient noise).
+mac-appearance.webp, Settings › Appearance scrolled to the sidebar's look and the gradient noise; and since 1.9.4
+mac-boosts.webp, the Gaming page scrolled to its performance boosts).
 
 From the 2× window pictures of the sample machines (1440 × 960 points, so 2880 × 1920 pixels):
   Mac:     tools/Coreloom.MacShots (overview.png, overview-light.png, gaming.png, optimize.png, storage-speedtest.png,
-           memory.png, settings-appearance-sidebar.png, and sidebar-liquid.png: memory.png from a run with
+           memory.png, settings-appearance-sidebar.png, gaming-boosts.png, and sidebar-liquid.png: memory.png from a run with
            --backdrop=image:bloom --opacity=100 --blur=0 --sidebar=liquidglass); run with
            --wallpaper=<picture> for the MacBook's desktop picture, and once more with --backdrop=image:aurora and
            --backdrop=image:dunes, its overview.png copied into the folder as backdrop-aurora.png and backdrop-dunes.png. Headless pictures have no window buttons, so the
@@ -60,7 +61,8 @@ def main():
     for source, name in [("overview", "mac-overview"), ("overview-light", "mac-overview-light"), ("gaming", "mac-gaming"), ("optimize", "mac-optimize"),
                          ("backdrop-aurora", "mac-backdrop-aurora"), ("backdrop-dunes", "mac-backdrop-dunes"),
                          ("storage-speedtest", "mac-speedtest"), ("memory", "mac-memory"),
-                         ("sidebar-liquid", "mac-sidebar"), ("settings-appearance-sidebar", "mac-appearance")]:
+                         ("sidebar-liquid", "mac-sidebar"), ("settings-appearance-sidebar", "mac-appearance"),
+                         ("gaming-boosts", "mac-boosts")]:
         path = mac / f"{source}.png"
         if path.exists():
             save(window_buttons(Image.open(path)), name)

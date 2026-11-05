@@ -9,8 +9,10 @@ storage and network telemetry, animated charts with up to an hour of history, a 
 clean-up, threshold alerts, a tray or menu bar icon and verified in-app updates.
 
 Coreloom only **reads** sensors. It never changes clocks, voltages, fan curves or firmware settings, never
-installs drivers or services, and never sends your data to the internet. New in 1.9.3: a new picture of the PC on
-the Overview, a slider for the grain over the gradients, and the selected range shown again; since 1.9.2, choose what
+installs drivers or services, and never sends your data to the internet. New in 1.9.4: eight new Game Boost
+helpers on the Mac (High Power Mode that follows your games, memory, heat, the cores, MetalFX, your displays, Rosetta 2
+and background apps), a card glow that fades out, and icons centred in their tiles; since 1.9.3, a new picture of the
+PC on the Overview and a slider for the grain over the gradients; since 1.9.2, choose what
 the sidebar is made of and how much shadow and blur it has; since 1.9.0, cards of dark glass with a hairline rim, a
 deeper blue, and pages that settle into place as you open them. Since 1.8.2, your own background shows behind the frosted glass, and since 1.7.0
 your computer's readings live on your phone, over your own network ([Coreloom on your phone](#coreloom-on-your-phone)).
@@ -217,11 +219,19 @@ macOS's own sources for every reading. What changes on a Mac:
   About panel.
 - **Gaming.** Your Steam, Epic Games and Applications-folder games with Play, plus the switches that matter on a
   Mac: Game Mode (macOS turns it on for full-screen games), full power on the charger (Low Power Mode off, High
-  Power Mode on where the Mac has it), keeping the Mac awake while a game runs, and Apple's Metal Performance HUD.
-  Metal's shader caches are listed, and a macOS update that resets them is pointed out.
+  Power Mode on where the Mac has it) and keeping the Mac awake while a game runs. Since 1.9.4, eight of Coreloom's
+  own, each with *Details*: **High Power Mode automation** (on the charger while a game or a long graphics workload
+  runs, your setting back after), the **unified memory pressure guard** (pressure, compression, swap and the apps to
+  quit), the **thermal headroom optimizer** (heat, clocks and fans over a session), the **performance core workload
+  monitor** (who uses the performance cores, at which QoS priority, and what competes with your game), the **MetalFX
+  graphics optimizer** (which games use MetalFX upscaling, frame interpolation or denoising, and what to turn on),
+  the **ProMotion & display pipeline optimizer** (refresh, HDR, resolution and colour depth of each display), **native
+  Apple silicon detection** (games and apps under Rosetta 2) and the **background application governor** (quit the
+  apps you pick for a game, reopened when it ends). Metal's shader caches are listed, and a macOS update that resets
+  them is pointed out.
 - **The in-game overlay** shows Coreloom's readings over full-screen apps and games (⌥⌘O by default; set it up on
-  the Graphics page). Nothing is added to games, so it shows Coreloom's readings rather than a frame rate: Apple's
-  Metal HUD shows that.
+  the Graphics page). Nothing is added to games, so it shows Coreloom's readings rather than a frame rate (macOS
+  doesn't let other apps measure one).
 - **Benchmarks** on Metal: the same CPU benchmark, the GPU benchmark's graphics and compute tests on Metal, and
   the stress test.
 - **Smart Optimize** for macOS: app caches, logs, temporary files, Xcode's build files, shader caches, old
@@ -235,7 +245,9 @@ macOS's own sources for every reading. What changes on a Mac:
   anything fails).
 - **No administrator rights.** Coreloom for Mac runs as you, with no helper, kernel extension or driver. The few
   changes that need your password (freeing memory, the DNS cache, the power mode) ask through macOS's own
-  dialog, and only when you click them.
+  dialog, and only when you click them. *High Power Mode automation* asks once, to add a single sudoers rule that
+  lets Coreloom set the charger's power mode (`pmset -c powermode 0, 1 or 2`) and nothing else; turning it off
+  removes the rule.
 
 ## Coreloom on your phone
 
@@ -310,7 +322,8 @@ On a Mac:
 | Network throughput | The kernel's 64-bit interface counters, named as System Settings names them | No |
 | Bluetooth devices and batteries; USB, Thunderbolt and displays | IOBluetooth, the I/O registry and System Information (`system_profiler`) | No (macOS asks once for Bluetooth) |
 | Installed games and their pictures | Steam's and Epic's library files, apps in the Applications folder's Games category, and (for games without a picture) Steam's public store | No |
-| Game Mode, Low/High Power Mode, Metal HUD | macOS's own settings (`pmset`, `defaults`) | Changing the power mode: **your password**, asked by macOS |
+| Game Mode, Low/High Power Mode | macOS's own settings (`pmset`) | Changing the power mode: **your password**, asked by macOS (once, for High Power Mode automation) |
+| The Gaming boosts' readings (1.9.4) | The memory-pressure level and swap (`sysctl`), the thermal state (`NSProcessInfo`), each process's time on performance cores and per QoS class (`proc_pid_rusage`), games' program files (read for MetalFX and their processor type), the displays (CoreGraphics, `NSScreen`), the Rosetta flag of running processes, the running apps (`NSWorkspace`) and their GPU time (the I/O registry) | No. Quitting an app asks it as its Quit command would |
 | The desktop picture on the Overview's MacBook | `NSWorkspace` (which picture is on the main screen), converted once to a PNG with macOS's `sips` and kept in Coreloom's own folder; never sent anywhere. A picture in Desktop, Documents, Downloads, iCloud Drive or another app's folder is read only after you choose *Show it* in Customize | No (macOS may ask once for those folders) |
 
 **About PawnIO.** Reading CPU temperature and motherboard sensors on modern Windows needs a kernel driver.
@@ -491,8 +504,10 @@ LibreHardwareMonitor's own report. See [docs/TESTING-ON-YOUR-PC.md](docs/TESTING
   be read and Smart Optimize can clean system folders, but it never installs drivers or services and can't be
   controlled from anywhere else (Coreloom Connect only lets paired phones look). On a Mac it runs as you; the few changes that need your password ask for it through macOS's
   own dialog when you click them.
-- **On a Mac, the same rules.** The Gaming page's switches set macOS's own settings (`pmset`, `defaults`) and turn
-  off again; Smart Optimize deletes only inside your own Library's caches and logs (and what you tick) and empties
+- **On a Mac, the same rules.** The Gaming page's switches set macOS's own settings (`pmset`) and turn
+  off again; Coreloom's own boosts only read, except the background application governor, which quits the apps you
+  tick (politely, and reopens them after the game), and High Power Mode automation, which sets only the charger's
+  power mode; Smart Optimize deletes only inside your own Library's caches and logs (and what you tick) and empties
   the Trash through Finder; login items are switched with `launchctl`, as System Settings does. Network requests
   are the same as on Windows: GitHub for updates, Cloudflare for a speed test you start, and Steam's and Epic's
   picture servers for games without a picture.
