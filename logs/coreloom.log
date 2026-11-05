@@ -1,0 +1,37 @@
+2026-11-05 14:26:19.033 INF [App] Coreloom 0.9.0+d3fa2b8ceeae98a647b54de4d4c1b3e08fd23662 starting (args: ; bundle: /Applications/Coreloom.app; macOS 15.7.9, X64, .NET 10.0.14, PID 8518; Apple silicon: False; virtual machine: True).
+2026-11-05 14:26:19.485 INF [App] First launch: Mac defaults applied.
+2026-11-05 14:26:22.215 INF [Telemetry] Telemetry started (7 providers, interval 1000 ms).
+2026-11-05 14:26:22.306 INF [Sensors] Sensors: SMC (1 fan, 13 temperature keys, system power, CPU power).
+2026-11-05 14:26:23.352 INF [Telemetry] Coreloom process: Running in 3 ms
+2026-11-05 14:26:23.352 INF [Telemetry] Mac sensors: Running in 161 ms — Mac mini (Macmini6,2); 1 fan(s); 13 temperature groups; sensors: SMC (1 fan, 13 temperature keys, system power, CPU power)
+2026-11-05 14:26:23.352 INF [Telemetry] macOS processor counters: Running in 142 ms — Intel Core i7-8700B: 4 threads; sensors: SMC (1 fan, 13 temperature keys, system power, CPU power)
+2026-11-05 14:26:23.352 INF [Telemetry] macOS memory: Running in 84 ms — 14 GB physical memory
+2026-11-05 14:26:23.352 INF [Telemetry] macOS storage: Running in 161 ms — 1 disk(s), 1 volume(s)
+2026-11-05 14:26:23.352 INF [Telemetry] macOS network: Running in 70 ms — 1 interface(s), primary en0
+2026-11-05 14:26:23.352 INF [Telemetry] macOS graphics drivers: Running in 5 ms — Apple Paravirtualized Graphics Device
+2026-11-05 14:26:31.254 INF [Appearance] Background: Gradient coreloom drawn at 1360×880 (frost 340×220) in 128 ms.
+2026-11-05 14:26:32.978 INF [Window] Title bar: glass 10,10 232×860; close 26,22 14×16; minimize 46,22 14×16; zoom 66,22 14×16; collapse (220,31) → AvnView; first page (126,121) → AvnView; range (1201,57) → AvnView; freeze (1315,57) → AvnView; glass top (126,14) → AvnView
+2026-11-05 14:26:34.280 INF [Alerts] CPU temperature: CPU temperature is 98 °C — above your 97 °C threshold for 10 s.
+2026-11-05 14:27:00.399 INF [Updates] Coreloom 1.9.4 downloaded and verified (Coreloom-1.9.4-macos-x64.zip).
+2026-11-05 14:27:10.412 INF [App] Coreloom 0.9.0+d3fa2b8ceeae98a647b54de4d4c1b3e08fd23662 starting (args: ; bundle: /Applications/Coreloom.app; macOS 15.7.9, X64, .NET 10.0.14, PID 9485; Apple silicon: False; virtual machine: True).
+2026-11-05 14:27:13.354 INF [Updates] Installing the downloaded update to 1.9.4 at startup.
+2026-11-05 14:27:13.664 INF [Updates] Installing Coreloom 1.9.4 from Coreloom-1.9.4-macos-x64.zip.
+2026-11-05 14:27:15.309 INF [Updates] Replacing /Applications/Coreloom.app once Coreloom has quit.
+2026-11-05 14:27:15.310 INF [App] Quitting so the update can replace Coreloom; the new version opens when it's done.
+2026-11-05 14:27:15.418 INF [App] Quitting.
+2026-11-05 14:27:16.568 INF [App] Coreloom 1.9.4+d3fa2b8ceeae98a647b54de4d4c1b3e08fd23662 starting (args: --updated; bundle: /Applications/Coreloom.app; macOS 15.7.9, X64, .NET 10.0.14, PID 9757; Apple silicon: False; virtual machine: True).
+2026-11-05 14:27:19.054 INF [Updates] First start of 1.9.4 after an update.
+2026-11-05 14:27:19.062 INF [Updates] Update to 1.9.4 installed.
+2026-11-05 14:27:19.226 INF [Notifications] Notifications aren't allowed (System Settings › Notifications › Coreloom).
+2026-11-05 14:27:19.399 INF [Telemetry] Telemetry started (7 providers, interval 1000 ms).
+2026-11-05 14:27:19.496 INF [Sensors] Sensors: SMC (1 fan, 13 temperature keys, system power, CPU power).
+2026-11-05 14:27:20.260 INF [Appearance] Background: Gradient coreloom drawn at 1360×880 (frost 340×220) in 92 ms.
+2026-11-05 14:27:20.411 INF [Telemetry] Coreloom process: Running in 3 ms
+2026-11-05 14:27:20.411 INF [Telemetry] Mac sensors: Running in 169 ms — Mac mini (Macmini6,2); 1 fan(s); 13 temperature groups; sensors: SMC (1 fan, 13 temperature keys, system power, CPU power)
+2026-11-05 14:27:20.411 INF [Telemetry] macOS processor counters: Running in 133 ms — Intel Core i7-8700B: 4 threads; sensors: SMC (1 fan, 13 temperature keys, system power, CPU power)
+2026-11-05 14:27:20.411 INF [Telemetry] macOS memory: Running in 89 ms — 14 GB physical memory
+2026-11-05 14:27:20.411 INF [Telemetry] macOS storage: Running in 156 ms — 1 disk(s), 1 volume(s)
+2026-11-05 14:27:20.411 INF [Telemetry] macOS network: Running in 72 ms — 1 interface(s), primary en0
+2026-11-05 14:27:20.411 INF [Telemetry] macOS graphics drivers: Running in 29 ms — Apple Paravirtualized Graphics Device
+2026-11-05 14:27:22.140 INF [Window] Title bar: glass 10,10 232×860; close 26,22 14×16; minimize 46,22 14×16; zoom 66,22 14×16; collapse (220,31) → AvnView; first page (126,121) → AvnView; range (1201,57) → AvnView; freeze (1315,57) → AvnView; glass top (126,14) → AvnView
+2026-11-05 14:27:31.451 INF [Alerts] CPU temperature: CPU temperature is 98 °C — above your 97 °C threshold for 10 s.
