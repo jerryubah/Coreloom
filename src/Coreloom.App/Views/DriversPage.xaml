@@ -173,9 +173,9 @@
                 <Button Style="{StaticResource Button.AccentGradient}" Padding="20,9" Margin="0,0,10,8" Command="{Binding CheckCommand}">
                   <StackPanel Orientation="Horizontal">
                     <Grid Width="14" Height="14">
-                      <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Refresh}" Stroke="{DynamicResource Brush.OnGlow}"
+                      <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Refresh}" Stroke="{DynamicResource Brush.OnAccent}"
                             Visibility="{Binding IsChecking, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
-                      <c:RadialGauge Style="{StaticResource DriverSpinner}" Fill="{DynamicResource Brush.OnGlow}" b:Spin.IsSpinning="{Binding IsChecking}"
+                      <c:RadialGauge Style="{StaticResource DriverSpinner}" Fill="{DynamicResource Brush.OnAccent}" b:Spin.IsSpinning="{Binding IsChecking}"
                                      Visibility="{Binding IsChecking, Converter={StaticResource BoolToVisibility}}" />
                     </Grid>
                     <TextBlock Text="Check for updates" Margin="8,0,0,0" />

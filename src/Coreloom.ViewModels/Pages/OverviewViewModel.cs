@@ -64,8 +64,11 @@ public sealed class ChartPanelViewModel : DashboardPanelViewModel
 
 public sealed class MemoryPanelViewModel : DashboardPanelViewModel
 {
+    private static readonly (double Cool, double Warm, double Hot) MemoryStops = GaugeTone.Stops(Thresholds.Memory, 100);
+
     private string _centerText = "—";
     private string _caption = string.Empty;
+    private double _fraction = double.NaN;
 
     public MemoryPanelViewModel()
         : base(DashboardCatalog.MemoryDonut, "Memory")
@@ -80,6 +83,34 @@ public sealed class MemoryPanelViewModel : DashboardPanelViewModel
     public ObservableCollection<DonutSegmentViewModel> Segments { get; }
 
     public ObservableCollection<KeyValueItem> Details { get; } = [];
+
+    /// <summary>How much of the memory is in use (0 … 1), for the tick dial; NaN before the first reading.</summary>
+    public double Fraction
+    {
+        get => _fraction;
+        set
+        {
+            if (!_fraction.Equals(value))
+            {
+                bool had = HasFraction;
+                _fraction = value;
+                OnPropertyChanged();
+                if (had != HasFraction)
+                {
+                    OnPropertyChanged(nameof(HasFraction));
+                }
+            }
+        }
+    }
+
+    public bool HasFraction => double.IsFinite(_fraction);
+
+    /// <summary>Where the dial turns from green to blue, blue to orange, and red (the memory thresholds).</summary>
+    public double GaugeCoolAt => MemoryStops.Cool;
+
+    public double GaugeWarmAt => MemoryStops.Warm;
+
+    public double GaugeHotAt => MemoryStops.Hot;
 
     public string CenterText
     {
@@ -113,6 +144,8 @@ public sealed class VolumeViewModel : ObservableObject
     public string Letter { get; }
 
     public string Name { get; }
+
+    private static readonly (double Cool, double Warm, double Hot) DriveStops = GaugeTone.Stops(Thresholds.DriveSpace, 100);
 
     public DonutSegmentViewModel Used { get; } = new("Used", ColorKeys.Storage);
 
@@ -156,6 +189,13 @@ public sealed class VolumeViewModel : ObservableObject
             }
         }
     }
+
+    /// <summary>Where the volume's dial turns from green to blue, blue to orange, and red (the drive space thresholds).</summary>
+    public double GaugeCoolAt => DriveStops.Cool;
+
+    public double GaugeWarmAt => DriveStops.Warm;
+
+    public double GaugeHotAt => DriveStops.Hot;
 
     public void Update(TelemetryFrame frame, UnitFormatter f)
     {
@@ -616,6 +656,7 @@ public sealed class OverviewViewModel : PageViewModel
             memory.InUse.ValueText = f.MemoryBytes(used).ToString();
             memory.Available.ValueText = f.MemoryBytes(available).ToString();
             memory.CenterText = total > 0 ? f.Percent(used * 100 / total).ToString() : "—";
+            memory.Fraction = total > 0 ? Math.Clamp(used / total, 0, 1) : double.NaN;
             memory.Caption = $"{f.MemoryBytes(used, 1)} of {f.MemoryBytes(total, 1)}";
 
             var details = new List<KeyValueItem>();

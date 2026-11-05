@@ -214,6 +214,14 @@ public class SquircleBorder : Decorator, ICustomHitTest
     public static readonly StyledProperty<bool> FrostedProperty =
         AvaloniaProperty.Register<SquircleBorder, bool>(nameof(Frosted));
 
+    /// <summary>Shows the sidebar's frosted copy instead of the cards' (its blur is set on its own, since 1.9.2).</summary>
+    public static readonly StyledProperty<bool> SidebarFrostProperty =
+        AvaloniaProperty.Register<SquircleBorder, bool>(nameof(SidebarFrost));
+
+    /// <summary>A light laid over the fill inside the shape (liquid glass's highlight, since 1.9.2).</summary>
+    public static readonly StyledProperty<IBrush?> HighlightProperty =
+        AvaloniaProperty.Register<SquircleBorder, IBrush?>(nameof(Highlight));
+
     /// <summary>How far the edge glow spreads outside the card.</summary>
     private const double OuterReach = 14;
 
@@ -243,7 +251,7 @@ public class SquircleBorder : Decorator, ICustomHitTest
     static SquircleBorder()
     {
         AffectsRender<SquircleBorder>(BackgroundProperty, BorderBrushProperty, BorderThicknessProperty, CornerRadiusProperty, SmoothingProperty,
-            GlowKeyProperty, GlowStrengthProperty, ShadowProperty, SheenProperty, FrostedProperty);
+            GlowKeyProperty, GlowStrengthProperty, ShadowProperty, SheenProperty, FrostedProperty, SidebarFrostProperty, HighlightProperty);
         AffectsMeasure<SquircleBorder>(BorderThicknessProperty);
     }
 
@@ -347,6 +355,18 @@ public class SquircleBorder : Decorator, ICustomHitTest
     {
         get => GetValue(FrostedProperty);
         set => SetValue(FrostedProperty, value);
+    }
+
+    public bool SidebarFrost
+    {
+        get => GetValue(SidebarFrostProperty);
+        set => SetValue(SidebarFrostProperty, value);
+    }
+
+    public IBrush? Highlight
+    {
+        get => GetValue(HighlightProperty);
+        set => SetValue(HighlightProperty, value);
     }
 
     private static bool IsDark => ThemeService.Instance?.IsDark ?? true;
@@ -509,6 +529,11 @@ public class SquircleBorder : Decorator, ICustomHitTest
             dc.DrawGeometry(background, null, outer);
         }
 
+        if (Highlight is { } highlight)
+        {
+            dc.DrawGeometry(highlight, null, outer);
+        }
+
         Color? glow = CurrentGlow();
         _glowShown = glow;
         if (glow is { } lamp)
@@ -542,7 +567,8 @@ public class SquircleBorder : Decorator, ICustomHitTest
     /// <summary>The frosted part of the window's background that's behind the card (the whole frost, placed so it lines up).</summary>
     private void DrawFrost(DrawingContext dc, Geometry outer, Size size)
     {
-        if (Backdrop.IsSeeThrough || Backdrop.Frost is not { } frost || Backdrop.Host is not { } host || this.TranslatePoint(default, host) is not { } at)
+        if (Backdrop.IsSeeThrough || (SidebarFrost ? Backdrop.SidebarFrost ?? Backdrop.Frost : Backdrop.Frost) is not { } frost
+            || Backdrop.Host is not { } host || this.TranslatePoint(default, host) is not { } at)
         {
             return;
         }
@@ -644,10 +670,12 @@ public class SquircleBorder : Decorator, ICustomHitTest
         var brush = ChartColors.Solid(Color.FromArgb(alpha, 0, 0, 0));
         using (dc.PushGeometryClip(Outside(size, outer)))
         {
+            // Past 1 (the sidebar's shadow turned up, since 1.9.2) the shadow spreads further as well as darkening.
+            double spread = Math.Min(depth, 1) * (1 + (Math.Max(depth - 1, 0) * 0.7));
             for (int i = Layers; i >= 1; i--)
             {
-                double grow = i * 1.75 * Math.Min(depth, 1);
-                var rect = new Rect(-grow, -grow + (i * 0.25 * Math.Min(depth, 1)), size.Width + (2 * grow), size.Height + (2 * grow));
+                double grow = i * 1.75 * spread;
+                var rect = new Rect(-grow, -grow + (i * 0.25 * spread), size.Width + (2 * grow), size.Height + (2 * grow));
                 dc.DrawGeometry(brush, null, Squircle.Create(rect, Squircle.Grow(CornerRadius, grow), Smoothing));
             }
         }

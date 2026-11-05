@@ -38,7 +38,7 @@
                 <Button Theme="{StaticResource Button.AccentGradient}" Padding="18,8" Command="{Binding RunCommand}"
                         IsVisible="{Binding IsIdle}">
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnGlow}" />
+                    <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
                     <TextBlock Text="{Binding RunText}" Margin="7,0,0,0" />
                   </StackPanel>
                 </Button>

@@ -251,6 +251,7 @@ public sealed class SettingsViewModel : PageViewModel
         ThemeOptions = [new(ThemePreference.Dark, "Dark"), new(ThemePreference.Light, "Light"), new(ThemePreference.System, IsMac ? "Use macOS setting" : "Use Windows setting")];
         AccentOptions = AccentPalette.Presets.Select(p => new AccentOption(p.Name, p.Hex)).ToArray();
         Backdrop = new BackdropViewModel(context.Settings, deps.Shell, deps.Theme, IsMac);
+        Sidebar = new SidebarLookViewModel(context.Settings);
         PollingOptions = [new(250, "0.25 s"), new(500, "0.5 s"), new(1000, "1 s (recommended)"), new(2000, "2 s (lighter)"), new(5000, "5 s (lightest)")];
         WindowOptions = Enum.GetValues<HistoryWindow>().Select(w => new Option<HistoryWindow>(w, w.ToLongLabel())).ToArray();
         TemperatureOptions = [new(TemperatureUnit.Celsius, "Celsius (°C)"), new(TemperatureUnit.Fahrenheit, "Fahrenheit (°F)")];
@@ -405,6 +406,9 @@ public sealed class SettingsViewModel : PageViewModel
 
     /// <summary>The window's background behind the glass (Settings › Appearance › Background).</summary>
     public BackdropViewModel Backdrop { get; }
+
+    /// <summary>The sidebar's surface, drop shadow and blur (Settings › Appearance › Sidebar).</summary>
+    public SidebarLookViewModel Sidebar { get; }
 
     // ---- Monitoring ------------------------------------------------------------------------------
 
@@ -924,6 +928,7 @@ public sealed class SettingsViewModel : PageViewModel
             LoadRules();
             MenuBar?.Reload();
             Backdrop.Refresh();
+            Sidebar.Refresh();
             OnPropertyChanged(string.Empty);
         }
     }

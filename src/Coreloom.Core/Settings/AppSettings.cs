@@ -88,6 +88,8 @@ public sealed class AppSettings
 
         Appearance.Backdrop ??= new BackdropSettings();
         Appearance.Backdrop.Normalize();
+        Appearance.Sidebar ??= new SidebarSettings();
+        Appearance.Sidebar.Normalize();
         if (loaded < 2 && string.Equals(Appearance.Accent, AccentPalette.PreviousDefault, StringComparison.OrdinalIgnoreCase))
         {
             // Settings saved before 1.9.0: whoever kept the old default accent gets the new look's blue (an accent chosen
@@ -157,6 +159,9 @@ public sealed class AppearanceSettings
 
     /// <summary>The window's background behind the glass (since 1.8.2).</summary>
     public BackdropSettings Backdrop { get; set; } = new();
+
+    /// <summary>The sidebar's surface, drop shadow and blur (since 1.9.2).</summary>
+    public SidebarSettings Sidebar { get; set; } = new();
 }
 
 public sealed class MonitoringSettings

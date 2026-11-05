@@ -85,13 +85,23 @@ public sealed record BackdropRequest
     public double BlurPoints { get; init; }
 
     public double FrostPoints { get; init; } = 30;
+
+    /// <summary>
+    /// The sidebar's own blur, in points, when it differs from the cards' (Settings › Appearance › Sidebar, since 1.9.2);
+    /// null when the sidebar shows the cards' frost (or doesn't blur at all).
+    /// </summary>
+    public double? SidebarFrostPoints { get; init; }
 }
 
 /// <summary>
 /// The window's background, and the frosted copy of it the glass cards and sidebar show (smaller and heavily blurred;
 /// it is stretched to the window's size and each card draws the part behind it).
 /// </summary>
-public sealed record BackdropLayers(PixelImage Background, PixelImage Frost);
+public sealed record BackdropLayers(PixelImage Background, PixelImage Frost)
+{
+    /// <summary>The sidebar's frosted copy when its blur differs from the cards' (null: it shows <see cref="Frost"/>).</summary>
+    public PixelImage? SidebarFrost { get; init; }
+}
 
 /// <summary>
 /// Draws the window's background from <see cref="BackdropSettings"/>: colors, gradients (dithered, so dark gradients
@@ -112,13 +122,6 @@ public static class BackdropRenderer
         int width = Math.Max(1, request.Width);
         int height = Math.Max(1, request.Height);
         double scale = request.Scale > 0 ? request.Scale : 1;
-        double frostPixels = Math.Max(1, request.FrostPoints * scale);
-        // At most a quarter of the window's pixels each way (since 1.8.6; it was up to 1/32): stretched back up, a
-        // smaller copy showed blocks and steps behind the glass.
-        int frostFactor = Math.Clamp((int)Math.Round(frostPixels / 6), 2, 4);
-        int frostWidth = Math.Max(4, (int)Math.Ceiling((double)width / frostFactor));
-        int frostHeight = Math.Max(4, (int)Math.Ceiling((double)height / frostFactor));
-        int frostRadius = Math.Max(1, (int)Math.Round(frostPixels / frostFactor));
 
         switch (request.Kind)
         {
@@ -129,9 +132,7 @@ public static class BackdropRenderer
             {
                 var (w, h) = Fit(width, height, MaxBackgroundPixels);
                 var background = Gradient(gradient, w, h, request.Accent, request.Dark, request.ThemeBase, dither: true);
-                var frost = Gradient(gradient, frostWidth, frostHeight, request.Accent, request.Dark, request.ThemeBase, dither: false);
-                Blur(frost, frostRadius);
-                return new BackdropLayers(background, frost);
+                return WithFrosts(background, request, width, height, scale);
             }
 
             case BackdropKind.Image when request.Image is { } image:
@@ -149,11 +150,7 @@ public static class BackdropRenderer
                     Blur(background, Math.Max(1, (int)Math.Round(blurPixels / factor)));
                 }
 
-                var frost = Cover(image, frostWidth, frostHeight);
-                Over(frost, request.ThemeBase, opacity);
-                Saturate(frost, 1.15);
-                Blur(frost, frostRadius); // last: its dithered result is what's shown
-                return new BackdropLayers(background, frost);
+                return WithFrosts(background, request, width, height, scale);
             }
 
             default:
@@ -165,6 +162,45 @@ public static class BackdropRenderer
                 return new BackdropLayers(Solid(color, 8, 8), Solid(color, 8, 8));
             }
         }
+    }
+
+    /// <summary>The background with the cards' frosted copy and, when its blur differs, the sidebar's.</summary>
+    private static BackdropLayers WithFrosts(PixelImage background, BackdropRequest request, int width, int height, double scale)
+    {
+        var frost = Frost(request, width, height, scale, request.FrostPoints);
+        var sidebar = request.SidebarFrostPoints is { } points && Math.Abs(points - request.FrostPoints) > 0.01
+            ? Frost(request, width, height, scale, points)
+            : null;
+        return new BackdropLayers(background, frost) { SidebarFrost = sidebar };
+    }
+
+    /// <summary>
+    /// A frosted copy of the background, blurred by <paramref name="points"/>: drawn small (at most a quarter of the
+    /// window's pixels each way, since 1.8.6; a smaller copy showed blocks and steps behind the glass when stretched back
+    /// up) and blurred there.
+    /// </summary>
+    private static PixelImage Frost(BackdropRequest request, int width, int height, double scale, double points)
+    {
+        double frostPixels = Math.Max(1, points * scale);
+        int frostFactor = Math.Clamp((int)Math.Round(frostPixels / 6), 2, 4);
+        int frostWidth = Math.Max(4, (int)Math.Ceiling((double)width / frostFactor));
+        int frostHeight = Math.Max(4, (int)Math.Ceiling((double)height / frostFactor));
+        int frostRadius = Math.Max(1, (int)Math.Round(frostPixels / frostFactor));
+
+        if (request.Kind == BackdropKind.Gradient && request.Gradient is { } gradient)
+        {
+            var frost = Gradient(gradient, frostWidth, frostHeight, request.Accent, request.Dark, request.ThemeBase, dither: false);
+            Blur(frost, frostRadius);
+            return frost;
+        }
+
+        var image = request.Image!;
+        double opacity = Math.Clamp(request.ImageOpacity, 0.05, 1) * (request.Dark ? 1 : 0.55);
+        var picture = Cover(image, frostWidth, frostHeight);
+        Over(picture, request.ThemeBase, opacity);
+        Saturate(picture, 1.15);
+        Blur(picture, frostRadius); // last: its dithered result is what's shown
+        return picture;
     }
 
     /// <summary>The largest size with the same shape and at most <paramref name="maxPixels"/> pixels.</summary>

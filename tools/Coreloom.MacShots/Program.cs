@@ -151,6 +151,26 @@ internal static class Program
             });
         }
 
+        // The sidebar's look (--sidebar=liquidglass, or --sidebar=solid:80:20 with its shadow and blur in percent).
+        if (Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("--sidebar=", StringComparison.Ordinal)) is { } sidebar)
+        {
+            string[] parts = sidebar[10..].Split(':');
+            data.Settings.Update("Appearance", s =>
+            {
+                var look = s.Appearance.Sidebar;
+                look.Surface = Enum.Parse<SidebarSurface>(parts[0], ignoreCase: true);
+                if (parts.Length > 1)
+                {
+                    look.Shadow = int.Parse(parts[1], System.Globalization.CultureInfo.InvariantCulture);
+                }
+
+                if (parts.Length > 2)
+                {
+                    look.Blur = int.Parse(parts[2], System.Globalization.CultureInfo.InvariantCulture);
+                }
+            });
+        }
+
         // The Mac picture's lighting color (--glow=Rainbow), and the desktop picture off (--no-wallpaper).
         if (Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("--glow=", StringComparison.Ordinal)) is { } glow)
         {

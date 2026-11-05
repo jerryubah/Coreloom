@@ -1031,14 +1031,13 @@ recreated in native XAML; no browser or web view is involved.
   belong to the main thread; `check-xaml.py` enforces both.
 - **Window.** 800 × 450 (16:9) with squircle corners, borderless and layered (`AllowsTransparency`, so the whole
   window can fade), centred on the monitor with the mouse cursor, not topmost, no taskbar button,
-  `WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE` so it never appears in Alt+Tab or takes focus. Since 1.9.0 the scene is the
-  app's own look: a near-black canvas with three soft lights (the accent's blue low on the left, amber up on the right,
-  teal in the lower right corner) that drift a few points over the splash's life, and a pane of dark glass in the
-  middle with a hairline rim (the ribbons of light, `SplashWaves`, were the 1.4.1–1.8.6 splash). The icon is the
-  dark-mode one with the dark theme, on a breathing halo; the wordmark is the embedded Inter with CSS-style letter
-  spacing (`TrackedText`), "loom" in the accent. The loading bar is a thin line that moves on with each status the app
-  reports (`SplashPolicy.ProgressTarget`: per-stage steps, a slow creep within a stage, never past 92 % until the
-  handoff, which fills it), with a sliding sheen and a blurred glow.
+  `WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE` so it never appears in Alt+Tab or takes focus. `SplashWaves` draws six
+  ribbons of light from sine waves every frame (a lit edge in five widths over a sheet, faded toward the middle); this
+  is the 1.4.1–1.8.6 splash, back since 1.9.2 (1.9.0 and 1.9.1 had soft drifting lights behind a pane of dark glass).
+  The icon is the dark-mode one with the dark theme, on a breathing halo; the wordmark uses the embedded Inter with
+  CSS-style letter spacing (`TrackedText`). The loading bar moves on with each status the app reports
+  (`SplashPolicy.ProgressTarget`: per-stage steps, a slow creep within a stage, never past 92 % until the handoff,
+  which fills it), with sliding stripes and a blurred glow.
 - **Readiness.** `StartupHandoff` creates the main window's handle, cloaks it (`DWMWA_CLOAK`), and shows it: the
   window lays out and renders but isn't displayed. Its `ContentRendered` event, plus two composition frames, is
   the ready signal. The dashboard does not wait for sensor data or network calls.

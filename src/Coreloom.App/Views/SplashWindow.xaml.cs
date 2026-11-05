@@ -13,9 +13,8 @@ using Coreloom.Core.Startup;
 namespace Coreloom.App.Views;
 
 /// <summary>
-/// Borderless 16:9 startup splash (redrawn for 1.9.0): a near-black canvas with soft drifting lights, a pane of dark
-/// glass with the app icon (the dark-mode icon with the dark theme) on a breathing halo, the wordmark in Inter, a thin
-/// glowing loading bar with a sliding sheen and the current step. Created and driven by
+/// Borderless 16:9 startup splash: flowing ribbons of light, the app icon (the dark-mode icon with the dark theme) on a
+/// breathing halo, the wordmark, a glowing loading bar with moving stripes and the current step. Created and driven by
 /// <see cref="Services.SplashScreenHost"/> on its own UI thread, so it keeps moving while the main thread builds the
 /// dashboard. It never decides when to close; the app hands off when its window has painted.
 /// <para>
@@ -50,10 +49,7 @@ public partial class SplashWindow : Window
         InitializeComponent();
         ShowStatus(status);
         LogoImage.Source = LoadIcon(darkIcon);
-        if (!reducedMotion)
-        {
-            BeginDrift();
-        }
+        Waves.IsAnimated = !reducedMotion;
         Root.SizeChanged += (_, _) => ShapeCorners();
 
         SourceInitialized += (_, _) =>
@@ -234,14 +230,6 @@ public partial class SplashWindow : Window
         FillGlow.Width = Fill.Width + 12;
     }
 
-    /// <summary>The lights drift a few points, slowly, for as long as the splash is up (1.9.0).</summary>
-    private void BeginDrift()
-    {
-        var ease = new SineEase { EasingMode = EasingMode.EaseInOut };
-        Drift.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(-6, 6, TimeSpan.FromSeconds(9)) { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever, EasingFunction = ease });
-        Drift.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(4, -4, TimeSpan.FromSeconds(7)) { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever, EasingFunction = ease });
-    }
-
     private void BeginEntrance()
     {
         if (_failed || _closing || _closed)
@@ -268,7 +256,7 @@ public partial class SplashWindow : Window
         BodyOffset.BeginAnimation(TranslateTransform.YProperty, rise);
 
         // The bar's stripes slide along, and the icon's halo breathes.
-        StripeOffset.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(0, 28, TimeSpan.FromMilliseconds(1400)) { RepeatBehavior = RepeatBehavior.Forever });
+        StripeOffset.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(0, 14, TimeSpan.FromMilliseconds(700)) { RepeatBehavior = RepeatBehavior.Forever });
         var breathe = new DoubleAnimation(0.92, 1.08, TimeSpan.FromSeconds(2.2))
         {
             AutoReverse = true,

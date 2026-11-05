@@ -287,7 +287,7 @@ internal static class Program
     /// The whole window at twice its size, for the website's pictures of Coreloom on Windows: the Overview dark and light
     /// (windows-overview.png, windows-overview-light.png), Gaming and Smart Optimize.
     /// </summary>
-    /// <summary>The startup splash (1.9.0's look), a second into its entrance and with its bar part way.</summary>
+    /// <summary>The startup splash (the ribbons look, back since 1.9.2), a second into its entrance and with its bar part way.</summary>
     private static async Task ShootSplashAsync(string output)
     {
         var splash = new SplashWindow(reducedMotion: true, status: "Reading your hardware", darkIcon: true)
@@ -358,24 +358,37 @@ internal static class Program
         // The build machine isn't an administrator: the note about it isn't part of the picture.
         shell.DismissBannerCommand.Execute(null);
         static BackdropSettings Picture(string id) => new() { Kind = BackdropKind.Image, Image = id };
-        var shots = new (string Name, ThemePreference Theme, PageViewModel Page, BackdropSettings Backdrop)[]
+        static SidebarSettings Sidebar(SidebarSurface surface, int shadow = SidebarSettings.Standard, int blur = SidebarSettings.Standard) =>
+            new() { Surface = surface, Shadow = shadow, Blur = blur };
+        var bright = new BackdropSettings { Kind = BackdropKind.Image, Image = "bloom", ImageOpacity = 100, Blur = 0 };
+        var shots = new (string Name, ThemePreference Theme, PageViewModel Page, BackdropSettings Backdrop, SidebarSettings Sidebar)[]
         {
-            ("windows-overview", ThemePreference.Dark, shell.Overview, new BackdropSettings()),
-            ("windows-overview-light", ThemePreference.Light, shell.Overview, new BackdropSettings()),
-            ("windows-gaming", ThemePreference.Dark, shell.Gaming, new BackdropSettings()),
-            ("windows-optimize", ThemePreference.Dark, shell.Optimize, new BackdropSettings()),
-            ("windows-drivers", ThemePreference.Dark, shell.Drivers, new BackdropSettings()), // 1.8.6
-            ("windows-applications", ThemePreference.Dark, shell.Applications, new BackdropSettings()),
-            ("windows-overview-aurora", ThemePreference.Dark, shell.Overview, Picture("aurora")),
-            ("windows-overview-dunes", ThemePreference.Dark, shell.Overview, Picture("dunes")),
-            ("windows-overview-midnight", ThemePreference.Dark, shell.Overview, new BackdropSettings { Gradient = "midnight" }),
-            ("windows-settings-appearance", ThemePreference.Dark, shell.Settings, Picture("bloom")),
+            ("windows-overview", ThemePreference.Dark, shell.Overview, new BackdropSettings(), new SidebarSettings()),
+            ("windows-overview-light", ThemePreference.Light, shell.Overview, new BackdropSettings(), new SidebarSettings()),
+            ("windows-gaming", ThemePreference.Dark, shell.Gaming, new BackdropSettings(), new SidebarSettings()),
+            ("windows-optimize", ThemePreference.Dark, shell.Optimize, new BackdropSettings(), new SidebarSettings()),
+            ("windows-drivers", ThemePreference.Dark, shell.Drivers, new BackdropSettings(), new SidebarSettings()), // 1.8.6
+            ("windows-applications", ThemePreference.Dark, shell.Applications, new BackdropSettings(), new SidebarSettings()),
+            ("windows-overview-aurora", ThemePreference.Dark, shell.Overview, Picture("aurora"), new SidebarSettings()),
+            ("windows-overview-dunes", ThemePreference.Dark, shell.Overview, Picture("dunes"), new SidebarSettings()),
+            ("windows-overview-midnight", ThemePreference.Dark, shell.Overview, new BackdropSettings { Gradient = "midnight" }, new SidebarSettings()),
+            ("windows-settings-appearance", ThemePreference.Dark, shell.Settings, Picture("bloom"), new SidebarSettings()),
+            // The sidebar's four looks over a bright picture, and its shadow and blur turned up and down (1.9.2).
+            ("windows-sidebar-frosted", ThemePreference.Dark, shell.Memory, bright, new SidebarSettings()),
+            ("windows-sidebar-liquid", ThemePreference.Dark, shell.Memory, bright, Sidebar(SidebarSurface.LiquidGlass)),
+            ("windows-sidebar-solid", ThemePreference.Dark, shell.Memory, bright, Sidebar(SidebarSurface.Solid)),
+            ("windows-sidebar-translucent", ThemePreference.Dark, shell.Memory, bright, Sidebar(SidebarSurface.Translucent)),
+            ("windows-sidebar-strong", ThemePreference.Dark, shell.Storage, bright, Sidebar(SidebarSurface.FrostedGlass, 100, 100)),
+            ("windows-sidebar-light-liquid", ThemePreference.Light, shell.Memory, bright, Sidebar(SidebarSurface.LiquidGlass, 0, 0)),
+            ("windows-settings-sidebar", ThemePreference.Dark, shell.Settings, bright, Sidebar(SidebarSurface.LiquidGlass, 70, 30)),
         };
-        foreach (var (name, preference, page, backdrop) in shots)
+        foreach (var (name, preference, page, backdrop, sidebar) in shots)
         {
-            ThemeService.Instance?.Apply(new AppearanceSettings { Theme = preference, ReducedMotion = true, Backdrop = backdrop });
+            ThemeService.Instance?.Apply(new AppearanceSettings { Theme = preference, ReducedMotion = true, Backdrop = backdrop, Sidebar = sidebar });
             data.Settings.Current.Appearance.Backdrop = backdrop; // what Settings › Appearance shows
+            data.Settings.Current.Appearance.Sidebar = sidebar;
             shell.Settings.Backdrop.Refresh();
+            shell.Settings.Sidebar.Refresh();
             shell.Settings.SelectedSection = "Appearance";
             shell.Navigate(page);
             for (int i = 0; i < 40; i++)
@@ -385,12 +398,26 @@ internal static class Program
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             }
 
+            if (name == "windows-settings-sidebar" && Descendants(root).OfType<SettingsPage>().FirstOrDefault() is { } settingsPage
+                && Descendants(settingsPage).OfType<TextBlock>().FirstOrDefault(b => b.Text == "Sidebar") is { } sidebarTitle
+                && Descendants(settingsPage).OfType<ScrollViewer>().FirstOrDefault(v => sidebarTitle.IsDescendantOf(v)) is { } settingsScroller
+                && settingsScroller.Content is UIElement settingsContent)
+            {
+                settingsScroller.ScrollToVerticalOffset(Math.Max(0, sidebarTitle.TranslatePoint(new Point(0, 0), settingsContent).Y - 260));
+                for (int i = 0; i < 6; i++)
+                {
+                    await Task.Delay(120);
+                    await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                }
+            }
+
             Save(root, Path.Combine(output, name + ".png"));
         }
 
         // The Gaming page scrolled to its boosts (the website's "New in 1.8.4" picture for Windows visitors).
         ThemeService.Instance?.Apply(new AppearanceSettings { Theme = ThemePreference.Dark, ReducedMotion = true });
         data.Settings.Current.Appearance.Backdrop = new BackdropSettings();
+        data.Settings.Current.Appearance.Sidebar = new SidebarSettings();
         shell.Navigate(shell.Gaming);
         for (int i = 0; i < 20; i++)
         {

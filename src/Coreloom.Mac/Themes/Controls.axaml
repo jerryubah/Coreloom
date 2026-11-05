@@ -237,13 +237,13 @@
     </Style>
   </ControlTheme>
 
-  <!-- Every text button (since 1.8.4; the banners' buttons since 1.8.3): charcoal glass with white text, its rim lit
-       along the top and toward a soft light of the accent in its lower right corner, which grows on hover. Primary,
-       Secondary, Subtle and the banners' AccentGradient are all this button now, so they look the same everywhere. -->
+  <!-- The glass button: since 1.9.2 in 1.9.0's colours on 1.8.6's corners. A little lighter than the glass it sits on, a
+       hairline rim and the text colour; lighter still under the pointer, and it gives a little when pressed. (1.8.3–1.9.1
+       it was charcoal glass with a light of the accent in its lower right corner.) Every secondary action is one. -->
   <ControlTheme x:Key="Button.Glass" TargetType="Button">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.OnGlow}" />
-    <Setter Property="Background" Value="{DynamicResource Brush.GlowButtonFill}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.GlowButtonRim}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Pill}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PillBorder}" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="Padding" Value="12,7" />
     <Setter Property="FontSize" Value="13" />
@@ -253,25 +253,21 @@
     <Setter Property="RenderTransformOrigin" Value="50%,50%" />
     <Setter Property="Template">
       <ControlTemplate>
-        <Panel>
-          <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
-                            CornerRadius="11" ClipContent="True">
-            <Border Name="Light" Background="{DynamicResource Brush.GlowButtonLight}" Opacity="0.85" IsHitTestVisible="False" />
-          </c:SquircleBorder>
-          <ContentPresenter Name="PART_ContentPresenter" Margin="{TemplateBinding Padding}" Content="{TemplateBinding Content}"
-                            ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}"
-                            HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
-        </Panel>
+        <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                          CornerRadius="11" Padding="{TemplateBinding Padding}">
+          <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                            Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+        </c:SquircleBorder>
       </ControlTemplate>
     </Setter>
-    <Style Selector="^:pointerover /template/ Border#Light">
-      <Setter Property="Opacity" Value="1" />
+    <Style Selector="^:pointerover /template/ c|SquircleBorder#Root">
+      <Setter Property="Background" Value="{DynamicResource Brush.PillHover}" />
     </Style>
     <Style Selector="^:pressed">
       <Setter Property="RenderTransform" Value="scale(0.98)" />
     </Style>
-    <Style Selector="^:pressed /template/ Border#Light">
-      <Setter Property="Opacity" Value="0.6" />
+    <Style Selector="^:pressed /template/ c|SquircleBorder#Root">
+      <Setter Property="Background" Value="{DynamicResource Brush.ControlPressed}" />
     </Style>
     <Style Selector="^:disabled">
       <Setter Property="Opacity" Value="0.45" />
@@ -281,10 +277,8 @@
     </Style>
   </ControlTheme>
 
-  <ControlTheme x:Key="Button.AccentGradient" TargetType="Button" BasedOn="{StaticResource Button.Glass}" />
-
-  <!-- A card's main action (Connect, Play, Clean, Save…): filled with the accent, white text (back in 1.8.5, so an
-       action such as Connect doesn't look like the glass Secondary beside it). -->
+  <!-- A card's main action (Connect, Play, Clean, Save, Boost now…): filled with the accent, white text; it gives a little
+       when pressed (1.9.0's colours, 1.8.6's corners). -->
   <ControlTheme x:Key="Button.Primary" TargetType="Button">
     <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}" />
     <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
@@ -294,6 +288,7 @@
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="HorizontalContentAlignment" Value="Center" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="RenderTransformOrigin" Value="50%,50%" />
     <Setter Property="Template">
       <ControlTemplate>
         <c:SquircleBorder Name="Root" Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
@@ -305,19 +300,28 @@
     <Style Selector="^:pointerover /template/ c|SquircleBorder#Root">
       <Setter Property="Background" Value="{DynamicResource Brush.AccentHover}" />
     </Style>
+    <Style Selector="^:pressed">
+      <Setter Property="RenderTransform" Value="scale(0.98)" />
+    </Style>
     <Style Selector="^:pressed /template/ c|SquircleBorder#Root">
-      <Setter Property="Opacity" Value="0.85" />
+      <Setter Property="Opacity" Value="0.88" />
     </Style>
     <Style Selector="^:disabled">
       <Setter Property="Opacity" Value="0.45" />
     </Style>
   </ControlTheme>
 
+  <!-- The banners' main button (Boost now, Smart Scan) is the accent button too (as in 1.9.0). -->
+  <ControlTheme x:Key="Button.AccentGradient" TargetType="Button" BasedOn="{StaticResource Button.Primary}" />
+
   <ControlTheme x:Key="Button.Secondary" TargetType="Button" BasedOn="{StaticResource Button.Glass}">
     <Setter Property="FontWeight" Value="Normal" />
   </ControlTheme>
 
+  <!-- The quietest: no fill, only the rim, filling in under the pointer. -->
   <ControlTheme x:Key="Button.Subtle" TargetType="Button" BasedOn="{StaticResource Button.Glass}">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.PillBorder}" />
     <Setter Property="FontWeight" Value="Normal" />
   </ControlTheme>
 
@@ -396,7 +400,7 @@
           <Panel Name="Switch" Grid.Column="1" Width="46" Height="26" VerticalAlignment="Center">
             <Border Name="TrackOff" CornerRadius="13" Background="{DynamicResource Brush.Track}"
                     BorderBrush="{DynamicResource Brush.InputBorder}" BorderThickness="1" />
-            <Border Name="TrackOn" CornerRadius="13" Background="{DynamicResource Brush.Success}" Opacity="0">
+            <Border Name="TrackOn" CornerRadius="13" Background="{DynamicResource Brush.Accent}" Opacity="0">
               <Border.Transitions>
                 <Transitions>
                   <DoubleTransition Property="Opacity" Duration="0:0:0.22" />

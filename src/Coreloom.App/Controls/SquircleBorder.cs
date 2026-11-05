@@ -212,6 +212,16 @@ public class SquircleBorder : Border
         nameof(Frosted), typeof(bool), typeof(SquircleBorder),
         new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender, OnFrostedChanged));
 
+    /// <summary>Shows the sidebar's frosted copy instead of the cards' (its blur is set on its own, since 1.9.2).</summary>
+    public static readonly DependencyProperty SidebarFrostProperty = DependencyProperty.Register(
+        nameof(SidebarFrost), typeof(bool), typeof(SquircleBorder),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    /// <summary>A light laid over the fill inside the shape (liquid glass's highlight, since 1.9.2).</summary>
+    public static readonly DependencyProperty HighlightProperty = DependencyProperty.Register(
+        nameof(Highlight), typeof(Brush), typeof(SquircleBorder),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+
     // Where the window's frosted background sits relative to this card: moved as the card scrolls or is laid out again,
     // without drawing the card again.
     private readonly TranslateTransform _frostShift = new();
@@ -311,6 +321,18 @@ public class SquircleBorder : Border
         set => SetValue(FrostedProperty, value);
     }
 
+    public bool SidebarFrost
+    {
+        get => (bool)GetValue(SidebarFrostProperty);
+        set => SetValue(SidebarFrostProperty, value);
+    }
+
+    public Brush? Highlight
+    {
+        get => (Brush?)GetValue(HighlightProperty);
+        set => SetValue(HighlightProperty, value);
+    }
+
     private static bool IsDark => ThemeService.Instance?.IsDark ?? true;
 
     private static void OnFrostedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -377,7 +399,7 @@ public class SquircleBorder : Border
     /// <summary>The frosted part of the window's background behind the card (the whole frost, shifted to line up).</summary>
     private void DrawFrost(DrawingContext dc, Geometry outer)
     {
-        if (Backdrop.IsSeeThrough || Backdrop.Frost is not { } frost || Backdrop.Host is not { } host)
+        if (Backdrop.IsSeeThrough || (SidebarFrost ? Backdrop.SidebarFrost ?? Backdrop.Frost : Backdrop.Frost) is not { } frost || Backdrop.Host is not { } host)
         {
             return;
         }
@@ -528,6 +550,11 @@ public class SquircleBorder : Border
             dc.DrawGeometry(background, null, outer);
         }
 
+        if (Highlight is { } highlight)
+        {
+            dc.DrawGeometry(highlight, null, outer);
+        }
+
         Color? glow = CurrentGlow();
         _glowShown = glow;
         if (glow is { } lamp)
@@ -632,10 +659,12 @@ public class SquircleBorder : Border
         byte alpha = (byte)Math.Clamp((dark ? 0x05 : 0x03) * depth, 0, 255);
         var brush = ChartColors.Solid(Color.FromArgb(alpha, 0, 0, 0));
         dc.PushClip(Outside(size, outer));
+        // Past 1 (the sidebar's shadow turned up, since 1.9.2) the shadow spreads further as well as darkening.
+        double spread = Math.Min(depth, 1) * (1 + (Math.Max(depth - 1, 0) * 0.7));
         for (int i = Layers; i >= 1; i--)
         {
-            double grow = i * 1.75 * Math.Min(depth, 1);
-            var rect = new Rect(-grow, -grow + (i * 0.25 * Math.Min(depth, 1)), size.Width + (2 * grow), size.Height + (2 * grow));
+            double grow = i * 1.75 * spread;
+            var rect = new Rect(-grow, -grow + (i * 0.25 * spread), size.Width + (2 * grow), size.Height + (2 * grow));
             dc.DrawGeometry(brush, null, Squircle.Create(rect, Squircle.Grow(CornerRadius, grow), Smoothing));
         }
         dc.Pop();

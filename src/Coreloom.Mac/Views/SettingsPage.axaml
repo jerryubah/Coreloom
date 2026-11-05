@@ -439,7 +439,7 @@
                   <Grid ColumnDefinitions="*,Auto">
                     <StackPanel VerticalAlignment="Center">
                       <TextBlock Theme="{StaticResource Row.Title}" Text="Background" />
-                      <TextBlock Theme="{StaticResource Row.Description}" Text="Fills the whole window. The sidebar and every card are frosted glass on it." />
+                      <TextBlock Theme="{StaticResource Row.Description}" Text="Fills the whole window. Every card is frosted glass on it; the sidebar's look is set below." />
                     </StackPanel>
                     <ListBox Grid.Column="1" Theme="{StaticResource Segmented}" Margin="16,0,0,0" VerticalAlignment="Center"
                              ItemsSource="{Binding Backdrop.Kinds}" DisplayMemberBinding="{Binding Label}"
@@ -555,18 +555,18 @@
                     <TextBlock Theme="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Elevated}" Margin="0,0,0,8" TextWrapping="Wrap"
                                Text="{Binding Backdrop.Message}" IsVisible="{Binding Backdrop.HasMessage}" />
 
-                    <Grid Margin="0,4,0,0" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
+                    <Grid Margin="0,4,0,0" ColumnDefinitions="136,*,Auto" RowDefinitions="Auto,Auto">
                       <TextBlock Text="Picture opacity" FontSize="12.5" VerticalAlignment="Center" Margin="0,0,16,0"
                                  ToolTip.Tip="How strongly the picture shows through. Lower keeps the cards and text easier to read." />
                       <Slider Grid.Column="1" Theme="{StaticResource Slider.Default}" Minimum="10" Maximum="100" SmallChange="5" LargeChange="10"
                               Value="{Binding Backdrop.ImageOpacity}" AutomationProperties.Name="Picture opacity" />
-                      <TextBlock Grid.Column="2" Text="{Binding Backdrop.ImageOpacityText}" Theme="{StaticResource Text.Caption}" MinWidth="44"
+                      <TextBlock Grid.Column="2" Text="{Binding Backdrop.ImageOpacityText}" Theme="{StaticResource Text.Caption}" MinWidth="58"
                                  TextAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0" />
                       <TextBlock Grid.Row="1" Text="Frosted glass blur" FontSize="12.5" VerticalAlignment="Center" Margin="0,10,16,0"
                                  ToolTip.Tip="How much the frosted layer over the picture blurs it. The cards always frost what's behind them." />
                       <Slider Grid.Row="1" Grid.Column="1" Theme="{StaticResource Slider.Default}" Minimum="0" Maximum="100" SmallChange="5" LargeChange="10" Margin="0,10,0,0"
                               Value="{Binding Backdrop.Blur}" AutomationProperties.Name="Frosted glass blur" />
-                      <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Backdrop.BlurText}" Theme="{StaticResource Text.Caption}" MinWidth="44"
+                      <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Backdrop.BlurText}" Theme="{StaticResource Text.Caption}" MinWidth="58"
                                  TextAlignment="Right" VerticalAlignment="Center" Margin="12,10,0,0" />
                     </Grid>
                   </StackPanel>
@@ -574,6 +574,36 @@
                   <!-- See-through -->
                   <TextBlock Theme="{StaticResource Row.Description}" Margin="0,12,0,0" Text="{Binding Backdrop.SeeThroughText}" TextWrapping="Wrap"
                              IsVisible="{Binding Backdrop.IsSeeThrough}" />
+                </StackPanel>
+              </Border>
+
+              <!-- Sidebar (since 1.9.2): what it's made of, how much shadow it casts and how much its glass blurs. -->
+              <Border Theme="{StaticResource Row}">
+                <StackPanel>
+                  <TextBlock Theme="{StaticResource Row.Title}" Text="Sidebar" />
+                  <TextBlock Theme="{StaticResource Row.Description}" Text="What the sidebar is made of, how much shadow it casts and how much its glass blurs the background." />
+                  <ListBox Theme="{StaticResource Segmented}" Margin="0,12,0,0" HorizontalAlignment="Left"
+                           ItemsSource="{Binding Sidebar.Surfaces}" DisplayMemberBinding="{Binding Label}"
+                           SelectedValueBinding="{Binding Value}" SelectedValue="{Binding Sidebar.Surface}" AutomationProperties.Name="Sidebar surface" />
+                  <TextBlock Theme="{StaticResource Row.Description}" Margin="0,8,0,0" Text="{Binding Sidebar.SurfaceText}" TextWrapping="Wrap" />
+
+                  <Grid Margin="0,12,0,0" ColumnDefinitions="136,*,Auto" RowDefinitions="Auto,Auto">
+                    <TextBlock Text="Drop shadow" FontSize="12.5" VerticalAlignment="Center" Margin="0,0,16,0"
+                               ToolTip.Tip="How much shadow the sidebar casts on the background. The middle is the standard shadow." />
+                    <Slider Grid.Column="1" Theme="{StaticResource Slider.Default}" Minimum="0" Maximum="100" SmallChange="5" LargeChange="10"
+                            Value="{Binding Sidebar.Shadow}" AutomationProperties.Name="Sidebar drop shadow" />
+                    <TextBlock Grid.Column="2" Text="{Binding Sidebar.ShadowText}" Theme="{StaticResource Text.Caption}" MinWidth="58"
+                               TextAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0" />
+                    <TextBlock Grid.Row="1" Text="Blur strength" FontSize="12.5" VerticalAlignment="Center" Margin="0,10,16,0"
+                               Opacity="{Binding Sidebar.CanBlur, Converter={StaticResource BoolToValue}, ConverterParameter='1|0.45'}"
+                               ToolTip.Tip="How much the sidebar's glass blurs what's behind it. The middle blurs as much as the cards." />
+                    <Slider Grid.Row="1" Grid.Column="1" Theme="{StaticResource Slider.Default}" Minimum="0" Maximum="100" SmallChange="5" LargeChange="10" Margin="0,10,0,0"
+                            Value="{Binding Sidebar.Blur}" IsEnabled="{Binding Sidebar.CanBlur}" AutomationProperties.Name="Sidebar blur strength" />
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Sidebar.BlurText}" Theme="{StaticResource Text.Caption}" MinWidth="58"
+                               TextAlignment="Right" VerticalAlignment="Center" Margin="12,10,0,0" />
+                  </Grid>
+                  <Button Theme="{StaticResource Button.Link}" Margin="0,10,0,0" HorizontalAlignment="Left" Content="Reset shadow and blur"
+                          Command="{Binding Sidebar.ResetCommand}" IsVisible="{Binding !Sidebar.IsStandard}" />
                 </StackPanel>
               </Border>
 
@@ -1101,7 +1131,7 @@
                     <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
                       <TextBlock Text="{Binding BadgeText}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
                       <TextBlock FontSize="30" FontWeight="Bold" LetterSpacing="-0.6" Margin="0,1,0,0" Foreground="{DynamicResource Brush.Text}">
-                        <Run Text="Coreloom " /><Run Text="{Binding UpdateVersion, Mode=OneWay}" Foreground="{DynamicResource Brush.AccentGradient}" />
+                        <Run Text="Coreloom " /><Run Text="{Binding UpdateVersion, Mode=OneWay}" Foreground="{DynamicResource Brush.VersionGradient}" />
                       </TextBlock>
                     </StackPanel>
                   </Grid>
@@ -1114,7 +1144,7 @@
                       <Button Theme="{StaticResource Button.AccentGradient}" Padding="20,10" Margin="0,0,10,0" Command="{Binding InstallCommand}" IsVisible="{Binding ShowInstallButton}"
                               ToolTip.Tip="Downloads the update if needed, quits Coreloom, replaces the app and opens it again.">
                         <StackPanel Orientation="Horizontal">
-                          <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Download}" Stroke="{DynamicResource Brush.OnGlow}" />
+                          <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Download}" Stroke="{DynamicResource Brush.OnAccent}" />
                           <TextBlock Text="Install update" Margin="8,0,0,0" FontWeight="SemiBold" />
                         </StackPanel>
                       </Button>
@@ -1146,7 +1176,7 @@
                     <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
                       <TextBlock Text="New in this version" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" />
                       <TextBlock FontSize="30" FontWeight="Bold" LetterSpacing="-0.6" Margin="0,1,0,0" Foreground="{DynamicResource Brush.Text}">
-                        <Run Text="Coreloom " /><Run Text="{Binding CurrentVersion, Mode=OneWay}" Foreground="{DynamicResource Brush.AccentGradient}" />
+                        <Run Text="Coreloom " /><Run Text="{Binding CurrentVersion, Mode=OneWay}" Foreground="{DynamicResource Brush.VersionGradient}" />
                       </TextBlock>
                     </StackPanel>
                   </Grid>

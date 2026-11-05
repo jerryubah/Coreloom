@@ -367,7 +367,9 @@
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
       <Grid Width="54" Height="54">
-        <c:DonutChart Segments="{Binding Segments}" Thickness="6" GapDegrees="4" />
+        <!-- The gradient tick dial (since 1.9.2; a solid ring before): green while roomy … red when nearly full. -->
+        <c:RadialGauge Thickness="8" Orb="False" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True"
+                       Value="{Binding Fraction}" CoolAt="{Binding GaugeCoolAt}" WarmAt="{Binding GaugeWarmAt}" HotAt="{Binding GaugeHotAt}" />
         <TextBlock Text="{Binding Letter}" FontWeight="SemiBold" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"
                    Foreground="{DynamicResource Brush.Text}" />
       </Grid>

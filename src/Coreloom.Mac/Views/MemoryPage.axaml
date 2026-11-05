@@ -19,7 +19,10 @@
 
             <Grid Margin="18,16" ColumnDefinitions="Auto,*">
               <Grid Width="190" Height="190" VerticalAlignment="Center">
-                <c:DonutChart Segments="{Binding Segments}" Thickness="16" />
+                <!-- The gradient tick dial (since 1.9.2; a solid ring before), coloured by how full the memory is. -->
+                <c:RadialGauge Thickness="16" Orb="False" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True"
+                               Value="{Binding Load.Fraction}" CoolAt="{Binding Load.GaugeCoolAt}" WarmAt="{Binding Load.GaugeWarmAt}" HotAt="{Binding Load.GaugeHotAt}"
+                               IsUnavailable="{Binding !Load.HasValue}" />
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                   <TextBlock Text="{Binding CenterText}" FontFamily="{StaticResource MonoFont}" FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Center" />
                   <TextBlock Text="{Binding CenterCaption}" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Center" />

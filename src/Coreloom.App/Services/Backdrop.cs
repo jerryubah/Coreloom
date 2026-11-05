@@ -23,6 +23,7 @@ public static class Backdrop
 
     private static DispatcherTimer? _timer;
     private static BackdropSettings _settings = new();
+    private static SidebarSettings _sidebar = new();
     private static bool _dark = true;
     private static Rgb _themeBase = Rgb.Parse("#0A0B0E");
     private static Rgb _accent = Rgb.Parse(AccentPalette.Default);
@@ -38,6 +39,9 @@ public static class Backdrop
 
     /// <summary>The frosted copy: stretched to the window too, each glass panel draws the part behind it.</summary>
     public static BitmapSource? Frost { get; private set; }
+
+    /// <summary>The sidebar's frosted copy when its blur differs from the cards' (Settings › Appearance › Sidebar); else <see cref="Frost"/>.</summary>
+    public static BitmapSource? SidebarFrost { get; private set; }
 
     /// <summary>The desktop shows through the window (Mica); the glass only tints.</summary>
     public static bool IsSeeThrough { get; private set; }
@@ -60,8 +64,9 @@ public static class Backdrop
     public static void Initialize(string folder) => Folder = folder;
 
     /// <summary>The settings or theme changed (from ThemeService.Apply). See-through only where Mica is available.</summary>
-    public static void Apply(BackdropSettings settings, bool dark, Color themeBase, Color accent, bool seeThrough)
+    public static void Apply(BackdropSettings settings, SidebarSettings sidebar, bool dark, Color themeBase, Color accent, bool seeThrough)
     {
+        _sidebar = new SidebarSettings { Surface = sidebar.Surface, Shadow = sidebar.Shadow, Blur = sidebar.Blur };
         _settings = new BackdropSettings
         {
             Kind = settings.Kind,
@@ -183,9 +188,10 @@ public static class Backdrop
                 ImageOpacity = settings.ImageOpacity / 100.0,
                 BlurPoints = settings.BlurPoints,
                 FrostPoints = settings.FrostPoints,
+                SidebarFrostPoints = _sidebar.NeedsOwnFrost ? _sidebar.FrostPoints(settings.FrostPoints) : null,
             };
 
-            string key = $"{request.Kind}|{request.Width}x{request.Height}|{scale:0.##}|{_dark}|{_themeBase}|{_accent}|{settings.Color}|{settings.Gradient}|{picture}|{settings.ImageOpacity}|{settings.Blur}";
+            string key = $"{request.Kind}|{request.Width}x{request.Height}|{scale:0.##}|{_dark}|{_themeBase}|{_accent}|{settings.Color}|{settings.Gradient}|{picture}|{settings.ImageOpacity}|{settings.Blur}|{request.SidebarFrostPoints:0.##}";
             if (key == _lastKey && (Background is not null || request.Kind == BackdropKind.SeeThrough))
             {
                 return;
@@ -209,6 +215,7 @@ public static class Backdrop
 
             Background = layers is null ? null : ToBitmap(layers.Background);
             Frost = layers is null ? null : ToBitmap(layers.Frost);
+            SidebarFrost = layers?.SidebarFrost is { } sidebarFrost ? ToBitmap(sidebarFrost) : Frost;
             _lastKey = key;
             string what = request.Kind switch
             {

@@ -117,8 +117,10 @@ public sealed class ThemeService : IThemeService
         SetColor("Brush.ContentLayer", tint, duration);
         SetColor("Brush.TitleBar", Colors.Transparent, TimeSpan.Zero);
         PublishGlass();
+        var sidebar = appearance.Sidebar ?? new SidebarSettings();
+        PublishSidebar(sidebar, palette);
         PublishAppIcon();
-        Backdrop.Apply(backdrop, _isDark, background, AccentColor, IsMicaActive);
+        Backdrop.Apply(backdrop, sidebar, _isDark, background, AccentColor, IsMicaActive);
 
         AnimatedText.IsGloballyEnabled = appearance.AnimateValues && !appearance.ReducedMotion;
         Motion.ReducedMotion = appearance.ReducedMotion;
@@ -172,6 +174,11 @@ public sealed class ThemeService : IThemeService
         var lighter = Blend(accent, Colors.White, 0.32);
         Publish("Brush.AccentGradient", Linear(new Point(0, 0), new Point(1, 0.4),
             (lighter, 0), (accent, 0.55), (deep, 1)));
+        // The version number in What's new (since 1.9.2): on the dark theme a light, clear blue of the accent (pale to
+        // bright) that stands off the dark card instead of sinking into it; on the light theme the accent to its deeper shade.
+        Publish("Brush.VersionGradient", _isDark
+            ? Linear(new Point(0, 0), new Point(1, 0.4), (Blend(accent, Colors.White, 0.66), 0), (Blend(accent, Colors.White, 0.42), 0.55), (Blend(accent, Colors.White, 0.24), 1))
+            : Linear(new Point(0, 0), new Point(1, 0.4), (accent, 0), (deep, 1)));
         PublishHeroLooks(accent, deep, lighter);
 
         static LinearGradientBrush Linear(Point start, Point end, params (Color Color, double Offset)[] stops)
@@ -259,6 +266,61 @@ public sealed class ThemeService : IThemeService
             new(ThemePalette.WithAlpha(color, (byte)(alpha * 0.4)), 0.5),
             new(ThemePalette.WithAlpha(color, 0), 1),
         });
+    }
+
+    /// <summary>
+    /// The sidebar's surface (Settings › Appearance › Sidebar, since 1.9.2) as "Brush.SidebarFill", "Brush.SidebarRim",
+    /// "Brush.SidebarHighlight" and the numbers the sidebar's shape takes ("Sidebar.Sheen", "Sidebar.Shadow",
+    /// "Sidebar.Frosted"). Frosted glass is the card glass (the sidebar before 1.9.2); liquid glass a thin tint over a
+    /// clearer frost with a bright rim catching the light at two corners and a highlight down from the top; translucent a
+    /// see-through tint with nothing blurred; solid the cards' own colour.
+    /// </summary>
+    private void PublishSidebar(SidebarSettings sidebar, IReadOnlyDictionary<string, Color> palette)
+    {
+        Color White(byte alpha) => Color.FromArgb(alpha, 255, 255, 255);
+        Color Black(byte alpha) => Color.FromArgb(alpha, 0, 0, 0);
+        static Color Ink(byte alpha) => Color.FromArgb(alpha, 0x0B, 0x10, 0x17);
+        var clear = new SolidColorBrush(Colors.Transparent);
+        bool frosted = sidebar.Blurs;
+        double sheen = 1;
+        Brush highlight = clear;
+        switch (sidebar.Surface)
+        {
+            case SidebarSurface.Solid:
+                Publish("Brush.SidebarFill", new SolidColorBrush(palette["Card"]));
+                Publish("Brush.SidebarRim", new SolidColorBrush(palette["CardBorder"]));
+                sheen = 0.4;
+                break;
+
+            case SidebarSurface.LiquidGlass:
+                Publish("Brush.SidebarFill", _isDark
+                    ? Gradient(new Point(0, 0), new Point(0.6, 1), (Ink(0x30), 0), (Ink(0x44), 0.55), (Ink(0x58), 1))
+                    : Gradient(new Point(0, 0), new Point(0.8, 1), (White(0x7A), 0), (White(0x62), 0.55), (White(0x56), 1)));
+                Publish("Brush.SidebarRim", _isDark
+                    ? Gradient(new Point(0, 0), new Point(1, 1), (White(0x66), 0), (White(0x1C), 0.3), (White(0x10), 0.65), (White(0x3C), 1))
+                    : Gradient(new Point(0, 0), new Point(1, 1), (White(0xFF), 0), (White(0x9A), 0.3), (Black(0x10), 0.65), (White(0xC8), 1)));
+                highlight = Gradient(new Point(0.5, 0), new Point(0.5, 0.42), (White((byte)(_isDark ? 0x24 : 0x48)), 0), (White(0), 1));
+                sheen = 2.2;
+                break;
+
+            case SidebarSurface.Translucent:
+                Publish("Brush.SidebarFill", new SolidColorBrush(_isDark ? Ink(0x5A) : White(0x80)));
+                Publish("Brush.SidebarRim", _isDark
+                    ? Gradient(new Point(0, 0), new Point(0.3, 1), (White(0x24), 0), (White(0x12), 0.4), (White(0x0E), 1))
+                    : Gradient(new Point(0, 0), new Point(1, 1), (White(0xE0), 0), (Black(0x10), 0.7), (Black(0x16), 1)));
+                sheen = 0.7;
+                break;
+
+            default:
+                _resources["Brush.SidebarFill"] = _resources["Brush.GlassFill"];
+                _resources["Brush.SidebarRim"] = _resources["Brush.GlassRim"];
+                break;
+        }
+
+        Publish("Brush.SidebarHighlight", highlight);
+        _resources["Sidebar.Sheen"] = sheen;
+        _resources["Sidebar.Shadow"] = sidebar.ShadowDepth;
+        _resources["Sidebar.Frosted"] = frosted;
     }
 
     /// <summary>

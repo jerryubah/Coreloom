@@ -22,7 +22,10 @@
           <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Memory" />
           <Grid Grid.Row="1" Margin="0,14,0,0" ColumnDefinitions="Auto,*">
             <Grid Width="168" Height="168" VerticalAlignment="Center">
-              <c:DonutChart Segments="{Binding Segments}" Thickness="14" />
+              <!-- The gradient tick dial (since 1.9.2; a solid ring before), coloured by how full the memory is. -->
+              <c:RadialGauge Thickness="14" Orb="False" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True"
+                             Value="{Binding Fraction}" CoolAt="{Binding GaugeCoolAt}" WarmAt="{Binding GaugeWarmAt}" HotAt="{Binding GaugeHotAt}"
+                             IsUnavailable="{Binding !HasFraction}" />
               <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock Text="{Binding CenterText}" FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Center" FontFeatures="+tnum" />
                 <TextBlock Text="in use" Theme="{StaticResource Text.Caption}" HorizontalAlignment="Center" />

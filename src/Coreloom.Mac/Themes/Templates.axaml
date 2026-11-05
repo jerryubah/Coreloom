@@ -258,7 +258,9 @@
   <DataTemplate x:Key="VolumeRow" DataType="pages:VolumeViewModel">
     <Grid Margin="0,6" ColumnDefinitions="Auto,*">
       <Panel Width="54" Height="54">
-        <c:DonutChart Segments="{Binding Segments}" Thickness="6" GapDegrees="4" />
+        <!-- The gradient tick dial (since 1.9.2; a solid ring before): green while roomy … red when nearly full. -->
+        <c:RadialGauge Thickness="8" Orb="False" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True"
+                       Value="{Binding Fraction}" CoolAt="{Binding GaugeCoolAt}" WarmAt="{Binding GaugeWarmAt}" HotAt="{Binding GaugeHotAt}" />
         <!-- A Mac's volumes have names, not letters: a disk in the middle of the ring -->
         <Path Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Storage}" HorizontalAlignment="Center" VerticalAlignment="Center"
               Stroke="{DynamicResource Brush.TextSecondary}" />

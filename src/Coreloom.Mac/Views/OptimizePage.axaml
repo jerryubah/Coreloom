@@ -197,7 +197,7 @@
                 <Button Theme="{StaticResource Button.AccentGradient}" Padding="20,9" Margin="0,0,10,8" Command="{Binding RunCommand}"
                         IsVisible="{Binding IsReady}">
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Optimize}" Stroke="{DynamicResource Brush.OnGlow}" />
+                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Optimize}" Stroke="{DynamicResource Brush.OnAccent}" />
                     <TextBlock Text="Clean up and optimize" Margin="8,0,0,0" />
                   </StackPanel>
                 </Button>
@@ -210,7 +210,7 @@
                     </MultiBinding>
                   </Button.IsVisible>
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnGlow}" />
+                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
                     <TextBlock Text="{Binding ScanText}" Margin="8,0,0,0" />
                   </StackPanel>
                 </Button>

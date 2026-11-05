@@ -82,12 +82,12 @@
       </DataTemplate.Triggers>
     </DataTemplate>
 
-    <!-- The update button (since 1.8.3): charcoal glass like the banners' buttons, its rim lit along the top and toward a
-         soft light of the accent in the lower right corner, which grows on hover. White text. -->
+    <!-- The update button: the accent button, like every main action (1.9.0's colours since 1.9.2, on 1.8.6's corners;
+         1.8.3–1.9.1 it was charcoal glass with a corner light). White text. -->
     <Style x:Key="Button.Update" TargetType="Button">
       <Setter Property="Cursor" Value="Hand" />
-      <Setter Property="Foreground" Value="{DynamicResource Brush.OnGlow}" />
-      <Setter Property="Background" Value="{DynamicResource Brush.GlowButtonFill}" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}" />
+      <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
       <Setter Property="HorizontalContentAlignment" Value="Left" />
       <Setter Property="Padding" Value="9,8,12,8" />
       <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
@@ -99,18 +99,15 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <c:SquircleBorder x:Name="Root" CornerRadius="14" Background="{TemplateBinding Background}" BorderBrush="{DynamicResource Brush.GlowButtonRim}"
-                              BorderThickness="1" ClipContent="True">
-              <Grid>
-                <Border x:Name="Light" Background="{DynamicResource Brush.GlowButtonLight}" Opacity="0.85" IsHitTestVisible="False" />
-                <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
-              </Grid>
+            <c:SquircleBorder x:Name="Root" CornerRadius="14" Background="{TemplateBinding Background}" BorderBrush="Transparent" BorderThickness="1">
+              <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
             </c:SquircleBorder>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Light" Property="Opacity" Value="1" />
+                <Setter TargetName="Root" Property="Background" Value="{DynamicResource Brush.AccentHover}" />
               </Trigger>
               <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="Root" Property="Opacity" Value="0.88" />
                 <Setter Property="RenderTransform">
                   <Setter.Value>
                     <ScaleTransform ScaleX="0.98" ScaleY="0.98" />
@@ -159,9 +156,11 @@
            sidebar floats on it as a pane of frosted glass, inset from the window's edges and lit along its rim, the same
            glass as every card. -->
       <c:WindowBackdrop x:Name="WindowBackdrop" Grid.ColumnSpan="2" Background="{DynamicResource Brush.ContentLayer}" />
+      <!-- What it's made of, its shadow and its blur follow Settings › Appearance › Sidebar (since 1.9.2). -->
       <c:SquircleBorder x:Name="Sidebar" Width="232" Margin="10" CornerRadius="22" Smoothing="0.7"
-                        Background="{DynamicResource Brush.GlassFill}" BorderBrush="{DynamicResource Brush.GlassRim}" BorderThickness="1"
-                        Sheen="1" Shadow="1" Frosted="True" RenderOptions.ClearTypeHint="Enabled">
+                        Background="{DynamicResource Brush.SidebarFill}" BorderBrush="{DynamicResource Brush.SidebarRim}" BorderThickness="1"
+                        Highlight="{DynamicResource Brush.SidebarHighlight}" Sheen="{DynamicResource Sidebar.Sheen}" Shadow="{DynamicResource Sidebar.Shadow}"
+                        Frosted="{DynamicResource Sidebar.Frosted}" SidebarFrost="True" RenderOptions.ClearTypeHint="Enabled">
         <Grid Margin="10,0,10,12">
           <Grid.RowDefinitions>
             <RowDefinition Height="56" />
@@ -202,13 +201,13 @@
                     AutomationProperties.Name="{Binding Updates.BadgeToolTip}"
                     Visibility="{Binding Updates.ShowBadge, Converter={StaticResource BoolToVisibility}}">
               <StackPanel Orientation="Horizontal">
-                <Border Width="28" Height="28" CornerRadius="9" Background="#1FFFFFFF" VerticalAlignment="Center">
-                  <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnGlow}" />
+                <Border Width="28" Height="28" CornerRadius="9" Background="#2EFFFFFF" VerticalAlignment="Center">
+                  <Path Style="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
                 </Border>
                 <StackPanel Margin="10,0,0,0" VerticalAlignment="Center"
                             Visibility="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
-                  <TextBlock Text="{Binding Updates.BadgeText}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.OnGlow}" TextTrimming="CharacterEllipsis" />
-                  <TextBlock Text="{Binding Updates.BadgeDetail}" FontSize="11" Margin="0,1,0,0" Foreground="{DynamicResource Brush.OnGlow}" Opacity="0.75" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{Binding Updates.BadgeText}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.OnAccent}" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="{Binding Updates.BadgeDetail}" FontSize="11" Margin="0,1,0,0" Foreground="{DynamicResource Brush.OnAccent}" Opacity="0.8" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
               </StackPanel>
             </Button>

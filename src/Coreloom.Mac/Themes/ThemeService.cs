@@ -126,8 +126,10 @@ public sealed class ThemeService : IThemeService
         _resources["SystemAccentColorLight1"] = Blend(AccentColor, Colors.White, 0.12);
         _resources["SystemAccentColorDark1"] = Blend(AccentColor, Colors.Black, 0.12);
         PublishGlass();
+        var sidebar = appearance.Sidebar ?? new SidebarSettings();
+        PublishSidebar(sidebar, palette);
         PublishAppIcon();
-        Backdrop.Apply(backdrop, _isDark, background, AccentColor);
+        Backdrop.Apply(backdrop, sidebar, _isDark, background, AccentColor);
 
         AnimatedText.IsGloballyEnabled = appearance.AnimateValues && !appearance.ReducedMotion;
         Motion.ReducedMotion = appearance.ReducedMotion;
@@ -155,6 +157,13 @@ public sealed class ThemeService : IThemeService
         var lighter = Blend(accent, Colors.White, 0.32);
         _resources["Brush.AccentGradient"] = Linear(new RelativePoint(0, 0, RelativeUnit.Relative), new RelativePoint(1, 0.4, RelativeUnit.Relative),
             (lighter, 0), (accent, 0.55), (deep, 1));
+        // The version number in What's new (since 1.9.2): on the dark theme a light, clear blue of the accent (pale to
+        // bright) that stands off the dark card instead of sinking into it; on the light theme the accent to its deeper shade.
+        var versionStart = new RelativePoint(0, 0, RelativeUnit.Relative);
+        var versionEnd = new RelativePoint(1, 0.4, RelativeUnit.Relative);
+        _resources["Brush.VersionGradient"] = _isDark
+            ? Linear(versionStart, versionEnd, (Blend(accent, Colors.White, 0.66), 0), (Blend(accent, Colors.White, 0.42), 0.55), (Blend(accent, Colors.White, 0.24), 1))
+            : Linear(versionStart, versionEnd, (accent, 0), (deep, 1));
         PublishHeroLooks(accent, deep, lighter);
     }
 
@@ -247,6 +256,60 @@ public sealed class ThemeService : IThemeService
 
         static RadialGradientBrush Glow(Color color, byte alpha) =>
             Radial((ThemePalette.WithAlpha(color, alpha), 0), (ThemePalette.WithAlpha(color, (byte)(alpha * 0.4)), 0.5), (ThemePalette.WithAlpha(color, 0), 1));
+    }
+
+    /// <summary>
+    /// The sidebar's surface (Settings › Appearance › Sidebar, since 1.9.2) as "Brush.SidebarFill", "Brush.SidebarRim",
+    /// "Brush.SidebarHighlight" and the numbers the sidebar's shape takes ("Sidebar.Sheen", "Sidebar.Shadow",
+    /// "Sidebar.Frosted"). Frosted glass is the card glass (the sidebar before 1.9.2); liquid glass a thin tint over a
+    /// clearer frost with a bright rim catching the light at two corners and a highlight down from the top; translucent a
+    /// see-through tint with nothing blurred; solid the cards' own colour.
+    /// </summary>
+    private void PublishSidebar(SidebarSettings sidebar, IReadOnlyDictionary<string, Color> palette)
+    {
+        static Color White(byte alpha) => Color.FromArgb(alpha, 255, 255, 255);
+        static Color Black(byte alpha) => Color.FromArgb(alpha, 0, 0, 0);
+        static Color Ink(byte alpha) => Color.FromArgb(alpha, 0x0B, 0x10, 0x17);
+        static RelativePoint At(double x, double y) => new(x, y, RelativeUnit.Relative);
+        double sheen = 1;
+        IBrush highlight = Brushes.Transparent;
+        switch (sidebar.Surface)
+        {
+            case SidebarSurface.Solid:
+                _resources["Brush.SidebarFill"] = new SolidColorBrush(palette["Card"]);
+                _resources["Brush.SidebarRim"] = new SolidColorBrush(palette["CardBorder"]);
+                sheen = 0.4;
+                break;
+
+            case SidebarSurface.LiquidGlass:
+                _resources["Brush.SidebarFill"] = _isDark
+                    ? Linear(At(0, 0), At(0.6, 1), (Ink(0x30), 0), (Ink(0x44), 0.55), (Ink(0x58), 1))
+                    : Linear(At(0, 0), At(0.8, 1), (White(0x7A), 0), (White(0x62), 0.55), (White(0x56), 1));
+                _resources["Brush.SidebarRim"] = _isDark
+                    ? Linear(At(0, 0), At(1, 1), (White(0x66), 0), (White(0x1C), 0.3), (White(0x10), 0.65), (White(0x3C), 1))
+                    : Linear(At(0, 0), At(1, 1), (White(0xFF), 0), (White(0x9A), 0.3), (Black(0x10), 0.65), (White(0xC8), 1));
+                highlight = Linear(At(0.5, 0), At(0.5, 0.42), (White((byte)(_isDark ? 0x24 : 0x48)), 0), (White(0), 1));
+                sheen = 2.2;
+                break;
+
+            case SidebarSurface.Translucent:
+                _resources["Brush.SidebarFill"] = new SolidColorBrush(_isDark ? Ink(0x5A) : White(0x80));
+                _resources["Brush.SidebarRim"] = _isDark
+                    ? Linear(At(0, 0), At(0.3, 1), (White(0x24), 0), (White(0x12), 0.4), (White(0x0E), 1))
+                    : Linear(At(0, 0), At(1, 1), (White(0xE0), 0), (Black(0x10), 0.7), (Black(0x16), 1));
+                sheen = 0.7;
+                break;
+
+            default:
+                _resources["Brush.SidebarFill"] = _resources["Brush.GlassFill"];
+                _resources["Brush.SidebarRim"] = _resources["Brush.GlassRim"];
+                break;
+        }
+
+        _resources["Brush.SidebarHighlight"] = highlight;
+        _resources["Sidebar.Sheen"] = sheen;
+        _resources["Sidebar.Shadow"] = sidebar.ShadowDepth;
+        _resources["Sidebar.Frosted"] = sidebar.Blurs;
     }
 
     /// <summary>The app icon for the theme as "Image.AppIcon" (the dark glass tile in the dark theme, the white tile otherwise).</summary>

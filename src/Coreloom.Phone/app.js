@@ -4,7 +4,7 @@
 import {
   ConnectError, LiveFeed, Session, forgetPairing, fromBase64Url, getInfo, loadPairing, pair, savePairing, suggestDeviceName,
 } from './connect.js';
-import { Ring, cssColor, drawDonut, metricColor, onThemeChange, parseColor, rgba, seriesVar } from './gauge.js';
+import { Ring, cssColor, metricColor, onThemeChange, parseColor, rgba, seriesVar } from './gauge.js';
 import { History, drawChart } from './chart.js';
 import { FrameTimeline, KeepAwake, drawFrameGraph } from './overlay.js';
 
@@ -798,6 +798,7 @@ class MemorySection {
     this.dash = dash;
     this.caption = h('p', { class: 'section__note' });
     this.donut = h('canvas', { 'aria-hidden': 'true' });
+    this.donutRing = new Ring(this.donut, { orb: false }); // the tick dial, like the desktop's (since 1.9.2; a solid ring before)
     this.center = h('span', { class: 'ring__number num', text: '—' });
     this.usedText = h('strong', { class: 'num' });
     this.availableText = h('strong', { class: 'num' });
@@ -823,9 +824,10 @@ class MemorySection {
     setText(this.usedText, memory.usedText || '—');
     setText(this.availableText, memory.availableText || '—');
     const used = memory.used || 0, available = memory.available || 0;
-    // The ring takes the gauges' colour scale (as on the desktop); its legend swatch follows it.
+    // The dial takes the gauges' colour scale (as on the desktop); its legend swatch follows it.
     const usedColor = rgba(load?.g ? metricColor(load) : parseColor(cssColor('--memory')));
-    drawDonut(this.donut, [{ value: used, color: usedColor }, { value: available, color: cssColor('--track') }]);
+    const total = used + available;
+    this.donutRing.set(load && load.v !== undefined ? load : total > 0 ? { c: 'Memory', ...(load || {}), v: used, f: used / total } : null);
     this.usedSwatch.style.setProperty('--swatch', usedColor);
     this.grid.update(rest, s.t);
     this.chart.update(s, byId(s));

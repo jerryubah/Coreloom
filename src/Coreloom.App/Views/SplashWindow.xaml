@@ -13,195 +13,162 @@
         TextOptions.TextHintingMode="Fixed"
         AutomationProperties.Name="Coreloom is starting">
   <!--
-    Startup splash (16:9), redrawn for 1.9.0 in the app's own look: a near-black canvas with soft, out-of-focus lights
-    (the accent's blue low on the left, a little amber up on the right, teal in the lower right corner) drifting a
-    little, a pane of dark glass in the middle with the app icon on a soft halo, the "Coreloom" wordmark in Inter, a thin
-    loading line and the current step. It runs on its own UI thread, so it must stay self-contained: no
-    StaticResource/DynamicResource keys and no implicit styles from App.xaml (the window also blocks those lookups in
-    code). The corners are clipped to a squircle in code.
+    Startup splash (16:9): flowing ribbons of blue light on deep navy, the app icon on a glowing tile (the dark-mode icon
+    when the dark theme is on), the "Coreloom" wordmark, a glowing loading bar with moving stripes and the current step.
+    It runs on its own UI thread, so it must stay self-contained: no StaticResource/DynamicResource keys and no implicit
+    styles from App.xaml (the window also blocks those lookups in code). The corners are clipped to a squircle in code.
   -->
 
   <Grid x:Name="Root" TextElement.FontFamily="pack://application:,,,/Fonts/#Inter">
-    <!-- The canvas: near-black navy, a shade lighter toward the top left. -->
+    <!-- Deep navy, a little lighter where the logo sits and toward the top. -->
     <Rectangle>
       <Rectangle.Fill>
-        <LinearGradientBrush StartPoint="0,0" EndPoint="0.6,1">
-          <GradientStop Color="#0A101A" Offset="0" />
-          <GradientStop Color="#060910" Offset="0.5" />
-          <GradientStop Color="#03050A" Offset="1" />
-        </LinearGradientBrush>
+        <RadialGradientBrush Center="0.5,0.4" GradientOrigin="0.5,0.4" RadiusX="0.75" RadiusY="0.95">
+          <GradientStop Color="#0C1A3F" Offset="0" />
+          <GradientStop Color="#060C20" Offset="0.55" />
+          <GradientStop Color="#03060F" Offset="1" />
+        </RadialGradientBrush>
+      </Rectangle.Fill>
+    </Rectangle>
+    <Rectangle>
+      <Rectangle.Fill>
+        <RadialGradientBrush Center="0.38,-0.05" GradientOrigin="0.38,-0.05" RadiusX="0.6" RadiusY="0.55">
+          <GradientStop Color="#2E1E4BFF" Offset="0" />
+          <GradientStop Color="#001E4BFF" Offset="1" />
+        </RadialGradientBrush>
       </Rectangle.Fill>
     </Rectangle>
 
-    <!-- The lights: wide, soft washes of colour, the way the window's background lights the glass in the app. The canvas
-         drifts a few points over the splash's life (Drift, in code). -->
-    <Canvas x:Name="Lights" IsHitTestVisible="False">
-      <Canvas.RenderTransform>
-        <TranslateTransform x:Name="Drift" X="0" Y="0" />
-      </Canvas.RenderTransform>
+    <!-- The flowing ribbons of light. -->
+    <c:SplashWaves x:Name="Waves" />
 
-      <!-- the accent's blue, low on the left -->
-      <Ellipse Canvas.Left="-260" Canvas.Top="60" Width="640" Height="560">
-        <Ellipse.Fill>
-          <RadialGradientBrush>
-            <GradientStop Color="#5C2E7CF6" Offset="0" />
-            <GradientStop Color="#242E7CF6" Offset="0.45" />
-            <GradientStop Color="#002E7CF6" Offset="1" />
-          </RadialGradientBrush>
-        </Ellipse.Fill>
-      </Ellipse>
-
-      <!-- amber, small, up on the right -->
-      <Ellipse Canvas.Left="590" Canvas.Top="-190" Width="360" Height="360">
-        <Ellipse.Fill>
-          <RadialGradientBrush>
-            <GradientStop Color="#3EFFB65A" Offset="0" />
-            <GradientStop Color="#12FFB65A" Offset="0.5" />
-            <GradientStop Color="#00FFB65A" Offset="1" />
-          </RadialGradientBrush>
-        </Ellipse.Fill>
-      </Ellipse>
-
-      <!-- teal, in the lower right corner -->
-      <Ellipse Canvas.Left="470" Canvas.Top="220" Width="560" Height="520">
-        <Ellipse.Fill>
-          <RadialGradientBrush>
-            <GradientStop Color="#4A36C4E2" Offset="0" />
-            <GradientStop Color="#1836C4E2" Offset="0.5" />
-            <GradientStop Color="#0036C4E2" Offset="1" />
-          </RadialGradientBrush>
-        </Ellipse.Fill>
-      </Ellipse>
-    </Canvas>
+    <!-- A soft vignette, and a faint blue haze along the bottom. -->
+    <Rectangle IsHitTestVisible="False">
+      <Rectangle.Fill>
+        <RadialGradientBrush Center="0.5,0.45" GradientOrigin="0.5,0.45" RadiusX="0.72" RadiusY="0.8">
+          <GradientStop Color="#00000000" Offset="0.55" />
+          <GradientStop Color="#A0010205" Offset="1" />
+        </RadialGradientBrush>
+      </Rectangle.Fill>
+    </Rectangle>
+    <Rectangle IsHitTestVisible="False">
+      <Rectangle.Fill>
+        <RadialGradientBrush Center="0.5,1.05" GradientOrigin="0.5,1.05" RadiusX="0.55" RadiusY="0.3">
+          <GradientStop Color="#2A1446C8" Offset="0" />
+          <GradientStop Color="#001446C8" Offset="1" />
+        </RadialGradientBrush>
+      </Rectangle.Fill>
+    </Rectangle>
 
     <!-- The rim (drawn along the squircle in code). -->
     <Path x:Name="Rim" StrokeThickness="1" IsHitTestVisible="False">
       <Path.Stroke>
         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-          <GradientStop Color="#30FFFFFF" Offset="0" />
-          <GradientStop Color="#10FFFFFF" Offset="0.5" />
-          <GradientStop Color="#1EFFFFFF" Offset="1" />
+          <GradientStop Color="#40A8C8FF" Offset="0" />
+          <GradientStop Color="#10A8C8FF" Offset="0.5" />
+          <GradientStop Color="#28A8C8FF" Offset="1" />
         </LinearGradientBrush>
       </Path.Stroke>
     </Path>
 
-    <!-- The pane of glass with everything on it: dark, nearly opaque, a hairline rim, the lights' colour just showing. -->
-    <StackPanel x:Name="Body" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,2" Opacity="0">
+    <StackPanel x:Name="Body" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,6" Opacity="0">
       <StackPanel.RenderTransform>
         <TranslateTransform x:Name="BodyOffset" Y="12" />
       </StackPanel.RenderTransform>
 
-      <c:SquircleBorder Width="560" Height="300" CornerRadius="30" Smoothing="0.7" BorderThickness="1" Sheen="0.35">
-        <c:SquircleBorder.Background>
-          <LinearGradientBrush StartPoint="0,0" EndPoint="0.6,1">
-            <GradientStop Color="#DC0B1017" Offset="0" />
-            <GradientStop Color="#E40B1017" Offset="1" />
+      <!-- The icon, on a halo of blue light that breathes. -->
+      <Grid Width="112" Height="112" HorizontalAlignment="Center">
+        <Ellipse x:Name="Halo" Width="250" Height="250" Margin="-69" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+          <Ellipse.Fill>
+            <RadialGradientBrush>
+              <GradientStop Color="#7A1E64FF" Offset="0" />
+              <GradientStop Color="#301E64FF" Offset="0.38" />
+              <GradientStop Color="#001E64FF" Offset="1" />
+            </RadialGradientBrush>
+          </Ellipse.Fill>
+          <Ellipse.RenderTransform>
+            <ScaleTransform x:Name="HaloScale" ScaleX="1" ScaleY="1" />
+          </Ellipse.RenderTransform>
+        </Ellipse>
+        <Image x:Name="LogoImage" Width="112" Height="112" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+      </Grid>
+
+      <!-- "Core" in white, "loom" in the brand blue. -->
+      <c:TrackedText x:Name="Wordmark" Text="Coreloom" AccentStart="4" HorizontalAlignment="Center" Margin="0,22,0,0"
+                     FontSize="58" FontWeight="Bold" Tracking="-1.6" LineHeight="62">
+        <c:TrackedText.Foreground>
+          <LinearGradientBrush MappingMode="Absolute" StartPoint="0,8" EndPoint="0,56">
+            <GradientStop Color="#FFFFFF" Offset="0" />
+            <GradientStop Color="#C7D4F2" Offset="1" />
           </LinearGradientBrush>
-        </c:SquircleBorder.Background>
-        <c:SquircleBorder.BorderBrush>
-          <LinearGradientBrush StartPoint="0,0" EndPoint="0.3,1">
-            <GradientStop Color="#2AFFFFFF" Offset="0" />
-            <GradientStop Color="#12FFFFFF" Offset="1" />
+        </c:TrackedText.Foreground>
+        <c:TrackedText.AccentForeground>
+          <LinearGradientBrush MappingMode="Absolute" StartPoint="130,6" EndPoint="264,56">
+            <GradientStop Color="#7FD6FF" Offset="0" />
+            <GradientStop Color="#3A9BFF" Offset="0.5" />
+            <GradientStop Color="#2563FF" Offset="1" />
           </LinearGradientBrush>
-        </c:SquircleBorder.BorderBrush>
+        </c:TrackedText.AccentForeground>
+      </c:TrackedText>
+      <c:TrackedText Text="SYSTEM PERFORMANCE" HorizontalAlignment="Center" Margin="0,12,0,0" FontSize="11.5" FontWeight="SemiBold"
+                     Tracking="5.2" LineHeight="14" Foreground="#A3B6E2" />
 
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,6,0,0">
-          <!-- The icon, on a halo of the accent's blue that breathes. -->
-          <Grid Width="84" Height="84" HorizontalAlignment="Center">
-            <Ellipse x:Name="Halo" Width="220" Height="220" Margin="-68" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
-              <Ellipse.Fill>
-                <RadialGradientBrush>
-                  <GradientStop Color="#5A2E7CF6" Offset="0" />
-                  <GradientStop Color="#222E7CF6" Offset="0.4" />
-                  <GradientStop Color="#002E7CF6" Offset="1" />
-                </RadialGradientBrush>
-              </Ellipse.Fill>
-              <Ellipse.RenderTransform>
-                <ScaleTransform x:Name="HaloScale" ScaleX="1" ScaleY="1" />
-              </Ellipse.RenderTransform>
-            </Ellipse>
-            <Image x:Name="LogoImage" Width="84" Height="84" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
-          </Grid>
-
-          <!-- "Core" in white, "loom" in the accent's blue. -->
-          <c:TrackedText x:Name="Wordmark" Text="Coreloom" AccentStart="4" HorizontalAlignment="Center" Margin="0,16,0,0"
-                         FontSize="42" FontWeight="Bold" Tracking="-1.2" LineHeight="46">
-            <c:TrackedText.Foreground>
-              <LinearGradientBrush MappingMode="Absolute" StartPoint="0,6" EndPoint="0,40">
-                <GradientStop Color="#FFFFFF" Offset="0" />
-                <GradientStop Color="#D6DEEA" Offset="1" />
-              </LinearGradientBrush>
-            </c:TrackedText.Foreground>
-            <c:TrackedText.AccentForeground>
-              <LinearGradientBrush MappingMode="Absolute" StartPoint="90,4" EndPoint="190,40">
-                <GradientStop Color="#7FB4FF" Offset="0" />
-                <GradientStop Color="#3F8BFF" Offset="0.55" />
-                <GradientStop Color="#2E7CF6" Offset="1" />
-              </LinearGradientBrush>
-            </c:TrackedText.AccentForeground>
-          </c:TrackedText>
-          <c:TrackedText Text="SYSTEM PERFORMANCE" HorizontalAlignment="Center" Margin="0,8,0,0" FontSize="10.5" FontWeight="Medium"
-                         Tracking="3.6" LineHeight="13" Foreground="#8A96A8" />
-
-          <!-- The loading line: a thin track, the accent filling it with a soft glow under the fill. -->
-          <Grid x:Name="Bar" Width="300" Height="4" Margin="0,26,0,0" HorizontalAlignment="Center">
-            <Border x:Name="FillGlow" HorizontalAlignment="Left" Width="0" CornerRadius="6" Margin="-6" Opacity="0.7" IsHitTestVisible="False">
+      <!-- Loading bar: a glow under it, the track, the fill with a sheen and moving stripes. -->
+      <Grid x:Name="Bar" Width="340" Height="14" Margin="0,36,0,0" HorizontalAlignment="Center">
+        <Border x:Name="FillGlow" HorizontalAlignment="Left" Width="0" CornerRadius="7" Margin="-6" Opacity="0.75" IsHitTestVisible="False">
+          <Border.Background>
+            <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+              <GradientStop Color="#552A6BFF" Offset="0" />
+              <GradientStop Color="#884FA8FF" Offset="1" />
+            </LinearGradientBrush>
+          </Border.Background>
+          <Border.Effect>
+            <BlurEffect Radius="14" RenderingBias="Performance" />
+          </Border.Effect>
+        </Border>
+        <Border CornerRadius="7" Background="#120E1C3A" BorderBrush="#2E6E8CC8" BorderThickness="1" />
+        <Border x:Name="Fill" HorizontalAlignment="Left" Width="0" CornerRadius="7" ClipToBounds="True">
+          <Border.Background>
+            <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+              <GradientStop Color="#1C55FF" Offset="0" />
+              <GradientStop Color="#3C93FF" Offset="0.7" />
+              <GradientStop Color="#9ED9FF" Offset="1" />
+            </LinearGradientBrush>
+          </Border.Background>
+          <Grid>
+            <Rectangle x:Name="Stripes" Opacity="0.22">
+              <Rectangle.Fill>
+                <DrawingBrush x:Name="StripeBrush" TileMode="Tile" Viewport="0,0,14,14" ViewportUnits="Absolute" Viewbox="0,0,14,14" ViewboxUnits="Absolute" Stretch="None">
+                  <DrawingBrush.Drawing>
+                    <GeometryDrawing Brush="#FFFFFFFF" Geometry="M0,14 L7,0 L11,0 L4,14 Z M14,14 L21,0 L25,0 L18,14 Z" />
+                  </DrawingBrush.Drawing>
+                  <DrawingBrush.Transform>
+                    <TranslateTransform x:Name="StripeOffset" X="0" />
+                  </DrawingBrush.Transform>
+                </DrawingBrush>
+              </Rectangle.Fill>
+            </Rectangle>
+            <Border CornerRadius="7,7,0,0" Height="6" VerticalAlignment="Top" Margin="2,1,2,0">
               <Border.Background>
-                <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
-                  <GradientStop Color="#302E7CF6" Offset="0" />
-                  <GradientStop Color="#663F8BFF" Offset="1" />
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                  <GradientStop Color="#70FFFFFF" Offset="0" />
+                  <GradientStop Color="#00FFFFFF" Offset="1" />
                 </LinearGradientBrush>
               </Border.Background>
-              <Border.Effect>
-                <BlurEffect Radius="10" RenderingBias="Performance" />
-              </Border.Effect>
-            </Border>
-            <Border CornerRadius="2" Background="#1AFFFFFF" />
-            <Border x:Name="Fill" HorizontalAlignment="Left" Width="0" CornerRadius="2" ClipToBounds="True">
-              <Border.Background>
-                <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
-                  <GradientStop Color="#2E7CF6" Offset="0" />
-                  <GradientStop Color="#5E9BFF" Offset="0.7" />
-                  <GradientStop Color="#9EC7FF" Offset="1" />
-                </LinearGradientBrush>
-              </Border.Background>
-              <Grid>
-                <!-- a faint sheen that slides along the fill -->
-                <Rectangle x:Name="Stripes" Opacity="0.35">
-                  <Rectangle.Fill>
-                    <DrawingBrush x:Name="StripeBrush" TileMode="Tile" Viewport="0,0,28,4" ViewportUnits="Absolute" Viewbox="0,0,28,4" ViewboxUnits="Absolute" Stretch="None">
-                      <DrawingBrush.Drawing>
-                        <GeometryDrawing Geometry="M0,0 L14,0 L14,4 L0,4 Z">
-                          <GeometryDrawing.Brush>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                              <GradientStop Color="#00FFFFFF" Offset="0" />
-                              <GradientStop Color="#80FFFFFF" Offset="0.5" />
-                              <GradientStop Color="#00FFFFFF" Offset="1" />
-                            </LinearGradientBrush>
-                          </GeometryDrawing.Brush>
-                        </GeometryDrawing>
-                      </DrawingBrush.Drawing>
-                      <DrawingBrush.Transform>
-                        <TranslateTransform x:Name="StripeOffset" X="0" />
-                      </DrawingBrush.Transform>
-                    </DrawingBrush>
-                  </Rectangle.Fill>
-                </Rectangle>
-              </Grid>
             </Border>
           </Grid>
+        </Border>
+      </Grid>
 
-          <!-- The current step, spaced out in capitals. -->
-          <c:TrackedText x:Name="StatusLabel" Text="STARTING CORELOOM" HorizontalAlignment="Center" Margin="0,16,0,0" FontSize="10.5" FontWeight="Medium"
-                         Tracking="3.2" LineHeight="13" Foreground="#6E7A8C" />
-          <!-- The same, for screen readers (live region). -->
-          <TextBlock x:Name="StatusText" Text="Starting Coreloom" Height="0" Opacity="0" IsHitTestVisible="False"
-                     AutomationProperties.LiveSetting="Polite" />
+      <!-- The current step, spaced out in capitals. -->
+      <c:TrackedText x:Name="StatusLabel" Text="STARTING CORELOOM" HorizontalAlignment="Center" Margin="0,18,0,0" FontSize="10.5" FontWeight="Medium"
+                     Tracking="3.6" LineHeight="13" Foreground="#8EA4CF" />
+      <!-- The same, for screen readers (live region). -->
+      <TextBlock x:Name="StatusText" Text="Starting Coreloom" Height="0" Opacity="0" IsHitTestVisible="False"
+                 AutomationProperties.LiveSetting="Polite" />
 
-          <TextBlock x:Name="ErrorText" Visibility="Collapsed" MaxWidth="460" Margin="0,14,0,0" TextWrapping="Wrap" TextAlignment="Center"
-                     FontSize="12.5" LineHeight="19" Foreground="#FFB6AD" AutomationProperties.LiveSetting="Assertive" />
-        </StackPanel>
-      </c:SquircleBorder>
+      <TextBlock x:Name="ErrorText" Visibility="Collapsed" MaxWidth="460" Margin="0,18,0,0" TextWrapping="Wrap" TextAlignment="Center"
+                 FontSize="12.5" LineHeight="19" Foreground="#FFB6AD" AutomationProperties.LiveSetting="Assertive" />
     </StackPanel>
   </Grid>
 </Window>
