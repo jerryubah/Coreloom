@@ -74,7 +74,7 @@
       <Grid RowDefinitions="Auto,Auto,*,Auto">
         <Grid ColumnDefinitions="Auto,*,Auto">
           <Border Width="26" Height="26" CornerRadius="8" Background="{DynamicResource Brush.ControlHover}">
-            <Path Theme="{StaticResource IconPath}" Width="14" Height="14" StrokeThickness="1.6"
+            <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" StrokeThickness="1.6"
                   Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
                   Stroke="{Binding Metric.GlowKey, Converter={StaticResource ColorKeyToBrush}}" />
           </Border>
@@ -262,7 +262,7 @@
         <c:RadialGauge Thickness="8" Orb="False" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True"
                        Value="{Binding Fraction}" CoolAt="{Binding GaugeCoolAt}" WarmAt="{Binding GaugeWarmAt}" HotAt="{Binding GaugeHotAt}" />
         <!-- A Mac's volumes have names, not letters: a disk in the middle of the ring -->
-        <Path Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Storage}" HorizontalAlignment="Center" VerticalAlignment="Center"
+        <c:GridIcon Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Storage}" HorizontalAlignment="Center" VerticalAlignment="Center"
               Stroke="{DynamicResource Brush.TextSecondary}" />
       </Panel>
       <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
@@ -284,7 +284,7 @@
   <!-- ================================================================================= -->
   <DataTemplate x:Key="HealthCheckRow" DataType="pages:HealthCheckViewModel">
     <Grid Background="Transparent" ToolTip.Tip="{Binding Detail}" ColumnDefinitions="Auto,*">
-      <Path Theme="{StaticResource IconPath}" Width="15" Height="15" VerticalAlignment="Top" Margin="0,1,9,0"
+      <c:GridIcon Theme="{StaticResource IconPath}" Width="15" Height="15" VerticalAlignment="Top" Margin="0,1,9,0"
             Data="{Binding StateKey, Converter={StaticResource CheckStateToIcon}}" Stroke="{Binding StateKey, Converter={StaticResource CheckStateToBrush}}" />
       <StackPanel Grid.Column="1">
         <TextBlock Text="{Binding Title}" FontSize="13" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
@@ -295,7 +295,7 @@
 
   <DataTemplate x:Key="HealthCheckLine" DataType="pages:HealthCheckViewModel">
     <Grid Background="Transparent" Margin="0,2" ToolTip.Tip="{Binding Detail}" ColumnDefinitions="Auto,*">
-      <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Margin="0,0,7,0" VerticalAlignment="Center"
+      <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Margin="0,0,7,0" VerticalAlignment="Center"
             Data="{Binding StateKey, Converter={StaticResource CheckStateToIcon}}" Stroke="{Binding StateKey, Converter={StaticResource CheckStateToBrush}}" />
       <TextBlock Grid.Column="1" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" FontSize="12.5">
         <Run Text="{Binding Title, Mode=OneWay}" Foreground="{DynamicResource Brush.Text}" /><Run Text=" · " Foreground="{DynamicResource Brush.TextTertiary}" /><Run Text="{Binding Detail, Mode=OneWay}" Foreground="{DynamicResource Brush.TextSecondary}" />
@@ -311,7 +311,7 @@
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,28,0" MinWidth="230">
           <Panel Width="46" Height="46" VerticalAlignment="Center">
             <Ellipse Fill="{Binding StatusKey, Converter={StaticResource StatusToBrush}, ConverterParameter=Brush.TextTertiary}" Opacity="0.14" />
-            <Path Theme="{StaticResource IconPath}" Width="22" Height="22" Data="{StaticResource Icon.Shield}"
+            <c:GridIcon Theme="{StaticResource IconPath}" Width="22" Height="22" Data="{StaticResource Icon.Shield}"
                   Stroke="{Binding StatusKey, Converter={StaticResource StatusToBrush}, ConverterParameter=Brush.TextTertiary}" StrokeThickness="1.8" />
           </Panel>
           <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
@@ -410,7 +410,7 @@
       <StackPanel>
         <Grid>
           <StackPanel Orientation="Horizontal">
-            <Path Theme="{StaticResource IconPath}" Width="14" Height="14" VerticalAlignment="Center"
+            <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" VerticalAlignment="Center"
                   Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
             <TextBlock Theme="{StaticResource Text.Label}" Text="{Binding Label}" Margin="7,0,0,0" VerticalAlignment="Center" />
           </StackPanel>
@@ -435,7 +435,7 @@
       <Panel Width="164" Height="164">
         <c:RadialGauge Thickness="15" Orb="False" TrackBrush="{DynamicResource Brush.Track}" ToneScale="True" Tone="{Binding Tone}" Value="{Binding Fraction}" />
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" HorizontalAlignment="Center"
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" HorizontalAlignment="Center"
                 Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}"
                 b:Pulse.IsPulsing="{Binding IsActive}" />
           <TextBlock FontFamily="{StaticResource UiFont}" FontSize="29" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,4,0,0"

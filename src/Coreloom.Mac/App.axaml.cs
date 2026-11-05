@@ -240,6 +240,7 @@ public partial class App : Application
                 Optimizer = new MacOptimizeService(),
                 Devices = _devices = new MacDeviceService(work => Dispatcher.UIThread.InvokeAsync(work).GetTask()),
                 Gaming = new MacGamingService(paths.LocalDirectory, userAgent, AppKit.RefreshRate),
+                MacPerformance = new MacPerformanceService(),
             },
         });
         _shell = shell;

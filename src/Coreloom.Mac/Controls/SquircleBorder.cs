@@ -721,6 +721,15 @@ public class SquircleBorder : Decorator, ICustomHitTest
 
     // ------------------------------------------------------------------ pointer light
 
+    /// <summary>Shows the pointer's light at a point at full strength, without a pointer (for MacShots' pictures).</summary>
+    public void ShowPointerLight(Point at)
+    {
+        _hovering = true;
+        _pointer = _target = at;
+        _hover = 1;
+        InvalidateVisual();
+    }
+
     protected override void OnPointerEntered(PointerEventArgs e)
     {
         base.OnPointerEntered(e);

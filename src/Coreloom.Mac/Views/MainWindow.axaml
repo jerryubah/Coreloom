@@ -114,7 +114,7 @@
         <Button Name="CollapseButton" Theme="{StaticResource Button.Icon}" HorizontalAlignment="Right" VerticalAlignment="Center" Width="28" Height="28"
                 Margin="0,0,-3,0" Command="{Binding ToggleSidebarCommand}" ToolTip.Tip="Hide sidebar (⌃⌘S)"
                 IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
-          <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Sidebar}" />
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Sidebar}" />
         </Button>
 
         <!-- Brand -->
@@ -130,7 +130,7 @@
         <StackPanel Grid.Row="2" Margin="0,4,0,0">
           <Button Theme="{StaticResource Button.Icon}" HorizontalAlignment="Center" Margin="0,0,0,8" Command="{Binding ToggleSidebarCommand}"
                   ToolTip.Tip="Show sidebar (⌃⌘S)" IsVisible="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
-            <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Sidebar}" />
+            <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Sidebar}" />
           </Button>
           <ListBox Name="NavList" Theme="{StaticResource NavList}" ItemsSource="{Binding Pages}"
                    ItemContainerTheme="{StaticResource NavItemBound}" ItemTemplate="{StaticResource NavItemTemplate}" />
@@ -146,7 +146,7 @@
                   Padding="{Binding IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToValue}, ConverterParameter='0,7|9,8,12,8'}">
             <StackPanel Orientation="Horizontal">
               <Border Width="28" Height="28" CornerRadius="9" Background="#2EFFFFFF" VerticalAlignment="Center">
-                <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
               </Border>
               <StackPanel Margin="10,0,0,0" VerticalAlignment="Center" IsVisible="{Binding !IsCompactSidebar, RelativeSource={RelativeSource AncestorType=Window}}">
                 <TextBlock Text="{Binding Updates.BadgeText}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.OnAccent}" TextTrimming="CharacterEllipsis" />
@@ -198,8 +198,8 @@
           <ToggleButton Name="FreezeButton" Theme="{StaticResource ToggleButton.Icon}" Margin="8,0,0,0" IsChecked="{Binding IsChartsFrozen}"
                         ToolTip.Tip="Pause charts to inspect them (monitoring continues)">
             <Panel>
-              <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Pause}" IsVisible="{Binding !IsChartsFrozen}" />
-              <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Play}" IsVisible="{Binding IsChartsFrozen}" />
+              <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Pause}" IsVisible="{Binding !IsChartsFrozen}" />
+              <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Play}" IsVisible="{Binding IsChartsFrozen}" />
             </Panel>
           </ToggleButton>
         </StackPanel>
@@ -211,14 +211,14 @@
                           Background="{DynamicResource Brush.AccentSoft}" BorderBrush="{DynamicResource Brush.CardBorder}" BorderThickness="1"
                           IsVisible="{Binding Updates.ShowUpdatedBanner}">
           <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-            <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.Accent}" />
+            <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.Accent}" />
             <TextBlock Grid.Column="1" Margin="12,0" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12.5" FontWeight="SemiBold"
                        Text="{Binding Updates.UpdatedBannerText}" />
             <Button Grid.Column="2" Theme="{StaticResource Button.Secondary}" Content="See what's new" Padding="12,5"
                     Command="{Binding ShowWhatsNewCommand}" />
             <Button Grid.Column="3" Theme="{StaticResource Button.Icon}" Width="28" Height="28" Margin="6,0,0,0"
                     Command="{Binding Updates.DismissUpdatedBannerCommand}" ToolTip.Tip="Dismiss" AutomationProperties.Name="Dismiss">
-              <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Close}" />
+              <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Close}" />
             </Button>
           </Grid>
         </c:SquircleBorder>
@@ -228,10 +228,10 @@
                           Background="{DynamicResource Brush.BannerBackground}" BorderBrush="{DynamicResource Brush.BannerBorder}" BorderThickness="1"
                           IsVisible="{Binding ShowLimitedModeBanner}">
           <Grid ColumnDefinitions="Auto,*,Auto">
-            <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Shield}" Stroke="{DynamicResource Brush.Elevated}" />
+            <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Shield}" Stroke="{DynamicResource Brush.Elevated}" />
             <TextBlock Grid.Column="1" Margin="12,0" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12.5" Text="{Binding LimitedModeText}" />
             <Button Grid.Column="2" Theme="{StaticResource Button.Icon}" Width="28" Height="28" Margin="6,0,0,0" Command="{Binding DismissBannerCommand}" ToolTip.Tip="Dismiss">
-              <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Close}" />
+              <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Close}" />
             </Button>
           </Grid>
         </c:SquircleBorder>
@@ -247,7 +247,7 @@
                         Background="{DynamicResource Brush.Card}" BorderBrush="{DynamicResource Brush.CardBorder}" BorderThickness="1"
                         IsVisible="{Binding HasToast}" AutomationProperties.LiveSetting="Assertive" AutomationProperties.Name="{Binding ToastText}">
         <Grid ColumnDefinitions="Auto,*,Auto">
-          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" VerticalAlignment="Top" Margin="0,1,0,0"
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" VerticalAlignment="Top" Margin="0,1,0,0"
                 Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Elevated}" />
           <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
             <TextBlock Text="{Binding ToastTitle}" FontSize="12.5" FontWeight="SemiBold" TextWrapping="Wrap" />
@@ -255,7 +255,7 @@
           </StackPanel>
           <Button Grid.Column="2" Theme="{StaticResource Button.Icon}" Width="28" Height="28" VerticalAlignment="Top"
                   Command="{Binding DismissToastCommand}" ToolTip.Tip="Dismiss" AutomationProperties.Name="Dismiss">
-            <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Close}" />
+            <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Close}" />
           </Button>
         </Grid>
       </c:SquircleBorder>

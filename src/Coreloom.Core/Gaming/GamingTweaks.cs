@@ -41,7 +41,10 @@ public enum GamingTweak
     /// <summary>macOS: the display stays awake while a library game runs (a power assertion Coreloom holds; no setting changes).</summary>
     KeepAwake,
 
-    /// <summary>macOS: Apple's Metal Performance HUD in Metal games (the user default MetalForceHudEnabled).</summary>
+    /// <summary>
+    /// macOS, until 1.9.3: Apple's Metal Performance HUD in Metal games (the user default MetalForceHudEnabled). Removed
+    /// from the Gaming page in 1.9.4; kept so the values after it keep their numbers.
+    /// </summary>
     MetalHud,
 
     /// <summary>macOS: full power on the charger — Low Power Mode off, and High Power Mode on Macs that have it (pmset).</summary>
@@ -70,6 +73,30 @@ public enum GamingTweak
     /// uses (see <see cref="CacheLocality"/>). Switched by Coreloom itself, not a Windows setting.
     /// </summary>
     CacheOptimization,
+
+    /// <summary>macOS (since 1.9.4): High Power Mode on the charger while a game or GPU workload runs, put back after (see <see cref="Gaming.HighPowerAutomation"/>).</summary>
+    HighPowerAutomation,
+
+    /// <summary>macOS (since 1.9.4): memory pressure, compressed memory and swap watched, with apps to quit (see <see cref="MemoryGuard"/>).</summary>
+    MemoryGuard,
+
+    /// <summary>macOS (since 1.9.4): thermal state, temperatures and clocks followed over the session (see <see cref="ThermalTracker"/>).</summary>
+    ThermalHeadroom,
+
+    /// <summary>macOS (since 1.9.4): who uses the performance and efficiency cores, at which QoS class (see <see cref="CoreWorkloadMonitor"/>).</summary>
+    CoreWorkload,
+
+    /// <summary>macOS (since 1.9.4): which games use MetalFX upscaling, frame interpolation and denoising (see <see cref="Gaming.MetalFx"/>).</summary>
+    MetalFx,
+
+    /// <summary>macOS (since 1.9.4): each display's refresh, ProMotion, HDR, resolution and colour depth (see <see cref="Gaming.DisplayPipeline"/>).</summary>
+    DisplayPipeline,
+
+    /// <summary>macOS (since 1.9.4): games and apps running through Rosetta 2 instead of natively (see <see cref="NativeApps"/>).</summary>
+    NativeApps,
+
+    /// <summary>macOS (since 1.9.4): background apps reviewed and quit for a game, reopened after (see <see cref="Gaming.BackgroundGovernor"/>).</summary>
+    BackgroundGovernor,
 }
 
 /// <summary>Whether a tweak can be used here, whether it is on, and whether a restart is still needed for it.</summary>

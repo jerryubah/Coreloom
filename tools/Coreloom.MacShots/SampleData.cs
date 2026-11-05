@@ -84,7 +84,7 @@ internal sealed class SampleData
 
     public MonitorContext Monitor { get; }
 
-    public ToolServices Tools { get; init; } = new() { Devices = new SampleDevices(), Optimizer = new SampleOptimizer(), Benchmarks = new SampleBenchmarks(), Gaming = new SampleGaming() };
+    public ToolServices Tools { get; init; } = new() { Devices = new SampleDevices(), Optimizer = new SampleOptimizer(), Benchmarks = new SampleBenchmarks(), Gaming = new SampleGaming(), MacPerformance = new SampleMacPerformance() };
 
     /// <summary>A reading a second, as the app takes them.</summary>
     public void Tick()

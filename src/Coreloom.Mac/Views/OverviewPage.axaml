@@ -76,7 +76,7 @@
           <Grid Grid.Row="1" Margin="0,14,0,6" ColumnDefinitions="*,*">
             <StackPanel>
               <StackPanel Orientation="Horizontal">
-                <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="M12,4 L12,20 M6,14 L12,20 18,14" Stroke="{DynamicResource Series.NetworkDown.Brush}" />
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="12" Height="12" Data="M12,4 L12,20 M6,14 L12,20 18,14" Stroke="{DynamicResource Series.NetworkDown.Brush}" />
                 <TextBlock Text="Download" Theme="{StaticResource Text.Label}" Margin="6,0,0,0" />
               </StackPanel>
               <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
@@ -86,7 +86,7 @@
             </StackPanel>
             <StackPanel Grid.Column="1">
               <StackPanel Orientation="Horizontal">
-                <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="M12,20 L12,4 M6,10 L12,4 18,10" Stroke="{DynamicResource Series.NetworkUp.Brush}" />
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="12" Height="12" Data="M12,20 L12,4 M6,10 L12,4 18,10" Stroke="{DynamicResource Series.NetworkUp.Brush}" />
                 <TextBlock Text="Upload" Theme="{StaticResource Text.Label}" Margin="6,0,0,0" />
               </StackPanel>
               <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
@@ -109,7 +109,7 @@
         <Grid RowDefinitions="Auto,*">
           <Grid>
             <StackPanel Orientation="Horizontal">
-              <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Shield}"
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Shield}"
                     Stroke="{Binding Health.OverallKey, Converter={StaticResource StatusToBrush}, ConverterParameter=Brush.TextTertiary}" StrokeThickness="1.8" VerticalAlignment="Center" />
               <TextBlock Theme="{StaticResource Text.CardTitle}" Text="System health" Margin="9,0,0,0" VerticalAlignment="Center" />
               <Border x:Name="Pill" CornerRadius="9" Padding="9,2" Margin="10,0,0,0" VerticalAlignment="Center" Background="{DynamicResource Brush.ControlHover}">
@@ -130,7 +130,7 @@
                 <DataTemplate DataType="{x:Type pages:HealthReportViewModel}">
                   <StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                      <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" VerticalAlignment="Center" />
+                      <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" VerticalAlignment="Center" />
                       <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" Margin="8,0,0,0" VerticalAlignment="Center" />
                       <TextBlock Text="{Binding StatusText}" FontSize="12.5" FontWeight="SemiBold" Margin="8,0,0,0" VerticalAlignment="Center"
                                  Foreground="{Binding StatusKey, Converter={StaticResource StatusToBrush}}" />
@@ -240,10 +240,10 @@
         </CheckBox>
         <TextBlock Grid.Column="1" Text="{Binding Kind}" Theme="{StaticResource Text.Caption}" VerticalAlignment="Center" Margin="12,0" />
         <Button Grid.Column="2" Theme="{StaticResource Button.Icon}" Command="{Binding MoveUpCommand}" ToolTip.Tip="Move up" AutomationProperties.Name="Move up">
-          <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.ChevronUp}" />
+          <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.ChevronUp}" />
         </Button>
         <Button Grid.Column="3" Theme="{StaticResource Button.Icon}" Command="{Binding MoveDownCommand}" ToolTip.Tip="Move down" AutomationProperties.Name="Move down">
-          <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.ChevronDown}" />
+          <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.ChevronDown}" />
         </Button>
       </Grid>
     </DataTemplate>
@@ -302,7 +302,7 @@
                 <Button Grid.Column="1" Grid.RowSpan="2" Theme="{StaticResource Button.Subtle}" VerticalAlignment="Top" Margin="16,0,0,0"
                         Command="{Binding CustomizeCommand}" Padding="10,5" ToolTip.Tip="The Mac picture, its color and which cards the dashboard shows">
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Edit}" />
+                    <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Edit}" />
                     <TextBlock Text="Customize" Margin="8,0,0,0" />
                   </StackPanel>
                 </Button>
@@ -345,7 +345,7 @@
             </StackPanel>
             <Button Theme="{StaticResource Button.Icon}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="32" Height="32"
                     Command="{Binding Customize.CloseCommand}" ToolTip.Tip="Close" AutomationProperties.Name="Close">
-              <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Close}" />
+              <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Close}" />
             </Button>
           </Grid>
 

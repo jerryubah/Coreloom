@@ -6,7 +6,9 @@
              xmlns:pages="using:Coreloom.ViewModels.Pages">
 
   <!-- The Gaming page on a Mac: Game Boost (the macOS switches that matter for games: Game Mode, full power on the
-       charger, keeping the Mac awake, Apple's Metal Performance HUD), Metal's shader caches, and the game library from
+       charger, keeping the Mac awake; since 1.9.4 in place of Apple's Metal Performance HUD, Coreloom's own eight:
+       High Power Mode automation, the memory pressure guard, thermal headroom, the performance core monitor, MetalFX,
+       the displays, Rosetta 2 and the background apps, with their Details), Metal's shader caches, and the game library from
        Steam, Epic Games and the Applications folder. The Windows page's frame limiter, adaptive pacing and CPU core
        scheduling set the NVIDIA driver and AMD's scheduler, which a Mac doesn't have, so they aren't here. -->
 
@@ -40,7 +42,7 @@
           <Grid ColumnDefinitions="Auto,*,Auto">
             <Grid Width="36" Height="36" VerticalAlignment="Top">
               <c:SquircleBorder CornerRadius="10" Background="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" Opacity="0.16" />
-              <Path Classes="glyph" Classes.off="{Binding ColorKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Neutral}"
+              <c:GridIcon Classes="glyph" Classes.off="{Binding ColorKey, Converter={StaticResource EqualsToBool}, ConverterParameter=Neutral}"
                     Theme="{StaticResource IconPath}" Width="17" Height="17" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
             </Grid>
             <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
@@ -56,6 +58,11 @@
                 <Border Theme="{StaticResource Badge}" Margin="0,0,6,2" IsVisible="{Binding HasTag}">
                   <TextBlock Text="{Binding Tag}" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
                 </Border>
+                <!-- More about the boost: what it found (the Mac's own boosts, since 1.9.4) -->
+                <Button Theme="{StaticResource Button.Subtle}" Classes="details" Margin="0,0,6,2" Command="{Binding DetailsCommand}" IsVisible="{Binding HasDetails}"
+                        AutomationProperties.Name="Details">
+                  <TextBlock Text="Details" FontSize="10.5" FontWeight="SemiBold" />
+                </Button>
               </WrapPanel>
             </StackPanel>
             <Grid Grid.Column="2" VerticalAlignment="Top">
@@ -110,16 +117,16 @@
           <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
             <Button Theme="{StaticResource Button.Icon}" Width="32" Height="32" Margin="0,0,2,0" Command="{Binding EditCommand}"
                     ToolTip.Tip="Change or remove this game" AutomationProperties.Name="Edit game" IsVisible="{Binding IsCustom}">
-              <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Edit}" />
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Edit}" />
             </Button>
             <Button Theme="{StaticResource Button.Icon}" Width="32" Height="32" Margin="0,0,6,0" Command="{Binding OpenFolderCommand}"
                     ToolTip.Tip="Show the game in Finder" AutomationProperties.Name="Show in Finder" IsVisible="{Binding CanOpenFolder}">
-              <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Folder}" />
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Folder}" />
             </Button>
             <Button Theme="{StaticResource Button.Primary}" Padding="14,7" Command="{Binding PlayCommand}" IsEnabled="{Binding CanPlay}"
                     AutomationProperties.Name="{Binding Name, StringFormat='Play {0}'}">
               <StackPanel Orientation="Horizontal">
-                <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
+                <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
                 <TextBlock Text="Play" Margin="7,0,0,0" />
               </StackPanel>
             </Button>
@@ -165,19 +172,19 @@
           <Button Classes="reveal" Theme="{StaticResource Button.Primary}" Padding="16,7" Margin="0,0,0,14" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                   Command="{Binding PlayCommand}" IsEnabled="{Binding CanPlay}" AutomationProperties.Name="{Binding Name, StringFormat='Play {0}'}">
             <StackPanel Orientation="Horizontal">
-              <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
+              <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
               <TextBlock Text="Play" Margin="7,0,0,0" />
             </StackPanel>
           </Button>
           <Button Classes="reveal" Theme="{StaticResource Button.Icon}" Width="30" Height="30" Margin="0,8,8,0" HorizontalAlignment="Right" VerticalAlignment="Top"
                   Background="#99000000" Command="{Binding OpenFolderCommand}" ToolTip.Tip="Show the game in Finder"
                   AutomationProperties.Name="Show in Finder" IsVisible="{Binding CanOpenFolder}">
-            <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Folder}" Stroke="White" />
+            <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Folder}" Stroke="White" />
           </Button>
           <Button Classes="reveal" Theme="{StaticResource Button.Icon}" Width="30" Height="30" Margin="0,8,42,0" HorizontalAlignment="Right" VerticalAlignment="Top"
                   Background="#99000000" Command="{Binding EditCommand}" ToolTip.Tip="Change or remove this game"
                   AutomationProperties.Name="Edit game" IsVisible="{Binding IsCustom}">
-            <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Edit}" Stroke="White" />
+            <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Edit}" Stroke="White" />
           </Button>
 
           <Border CornerRadius="7" Padding="8,3" Margin="8" HorizontalAlignment="Left" VerticalAlignment="Top" Background="#CC0B1A10" IsVisible="{Binding IsRunning}">
@@ -214,10 +221,10 @@
     <DataTemplate x:Key="ViewOption">
       <StackPanel Orientation="Horizontal">
         <Grid Width="12" Height="12" VerticalAlignment="Center">
-          <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.List}"
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.List}"
                 Stroke="{Binding $parent[ListBoxItem].Foreground}"
                 IsVisible="{Binding Label, Converter={StaticResource EqualsToBool}, ConverterParameter=List}" />
-          <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Grid}"
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Grid}"
                 Stroke="{Binding $parent[ListBoxItem].Foreground}"
                 IsVisible="{Binding Label, Converter={StaticResource EqualsToBool}, ConverterParameter=Grid}" />
         </Grid>
@@ -246,11 +253,18 @@
     </Style>
 
     <!-- A boost's icon: in its color while on, grey while off (the neutral series color is too dark for a line). -->
-    <Style Selector="Path.glyph">
+    <Style Selector=":is(Path).glyph">
       <Setter Property="Stroke" Value="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
     </Style>
-    <Style Selector="Path.glyph.off">
+    <Style Selector=":is(Path).glyph.off">
       <Setter Property="Stroke" Value="{DynamicResource Brush.TextTertiary}" />
+    </Style>
+
+    <!-- A boost's Details pill: as small as the pills beside it. -->
+    <Style Selector="Button.details">
+      <Setter Property="Padding" Value="8,1" />
+      <Setter Property="MinHeight" Value="0" />
+      <Setter Property="CornerRadius" Value="6" />
     </Style>
 
     <!-- A game that's running: a green edge. -->
@@ -292,7 +306,7 @@
       <!-- Not available -->
       <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,0,0,16" Background="{DynamicResource Brush.ElevatedSoft}" IsVisible="{Binding !IsSupported}">
         <StackPanel Orientation="Horizontal">
-          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.Elevated}" />
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.Elevated}" />
           <TextBlock Text="{Binding UnsupportedText}" Margin="10,0,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
         </StackPanel>
       </c:SquircleBorder>
@@ -316,7 +330,7 @@
               <Panel>
                 <c:HeroDial Value="{Binding Readiness}" StartLabel="0" EndLabel="{Binding BoostsAvailable}" DialSize="228" />
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                  <Path Theme="{StaticResource IconPath}" Width="26" Height="26" Data="{StaticResource Icon.Controller}" Stroke="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" />
+                  <c:GridIcon Theme="{StaticResource IconPath}" Width="26" Height="26" Data="{StaticResource Icon.Controller}" Stroke="{DynamicResource Brush.Accent}" HorizontalAlignment="Center" />
                   <TextBlock Text="{Binding ReadinessText}" FontSize="34" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,6,0,0"
                              Foreground="{DynamicResource Brush.Text}" TextElement.FontFeatures="+tnum" />
                   <TextBlock Text="boosts on" Theme="{StaticResource Text.Label}" HorizontalAlignment="Center" Opacity="0.85" />
@@ -340,13 +354,13 @@
               <WrapPanel Margin="0,14,0,0">
                 <Button Theme="{StaticResource Button.AccentGradient}" Padding="20,9" Margin="0,0,10,8" Command="{Binding ApplyAllCommand}" IsVisible="{Binding !AllBoostsOn}">
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Rocket}" Stroke="{DynamicResource Brush.OnAccent}" />
+                    <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Rocket}" Stroke="{DynamicResource Brush.OnAccent}" />
                     <TextBlock Text="Boost now" Margin="8,0,0,0" />
                   </StackPanel>
                 </Button>
                 <Button Theme="{StaticResource Button.Secondary}" Padding="16,9" Margin="0,0,10,8" Command="{Binding RefreshCommand}" ToolTip.Tip="Read the settings again">
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Refresh}" />
+                    <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Refresh}" />
                     <TextBlock Text="Check again" Margin="7,0,0,0" />
                   </StackPanel>
                 </Button>
@@ -403,7 +417,7 @@
       <!-- ============================================================ -->
       <StackPanel Margin="2,28,0,14">
         <TextBlock Text="Performance boosts" Theme="{StaticResource Text.SectionTitle}" />
-        <TextBlock Text="The macOS settings that matter while you play: full power on the charger, a Mac that stays awake, and Apple's own frame-rate overlay. Each one can be turned off again."
+        <TextBlock Text="The macOS settings that matter while you play, and Coreloom's own helpers for power, memory, heat, the cores, MetalFX, your displays, Rosetta and the apps in the background. Each one can be turned off again."
                    Theme="{StaticResource Text.Secondary}" TextWrapping="Wrap" TextTrimming="None" Margin="0,3,0,0" />
       </StackPanel>
       <ItemsControl ItemsSource="{Binding Boosts}" ItemTemplate="{StaticResource BoostCard}" Focusable="False">
@@ -421,7 +435,7 @@
         <StackPanel>
           <Grid ColumnDefinitions="Auto,*">
             <c:SquircleBorder Width="36" Height="36" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
-              <Path Theme="{StaticResource IconPath}" Width="17" Height="17" Data="{StaticResource Icon.Layers}" Stroke="{DynamicResource Brush.Accent}" />
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="17" Height="17" Data="{StaticResource Icon.Layers}" Stroke="{DynamicResource Brush.Accent}" />
             </c:SquircleBorder>
             <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
               <StackPanel Orientation="Horizontal">
@@ -430,7 +444,7 @@
                   <TextBlock Text="Metal" FontSize="10.5" Foreground="{DynamicResource Brush.TextSecondary}" />
                 </Border>
                 <Border Background="Transparent" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip.Tip="{Binding ShaderCacheNote}">
-                  <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.TextTertiary}" />
+                  <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.TextTertiary}" />
                 </Border>
               </StackPanel>
               <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding ShaderCacheSummary}" TextWrapping="Wrap" TextTrimming="None" Margin="0,2,0,0" />
@@ -440,7 +454,7 @@
           <!-- A macOS update: caches start over -->
           <c:SquircleBorder CornerRadius="12" Padding="14,12" Margin="0,14,0,0" Background="{DynamicResource Brush.ElevatedSoft}" IsVisible="{Binding HasDriverNotice}">
             <Grid ColumnDefinitions="Auto,*,Auto">
-              <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.Elevated}" VerticalAlignment="Top" Margin="0,1,10,0" />
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.Elevated}" VerticalAlignment="Top" Margin="0,1,10,0" />
               <TextBlock Grid.Column="1" Text="{Binding DriverNotice}" FontSize="12" Foreground="{DynamicResource Brush.Text}" TextWrapping="Wrap" />
               <Button Grid.Column="2" Theme="{StaticResource Button.Subtle}" Padding="10,4" Margin="10,-2,0,0" VerticalAlignment="Top" Content="Got it" Command="{Binding DismissDriverNoticeCommand}" />
             </Grid>
@@ -483,14 +497,14 @@
         <Button Theme="{StaticResource Button.Secondary}" Padding="14,8" Margin="0,0,10,10" VerticalAlignment="Center" Command="{Binding AddGameCommand}"
                 ToolTip.Tip="Add a game Coreloom didn't find: pick its app, then name it">
           <StackPanel Orientation="Horizontal">
-            <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Plus}" />
+            <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Plus}" />
             <TextBlock Text="Add game" Margin="7,0,0,0" />
           </StackPanel>
         </Button>
         <Button Theme="{StaticResource Button.Secondary}" Padding="14,8" Margin="0,0,0,10" VerticalAlignment="Center" Command="{Binding RescanCommand}" ToolTip.Tip="Look for games again">
           <StackPanel Orientation="Horizontal">
             <Grid Width="13" Height="13">
-              <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Refresh}" IsVisible="{Binding !IsScanning}" />
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Refresh}" IsVisible="{Binding !IsScanning}" />
               <c:RadialGauge Theme="{StaticResource GameSpinner}" Width="13" Height="13" b:Spin.IsSpinning="{Binding IsScanning}" IsVisible="{Binding IsScanning}" />
             </Grid>
             <TextBlock Text="Rescan" Margin="7,0,0,0" />
@@ -518,7 +532,7 @@
           </MultiBinding>
         </c:SquircleBorder.IsVisible>
         <StackPanel Orientation="Horizontal">
-          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Controller}" Stroke="{DynamicResource Brush.TextTertiary}" />
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Controller}" Stroke="{DynamicResource Brush.TextTertiary}" />
           <TextBlock Text="{Binding EmptyText}" Theme="{StaticResource Text.Secondary}" Margin="10,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" />
         </StackPanel>
       </c:SquircleBorder>
@@ -542,7 +556,7 @@
           </StackPanel>
           <Button Theme="{StaticResource Button.Icon}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="32" Height="32"
                   Command="{Binding CancelCommand}" ToolTip.Tip="Close" AutomationProperties.Name="Close">
-            <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Close}" />
+            <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Close}" />
           </Button>
         </Grid>
 
@@ -586,13 +600,126 @@
           <Button Theme="{StaticResource Button.Subtle}" HorizontalAlignment="Left" Command="{Binding RemoveCommand}" IsVisible="{Binding !IsNew}"
                   ToolTip.Tip="Takes it out of Coreloom's list; the game's files aren't touched">
             <StackPanel Orientation="Horizontal">
-              <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Trash}" />
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Trash}" />
               <TextBlock Text="Remove from my games" Margin="7,0,0,0" />
             </StackPanel>
           </Button>
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Theme="{StaticResource Button.Secondary}" Margin="0,0,8,0" Command="{Binding CancelCommand}" Content="Cancel" />
             <Button Theme="{StaticResource Button.Primary}" Padding="18,7" Command="{Binding SaveCommand}" Content="Save" IsDefault="True" />
+          </StackPanel>
+        </Grid>
+      </StackPanel>
+    </c:SquircleBorder>
+  </Grid>
+
+  <!-- A boost's Details (the Mac's own boosts, since 1.9.4): what it found, line by line -->
+  <Grid DataContext="{Binding Details}" IsVisible="{Binding IsOpen}">
+    <Border x:Name="DetailsScrim" Background="{DynamicResource Brush.Scrim}" />
+    <c:SquircleBorder Theme="{StaticResource Card}" Width="600" Margin="32" Padding="22,18,22,18" HorizontalAlignment="Center" VerticalAlignment="Center" Shadow="1"
+                      AutomationProperties.Name="{Binding Title}" b:Pop.Trigger="{Binding IsOpen}">
+      <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="660">
+        <StackPanel>
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Theme="{StaticResource Text.CardTitle}" FontSize="16" Text="{Binding Title}" />
+              <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Summary}" TextWrapping="Wrap" TextTrimming="None" Margin="0,3,0,0" />
+            </StackPanel>
+            <Button Grid.Column="1" Theme="{StaticResource Button.Icon}" Width="32" Height="32" Margin="8,0,0,0" VerticalAlignment="Top"
+                    Command="{Binding CloseCommand}" ToolTip.Tip="Close" AutomationProperties.Name="Close">
+              <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Close}" />
+            </Button>
+          </Grid>
+          <TextBlock Text="{Binding EmptyText}" Theme="{StaticResource Text.Secondary}" TextWrapping="Wrap" TextTrimming="None" Margin="0,16,0,0"
+                     IsVisible="{Binding !HasRows}" />
+          <ItemsControl ItemsSource="{Binding Rows}" Focusable="False" Margin="0,12,0,0">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="{x:Type pages:DetailRow}">
+                <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="14,11" Margin="0,0,0,8">
+                  <StackPanel>
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                      <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center" MaxWidth="330">
+                        <Ellipse Width="7" Height="7" Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding Value}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" Margin="7,0,0,0"
+                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Value}" />
+                      </StackPanel>
+                    </Grid>
+                    <TextBlock Text="{Binding Detail}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="0,4,0,0"
+                               IsVisible="{Binding HasDetail}" />
+                  </StackPanel>
+                </c:SquircleBorder>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock Text="{Binding Note}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="2,6,0,0"
+                     IsVisible="{Binding HasNote}" />
+        </StackPanel>
+      </ScrollViewer>
+    </c:SquircleBorder>
+  </Grid>
+
+  <!-- The background application governor's card: the apps running, ticked to quit now or each time a game starts -->
+  <Grid DataContext="{Binding MacBoosts.Apps}" IsVisible="{Binding IsOpen}">
+    <Border x:Name="AppsScrim" Background="{DynamicResource Brush.Scrim}" />
+    <c:SquircleBorder Theme="{StaticResource Card}" Width="620" Margin="32" Padding="22,18,22,18" HorizontalAlignment="Center" VerticalAlignment="Center" Shadow="1"
+                      AutomationProperties.Name="Background application governor" b:Pop.Trigger="{Binding IsOpen}">
+      <StackPanel>
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Theme="{StaticResource Text.CardTitle}" FontSize="16" Text="Background application governor" />
+            <TextBlock Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="0,3,0,0"
+                       Text="The apps running now, the ones using the most first. Tick the ones to quit while you play: now, or each time a game starts." />
+          </StackPanel>
+          <Button Grid.Column="1" Theme="{StaticResource Button.Icon}" Width="32" Height="32" Margin="8,0,0,0" VerticalAlignment="Top"
+                  Command="{Binding CloseCommand}" ToolTip.Tip="Close" AutomationProperties.Name="Close">
+            <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Close}" />
+          </Button>
+        </Grid>
+
+        <!-- Which game the ticks are kept for -->
+        <Grid Margin="0,16,0,0" ColumnDefinitions="Auto,*,Auto">
+          <TextBlock Text="For" Theme="{StaticResource Text.Label}" VerticalAlignment="Center" />
+          <ComboBox Grid.Column="1" Theme="{StaticResource ComboBox.Default}" Margin="10,0,10,0" HorizontalAlignment="Stretch" ItemsSource="{Binding Games}"
+                    SelectedItem="{Binding ProfileGame}" DisplayMemberBinding="{Binding Name}" PlaceholderText="Your games" AutomationProperties.Name="Game" />
+          <Button Grid.Column="2" Theme="{StaticResource Button.Secondary}" Padding="14,7" Command="{Binding SaveForGameCommand}" Content="Keep for this game"
+                  ToolTip.Tip="The ticked apps quit each time this game starts, and reopen when it ends" />
+        </Grid>
+        <TextBlock Text="{Binding ProfileText}" Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="2,6,0,0" />
+
+        <TextBlock Text="Nothing else is running." Theme="{StaticResource Text.Secondary}" Margin="0,16,0,0" IsVisible="{Binding !HasRows}" />
+        <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="360" Margin="0,12,0,0" IsVisible="{Binding HasRows}">
+          <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="{x:Type pages:BackgroundAppRow}">
+                <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="12,8" Margin="0,0,0,6"
+                                  Opacity="{Binding IsRunning, Converter={StaticResource BoolToDouble}, ConverterParameter='1|0.6'}">
+                  <Grid ColumnDefinitions="Auto,*,Auto">
+                    <CheckBox IsChecked="{Binding IsSelected}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
+                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}"
+                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="4,0,12,0" />
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                      <Ellipse Width="7" Height="7" Fill="{DynamicResource Brush.Info}" VerticalAlignment="Center" Margin="0,0,7,0" IsVisible="{Binding Heavy}"
+                               ToolTip.Tip="Uses a lot while you play" />
+                      <TextBlock Text="{Binding Usage}" FontSize="12" Foreground="{DynamicResource Brush.TextSecondary}" TextElement.FontFeatures="+tnum" />
+                    </StackPanel>
+                  </Grid>
+                </c:SquircleBorder>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+
+        <TextBlock Text="{Binding Message}" FontSize="12.5" Foreground="{DynamicResource Brush.Success}" TextWrapping="Wrap" Margin="2,8,0,0"
+                   IsVisible="{Binding HasMessage}" />
+        <Grid Margin="0,14,0,0" ColumnDefinitions="*,Auto">
+          <TextBlock Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" VerticalAlignment="Center" Margin="0,0,14,0"
+                     Text="Apps quit as with Quit in their menu, so one with unsaved work asks first. macOS's own apps and game launchers aren't listed." />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+            <Button Theme="{StaticResource Button.Secondary}" Padding="14,7" Margin="0,0,8,0" Command="{Binding ReopenCommand}" IsVisible="{Binding CanReopen}">
+              <TextBlock Text="{Binding ReopenText}" />
+            </Button>
+            <Button Theme="{StaticResource Button.Primary}" Padding="16,7" Command="{Binding QuitSelectedCommand}" Content="Quit ticked apps" />
           </StackPanel>
         </Grid>
       </StackPanel>

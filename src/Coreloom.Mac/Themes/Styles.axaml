@@ -2,6 +2,17 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:c="using:Coreloom.Mac.Controls">
 
+  <!-- Avalonia clips every templated control to its rectangle by default. The plain ContentControls and ItemsControls that
+       hold cards don't need that, and it cut the glow a card's rim spreads outside itself under the pointer off at the card's
+       edge (1.9.4). Buttons, lists and other controls derived from them keep their own clipping (a style for a type applies
+       to that type only). -->
+  <Style Selector="ContentControl">
+    <Setter Property="ClipToBounds" Value="False" />
+  </Style>
+  <Style Selector="ItemsControl">
+    <Setter Property="ClipToBounds" Value="False" />
+  </Style>
+
   <!-- A row that lights up under the pointer (sensor tables, lists). -->
   <Style Selector="Border.hover-row:pointerover">
     <Setter Property="Background" Value="{DynamicResource Brush.ControlHover}" />

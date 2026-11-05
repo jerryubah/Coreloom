@@ -16,8 +16,9 @@ namespace Coreloom.Mac.Services;
 /// <summary>
 /// The Gaming page on a Mac. The library comes from Steam's and Epic's own library files and from the games in the
 /// Applications folders (apps whose Info.plist files them under Games, App Store and Apple Arcade games included). The
-/// switches are macOS's own: Low Power and High Power Mode (pmset, after macOS asks for the user's password), Apple's
-/// Metal Performance HUD (a user default) and a sleep assertion while a game runs. Game Mode is macOS's to switch, so it
+/// switches are macOS's own: Low Power and High Power Mode (pmset, after macOS asks for the user's password) and a sleep
+/// assertion while a game runs (Apple's Metal Performance HUD switch was removed in 1.9.4; Coreloom's own boosts are in
+/// MacPerformanceService). Game Mode is macOS's to switch, so it
 /// is reported, not changed. Nothing is ever added to a game; pictures missing on the Mac are fetched as on Windows
 /// (Epic's catalog or Steam's public store, sending only the game's name or Steam app id).
 /// </summary>
@@ -618,9 +619,14 @@ public sealed class MacGamingService : IGamingService
                 ? new TweakStatus(true, true) // the card's caveat says macOS turns it on by itself
                 : TweakStatus.Unsupported("Game Mode comes with macOS Sonoma (14) and later."),
             [GamingTweak.KeepAwake] = new TweakStatus(true, settings.KeepAwake),
-            [GamingTweak.MetalHud] = await MetalHudStatusAsync(cancellationToken),
             [GamingTweak.PowerMode] = PowerModeStatus(await PowerSettingsAsync(cancellationToken)),
         };
+
+        if (!settings.MetalHudRetired)
+        {
+            await RetireMetalHudAsync(cancellationToken);
+            settings.MetalHudRetired = true;
+        }
 
         if (DateTime.UtcNow - _shaderCachesMeasured > TimeSpan.FromMinutes(5))
         {
@@ -638,15 +644,21 @@ public sealed class MacGamingService : IGamingService
         };
     }, cancellationToken);
 
-    private static async Task<TweakStatus> MetalHudStatusAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// The Gaming page's Metal Performance HUD switch (until 1.9.3) set a macOS-wide default that shows Apple's HUD in
+    /// every Metal app. The switch is gone since 1.9.4, so once, Coreloom turns the HUD off if it's on, so no one is left
+    /// with it and no way to turn it off; after that it's never touched (Terminal can still turn it on).
+    /// </summary>
+    private static async Task RetireMetalHudAsync(CancellationToken cancellationToken)
     {
-        if (Environment.OSVersion.Version.Major < 13)
-        {
-            return TweakStatus.Unsupported("The Metal Performance HUD comes with macOS Ventura (13) and later.");
-        }
-
         var read = await Commands.RunAsync("/usr/bin/defaults", ["read", "-g", "MetalForceHudEnabled"], cancellationToken: cancellationToken);
-        return new TweakStatus(true, read.Succeeded && read.Output.Trim() is "1" or "true" or "YES");
+        if (read.Succeeded && read.Output.Trim() is "1" or "true" or "YES")
+        {
+            var removed = await Commands.RunAsync("/usr/bin/defaults", ["delete", "-g", "MetalForceHudEnabled"], cancellationToken: cancellationToken);
+            Log.Info(LogCategory, removed.Succeeded
+                ? "Turned off the Metal Performance HUD the Gaming page used to switch (the switch is gone since 1.9.4)."
+                : $"Turning off the Metal Performance HUD failed: {removed.Error}");
+        }
     }
 
     /// <summary>The charger's power settings ("AC Power" in pmset -g custom): its keys and values.</summary>
@@ -716,7 +728,6 @@ public sealed class MacGamingService : IGamingService
     {
         GamingTweak.GameMode => Task.FromResult(new TweakResult(false, "macOS turns Game Mode on by itself when a game goes full screen; apps can't switch it.")),
         GamingTweak.KeepAwake => Task.FromResult(SetKeepAwake(on, settings)),
-        GamingTweak.MetalHud => SetMetalHudAsync(on, cancellationToken),
         GamingTweak.PowerMode => SetPowerModeAsync(on, settings, cancellationToken),
         _ => Task.FromResult(new TweakResult(false, "Not available on a Mac.")),
     };
@@ -725,18 +736,6 @@ public sealed class MacGamingService : IGamingService
     {
         settings.KeepAwake = on;
         return new TweakResult(true, on ? "The Mac stays awake while a library game runs." : "The Mac sleeps as usual while you play.");
-    }
-
-    private static async Task<TweakResult> SetMetalHudAsync(bool on, CancellationToken cancellationToken)
-    {
-        var result = await Commands.RunAsync("/usr/bin/defaults", ["write", "-g", "MetalForceHudEnabled", "-bool", on ? "true" : "false"], cancellationToken: cancellationToken);
-        if (!result.Succeeded)
-        {
-            return new TweakResult(false, $"macOS didn't accept the change: {result.Error}");
-        }
-
-        Log.Info(LogCategory, $"Metal Performance HUD {(on ? "on" : "off")}.");
-        return new TweakResult(true, on ? "Games you open from now on show Apple's Metal Performance HUD." : "Games you open from now on don't show the HUD.");
     }
 
     private static async Task<TweakResult> SetPowerModeAsync(bool on, GamingSettings settings, CancellationToken cancellationToken)

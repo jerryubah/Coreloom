@@ -49,7 +49,7 @@
             <Button Theme="{StaticResource Button.Secondary}" Padding="10,4" Margin="6,0,0,0" Command="{Binding ExportCommand}"
                     ToolTip.Tip="Export the visible time window of the selected metrics to a CSV file">
               <StackPanel Orientation="Horizontal">
-                <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Download}" />
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Download}" />
                 <TextBlock Text="Export CSV" Margin="6,0,0,0" />
               </StackPanel>
             </Button>
@@ -63,7 +63,7 @@
       <c:SquircleBorder Theme="{StaticResource Card}" VerticalAlignment="Top"
               IsVisible="{Binding Charts.Count, Converter={StaticResource HasValue}, ConverterParameter=Invert}">
         <StackPanel Margin="8,18">
-          <Path Theme="{StaticResource IconPath}" Width="22" Height="22" Data="{StaticResource Icon.History}" HorizontalAlignment="Center" />
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="22" Height="22" Data="{StaticResource Icon.History}" HorizontalAlignment="Center" />
           <TextBlock Text="Select metrics on the left to chart them here." Theme="{StaticResource Text.Secondary}" HorizontalAlignment="Center" Margin="0,10,0,0" />
           <TextBlock Text="Use the window selector above to look back up to an hour." Theme="{StaticResource Text.Caption}" HorizontalAlignment="Center" Margin="0,4,0,0" />
         </StackPanel>
@@ -90,7 +90,7 @@
                       <Button Theme="{StaticResource Button.Icon}" Margin="10,0,0,0" ToolTip.Tip="Remove from comparison"
                               Command="{Binding DataContext.RemoveChartCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                               CommandParameter="{Binding}">
-                        <Path Theme="{StaticResource IconPath}" Width="10" Height="10" Data="{StaticResource Icon.Close}" />
+                        <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="10" Height="10" Data="{StaticResource Icon.Close}" />
                       </Button>
                     </StackPanel>
                   </Grid>

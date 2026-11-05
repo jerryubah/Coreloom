@@ -10,7 +10,7 @@
 
       <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
         <c:BrandMark Vendor="{Binding VendorKey}" Margin="0,0,12,0" />
-        <Path Theme="{StaticResource IconPath}" Data="{StaticResource Icon.Cpu}" Stroke="{DynamicResource Series.Cpu.Brush}" Margin="0,0,10,0" VerticalAlignment="Center"
+        <c:GridIcon Theme="{StaticResource IconPath}" Data="{StaticResource Icon.Cpu}" Stroke="{DynamicResource Series.Cpu.Brush}" Margin="0,0,10,0" VerticalAlignment="Center"
               IsVisible="{Binding VendorKey, Converter={StaticResource HasValue}, ConverterParameter=Invert}" />
         <TextBlock Text="{Binding CpuName}" Theme="{StaticResource Text.Section}" VerticalAlignment="Center" />
       </StackPanel>
@@ -18,7 +18,7 @@
       <!-- Why temperature/power may be missing (a virtual Mac has no sensors) -->
       <c:SquircleBorder Theme="{StaticResource Card.Inset}" Margin="0,0,0,16" IsVisible="{Binding LowLevelUnavailable}">
         <StackPanel Orientation="Horizontal">
-          <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Info}" />
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Info}" />
           <TextBlock Text="{Binding LowLevelMessage}" Margin="10,0,0,0" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource Brush.TextSecondary}" />
         </StackPanel>
       </c:SquircleBorder>

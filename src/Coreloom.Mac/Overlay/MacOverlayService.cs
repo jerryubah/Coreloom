@@ -279,7 +279,7 @@ internal sealed class MacOverlayService : IDisposable
 
         public bool IsAvailable => false;
 
-        public string? Problem => "macOS doesn't let other apps measure a game's frame rate. Turn on Metal Performance HUD on the Gaming page to see it inside Metal games.";
+        public string? Problem => "macOS doesn't let other apps measure a game's frame rate, so the readings window shows the Mac's own readings.";
 
         public FrameRateStats? Get(int processId) => null;
 

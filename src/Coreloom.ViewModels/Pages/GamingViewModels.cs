@@ -551,6 +551,7 @@ public sealed class GamingViewModel : PageViewModel
         CoreScheduling = new CoreSchedulingController(this, context.Tools.CoreScheduling);
         Vram = new VramController(this);
         CacheOptimization = new CacheOptimizationController(this, context.Tools.CoreScheduling);
+        MacBoosts = new MacBoostsController(this, context.Tools.MacPerformance, () => Monitor.Engine.LatestFrame);
         GamingTweakViewModel shaderCache = new(GamingTweak.ShaderCache, "NVIDIA shader cache", "Keeps the shaders games compile, so they aren't compiled again mid-play: fewer repeat stutters and steadier frame times the next times you play.", "Icon.Database", "NVIDIA", SetTweakAsync, "Frame stability",
             "Recommended: 10 GB when the current limit is smaller, or a larger size for a big game library.", "Doesn't remove every shader stutter or raise the average frame rate.");
         GamingTweakViewModel keepShaderCaches = new(GamingTweak.KeepShaderCaches, "Keep shader caches", "Stops Windows' automatic maintenance from deleting the DirectX shader cache, so games don't compile their shaders again and stutter after a cleanup.", "Icon.Layers", "DirectX", SetTweakAsync, "Frame stability",
@@ -570,10 +571,25 @@ public sealed class GamingViewModel : PageViewModel
                     null, "macOS turns it on by itself when a game goes full screen; it can't be forced from an app."),
                 new(GamingTweak.PowerMode, "Full power on the charger", "Turns Low Power Mode off on the charger and, on Macs with High Power Mode, turns that on: the chip keeps its highest clocks through long sessions.", "Icon.Power", null, SetTweakAsync, "Performance",
                     "Recommended: on for gaming sessions. macOS asks for your password to change it.", "The fans may run faster; it doesn't change the battery's own mode."),
-                new(GamingTweak.KeepAwake, "Keep the Mac awake while playing", "The display doesn't dim or sleep while a library game is running, even when you play with a controller macOS doesn't count as input.", "Icon.Display", null, SetTweakAsync, "Comfort",
+                new(GamingTweak.HighPowerAutomation, "High Power Mode automation", "Turns High Power Mode on while a demanding game or graphics workload runs on the charger, and puts your power mode back when it ends.", "Icon.Rocket", "Apple silicon", SetTweakAsync, "Sustained performance",
+                    MacRecommendations[GamingTweak.HighPowerAutomation], "Only on the charger, and the fans may run faster. Coreloom changes nothing else."),
+                new(GamingTweak.KeepAwake, "Keep the Mac awake while playing", "The display doesn't dim or sleep while a library game is running, even when you play with a controller macOS doesn't count as input.", "Icon.Sun", null, SetTweakAsync, "Comfort",
                     null, "Coreloom asks macOS to hold off sleep only while the game runs; nothing is changed in System Settings."),
-                new(GamingTweak.MetalHud, "Metal Performance HUD", "Apple's own overlay in Metal games: frame rate, frame times, GPU time and memory. Games started after you turn it on show it.", "Icon.Pulse", "Apple", SetTweakAsync, "Insight",
-                    null, "Coreloom doesn't measure games' frame rates on a Mac (that would mean adding code to them); Apple's HUD does."),
+                // Since 1.9.4 (Apple's Metal Performance HUD switch made way for them): Coreloom's own switches, run by MacBoosts.
+                new(GamingTweak.MemoryGuard, "Unified memory pressure guard", "Watches memory pressure, compressed memory, swap and what each app uses, and says what to quit before memory runs short and stutters start.", "Icon.Memory", "Apple silicon", SetTweakAsync, "Memory optimization",
+                    MacRecommendations[GamingTweak.MemoryGuard], "It recommends; it never quits anything by itself."),
+                new(GamingTweak.ThermalHeadroom, "Thermal headroom optimizer", "Follows thermal pressure, temperatures and the chip's clocks over a session, and warns before heat starts to slow a long game down.", "Icon.Temperature", "Apple silicon", SetTweakAsync, "Thermal performance",
+                    MacRecommendations[GamingTweak.ThermalHeadroom], "macOS runs the fans and clocks; Coreloom reads and advises."),
+                new(GamingTweak.CoreWorkload, "Performance core workload monitor", "Shows how the performance and efficiency cores are shared, which apps use the performance cores and at what priority, and which compete with your game.", "Icon.Cpu", "Apple silicon", SetTweakAsync, "CPU optimization",
+                    MacRecommendations[GamingTweak.CoreWorkload], "Reads each app's processor time; it changes nothing."),
+                new(GamingTweak.MetalFx, "MetalFX graphics optimizer", "Finds which of your games support MetalFX upscaling, frame interpolation and denoising, and says what to turn on in each game.", "Icon.Sparkle", "Metal", SetTweakAsync, "Visual fidelity + FPS",
+                    MacRecommendations[GamingTweak.MetalFx], "Games have to build MetalFX in themselves; Coreloom can't add it."),
+                new(GamingTweak.DisplayPipeline, "ProMotion & display pipeline optimizer", "Checks each display's refresh rate, ProMotion, HDR, resolution and colour depth, and suggests the settings that suit games.", "Icon.Display", "macOS", SetTweakAsync, "Display fidelity",
+                    MacRecommendations[GamingTweak.DisplayPipeline], "It reads your display settings; you change them in System Settings › Displays."),
+                new(GamingTweak.NativeApps, "Native Apple silicon detection", "Finds games and apps running through Rosetta 2 instead of natively on Apple silicon, so you can look for their faster native versions.", "Icon.Apps", "ARM64", SetTweakAsync, "Application performance",
+                    MacRecommendations[GamingTweak.NativeApps], "Rosetta 2 runs Intel programs well; native ones are faster and use less power."),
+                new(GamingTweak.BackgroundGovernor, "Background application governor", "Finds the apps using the processor, graphics or memory while you play, quits the ones you pick for each game, and reopens them when you stop.", "Icon.Layers", "macOS", SetTweakAsync, "System performance",
+                    MacRecommendations[GamingTweak.BackgroundGovernor], "Apps quit as with their own Quit command and can ask to save; macOS's own apps and game launchers are never touched."),
             ]
             :
             [
@@ -622,6 +638,18 @@ public sealed class GamingViewModel : PageViewModel
             }
         };
         ShowVramNote();
+        foreach (var boost in Boosts.Where(b => MacBoostsController.Owns(b.Tweak)))
+        {
+            var tweak = boost.Tweak;
+            boost.DetailsCommand = tweak == GamingTweak.BackgroundGovernor
+                ? new RelayCommand(() => MacBoosts.Apps.IsOpen = true)
+                : new RelayCommand(() =>
+                {
+                    Details.Open(MacBoostsController.DetailsKey(tweak), MacBoostsController.Title(tweak), () => MacBoosts.Details(tweak));
+                    _ = MacBoosts.RefreshAsync(tweak);
+                });
+        }
+
         CoreSchedulingBoost = coreScheduling;
         CoreSchedulingBoost.DetailsCommand = CoreScheduling.OpenDetailsCommand;
         CoreScheduling.PropertyChanged += (_, e) =>
@@ -680,6 +708,42 @@ public sealed class GamingViewModel : PageViewModel
     /// management and intelligent CPU core scheduling. On a Mac, the four macOS leaves to the user.
     /// </summary>
     public IReadOnlyList<GamingTweakViewModel> Boosts { get; }
+
+    /// <summary>The Mac's own boosts added in 1.9.4 (power automation, memory, heat, cores, MetalFX, displays, Rosetta, background apps).</summary>
+    public MacBoostsController MacBoosts { get; }
+
+    /// <summary>What each of the Mac's own boosts recommends while it's off (once it's on, the line says what it found).</summary>
+    private static readonly Dictionary<GamingTweak, string> MacRecommendations = new()
+    {
+        [GamingTweak.HighPowerAutomation] = "Recommended: on, for Macs with High Power Mode. macOS asks for your password once, to allow it.",
+        [GamingTweak.MemoryGuard] = "Recommended: on, most of all with 8 or 16 GB of memory.",
+        [GamingTweak.ThermalHeadroom] = "Recommended: on for long sessions, especially on a MacBook Air, which has no fan.",
+        [GamingTweak.CoreWorkload] = "Recommended: on, to find what holds back a game that's heavy on the processor.",
+        [GamingTweak.MetalFx] = "Recommended: on. It reads your games' program files once.",
+        [GamingTweak.DisplayPipeline] = "Recommended: on, more so with an external high-refresh display.",
+        [GamingTweak.NativeApps] = "Recommended: on. Games built for Intel run slower through Rosetta 2.",
+        [GamingTweak.BackgroundGovernor] = "Recommended: on. Open Details to choose the apps to quit for a game.",
+    };
+
+    /// <summary>A Mac boost's state, line and Details changed (its engine read something, or a game started or quit).</summary>
+    internal void MacBoostsChanged()
+    {
+        foreach (var boost in Boosts.Where(b => MacBoostsController.Owns(b.Tweak)))
+        {
+            if (!boost.IsBusy && _status != GamingStatus.Unavailable)
+            {
+                boost.Apply(MacBoosts.Status(boost.Tweak));
+            }
+
+            boost.Recommendation = MacBoosts.Note(boost.Tweak) ?? MacRecommendations.GetValueOrDefault(boost.Tweak);
+            if (Details.IsOpen && Details.OpenFor == MacBoostsController.DetailsKey(boost.Tweak))
+            {
+                Details.Refresh(Details.OpenFor);
+            }
+        }
+
+        HeroChanged();
+    }
 
     /// <summary>The NVIDIA shader cache boost (its size is chosen under it).</summary>
     public GamingTweakViewModel ShaderCache { get; }
@@ -794,7 +858,7 @@ public sealed class GamingViewModel : PageViewModel
 
     public string HeroDetail => IsMac
         ? BoostsOn == BoostsAvailable && BoostsAvailable > 0
-            ? "macOS keeps the chip at full speed and the Mac awake while you play, and Apple's HUD shows the frame rate in Metal games."
+            ? "Your Mac runs at full power while you play, and Coreloom keeps an eye on memory, heat, the cores and what runs in the background."
             : "Turn them on one by one below, or all at once. Each switch shows what it changes, and you can turn it off again anytime."
         : RestartPending
         ? "Restart Windows to finish turning on hardware-accelerated GPU scheduling."
@@ -1422,7 +1486,17 @@ public sealed class GamingViewModel : PageViewModel
                 _lastStatus = DateTime.UtcNow;
                 try
                 {
+                    bool hudRetired = Settings.Current.Gaming.MetalHudRetired;
                     ApplyStatus(await _service.StatusAsync(Settings.Current.Gaming, CancellationToken.None));
+                    if (Settings.Current.Gaming.MetalHudRetired != hudRetired)
+                    {
+                        Settings.Update("Gaming"); // the Mac's one-time HUD clean-up is remembered
+                    }
+
+                    if (IsMac)
+                    {
+                        await MacBoosts.RefreshAsync(); // the power state (High Power Mode or not) and each boost's checks
+                    }
                 }
                 catch (Exception e) when (IsExpected(e))
                 {
@@ -1499,6 +1573,7 @@ public sealed class GamingViewModel : PageViewModel
         GamingTweak.CoreScheduling => CoreScheduling.Status,
         GamingTweak.VramManagement => Vram.Status,
         GamingTweak.CacheOptimization => CacheOptimization.Status,
+        _ when MacBoostsController.Owns(tweak) => MacBoosts.Status(tweak),
         GamingTweak.KeepShaderCaches when DriverNotice is { } notice => _status.Tweak(tweak) with { Note = notice },
         _ => _status.Tweak(tweak),
     };
@@ -1658,6 +1733,34 @@ public sealed class GamingViewModel : PageViewModel
 
             Details.Refresh("vram");
             HeroChanged();
+            return;
+        }
+
+        if (MacBoostsController.Owns(tweak.Tweak))
+        {
+            // Coreloom's own switches on a Mac (since 1.9.4).
+            tweak.IsBusy = true;
+            TweakResult outcome;
+            try
+            {
+                outcome = await MacBoosts.SetEnabledAsync(tweak.Tweak, on);
+            }
+            catch (Exception e) when (IsExpected(e))
+            {
+                outcome = new TweakResult(false, "macOS didn't accept the change.");
+            }
+            finally
+            {
+                tweak.IsBusy = false;
+            }
+
+            tweak.Apply(MacBoosts.Status(tweak.Tweak));
+            if (!outcome.Success)
+            {
+                tweak.ShowOutcome(outcome.Message);
+            }
+
+            MacBoostsChanged();
             return;
         }
 

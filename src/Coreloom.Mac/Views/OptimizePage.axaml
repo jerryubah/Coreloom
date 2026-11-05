@@ -23,7 +23,7 @@
         <Grid ColumnDefinitions="Auto,*,Auto">
           <Grid Width="36" Height="36" VerticalAlignment="Top">
             <Ellipse Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" Opacity="0.16" />
-            <Path Theme="{StaticResource IconPath}" Width="17" Height="17" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
+            <c:GridIcon Theme="{StaticResource IconPath}" Width="17" Height="17" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
                   Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
           </Grid>
           <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
@@ -36,7 +36,7 @@
           <Grid Grid.Column="2" VerticalAlignment="Top">
             <c:RadialGauge Theme="{StaticResource Spinner}" b:Spin.IsSpinning="{Binding IsWorking}"
                            IsVisible="{Binding IsWorking}" />
-            <Path Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Check}" Stroke="{DynamicResource Brush.Success}"
+            <c:GridIcon Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Check}" Stroke="{DynamicResource Brush.Success}"
                   b:Pop.Trigger="{Binding IsDone}" IsVisible="{Binding IsDone}" />
             <CheckBox Theme="{StaticResource CheckBox.Compact}" IsChecked="{Binding IsIncluded}"
                       Margin="0,-4,-6,0" ToolTip.Tip="Include in the clean-up" AutomationProperties.Name="{Binding Title}">
@@ -59,7 +59,7 @@
           <CheckBox Theme="{StaticResource CheckBox.Compact}" IsChecked="{Binding IsSelected}" VerticalAlignment="Center"
                     IsEnabled="{Binding !DataContext.Cleanup.IsBusy, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     AutomationProperties.Name="{Binding Name}" />
-          <Path Grid.Column="1" Theme="{StaticResource IconPath}" Width="16" Height="16" Margin="2,0,10,0" VerticalAlignment="Center"
+          <c:GridIcon Grid.Column="1" Theme="{StaticResource IconPath}" Width="16" Height="16" Margin="2,0,10,0" VerticalAlignment="Center"
                 Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
           <StackPanel Grid.Column="2" VerticalAlignment="Center">
             <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
@@ -85,7 +85,7 @@
     <DataTemplate x:Key="ThreatRow" DataType="{x:Type pages:ThreatViewModel}">
       <Border Background="{DynamicResource Brush.CriticalSoft}" CornerRadius="8" Padding="12,8" Margin="0,0,0,6">
         <Grid ColumnDefinitions="Auto,*,Auto">
-          <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Warning}" VerticalAlignment="Top" Margin="0,1,10,0"
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Warning}" VerticalAlignment="Top" Margin="0,1,10,0"
                 Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
           <StackPanel Grid.Column="1">
             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12.5" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" />
@@ -116,7 +116,7 @@
     <DataTemplate x:Key="TaskRow" DataType="{x:Type pages:MaintenanceTaskViewModel}">
       <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="12,10" Margin="0,0,0,6">
         <Grid ColumnDefinitions="Auto,*,Auto">
-          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Margin="0,0,12,0" VerticalAlignment="Center"
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Margin="0,0,12,0" VerticalAlignment="Center"
                 Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}" />
           <StackPanel Grid.Column="1" VerticalAlignment="Center">
             <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" />
@@ -143,7 +143,7 @@
       <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,0,0,16" Background="{DynamicResource Brush.ElevatedSoft}"
               IsVisible="{Binding !IsSupported}">
         <StackPanel Orientation="Horizontal">
-          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.Elevated}" />
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.Elevated}" />
           <TextBlock Text="{Binding UnsupportedText}" Margin="10,0,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
         </StackPanel>
       </c:SquircleBorder>
@@ -168,9 +168,9 @@
                 <c:HeroDial Value="{Binding DialValue}" Tone="{Binding DialTone}" IsSpinning="{Binding IsWorking}" DialSize="236" />
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="160">
                   <Grid HorizontalAlignment="Center" Width="30" Height="30">
-                    <Path Theme="{StaticResource IconPath}" Width="26" Height="26" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.Accent}"
+                    <c:GridIcon Theme="{StaticResource IconPath}" Width="26" Height="26" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.Accent}"
                           IsVisible="{Binding !IsDone}" b:Pulse.IsPulsing="{Binding IsWorking}" />
-                    <Path Theme="{StaticResource IconPath}" Width="28" Height="28" Data="{StaticResource Icon.Check}" Stroke="{DynamicResource Brush.Success}"
+                    <c:GridIcon Theme="{StaticResource IconPath}" Width="28" Height="28" Data="{StaticResource Icon.Check}" Stroke="{DynamicResource Brush.Success}"
                           IsVisible="{Binding IsDone}" b:Pop.Trigger="{Binding IsDone}" />
                   </Grid>
                   <TextBlock Text="{Binding Headline}" FontSize="22" FontWeight="SemiBold" HorizontalAlignment="Center" TextAlignment="Center"
@@ -197,7 +197,7 @@
                 <Button Theme="{StaticResource Button.AccentGradient}" Padding="20,9" Margin="0,0,10,8" Command="{Binding RunCommand}"
                         IsVisible="{Binding IsReady}">
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Optimize}" Stroke="{DynamicResource Brush.OnAccent}" />
+                    <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Optimize}" Stroke="{DynamicResource Brush.OnAccent}" />
                     <TextBlock Text="Clean up and optimize" Margin="8,0,0,0" />
                   </StackPanel>
                 </Button>
@@ -210,7 +210,7 @@
                     </MultiBinding>
                   </Button.IsVisible>
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
+                    <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
                     <TextBlock Text="{Binding ScanText}" Margin="8,0,0,0" />
                   </StackPanel>
                 </Button>
@@ -222,7 +222,7 @@
                     </MultiBinding>
                   </Button.IsVisible>
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" />
+                    <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Sparkle}" />
                     <TextBlock Text="{Binding ScanText}" Margin="8,0,0,0" />
                   </StackPanel>
                 </Button>
@@ -254,7 +254,7 @@
           <StackPanel>
             <Grid ColumnDefinitions="Auto,*">
               <c:SquircleBorder Width="34" Height="34" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
-                <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Trash}" Stroke="{DynamicResource Brush.Accent}" />
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Trash}" Stroke="{DynamicResource Brush.Accent}" />
               </c:SquircleBorder>
               <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                 <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Cleanup" />
@@ -268,7 +268,7 @@
             <WrapPanel Margin="0,6,0,0">
               <Button Theme="{StaticResource Button.Primary}" Padding="16,7" Margin="0,0,8,0" Command="{Binding CleanCommand}">
                 <StackPanel Orientation="Horizontal">
-                  <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Trash}" Stroke="{DynamicResource Brush.OnAccent}" />
+                  <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Trash}" Stroke="{DynamicResource Brush.OnAccent}" />
                   <TextBlock Text="Clean selected" Margin="7,0,0,0" />
                 </StackPanel>
               </Button>
@@ -290,7 +290,7 @@
             <Grid ColumnDefinitions="Auto,*,Auto">
               <Grid Width="34" Height="34">
                 <Ellipse Fill="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" Opacity="0.16" />
-                <Path Theme="{StaticResource IconPath}" Width="17" Height="17" Data="{StaticResource Icon.Shield}"
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="17" Height="17" Data="{StaticResource Icon.Shield}"
                       Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
               </Grid>
               <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
@@ -298,7 +298,7 @@
                 <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Engine}" Margin="0,2,0,0" />
               </StackPanel>
               <Button Grid.Column="2" Theme="{StaticResource Button.Icon}" Command="{Binding RefreshCommand}" ToolTip.Tip="Check again" AutomationProperties.Name="Check protection again">
-                <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Refresh}" />
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Refresh}" />
               </Button>
             </Grid>
 
@@ -314,7 +314,7 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
                   <Grid Margin="2,0,0,8" ColumnDefinitions="Auto,*,Auto" ToolTip.Tip="{Binding Detail}">
-                    <Path Theme="{StaticResource IconPath}" Width="15" Height="15" VerticalAlignment="Top" Margin="0,1,10,0"
+                    <c:GridIcon Theme="{StaticResource IconPath}" Width="15" Height="15" VerticalAlignment="Top" Margin="0,1,10,0"
                           Data="{Binding IsOn, Converter={StaticResource BoolToValue}, ConverterParameter='M5,12 L10,17 L19,7|M12,8 L12,13 M12,16.5 L12,16.6 M10.3,3.8 L2.4,18 C1.9,18.9 2.6,20 3.6,20 L20.4,20 C21.4,20 22.1,18.9 21.6,18 L13.7,3.8 C13.2,2.9 10.8,2.9 10.3,3.8 Z'}"
                           Stroke="{Binding IsOn, Converter={StaticResource BoolToBrush}, ConverterParameter='Brush.Success|Brush.Elevated'}" />
                     <StackPanel Grid.Column="1">
@@ -335,7 +335,7 @@
               <Button Theme="{StaticResource Button.Secondary}" Padding="14,7" Margin="0,0,8,8" Command="{Binding OpenSecurityCommand}">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="Privacy &amp; Security settings" />
-                  <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.External}" Margin="6,0,0,0" />
+                  <c:GridIcon Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.External}" Margin="6,0,0,0" />
                 </StackPanel>
               </Button>
             </WrapPanel>
@@ -351,7 +351,7 @@
           <Grid RowDefinitions="Auto,*,Auto">
             <Grid ColumnDefinitions="Auto,*">
               <c:SquircleBorder Width="34" Height="34" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
-                <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Memory}" Stroke="{DynamicResource Brush.Accent}" />
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Memory}" Stroke="{DynamicResource Brush.Accent}" />
               </c:SquircleBorder>
               <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                 <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Free up memory" />
@@ -378,7 +378,7 @@
                 <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                   <Button Theme="{StaticResource Button.Primary}" Padding="16,7" Command="{Binding FreeUpCommand}">
                     <StackPanel Orientation="Horizontal">
-                      <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
+                      <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Sparkle}" Stroke="{DynamicResource Brush.OnAccent}" />
                       <TextBlock Text="Free up memory" Margin="7,0,0,0" />
                     </StackPanel>
                   </Button>
@@ -392,13 +392,13 @@
                 <WrapPanel Margin="0,8,0,0" IsVisible="False">
                   <Button Theme="{StaticResource Button.Subtle}" Command="{Binding ToggleDetailsCommand}" Margin="0,0,6,0" ToolTip.Tip="Every process: its memory before and after, and what happened">
                     <StackPanel Orientation="Horizontal">
-                      <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.List}" />
+                      <c:GridIcon Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.List}" />
                       <TextBlock Text="Process details" Margin="6,0,0,0" />
                     </StackPanel>
                   </Button>
                   <Button Theme="{StaticResource Button.Subtle}" Command="{Binding OpenLogsCommand}" ToolTip.Tip="Opens the log viewer at this clean-up's lines">
                     <StackPanel Orientation="Horizontal">
-                      <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Folder}" />
+                      <c:GridIcon Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Folder}" />
                       <TextBlock Text="Open logs" Margin="6,0,0,0" />
                     </StackPanel>
                   </Button>
@@ -418,14 +418,14 @@
           <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto">
             <Grid ColumnDefinitions="Auto,*,Auto">
               <c:SquircleBorder Width="34" Height="34" CornerRadius="10" Background="{DynamicResource Brush.AccentSoft}">
-                <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Rocket}" Stroke="{DynamicResource Brush.Accent}" />
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Rocket}" Stroke="{DynamicResource Brush.Accent}" />
               </c:SquircleBorder>
               <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                 <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Speed up" />
                 <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding StartupSummary}" Margin="0,2,0,0" />
               </StackPanel>
               <Button Grid.Column="2" Theme="{StaticResource Button.Icon}" Command="{Binding RefreshCommand}" ToolTip.Tip="Refresh" AutomationProperties.Name="Refresh startup apps">
-                <Path Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Refresh}" />
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="15" Height="15" Data="{StaticResource Icon.Refresh}" />
               </Button>
             </Grid>
 

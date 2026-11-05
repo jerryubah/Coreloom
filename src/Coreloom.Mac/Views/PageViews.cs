@@ -96,6 +96,22 @@ public partial class GamingPage : UserControl
                 e.Handled = true;
             }
         };
+        DetailsScrim.PointerPressed += (_, e) =>
+        {
+            if (DataContext is GamingViewModel page)
+            {
+                page.Details.CloseCommand.Execute(null);
+                e.Handled = true;
+            }
+        };
+        AppsScrim.PointerPressed += (_, e) =>
+        {
+            if (DataContext is GamingViewModel page)
+            {
+                page.MacBoosts.Apps.CloseCommand.Execute(null);
+                e.Handled = true;
+            }
+        };
         DataContextChanged += (_, _) =>
         {
             if (_page is not null)

@@ -5,6 +5,7 @@ using Coreloom.Core.Telemetry;
 using Coreloom.Hardware.Mac.Native;
 using Coreloom.Mac.Native;
 using Coreloom.ViewModels;
+using Coreloom.ViewModels.Pages;
 using Coreloom.ViewModels.Services;
 
 namespace Coreloom.Mac.Services;
@@ -13,7 +14,9 @@ namespace Coreloom.Mac.Services;
 /// Every two seconds: is a game the app in front (one of the library's games, or an app filed under Games)? It tells the
 /// shell, which then reads sensors less often while the game plays ("Lighter monitoring while gaming"), and while a
 /// library game runs and "Keep the Mac awake while playing" is on it holds a display-sleep assertion (released as soon as
-/// the game quits). It only looks at which app is in front; nothing is added to or read from the game.
+/// the game quits). Since 1.9.4 it also hands the Gaming page's Mac boosts the running game every two seconds (High Power
+/// Mode automation, the background app governor and the monitors follow it). It only looks at which app is in front and
+/// which programs run; nothing is added to or read from the game.
 /// </summary>
 public sealed class MacGameWatcher : IDisposable
 {
@@ -24,6 +27,7 @@ public sealed class MacGameWatcher : IDisposable
     private uint _assertion;
     private bool _gaming;
     private int _tick;
+    private RunningGame? _running;
 
     public MacGameWatcher(ShellViewModel shell, SettingsService settings)
     {
@@ -56,10 +60,21 @@ public sealed class MacGameWatcher : IDisposable
                 Log.Info("Monitoring", gaming ? $"Game in front: {Path.GetFileNameWithoutExtension(bundle)}." : "No game in front.");
             }
 
-            // Keep awake while any library game runs (checked every 6 s: it walks the process list).
-            if (++_tick % 3 == 0 || (_assertion == 0 && gaming && known))
+            // Which library game runs (every 6 s, or at once when one comes to the front: it walks the process list), for
+            // Keep awake and the Mac boosts.
+            var gamingSettings = _settings.Current.Gaming;
+            bool boosts = MacBoostsController.Tweaks.Any(_shell.Gaming.MacBoosts.IsOn) || gamingSettings.AppsToReopen.Count > 0;
+            if (++_tick % 3 == 0 || (gaming && known && _running is null))
             {
-                UpdateKeepAwake(library);
+                _running = (gamingSettings.KeepAwake || boosts) && library.Count > 0
+                    ? GameLibrary.FindRunning(library, MacGamingService.RunningPrograms())
+                    : null;
+                UpdateKeepAwake();
+            }
+
+            if (boosts || _shell.Gaming.MacBoosts.Apps.IsOpen || _shell.Gaming.Details.IsOpen)
+            {
+                _ = _shell.Gaming.MacBoosts.TickAsync(new MacBoostTick(_running?.Game, _running?.ProcessIds.FirstOrDefault(), gaming), DateTime.UtcNow);
             }
         }
         catch (Exception e) when (e is InvalidOperationException or IOException)
@@ -68,10 +83,9 @@ public sealed class MacGameWatcher : IDisposable
         }
     }
 
-    private void UpdateKeepAwake(IReadOnlyList<GameEntry> library)
+    private void UpdateKeepAwake()
     {
-        bool want = _settings.Current.Gaming.KeepAwake && library.Count > 0
-            && GameLibrary.FindRunning(library, MacGamingService.RunningPrograms()) is not null;
+        bool want = _settings.Current.Gaming.KeepAwake && _running is not null;
         if (want && _assertion == 0)
         {
             _assertion = IOKit.PreventDisplaySleep("Coreloom: a game is running");

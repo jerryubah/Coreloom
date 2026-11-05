@@ -64,6 +64,47 @@ public sealed class GamingSettings
     /// <summary>macOS: the charger's power mode before "Full power on the charger" was turned on (restored when it's turned off).</summary>
     public int? PreviousPowerMode { get; set; }
 
+    /// <summary>macOS: the Metal Performance HUD the Gaming page used to switch has been turned off once (1.9.4 removed the switch).</summary>
+    public bool MetalHudRetired { get; set; }
+
+    /// <summary>macOS (since 1.9.4): High Power Mode while a demanding workload runs on the charger. Off until turned on.</summary>
+    public bool HighPowerAutomation { get; set; }
+
+    /// <summary>macOS: the charger's power mode before the automation raised it (null while it hasn't), put back afterwards,
+    /// also after Coreloom was quit in between.</summary>
+    public int? AutomationRaisedFrom { get; set; }
+
+    /// <summary>macOS (since 1.9.4): the unified memory pressure guard. Off until turned on.</summary>
+    public bool MemoryGuard { get; set; }
+
+    /// <summary>macOS (since 1.9.4): the thermal headroom optimizer. Off until turned on.</summary>
+    public bool ThermalHeadroom { get; set; }
+
+    /// <summary>macOS (since 1.9.4): the performance core workload monitor. Off until turned on.</summary>
+    public bool CoreWorkload { get; set; }
+
+    /// <summary>macOS (since 1.9.4): the MetalFX graphics optimizer. Off until turned on.</summary>
+    public bool MetalFx { get; set; }
+
+    /// <summary>macOS (since 1.9.4): the ProMotion and display pipeline optimizer. Off until turned on.</summary>
+    public bool DisplayPipeline { get; set; }
+
+    /// <summary>macOS (since 1.9.4): the native Apple silicon check. Off until turned on.</summary>
+    public bool NativeApps { get; set; }
+
+    /// <summary>macOS (since 1.9.4): the background application governor. Off until turned on.</summary>
+    public bool BackgroundGovernor { get; set; }
+
+    /// <summary>macOS: per game, the apps to quit each time it starts (chosen in the governor's card).</summary>
+    public List<QuitProfile> QuitProfiles { get; set; } = [];
+
+    /// <summary>macOS: apps Coreloom quit for a game (their app bundles), reopened when the game quits.</summary>
+    public List<string> AppsToReopen { get; set; } = [];
+
+    /// <summary>A game's apps to quit, or null.</summary>
+    public QuitProfile? QuitProfileFor(string gameId) =>
+        QuitProfiles.FirstOrDefault(p => string.Equals(p.GameId, gameId, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>What adaptive pacing knows about a game, or null.</summary>
     public AdaptivePacingGame? PacingFor(string gameId) =>
         AdaptivePacingGames.FirstOrDefault(g => string.Equals(g.GameId, gameId, StringComparison.OrdinalIgnoreCase));
@@ -128,6 +169,13 @@ public sealed class GamingSettings
         AdaptivePacingGames = AdaptivePacingGame.Normalize(AdaptivePacingGames);
         CoreProfiles = CoreProfile.Normalize(CoreProfiles);
         VramGames = VramRecord.Normalize(VramGames);
+        QuitProfiles = QuitProfile.Normalize(QuitProfiles);
+        AppsToReopen = [.. (AppsToReopen ?? []).Where(p => !string.IsNullOrWhiteSpace(p)).Distinct(StringComparer.Ordinal).Take(QuitProfile.MaxApps)];
+        if (AutomationRaisedFrom is < 0 or > 2)
+        {
+            AutomationRaisedFrom = null;
+        }
+
         if (!Enum.IsDefined(LibraryView))
         {
             LibraryView = GameLibraryView.List;

@@ -345,9 +345,11 @@
               <ColumnDefinition Width="Auto" />
               <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <!-- Shown or not, lighting color and fans: see Customize -->
-            <Border Visibility="{Binding ShowPcPicture, Converter={StaticResource BoolToVisibility}}" VerticalAlignment="Center">
-              <views:PcIllustration Width="196" Height="234" DataContext="{Binding Specs}"
+            <!-- Shown or not, lighting color and fans: see Customize. A little smaller than the card is tall since 1.9.4
+                 (174 × 208, was 196 × 234), with room around it: 22 points from the card's left edge, like the specs from
+                 its right. -->
+            <Border Visibility="{Binding ShowPcPicture, Converter={StaticResource BoolToVisibility}}" VerticalAlignment="Center" Margin="8,6,4,6">
+              <views:PcIllustration Width="174" Height="208" DataContext="{Binding Specs}"
                                     Glow="{Binding Glow}" TopFanSpeed="{Binding TopFanSpeed}" BottomFanSpeed="{Binding BottomFanSpeed}"
                                     AnimateFans="{Binding AnimateFans}" />
             </Border>

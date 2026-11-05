@@ -481,4 +481,7 @@ public sealed class ToolServices
     public IDriverService Drivers { get; init; } = new UnsupportedDriverService();
 
     public IAppService Apps { get; init; } = new UnsupportedAppService();
+
+    /// <summary>The Mac's Gaming boosts (since 1.9.4).</summary>
+    public IMacPerformanceService MacPerformance { get; init; } = new UnsupportedMacPerformanceService();
 }

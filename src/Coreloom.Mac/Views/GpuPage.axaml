@@ -50,7 +50,7 @@
         <ControlTemplate>
           <Border x:Name="Chip" CornerRadius="8" Padding="9,4" Background="{DynamicResource Brush.ControlHover}" BorderBrush="Transparent" BorderThickness="1">
             <StackPanel Orientation="Horizontal">
-              <Path x:Name="Tick" Theme="{StaticResource IconPath}" Width="10" Height="10" Data="{StaticResource Icon.Check}" Stroke="{DynamicResource Brush.Accent}"
+              <c:GridIcon x:Name="Tick" Theme="{StaticResource IconPath}" Width="10" Height="10" Data="{StaticResource Icon.Check}" Stroke="{DynamicResource Brush.Accent}"
                     Margin="0,0,5,0" IsVisible="False" />
               <ContentPresenter Content="{TemplateBinding Content}" VerticalAlignment="Center" />
             </StackPanel>
@@ -62,7 +62,7 @@
         <Style Selector="^ /template/ Border#Chip">
           <Setter Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
         </Style>
-        <Style Selector="^ /template/ Path#Tick">
+        <Style Selector="^ /template/ :is(Path)#Tick">
           <Setter Property="IsVisible" Value="True" />
         </Style>
       </Style>
@@ -107,7 +107,7 @@
       <Grid Margin="0,0,0,16" ColumnDefinitions="*,Auto">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
           <c:BrandMark Vendor="{Binding VendorKey}" Margin="0,0,12,0" />
-          <Path Theme="{StaticResource IconPath}" Data="{StaticResource Icon.Gpu}" Stroke="{DynamicResource Series.Gpu.Brush}" Margin="0,0,10,0" VerticalAlignment="Center"
+          <c:GridIcon Theme="{StaticResource IconPath}" Data="{StaticResource Icon.Gpu}" Stroke="{DynamicResource Series.Gpu.Brush}" Margin="0,0,10,0" VerticalAlignment="Center"
                 IsVisible="{Binding VendorKey, Converter={StaticResource HasValue}, ConverterParameter=Invert}" />
           <TextBlock Text="{Binding GpuName}" Theme="{StaticResource Text.Section}" VerticalAlignment="Center" />
         </StackPanel>
@@ -132,7 +132,7 @@
         <c:SquircleBorder Theme="{StaticResource Card.Inset}" Margin="0,0,12,0" IsVisible="{Binding ClockReasons, Converter={StaticResource HasValue}}"
                 ToolTip.Tip="Why the GPU is not running at its maximum clocks right now (reported by the graphics driver).">
           <Grid ColumnDefinitions="Auto,Auto,*">
-            <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Info}" VerticalAlignment="Center" />
+            <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Info}" VerticalAlignment="Center" />
             <TextBlock Grid.Column="1" Text="Clock limits:" Theme="{StaticResource Text.Label}" Margin="8,0,6,0" VerticalAlignment="Center" />
             <TextBlock Grid.Column="2" Text="{Binding ClockReasons}" FontSize="12.5" VerticalAlignment="Center" TextWrapping="Wrap" />
           </Grid>
@@ -151,7 +151,7 @@
             <Button Theme="{StaticResource Button.Subtle}" Margin="6,0,0,0" Padding="9,5" Command="{Binding OverlaySettings.OpenCommand}"
                     ToolTip.Tip="What the overlay shows, where, and how it looks" AutomationProperties.Name="Customize the overlay">
               <StackPanel Orientation="Horizontal">
-                <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Edit}" />
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Edit}" />
                 <TextBlock Text="Customize" Margin="7,0,0,0" FontSize="12.5" />
               </StackPanel>
             </Button>
@@ -217,7 +217,7 @@
             </StackPanel>
             <Button Theme="{StaticResource Button.Icon}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="32" Height="32"
                     Command="{Binding CloseCommand}" ToolTip.Tip="Close" AutomationProperties.Name="Close">
-              <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Close}" />
+              <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Close}" />
             </Button>
           </Grid>
 
@@ -297,7 +297,7 @@
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
               <TextBlock Theme="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,4,0,0"
-                         Text="Readings your Mac doesn't report are left out. For a game's frame rate, turn on Metal Performance HUD on the Gaming page." />
+                         Text="Readings your Mac doesn't report are left out. macOS doesn't let other apps measure a game's frame rate." />
 
               <Border Theme="{StaticResource Divider}" Margin="0,18,0,16" />
 
@@ -317,7 +317,7 @@
                   <Button Theme="{StaticResource Button.Secondary}" Margin="0,10,0,0" Padding="10,6" HorizontalAlignment="Stretch" Command="{Binding MoveOnScreenCommand}"
                           ToolTip.Tip="{Binding MoveHint}">
                     <StackPanel Orientation="Horizontal">
-                      <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Window}" />
+                      <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Window}" />
                       <TextBlock Text="Move on screen" Margin="7,0,0,0" />
                     </StackPanel>
                   </Button>
@@ -364,7 +364,7 @@
                           <TextBlock Text="{Binding PlaceText}" FontSize="11.5" VerticalAlignment="Center" />
                           <Button Theme="{StaticResource Button.Icon}" Width="20" Height="20" Margin="4,0,0,0" Command="{Binding RemoveCommand}"
                                   ToolTip.Tip="Forget this game's place" AutomationProperties.Name="{Binding Program, StringFormat='Forget the place for {0}'}">
-                            <Path Theme="{StaticResource IconPath}" Width="8" Height="8" Data="{StaticResource Icon.Close}" />
+                            <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="8" Height="8" Data="{StaticResource Icon.Close}" />
                           </Button>
                         </StackPanel>
                       </c:SquircleBorder>

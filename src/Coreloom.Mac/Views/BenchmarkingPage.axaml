@@ -56,7 +56,7 @@
     <ControlTemplate x:Key="BestBadge" TargetType="ContentControl">
       <Border CornerRadius="7" Padding="7,2" Background="{DynamicResource Brush.AccentSoft}" VerticalAlignment="Center">
         <StackPanel Orientation="Horizontal">
-          <Path Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Trophy}" Stroke="{DynamicResource Brush.Accent}" StrokeThickness="1.6" />
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="11" Height="11" Data="{StaticResource Icon.Trophy}" Stroke="{DynamicResource Brush.Accent}" StrokeThickness="1.6" />
           <TextBlock Text="{TemplateBinding Content}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Accent}" Margin="5,0,0,0" />
         </StackPanel>
       </Border>
@@ -85,14 +85,14 @@
           <Grid ColumnDefinitions="Auto,*,Auto">
             <Grid Width="40" Height="40" VerticalAlignment="Top">
               <c:SquircleBorder CornerRadius="11" Background="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" Opacity="0.16" />
-              <Path Theme="{StaticResource IconPath}" Width="19" Height="19" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="19" Height="19" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
                     Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
             </Grid>
             <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
               <StackPanel Orientation="Horizontal">
                 <TextBlock Text="{Binding Title}" Theme="{StaticResource Text.CardTitle}" VerticalAlignment="Center" />
                 <Border Margin="5,1,0,0" Padding="2" VerticalAlignment="Center" Background="Transparent" ToolTip.Tip="{Binding About}">
-                  <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.TextTertiary}" />
+                  <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.TextTertiary}" />
                 </Border>
               </StackPanel>
               <TextBlock Text="{Binding Device}" Theme="{StaticResource Text.Caption}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Device}" />
@@ -148,7 +148,7 @@
                       IsVisible="{Binding IsIdle}"
                       AutomationProperties.Name="{Binding Title, StringFormat='Run the {0} benchmark'}">
                 <StackPanel Orientation="Horizontal">
-                  <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
+                  <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
                   <TextBlock Text="Run benchmark" Margin="7,0,0,0" />
                 </StackPanel>
               </Button>
@@ -176,7 +176,7 @@
         <Grid ColumnDefinitions="Auto,*,Auto,200,112,Auto">
           <Grid Width="34" Height="34">
             <c:SquircleBorder CornerRadius="10" Background="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" Opacity="0.15" />
-            <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
+            <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
                   Stroke="{Binding ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
           </Grid>
           <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
@@ -251,7 +251,7 @@
           <Button Theme="{StaticResource Button.AccentGradient}" Padding="18,9" Command="{Binding RunBothCommand}" VerticalAlignment="Center"
                   ToolTip.Tip="Runs the CPU benchmark, then the GPU benchmark (about two minutes)">
             <StackPanel Orientation="Horizontal">
-              <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Benchmark}" Stroke="{DynamicResource Brush.OnAccent}" />
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Benchmark}" Stroke="{DynamicResource Brush.OnAccent}" />
               <TextBlock Text="Run both" Margin="8,0,0,0" />
             </StackPanel>
           </Button>
@@ -261,7 +261,7 @@
       <Border Background="{DynamicResource Brush.CriticalSoft}" CornerRadius="10" Padding="12,9" Margin="0,0,0,14"
               IsVisible="{Binding HasError}">
         <StackPanel Orientation="Horizontal">
-          <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Critical}" />
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Critical}" />
           <TextBlock Text="{Binding Error}" Margin="8,0,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
         </StackPanel>
       </Border>
@@ -280,7 +280,7 @@
           <Grid ColumnDefinitions="Auto,*,Auto">
             <Grid Width="40" Height="40" VerticalAlignment="Top">
               <c:SquircleBorder CornerRadius="11" Background="{Binding Converter={StaticResource ColorKeyToBrush}, ConverterParameter=Temperature}" Opacity="0.16" />
-              <Path Theme="{StaticResource IconPath}" Width="19" Height="19" Data="{StaticResource Icon.Flame}" Stroke="{Binding Converter={StaticResource ColorKeyToBrush}, ConverterParameter=Temperature}" />
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="19" Height="19" Data="{StaticResource Icon.Flame}" Stroke="{Binding Converter={StaticResource ColorKeyToBrush}, ConverterParameter=Temperature}" />
             </Grid>
             <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
               <TextBlock Text="Stress test" Theme="{StaticResource Text.CardTitle}" />
@@ -309,7 +309,7 @@
               <Button Theme="{StaticResource Button.Primary}" Padding="18,8" Command="{Binding StartStressCommand}"
                       IsVisible="{Binding IsStressIdle}">
                 <StackPanel Orientation="Horizontal">
-                  <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Flame}" Stroke="{DynamicResource Brush.OnAccent}" />
+                  <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Flame}" Stroke="{DynamicResource Brush.OnAccent}" />
                   <TextBlock Text="Start stress test" Margin="7,0,0,0" />
                 </StackPanel>
               </Button>
@@ -351,7 +351,7 @@
         <StackPanel>
           <Grid Margin="0,0,0,10" ColumnDefinitions="Auto,*,Auto">
             <c:SquircleBorder Width="40" Height="40" CornerRadius="11" Background="{DynamicResource Brush.AccentSoft}" VerticalAlignment="Center">
-              <Path Theme="{StaticResource IconPath}" Width="19" Height="19" Data="{StaticResource Icon.Trophy}" Stroke="{DynamicResource Brush.Accent}" />
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="19" Height="19" Data="{StaticResource Icon.Trophy}" Stroke="{DynamicResource Brush.Accent}" />
             </c:SquircleBorder>
             <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
               <TextBlock Text="Results" Theme="{StaticResource Text.CardTitle}" />
@@ -366,7 +366,7 @@
 
           <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="16,14" IsVisible="{Binding !HasResults}">
             <StackPanel Orientation="Horizontal">
-              <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Benchmark}" Stroke="{DynamicResource Brush.TextTertiary}" />
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Benchmark}" Stroke="{DynamicResource Brush.TextTertiary}" />
               <TextBlock Text="{Binding EmptyText}" Theme="{StaticResource Text.Secondary}" Margin="10,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" />
             </StackPanel>
           </c:SquircleBorder>
@@ -392,7 +392,7 @@
           <Grid ColumnDefinitions="Auto,*,Auto,Auto">
             <Grid Width="44" Height="44" VerticalAlignment="Top">
               <c:SquircleBorder CornerRadius="12" Background="{Binding Item.ColorKey, Converter={StaticResource ColorKeyToBrush}}" Opacity="0.16" />
-              <Path Theme="{StaticResource IconPath}" Width="20" Height="20" Data="{Binding Item.IconKey, Converter={StaticResource IconKeyToGeometry}}"
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="20" Height="20" Data="{Binding Item.IconKey, Converter={StaticResource IconKeyToGeometry}}"
                     Stroke="{Binding Item.ColorKey, Converter={StaticResource ColorKeyToBrush}}" />
             </Grid>
             <StackPanel Grid.Column="1" Margin="14,0,10,0" VerticalAlignment="Center">
@@ -410,7 +410,7 @@
             </StackPanel>
             <Button Grid.Column="3" Theme="{StaticResource Button.Icon}" Width="32" Height="32" Margin="6,0,0,0" VerticalAlignment="Top"
                     Command="{Binding DataContext.CloseDetailsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" ToolTip.Tip="Close" AutomationProperties.Name="Close">
-              <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Close}" />
+              <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Close}" />
             </Button>
           </Grid>
 
@@ -591,7 +591,7 @@
             <Button Theme="{StaticResource Button.Secondary}" Padding="16,8" Margin="0,0,10,0"
                     Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
               <StackPanel Orientation="Horizontal">
-                <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Trash}" />
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Trash}" />
                 <TextBlock Text="Delete result" Margin="7,0,0,0" />
               </StackPanel>
             </Button>

@@ -85,6 +85,7 @@ internal static class Program
         }
 
         File.WriteAllLines(Path.Combine(output, "binding-errors.txt"), sink.Errors.Distinct());
+        File.WriteAllLines(Path.Combine(output, "glow-check.txt"), GlowChecks);
         Console.WriteLine($"{sink.Errors.Distinct().Count()} distinct binding errors (see binding-errors.txt)");
         if (strict && sink.Errors.Count > 0)
         {
@@ -255,7 +256,13 @@ internal static class Program
             shell.Navigate(page);
             window.Height = WindowHeight * Scale;
             Settle(window, data, 6);
+            if (name == "gaming")
+            {
+                DriveMacBoosts(window, data, shell);
+            }
+
             Capture(window, Path.Combine(output, $"{name}.png"));
+            GlowClipCheck(window, name);
             if (Environment.GetEnvironmentVariable("MACSHOTS_DUMP") == name)
             {
                 Dump(window.FindControl<Coreloom.Mac.Controls.PageHost>("Host")!, 0);
@@ -270,6 +277,25 @@ internal static class Program
                 window.Height = Math.Min(16000, (top + scroller.Extent.Height + 8) * Scale);
                 Settle(window, data, 2);
                 Capture(window, Path.Combine(output, $"{name}-full.png"));
+            }
+        }
+
+        // A card's edge lit by the pointer near its top-left corner: the glow must spread outside the card, not stop at its
+        // rectangle (1.9.4; glow-check.txt checks every page).
+        if (only is null || only.Split(',').Contains("overview"))
+        {
+            shell.Navigate(shell.Overview);
+            window.Height = WindowHeight * Scale;
+            Settle(window, data, 4);
+            var card = window.GetVisualDescendants().OfType<Coreloom.Mac.Controls.SquircleBorder>()
+                .FirstOrDefault(b => b.EdgeGlow && b.DataContext is SummaryCardViewModel);
+            if (card is not null)
+            {
+                card.ShowPointerLight(new Point(6, 6));
+                Settle(window, data, 1);
+                Capture(window, Path.Combine(output, "overview-hover.png"));
+                card.ShowPointerLight(new Point(-1000, -1000));
+                Settle(window, data, 1);
             }
         }
 
@@ -341,6 +367,41 @@ internal static class Program
             Settle(window, data, 4);
             Capture(window, Path.Combine(output, "gaming-editor.png"));
             shell.Gaming.Editor.CancelCommand.Execute(null);
+
+            // The Mac's own boosts (1.9.4): the cards, a few of their Details, and the background apps card.
+            if (window.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(b => b.Text == "Performance boosts") is { } boostsTitle
+                && scroller.Content is Visual gamingContent && boostsTitle.TranslatePoint(default, gamingContent) is { } boostsAt)
+            {
+                scroller.Offset = new Vector(0, Math.Max(0, boostsAt.Y - 24));
+                Settle(window, data, 2);
+                Capture(window, Path.Combine(output, "gaming-boosts.png"));
+                scroller.Offset = default;
+            }
+
+            foreach (var (tweak, file) in new[]
+            {
+                (Coreloom.Core.Gaming.GamingTweak.MemoryGuard, "memory"), (Coreloom.Core.Gaming.GamingTweak.MetalFx, "metalfx"),
+                (Coreloom.Core.Gaming.GamingTweak.DisplayPipeline, "display"), (Coreloom.Core.Gaming.GamingTweak.CoreWorkload, "cores"),
+                (Coreloom.Core.Gaming.GamingTweak.HighPowerAutomation, "power"), (Coreloom.Core.Gaming.GamingTweak.ThermalHeadroom, "thermal"),
+                (Coreloom.Core.Gaming.GamingTweak.NativeApps, "native"),
+            })
+            {
+                shell.Gaming.Boosts.First(b => b.Tweak == tweak).DetailsCommand!.Execute(null);
+                Settle(window, data, 3);
+                Capture(window, Path.Combine(output, $"gaming-details-{file}.png"));
+                shell.Gaming.Details.CloseCommand.Execute(null);
+            }
+
+            shell.Gaming.MacBoosts.Apps.IsOpen = true;
+            Wait(shell.Gaming.MacBoosts.Apps.RefreshAsync());
+            if (shell.Gaming.MacBoosts.Apps.Rows.FirstOrDefault(r => r.Name == "Google Chrome") is { } chrome)
+            {
+                chrome.IsSelected = true;
+            }
+
+            Settle(window, data, 3);
+            Capture(window, Path.Combine(output, "gaming-apps.png"));
+            shell.Gaming.MacBoosts.Apps.IsOpen = false;
         }
 
         // Every section of Settings.
@@ -393,6 +454,101 @@ internal static class Program
         Settle(window, data, 4);
         Capture(window, Path.Combine(output, "overview-light.png"));
         window.Close();
+    }
+
+    /// <summary>
+    /// The Mac's own boosts on (1.9.4), fed a game that's running for a few seconds of readings, so their cards show what
+    /// they found: High Power Mode raised, memory, heat, the cores, MetalFX, the displays, Rosetta and the background apps.
+    /// </summary>
+    private static void DriveMacBoosts(Window window, SampleData data, ShellViewModel shell)
+    {
+        data.Settings.Update("Gaming", s =>
+        {
+            var g = s.Gaming;
+            g.HighPowerAutomation = g.MemoryGuard = g.ThermalHeadroom = g.CoreWorkload = g.MetalFx = g.DisplayPipeline = g.NativeApps = g.BackgroundGovernor = true;
+        });
+        var boosts = shell.Gaming.MacBoosts;
+        var game = shell.Gaming.LibrarySnapshot().FirstOrDefault(g => g.Id == "steam:1");
+        var start = DateTime.UtcNow;
+        Wait(boosts.RefreshAsync(force: true));
+        Wait(boosts.RefreshAsync(Coreloom.Core.Gaming.GamingTweak.MemoryGuard));
+        for (int i = 1; i <= 4; i++)
+        {
+            Wait(boosts.TickAsync(new MacBoostTick(game, 401, true), start.AddSeconds(2 * i)));
+        }
+
+        Settle(window, data, 3);
+    }
+
+    /// <summary>Waits for work that comes back to the UI thread, running the UI thread's jobs meanwhile.</summary>
+    private static void Wait(Task task)
+    {
+        var waited = System.Diagnostics.Stopwatch.StartNew();
+        while (!task.IsCompleted && waited.Elapsed < TimeSpan.FromSeconds(30))
+        {
+            Dispatcher.UIThread.RunJobs();
+            Thread.Sleep(5);
+        }
+
+        task.GetAwaiter().GetResult();
+    }
+
+    /// <summary>Lines of <c>glow-check.txt</c>: for each page, how many glowing cards there are and which would have their glow cut.</summary>
+    private static readonly List<string> GlowChecks = [];
+
+    /// <summary>
+    /// Every card on the page whose rim glows under the pointer, checked against its ancestors: one that clips (a templated
+    /// control does by default) must leave room for the 14 points the glow spreads past the card. A scroll viewer may cut
+    /// it at its top and bottom (that's scrolling), not at its sides.
+    /// </summary>
+    private static void GlowClipCheck(Window window, string page)
+    {
+        const double Reach = 14;
+        // Measured inside the 2× layout transform, in the app's own points.
+        Visual root = window.Content is LayoutTransformControl { Child: { } inner } ? inner : window;
+        int cards = 0, cut = 0;
+        foreach (var card in window.GetVisualDescendants().OfType<Coreloom.Mac.Controls.SquircleBorder>().Where(b => b.EdgeGlow && b.IsEffectivelyVisible))
+        {
+            if (card.TranslatePoint(default, root) is not { } at || card.Bounds.Width <= 0)
+            {
+                continue;
+            }
+
+            cards++;
+            var rect = new Rect(at, card.Bounds.Size);
+            for (var v = card.GetVisualParent(); v is not null && v != root; v = v.GetVisualParent())
+            {
+                if (!v.ClipToBounds && v.Clip is null)
+                {
+                    continue;
+                }
+
+                if (v.TranslatePoint(default, root) is not { } vAt)
+                {
+                    break;
+                }
+
+                var clip = new Rect(vAt, v.Bounds.Size);
+                bool scroller = v is Avalonia.Controls.Presenters.ScrollContentPresenter;
+                double left = clip.Left - (rect.Left - Reach), right = (rect.Right + Reach) - clip.Right;
+                double top = scroller ? 0 : clip.Top - (rect.Top - Reach), bottom = scroller ? 0 : (rect.Bottom + Reach) - clip.Bottom;
+                if (left > 0.5 || right > 0.5 || top > 0.5 || bottom > 0.5)
+                {
+                    cut++;
+                    GlowChecks.Add($"{page}: the glow of the card at {rect.X:0},{rect.Y:0} ({rect.Width:0} × {rect.Height:0}, {card.DataContext?.GetType().Name}) is cut by {v.GetType().Name}"
+                        + (string.IsNullOrEmpty((v as Control)?.Name) ? string.Empty : $" \"{((Control)v).Name}\"")
+                        + $": left {Math.Max(0, left):0}, top {Math.Max(0, top):0}, right {Math.Max(0, right):0}, bottom {Math.Max(0, bottom):0}");
+                    break;
+                }
+
+                if (scroller)
+                {
+                    break; // what's outside the page's scroll area isn't the card's to glow over
+                }
+            }
+        }
+
+        GlowChecks.Add($"{page}: {cards} glowing cards, {cut} with their glow cut");
     }
 
     /// <summary>A few readings arrive, layout settles and every animation has finished.</summary>

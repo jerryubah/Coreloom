@@ -26,8 +26,9 @@ public enum MacForm
 /// <summary>
 /// A picture of the Mac Coreloom runs on for the Overview header, picked from the model's name: a MacBook (a photo-like
 /// picture whose screen shows the Mac's own desktop picture, or Coreloom's in the lighting color, and whose keyboard deck
-/// catches the screen's light), or a drawing of an all-in-one, a small or a tall desktop or a tower, lit in the lighting
-/// color chosen in Customize. No company logo is on any of them.
+/// catches the screen's light), or a drawing of an all-in-one, a small or a tall desktop or a tower, with the lighting
+/// color chosen in Customize on its screen and status light. No company logo is on any of them, and since 1.9.4 no glow
+/// is drawn behind or under them.
 /// </summary>
 public sealed class MacIllustration : Control
 {
@@ -187,8 +188,9 @@ public sealed class MacIllustration : Control
     }
 
     /// <summary>
-    /// The MacBook picture, <see cref="MacBookWidth"/> points wide and centered: the lighting color's glow behind it, the
-    /// desktop picture (or Coreloom's) on its screen under a faint glare, and the screen's light on the keyboard deck.
+    /// The MacBook picture, <see cref="MacBookWidth"/> points wide and centered: the desktop picture (or Coreloom's) on its
+    /// screen under a faint glare, and the screen's light on the keyboard deck. (Until 1.9.4 the lighting color also glowed
+    /// behind it; Jerry asked for the picture on its own.)
     /// </summary>
     private void DrawMacBook(DrawingContext context, Bitmap body, Rect bounds)
     {
@@ -198,8 +200,6 @@ public sealed class MacIllustration : Control
         Rect Place(Rect r) => new(area.X + (r.X * scale), area.Y + (r.Y * scale), r.Width * scale, r.Height * scale);
         var screen = Place(PictureScreen);
         var (light, deep) = LightingColors();
-
-        DrawHalo(context, screen.Inflate(new Thickness(screen.Width * 0.2, screen.Height * 0.24, screen.Width * 0.2, screen.Height * 0.32)), light);
 
         var (picture, glow) = ScreenPicture(light, deep);
         using (context.PushRenderOptions(new RenderOptions { BitmapInterpolationMode = BitmapInterpolationMode.HighQuality }))
@@ -238,19 +238,6 @@ public sealed class MacIllustration : Control
             new GradientStop(Color.FromArgb(0, 255, 255, 255), 1),
         ],
     };
-
-    /// <summary>The light the screen casts around the Mac, in the lighting color (all its colors for the rainbow).</summary>
-    private void DrawHalo(DrawingContext context, Rect area, Color light)
-    {
-        var falloff = new RadialGradientBrush
-        {
-            GradientStops = [new GradientStop(Color.FromArgb(150, 255, 255, 255), 0), new GradientStop(Color.FromArgb(60, 255, 255, 255), 0.5), new GradientStop(Color.FromArgb(0, 255, 255, 255), 1)],
-        };
-        using (context.PushOpacityMask(falloff, area))
-        {
-            context.DrawRectangle(Glow == PcGlow.Rainbow ? RainbowBrush(horizontal: true) : new SolidColorBrush(light), null, area);
-        }
-    }
 
     /// <summary>The rainbow lighting as a brush: red through violet.</summary>
     internal static LinearGradientBrush RainbowBrush(bool horizontal)
@@ -509,7 +496,6 @@ public sealed class MacIllustration : Control
         context.DrawRectangle(Aluminium(dark), null, new RoundedRect(new Rect(84, 159, 72, 4), 2));
 
         var body = new Rect(16, 6, 208, 128);
-        DrawHalo(context, body.Inflate(new Thickness(30, 24)), light);
 
         // The chin in a pastel of the lighting color, the bezel white.
         context.DrawRectangle(new SolidColorBrush(Mix(light, Colors.White, 0.55)), null, new RoundedRect(body, 9));
@@ -540,8 +526,7 @@ public sealed class MacIllustration : Control
         var front = new Rect((CanvasWidth - width) / 2, 150 - height, width, height);
         var top = new Rect(front.X + 4, front.Y - 14, front.Width - 8, 18);
 
-        // Light on the desk under it, and its shadow.
-        DrawHalo(context, new Rect(front.X - 34, front.Bottom - 16, front.Width + 68, 34), light);
+        // Its shadow on the desk.
         Shadow(context, new Rect(front.X - 10, front.Bottom - 6, front.Width + 20, 16), 0.5);
 
         // The top, seen from slightly above.
@@ -575,7 +560,6 @@ public sealed class MacIllustration : Control
     private void DrawTower(DrawingContext context, Color light, bool dark)
     {
         var body = new Rect(76, 20, 88, 140);
-        DrawHalo(context, new Rect(body.X - 40, body.Bottom - 14, body.Width + 80, 30), light);
         Shadow(context, new Rect(body.X - 8, body.Bottom - 6, body.Width + 16, 14), 0.5);
         context.DrawRectangle(Aluminium(dark, 0, 1.4), null, new RoundedRect(body, 8));
 

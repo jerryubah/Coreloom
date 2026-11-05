@@ -239,7 +239,6 @@ internal sealed class SampleGaming : IGamingService
                 [Coreloom.Core.Gaming.GamingTweak.GameMode] = new(true, true),
                 [Coreloom.Core.Gaming.GamingTweak.PowerMode] = new(true, false),
                 [Coreloom.Core.Gaming.GamingTweak.KeepAwake] = new(true, true),
-                [Coreloom.Core.Gaming.GamingTweak.MetalHud] = new(true, false),
             },
             RefreshRate = 120,
             DriverVersion = "Metal · macOS 15.1",
@@ -281,4 +280,91 @@ internal sealed class SampleGaming : IGamingService
     public string? PickProgram(string? startIn = null) => "/Applications/Lantern Keep.app";
 
     public Coreloom.Core.Gaming.ProgramInfo? DescribeProgram(string path) => new(path, Path.GetFileNameWithoutExtension(path));
+}
+
+/// <summary>The Mac's own Gaming boosts' readings (since 1.9.4), invented: a MacBook Pro with High Power Mode on the charger,
+/// memory getting tight with a browser open, a warm chip, two displays and a few apps in the background.</summary>
+internal sealed class SampleMacPerformance : IMacPerformanceService
+{
+    private int _calls;
+
+    public bool IsSupported => true;
+
+    public bool IsAppleSilicon => true;
+
+    public double TicksToSeconds => 1e-9;
+
+    public Task<MacPowerState> PowerAsync(CancellationToken cancellationToken) =>
+        Task.FromResult(new MacPowerState(true, true, Coreloom.Core.Gaming.MacPowerModes.Automatic, true));
+
+    public Task<Coreloom.Core.Gaming.TweakResult> AllowPowerSwitchingAsync(bool allow, CancellationToken cancellationToken) =>
+        Task.FromResult(new Coreloom.Core.Gaming.TweakResult(true, "Allowed."));
+
+    public Task<bool> SetChargerPowerModeAsync(int mode, CancellationToken cancellationToken) => Task.FromResult(true);
+
+    public Coreloom.Core.Gaming.MemorySnapshot? Memory() => new(Coreloom.Core.Gaming.MemoryPressure.Warning, 16L << 30, 14_300_000_000, 2_800_000_000, 1_250_000_000,
+    [
+        new("Ember Road", 6_400_000_000), new("Google Chrome", 2_550_000_000), new("Slack", 940_000_000), new("Photos", 640_000_000),
+        new("WindowServer", 520_000_000), new("Music", 310_000_000),
+    ]);
+
+    public Coreloom.Core.Gaming.ThermalPressure? ThermalState() => Coreloom.Core.Gaming.ThermalPressure.Fair;
+
+    public IReadOnlyList<Coreloom.Core.Gaming.CoreTimes> CoreTimes()
+    {
+        // Every call is four seconds later: each program's processor time grows by what it used in them.
+        ulong n = (ulong)++_calls;
+        Coreloom.Core.Gaming.CoreTimes Times(int pid, string name, double cores, double pShare, int qos)
+        {
+            ulong total = (ulong)(cores * 4e9 * n);
+            ulong p = (ulong)(total * pShare);
+            return new(pid, name, total, total, p, qos == 0 ? total : 0, qos == 1 ? total : 0, qos == 2 ? total : 0, qos == 3 ? total : 0, qos == 4 ? total : 0);
+        }
+
+        return
+        [
+            Times(401, "Ember Road", 3.1, 0.97, 0), Times(402, "Google Chrome", 0.42, 0.86, 1), Times(403, "Discord", 0.18, 0.71, 2),
+            Times(404, "Spotlight", 0.22, 0.05, 4), Times(405, "Music", 0.06, 0.1, 3), Times(406, "WindowServer", 0.35, 0.8, 0),
+        ];
+    }
+
+    public Task<Coreloom.Core.Gaming.MetalFxFeatures> MetalFxAsync(Coreloom.Core.Gaming.GameEntry game, CancellationToken cancellationToken) =>
+        Task.FromResult(game.Id switch
+        {
+            "steam:1" => Coreloom.Core.Gaming.MetalFxFeatures.Linked | Coreloom.Core.Gaming.MetalFxFeatures.TemporalUpscaling | Coreloom.Core.Gaming.MetalFxFeatures.FrameInterpolation,
+            "steam:2" => Coreloom.Core.Gaming.MetalFxFeatures.Linked | Coreloom.Core.Gaming.MetalFxFeatures.SpatialUpscaling,
+            "app:4" => Coreloom.Core.Gaming.MetalFxFeatures.Linked | Coreloom.Core.Gaming.MetalFxFeatures.TemporalUpscaling | Coreloom.Core.Gaming.MetalFxFeatures.Denoising,
+            _ => Coreloom.Core.Gaming.MetalFxFeatures.None,
+        });
+
+    public IReadOnlyList<Coreloom.Core.Gaming.DisplayDescription> Displays() =>
+    [
+        new("Built-in Liquid Retina XDR Display", true, new(3024, 1964, 1512, 982, 120), 120, true, 16, 10, 3024, 1964),
+        new("Desk monitor", false, new(2560, 1440, 2560, 1440, 60), 165, false, 1, 8, 2560, 1440),
+    ];
+
+    public Task<Coreloom.Core.Gaming.CpuArchitecture> ArchitectureAsync(Coreloom.Core.Gaming.GameEntry game, CancellationToken cancellationToken) =>
+        Task.FromResult(game.Id switch
+        {
+            "steam:5" => Coreloom.Core.Gaming.CpuArchitecture.X86_64,
+            "steam:2" or "epic:3" => Coreloom.Core.Gaming.CpuArchitecture.Universal,
+            _ => Coreloom.Core.Gaming.CpuArchitecture.Arm64,
+        });
+
+    public IReadOnlyList<TranslatedProcess> TranslatedProcesses() => [new(512, "Pixel Notes")];
+
+    public IReadOnlyList<Coreloom.Core.Gaming.RunningAppInfo> RunningApps() =>
+    [
+        new(402, "Google Chrome", "com.google.Chrome", "/Applications/Google Chrome.app", 14.2, 2_550_000_000, 3.1, true),
+        new(403, "Discord", "com.hnc.Discord", "/Applications/Discord.app", 6.4, 720_000_000, 2.2, true),
+        new(407, "Slack", "com.tinyspeck.slackmacgap", "/Applications/Slack.app", 3.8, 940_000_000, 0.4, true),
+        new(408, "Photos", "com.apple.Photos", "/System/Applications/Photos.app", 1.1, 640_000_000, 0, true),
+        new(405, "Music", "com.apple.Music", "/System/Applications/Music.app", 1.6, 310_000_000, 0, true),
+        new(409, "Steam", "com.valvesoftware.steam", "/Applications/Steam.app", 2.0, 480_000_000, 0.5, true),
+        new(410, "Finder", "com.apple.finder", "/System/Library/CoreServices/Finder.app", 0.3, 120_000_000, 0, true),
+    ];
+
+    public Task<bool> QuitAsync(Coreloom.Core.Gaming.RunningAppInfo app, CancellationToken cancellationToken) => Task.FromResult(true);
+
+    public bool Reopen(string bundlePath) => true;
 }

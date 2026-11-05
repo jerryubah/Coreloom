@@ -34,7 +34,7 @@
           <Grid ColumnDefinitions="Auto,*,Auto">
             <Grid Width="38" Height="38" VerticalAlignment="Top">
               <Ellipse Fill="{Binding IsConnected, Converter={StaticResource BoolToBrush}, ConverterParameter='Brush.Success|Brush.TextTertiary'}" Opacity="0.14" />
-              <Path Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
                     Stroke="{Binding IsConnected, Converter={StaticResource BoolToBrush}, ConverterParameter='Brush.Success|Brush.TextSecondary'}" />
             </Grid>
             <StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center" IsVisible="{Binding !IsRenaming}">
@@ -58,7 +58,7 @@
             </StackPanel>
             <Button Grid.Column="2" Theme="{StaticResource Button.Icon}" Width="28" Height="28" Margin="6,0,0,0" VerticalAlignment="Center"
                     Command="{Binding RenameCommand}" IsVisible="{Binding !IsRenaming}" ToolTip.Tip="Rename" AutomationProperties.Name="Rename">
-              <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Edit}" />
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Edit}" />
             </Button>
           </Grid>
 
@@ -79,7 +79,7 @@
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0"
                         IsVisible="{Binding HasBattery}" ToolTip.Tip="Battery">
               <Grid Width="22" Height="12" VerticalAlignment="Center">
-                <Path Theme="{StaticResource IconPath}" Width="22" Height="12" Data="{StaticResource Icon.Battery}" StrokeThickness="1.4"
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="22" Height="12" Data="{StaticResource Icon.Battery}" StrokeThickness="1.4"
                       Stroke="{Binding BatteryColorKey, Converter={StaticResource ColorKeyToBrush}}" />
                 <ProgressBar Theme="{StaticResource ProgressBar.Thin}" Width="14" Height="6" Margin="2.5,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
                              Maximum="1" Background="Transparent" Foreground="{Binding BatteryColorKey, Converter={StaticResource ColorKeyToBrush}}"
@@ -101,7 +101,7 @@
             <Button Theme="{StaticResource Button.Primary}" Padding="12,6" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding ActionCommand}"
                     IsVisible="{Binding !IsConnected}">
               <StackPanel Orientation="Horizontal">
-                <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Link}" Stroke="{DynamicResource Brush.OnAccent}"
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Link}" Stroke="{DynamicResource Brush.OnAccent}"
                       IsVisible="{Binding !IsBusy}" />
                 <c:RadialGauge Theme="{StaticResource DeviceSpinner}" Fill="{DynamicResource Brush.OnAccent}" b:Spin.IsSpinning="{Binding IsBusy}"
                                IsVisible="{Binding IsBusy}" />
@@ -111,7 +111,7 @@
             <Button Theme="{StaticResource Button.Secondary}" Padding="12,6" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding ActionCommand}"
                     IsVisible="{Binding IsConnected}">
               <StackPanel Orientation="Horizontal">
-                <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Unlink}"
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Unlink}"
                       IsVisible="{Binding !IsBusy}" />
                 <c:RadialGauge Theme="{StaticResource DeviceSpinner}" b:Spin.IsSpinning="{Binding IsBusy}"
                                IsVisible="{Binding IsBusy}" />
@@ -129,14 +129,14 @@
         <Grid ColumnDefinitions="Auto,*,Auto">
           <Grid Width="34" Height="34" VerticalAlignment="Top">
             <Ellipse Fill="{DynamicResource Brush.Accent}" Opacity="0.12" />
-            <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
+            <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
                   Stroke="{DynamicResource Brush.Accent}" />
           </Grid>
           <StackPanel Grid.Column="1" Margin="11,0,6,0" VerticalAlignment="Center">
             <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
             <TextBlock Text="{Binding Detail}" Theme="{StaticResource Text.Caption}" Margin="0,1,0,0" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Detail}" />
             <StackPanel Orientation="Horizontal" Margin="0,4,0,0" IsVisible="{Binding HasProblem}">
-              <Path Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Elevated}" />
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="12" Height="12" Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Elevated}" />
               <TextBlock Text="{Binding ProblemText}" FontSize="11.5" Foreground="{DynamicResource Brush.Elevated}" Margin="5,0,0,0" TextTrimming="CharacterEllipsis" />
             </StackPanel>
             <TextBlock Classes="message" Classes.error="{Binding MessageIsError}" Text="{Binding Message}" FontSize="11.5" Foreground="{DynamicResource Brush.Success}" TextWrapping="Wrap" Margin="0,4,0,0"
@@ -146,7 +146,7 @@
           <Button Grid.Column="2" Theme="{StaticResource Button.Secondary}" Width="32" Height="32" Padding="0" VerticalAlignment="Center" Command="{Binding EjectCommand}"
                   ToolTip.Tip="Eject (safely remove)" AutomationProperties.Name="Eject" IsVisible="{Binding CanEject}">
             <Grid>
-              <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Eject}"
+              <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Eject}"
                     IsVisible="{Binding !IsBusy}" />
               <c:RadialGauge Theme="{StaticResource DeviceSpinner}" Width="13" Height="13" b:Spin.IsSpinning="{Binding IsBusy}"
                              IsVisible="{Binding IsBusy}" />
@@ -160,7 +160,7 @@
     <DataTemplate x:Key="WiredGroup" DataType="{x:Type pages:DeviceGroupViewModel}">
       <StackPanel>
         <StackPanel Orientation="Horizontal" Margin="2,0,0,10">
-          <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{Binding IconKey, Converter={StaticResource IconKeyToGeometry}}"
                 Stroke="{DynamicResource Brush.TextSecondary}" VerticalAlignment="Center" />
           <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}" Margin="8,0,0,0" VerticalAlignment="Center" />
           <Border Theme="{StaticResource Badge}" Margin="8,0,0,0">
@@ -203,7 +203,7 @@
       <c:SquircleBorder Theme="{StaticResource Card}" Margin="0,0,0,16" Background="{DynamicResource Brush.ElevatedSoft}"
               IsVisible="{Binding !IsSupported}">
         <StackPanel Orientation="Horizontal">
-          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.Elevated}" />
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Info}" Stroke="{DynamicResource Brush.Elevated}" />
           <TextBlock Text="{Binding UnsupportedText}" Margin="10,0,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
         </StackPanel>
       </c:SquircleBorder>
@@ -227,7 +227,7 @@
               <Grid ColumnDefinitions="Auto,Auto,Auto,*">
                 <Grid Width="48" Height="48">
                   <Ellipse x:Name="RadioHalo" Fill="{DynamicResource Brush.Accent}" Opacity="0.18" />
-                  <Path Theme="{StaticResource IconPath}" Width="22" Height="22" Data="{StaticResource Icon.Wireless}" Stroke="{DynamicResource Brush.Accent}" />
+                  <c:GridIcon Theme="{StaticResource IconPath}" Width="22" Height="22" Data="{StaticResource Icon.Wireless}" Stroke="{DynamicResource Brush.Accent}" />
                 </Grid>
                 <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
                   <TextBlock Text="Bluetooth" Theme="{StaticResource Text.Section}" />
@@ -245,7 +245,7 @@
               <Border Background="{DynamicResource Brush.ElevatedSoft}" CornerRadius="8" Padding="10,6" Margin="0,10,0,0" HorizontalAlignment="Left"
                       IsVisible="{Binding LowBatteryText, Converter={StaticResource HasValue}}">
                 <StackPanel Orientation="Horizontal">
-                  <Path Theme="{StaticResource IconPath}" Width="16" Height="10" Data="{StaticResource Icon.Battery}" Stroke="{DynamicResource Brush.Elevated}" />
+                  <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="10" Data="{StaticResource Icon.Battery}" Stroke="{DynamicResource Brush.Elevated}" />
                   <TextBlock Text="{Binding LowBatteryText}" FontSize="12" Margin="8,0,0,0" Foreground="{DynamicResource Brush.Text}" />
                 </StackPanel>
               </Border>
@@ -257,20 +257,20 @@
                 <Button Theme="{StaticResource Button.Primary}" Padding="16,8" Margin="0,0,8,0" Command="{Binding AllowBluetoothCommand}"
                         IsVisible="{Binding NeedsBluetoothPermission}" ToolTip.Tip="macOS asks whether Coreloom may use Bluetooth">
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Wireless}" Stroke="{DynamicResource Brush.OnAccent}" />
+                    <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Wireless}" Stroke="{DynamicResource Brush.OnAccent}" />
                     <TextBlock Text="Allow Bluetooth…" Margin="7,0,0,0" />
                   </StackPanel>
                 </Button>
                 <Button Theme="{StaticResource Button.Primary}" Padding="16,8" Margin="0,0,8,0" Command="{Binding PairCommand}"
                         IsVisible="{Binding !NeedsBluetoothPermission}">
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Plus}" Stroke="{DynamicResource Brush.OnAccent}" />
+                    <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Plus}" Stroke="{DynamicResource Brush.OnAccent}" />
                     <TextBlock Text="Pair a new device" Margin="7,0,0,0" />
                   </StackPanel>
                 </Button>
                 <Button Theme="{StaticResource Button.Secondary}" Padding="14,8" Command="{Binding RefreshCommand}" ToolTip.Tip="Check again">
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Refresh}" />
+                    <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Refresh}" />
                     <TextBlock Text="Refresh" Margin="7,0,0,0" />
                   </StackPanel>
                 </Button>
@@ -341,7 +341,7 @@
       </ItemsControl>
       <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="16,14" IsVisible="{Binding !HasBluetoothDevices}">
         <StackPanel Orientation="Horizontal">
-          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Wireless}" Stroke="{DynamicResource Brush.TextTertiary}" />
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Wireless}" Stroke="{DynamicResource Brush.TextTertiary}" />
           <TextBlock Text="{Binding BluetoothEmptyText}" Theme="{StaticResource Text.Secondary}" Margin="10,0,0,0" VerticalAlignment="Center" />
         </StackPanel>
       </c:SquircleBorder>
@@ -371,7 +371,7 @@
       </ItemsControl>
       <c:SquircleBorder Theme="{StaticResource Card.Inset}" Padding="16,14" IsVisible="{Binding !HasWiredDevices}">
         <StackPanel Orientation="Horizontal">
-          <Path Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Plug}" Stroke="{DynamicResource Brush.TextTertiary}" />
+          <c:GridIcon Theme="{StaticResource IconPath}" Width="16" Height="16" Data="{StaticResource Icon.Plug}" Stroke="{DynamicResource Brush.TextTertiary}" />
           <TextBlock Text="{Binding WiredEmptyText}" Theme="{StaticResource Text.Secondary}" Margin="10,0,0,0" VerticalAlignment="Center" />
         </StackPanel>
       </c:SquircleBorder>

@@ -28,7 +28,7 @@
           <StackPanel Margin="20,18">
             <Grid ColumnDefinitions="Auto,*,Auto">
               <c:SquircleBorder Width="38" Height="38" CornerRadius="11" Background="{DynamicResource Brush.AccentSoft}" VerticalAlignment="Top">
-                <Path Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Globe}" Stroke="{DynamicResource Brush.Accent}" />
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="18" Height="18" Data="{StaticResource Icon.Globe}" Stroke="{DynamicResource Brush.Accent}" />
               </c:SquircleBorder>
               <StackPanel Grid.Column="1" Margin="12,0,16,0">
                 <TextBlock Theme="{StaticResource Text.CardTitle}" Text="Internet speed test" />
@@ -38,7 +38,7 @@
                 <Button Theme="{StaticResource Button.AccentGradient}" Padding="18,8" Command="{Binding RunCommand}"
                         IsVisible="{Binding IsIdle}">
                   <StackPanel Orientation="Horizontal">
-                    <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
+                    <c:GridIcon Fit="True" Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Play}" Stroke="{DynamicResource Brush.OnAccent}" />
                     <TextBlock Text="{Binding RunText}" Margin="7,0,0,0" />
                   </StackPanel>
                 </Button>
@@ -52,7 +52,7 @@
             <Border Background="{DynamicResource Brush.CriticalSoft}" CornerRadius="8" Padding="12,8" Margin="0,12,0,0"
                     IsVisible="{Binding Error, Converter={StaticResource HasValue}}">
               <StackPanel Orientation="Horizontal">
-                <Path Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Critical}" />
+                <c:GridIcon Theme="{StaticResource IconPath}" Width="14" Height="14" Data="{StaticResource Icon.Warning}" Stroke="{DynamicResource Brush.Critical}" />
                 <TextBlock Text="{Binding Error}" Margin="8,0,0,0" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Text}" />
               </StackPanel>
             </Border>
@@ -77,7 +77,7 @@
                   </ItemsControl.ItemsPanel>
                 </ItemsControl>
                 <StackPanel Orientation="Horizontal" Margin="2,12,0,0" IsVisible="{Binding Server, Converter={StaticResource HasValue}}">
-                  <Path Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Network}" VerticalAlignment="Center" />
+                  <c:GridIcon Theme="{StaticResource IconPath}" Width="13" Height="13" Data="{StaticResource Icon.Network}" VerticalAlignment="Center" />
                   <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Server}" Margin="7,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
                 <TextBlock Theme="{StaticResource Text.Caption}" Text="{Binding Finished}" Margin="22,2,0,0"
