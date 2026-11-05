@@ -1,0 +1,16 @@
+Processor: AMD64 Family 25 Model 1 Stepping 1, AuthenticAMD, 4 logical processors
+CPU File compression: single 26.673 MB/s = 1778 · multi 80.996 MB/s = 5400
+CPU Text processing: single 358.039 MB/s = 1356 · multi 906.832 MB/s = 3435
+CPU Cryptography: single 2602.668 MB/s = 3470 · multi 8254.743 MB/s = 11006
+CPU Navigation: single 456.287 routes/s = 1521 · multi 1351.143 routes/s = 4504
+CPU Ray tracing: single 11.493 Mpixels/s = 1437 · multi 28.129 Mpixels/s = 3516
+CPU Machine learning: single 29.971 GFLOPS = 1647 · multi 62.932 GFLOPS = 3458
+CPU Photo filter: single 270.93 Mpixels/s = 2185 · multi 503.952 Mpixels/s = 4064
+CPU Physics: single 192.752 M pairs/s = 1277 · multi 406.936 M pairs/s = 2695
+CPU single-core 1740 · multi-core 4325 on 4 threads · memory 46.0 GB/s, 86.8 ns
+GPU Lighting on Microsoft Basic Render Driver (WARP): 0.416 fps = 69.3
+GPU Ray marching on Microsoft Basic Render Driver (WARP): 2.277 fps = 650.5
+GPU Compute on Microsoft Basic Render Driver (WARP): 59.543 GFLOPS = 270.7
+GPU Memory bandwidth on Microsoft Basic Render Driver (WARP): 17.455 GB/s = 1662.3
+GPU Physics on Microsoft Basic Render Driver (WARP): 1.044 G pairs/s = 232
+GPU overall 342.4 · graphics 212.3 · compute 470.8 in 21.7 s
