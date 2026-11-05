@@ -190,6 +190,17 @@
   }
   .stage .caption { text-align: center; color: var(--text-3); font-size: 13.5px; margin-top: 18px; }
 
+  /* The product film: the 90-second film as an autoplaying, looping picture (assets/readme/coreloom-film.avif, copied
+     here by the Website workflow); a still for people who prefer less motion */
+  .film { position: relative; z-index: 1; max-width: 1120px; margin: 56px auto 0; }
+  .film::before {
+    content: ""; position: absolute; inset: 10% 6% -6%; z-index: -1; border-radius: 40px; filter: blur(60px);
+    background: radial-gradient(closest-side, rgba(91, 140, 255, 0.38), rgba(138, 107, 255, 0.14) 60%, transparent);
+  }
+  .film .frame { border-radius: 20px; overflow: hidden; border: 1px solid var(--line-2); box-shadow: var(--shadow); background: #03060f; }
+  .film img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+  .film .caption { text-align: center; color: var(--text-3); font-size: 13.5px; margin-top: 18px; }
+
   /* ---------- Sections ---------- */
   section { position: relative; z-index: 1; padding: 168px 0 0; }
   @media (max-width: 760px) { section { padding-top: 120px; } }
@@ -461,6 +472,26 @@
       <div class="caption"><span class="os-mac">Coreloom on a Mac with Apple silicon</span><span class="os-windows">Coreloom on a Windows 11 PC</span> (sample readings). <a href="#" id="other-os" style="color:var(--text-2)"><span class="os-mac">See it on Windows</span><span class="os-windows">See it on a Mac</span></a></div>
     </div>
   </div>
+
+  <!-- The product film -->
+  <section id="film">
+    <div class="wrap">
+      <div class="head center reveal">
+        <div class="eyebrow">The film</div>
+        <h2>Ninety seconds with Coreloom.</h2>
+        <p class="sub">Your PC and your Mac side by side: the dashboard, a background of your own, Game Boost, Smart Optimize and your phone.</p>
+      </div>
+      <div class="film reveal" style="--i:1">
+        <div class="frame">
+          <picture>
+            <source srcset="assets/coreloom-film-still.webp" media="(prefers-reduced-motion: reduce)">
+            <img src="assets/coreloom-film.avif" width="1600" height="900" loading="lazy" alt="Coreloom's product film: a PC and a Mac rise out of the dark, then the Windows dashboard, the Mac app with readings in its menu bar, a background behind frosted glass and a liquid glass sidebar, Game Boost on both, the in-game overlay, benchmarks, Smart Optimize, and the computer's readings live on a phone.">
+          </picture>
+        </div>
+        <div class="caption">Coreloom 1.9.2 on Windows, a Mac and a phone (sample readings). Silent, 1:30, it loops.</div>
+      </div>
+    </div>
+  </section>
 
   <!-- What it does -->
   <section id="features">

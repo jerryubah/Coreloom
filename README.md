@@ -188,10 +188,10 @@ Each button downloads the newest version. Once installed, Coreloom keeps itself 
 ### The product film
 
 <p align="center">
-  <img src="assets/readme/coreloom-film.avif" width="100%" alt="Coreloom 1.4.5 product film: the PC lighting up, the Overview dashboard, live gauges, Make it yours, Game Boost, the frame limiter, the game library, the in-game overlay, honest numbers, Smart Optimize, devices and speed tests, and what Coreloom never does">
+  <img src="assets/readme/coreloom-film.avif" width="100%" alt="Coreloom 1.9.2 product film: a PC and a Mac rise out of the dark, then the Windows dashboard, the Mac app with readings in its menu bar, a background behind frosted glass and a liquid glass sidebar, Game Boost with twelve boosts on Windows and four on a Mac, the in-game overlay, benchmarks, Smart Optimize, Coreloom on your phone and what Coreloom never does">
 </p>
 
-Made with Coreloom 1.4.5 on Windows, before the frosted-glass design and the Mac app.
+Made with Coreloom 1.9.2 on Windows, a Mac and a phone (sample readings). Silent, 1:30, it loops.
 
 ## Coreloom for Mac
 
