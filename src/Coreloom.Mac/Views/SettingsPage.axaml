@@ -607,6 +607,25 @@
                 </StackPanel>
               </Border>
 
+              <!-- Gradient noise (since 1.9.3): the grain over the banners' and speed tests' light, and over the window. -->
+              <Border Theme="{StaticResource Row}">
+                <StackPanel>
+                  <TextBlock Theme="{StaticResource Row.Title}" Text="Gradient noise" />
+                  <TextBlock Theme="{StaticResource Row.Description}" TextWrapping="Wrap"
+                             Text="The fine grain over the lit banners, the speed tests, What's new and the window, which keeps their gradients smooth. Less for a cleaner look, more for texture." />
+                  <Grid Margin="0,12,0,0" ColumnDefinitions="136,*,Auto">
+                    <TextBlock Text="Noise" FontSize="12.5" VerticalAlignment="Center" Margin="0,0,16,0"
+                               ToolTip.Tip="How strong the grain is. The middle is the standard grain; at the far left there is none." />
+                    <Slider Grid.Column="1" Theme="{StaticResource Slider.Default}" Minimum="0" Maximum="100" SmallChange="5" LargeChange="10"
+                            Value="{Binding Noise}" AutomationProperties.Name="Gradient noise" />
+                    <TextBlock Grid.Column="2" Text="{Binding NoiseText}" Theme="{StaticResource Text.Caption}" MinWidth="58"
+                               TextAlignment="Right" VerticalAlignment="Center" Margin="12,0,0,0" />
+                  </Grid>
+                  <Button Theme="{StaticResource Button.Link}" Margin="0,10,0,0" HorizontalAlignment="Left" Content="Reset noise"
+                          Command="{Binding ResetNoiseCommand}" IsVisible="{Binding !IsStandardNoise}" />
+                </StackPanel>
+              </Border>
+
               <Border Theme="{StaticResource Row}">
                 <CheckBox Theme="{StaticResource ToggleSwitch}" IsChecked="{Binding AnimateValues}">
                   <StackPanel>
@@ -1115,7 +1134,7 @@
               <Grid ClipToBounds="True">
                 <!-- the banners' light from the top edge, its bright line and grain (as on Gaming and Smart Optimize) -->
                 <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.HeroGlow}" IsHitTestVisible="False" />
-                <c:SquircleBorder CornerRadius="17" Background="{StaticResource GrainTexture}" Opacity="0.045" IsHitTestVisible="False" />
+                <c:SquircleBorder CornerRadius="17" Background="{StaticResource GrainTexture}" Opacity="{DynamicResource Grain.Opacity}" IsHitTestVisible="False" />
                 <Border Height="1" VerticalAlignment="Top" Margin="56,0" Background="{DynamicResource Brush.HeroLine}" IsHitTestVisible="False" />
                 <StackPanel Margin="26,24,26,24">
                   <Grid ColumnDefinitions="Auto,*">
@@ -1166,7 +1185,7 @@
             <c:SquircleBorder Theme="{StaticResource Card}" Sheen="0.6" Padding="0" Margin="0,12,0,0" IsVisible="{Binding ShowInstalledSummary}">
               <Grid ClipToBounds="True">
                 <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.HeroGlow}" Opacity="0.7" IsHitTestVisible="False" />
-                <c:SquircleBorder CornerRadius="17" Background="{StaticResource GrainTexture}" Opacity="0.045" IsHitTestVisible="False" />
+                <c:SquircleBorder CornerRadius="17" Background="{StaticResource GrainTexture}" Opacity="{DynamicResource Grain.Opacity}" IsHitTestVisible="False" />
                 <StackPanel Margin="26,24,26,24">
                   <Grid ColumnDefinitions="Auto,*">
                     <c:SquircleBorder Width="52" Height="52" CornerRadius="16" Background="{DynamicResource Brush.DialTile}" BorderBrush="{DynamicResource Brush.DialTileRim}"

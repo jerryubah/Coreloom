@@ -876,7 +876,7 @@
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="Template">
       <ControlTemplate>
-        <c:SquircleBorder Name="Root" Background="Transparent" CornerRadius="8" Padding="11,5" Margin="1">
+        <c:SquircleBorder Name="Root" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="8" Padding="10,4" Margin="1">
           <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </c:SquircleBorder>
       </ControlTemplate>
@@ -884,8 +884,11 @@
     <Style Selector="^:pointerover">
       <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
     </Style>
+    <!-- The selected segment: a raised thumb lighter than the track with a hairline rim, so its shape shows over any
+         background (since 1.9.3; the card colour it had sank into dark backgrounds). -->
     <Style Selector="^:selected /template/ c|SquircleBorder#Root">
-      <Setter Property="Background" Value="{DynamicResource Brush.Card}" />
+      <Setter Property="Background" Value="{DynamicResource Brush.SegmentThumb}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.SegmentThumbRim}" />
     </Style>
     <Style Selector="^:selected">
       <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />

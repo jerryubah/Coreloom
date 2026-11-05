@@ -90,6 +90,7 @@ public sealed class AppSettings
         Appearance.Backdrop.Normalize();
         Appearance.Sidebar ??= new SidebarSettings();
         Appearance.Sidebar.Normalize();
+        Appearance.Noise = Math.Clamp(Appearance.Noise, 0, 100);
         if (loaded < 2 && string.Equals(Appearance.Accent, AccentPalette.PreviousDefault, StringComparison.OrdinalIgnoreCase))
         {
             // Settings saved before 1.9.0: whoever kept the old default accent gets the new look's blue (an accent chosen
@@ -162,6 +163,19 @@ public sealed class AppearanceSettings
 
     /// <summary>The sidebar's surface, drop shadow and blur (since 1.9.2).</summary>
     public SidebarSettings Sidebar { get; set; } = new();
+
+    /// <summary>The noise's middle: the grain the gradients had before 1.9.3.</summary>
+    public const int StandardNoise = 50;
+
+    /// <summary>
+    /// How strong the fine grain over the gradients is, in percent (since 1.9.3): the banners' and speed tests' light,
+    /// the What's new card and, on a Mac, the faint grain over the whole window. 0 turns it off, 50 is the standard,
+    /// 100 twice as strong.
+    /// </summary>
+    public int Noise { get; set; } = StandardNoise;
+
+    /// <summary>How much of the standard grain to draw (0 … 2).</summary>
+    public double NoiseFactor => Math.Clamp(Noise, 0, 100) / (double)StandardNoise;
 }
 
 public sealed class MonitoringSettings

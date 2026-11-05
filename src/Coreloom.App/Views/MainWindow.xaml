@@ -250,9 +250,9 @@
           </StackPanel>
 
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-            <!-- Live indicator -->
-            <Border Style="{StaticResource Badge}" Padding="10,5" Margin="0,0,12,0" Background="{DynamicResource Brush.Surface}"
-                    ToolTip="Monitoring status and polling interval">
+            <!-- Live indicator: as tall as the range picker beside it, with its corners (since 1.9.3). -->
+            <Border Style="{StaticResource Badge}" Padding="12,0" Margin="0,0,12,0" Background="{DynamicResource Brush.Surface}" CornerRadius="11"
+                    Height="{Binding ActualHeight, ElementName=RangePicker}" ToolTip="Monitoring status and polling interval">
               <StackPanel Orientation="Horizontal">
                 <Grid Width="10" Height="10" VerticalAlignment="Center">
                   <Ellipse x:Name="LivePulse" Fill="{DynamicResource Brush.Success}" Opacity="0.35" RenderTransformOrigin="0.5,0.5">
@@ -267,7 +267,7 @@
             </Border>
 
             <!-- Time window -->
-            <ListBox Style="{StaticResource Segmented}" ItemsSource="{Binding WindowOptions}" DisplayMemberPath="Label"
+            <ListBox x:Name="RangePicker" Style="{StaticResource Segmented}" ItemsSource="{Binding WindowOptions}" DisplayMemberPath="Label"
                      SelectedValuePath="Value" SelectedValue="{Binding SelectedWindow}" ToolTip="Chart time range" />
 
             <!-- Freeze charts -->

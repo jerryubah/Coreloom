@@ -410,6 +410,36 @@ public sealed class SettingsViewModel : PageViewModel
     /// <summary>The sidebar's surface, drop shadow and blur (Settings › Appearance › Sidebar).</summary>
     public SidebarLookViewModel Sidebar { get; }
 
+    /// <summary>The grain over the gradients, 0–100 % (Settings › Appearance › Gradient noise, since 1.9.3; 50 is the standard).</summary>
+    public double Noise
+    {
+        get => Settings.Current.Appearance.Noise;
+        set
+        {
+            int v = (int)Math.Round(Math.Clamp(value, 0, 100));
+            if (v != Settings.Current.Appearance.Noise)
+            {
+                Change("Appearance", s => s.Appearance.Noise = v);
+                OnPropertyChanged(nameof(NoiseText));
+                OnPropertyChanged(nameof(IsStandardNoise));
+            }
+        }
+    }
+
+    public string NoiseText => Settings.Current.Appearance.Noise switch
+    {
+        0 => "Off",
+        AppearanceSettings.StandardNoise => "Standard",
+        var n => $"{n} %",
+    };
+
+    public bool IsStandardNoise => Settings.Current.Appearance.Noise == AppearanceSettings.StandardNoise;
+
+    private IRelayCommand? _resetNoise;
+
+    /// <summary>Puts the grain back to the standard strength.</summary>
+    public IRelayCommand ResetNoiseCommand => _resetNoise ??= new RelayCommand(() => Noise = AppearanceSettings.StandardNoise);
+
     // ---- Monitoring ------------------------------------------------------------------------------
 
     public IReadOnlyList<Option<int>> PollingOptions { get; }

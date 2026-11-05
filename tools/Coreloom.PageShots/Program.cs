@@ -414,6 +414,23 @@ internal static class Program
             Save(root, Path.Combine(output, name + ".png"));
         }
 
+        // The Gaming banner with the grain off and at full strength (Settings › Appearance › Gradient noise, 1.9.3).
+        foreach (var (name, noise) in new[] { ("windows-noise-off", 0), ("windows-noise-strong", 100) })
+        {
+            ThemeService.Instance?.Apply(new AppearanceSettings { Theme = ThemePreference.Dark, ReducedMotion = true, Noise = noise });
+            data.Settings.Current.Appearance.Backdrop = new BackdropSettings();
+            data.Settings.Current.Appearance.Sidebar = new SidebarSettings();
+            shell.Navigate(shell.Gaming);
+            for (int i = 0; i < 20; i++)
+            {
+                shell.OnFrame(data.Poll());
+                await Task.Delay(120);
+                await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            }
+
+            Save(root, Path.Combine(output, name + ".png"));
+        }
+
         // The Gaming page scrolled to its boosts (the website's "New in 1.8.4" picture for Windows visitors).
         ThemeService.Instance?.Apply(new AppearanceSettings { Theme = ThemePreference.Dark, ReducedMotion = true });
         data.Settings.Current.Appearance.Backdrop = new BackdropSettings();

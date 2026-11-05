@@ -17,9 +17,9 @@
   <Grid>
     <Grid x:Name="Picture" Background="Transparent" ToolTip="{Binding FanToolTip}" ToolTipService.InitialShowDelay="900">
       <Viewbox x:Name="Art" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality">
-        <Grid Width="552" Height="660">
-          <Image Source="pack://application:,,,/Assets/PcRender/base.png" Width="552" Height="660" />
-          <Rectangle x:Name="GlowLayer" Width="552" Height="660" Fill="#0D6BFF" IsHitTestVisible="False">
+        <Grid Width="555" Height="663">
+          <Image Source="pack://application:,,,/Assets/PcRender/base.png" Width="555" Height="663" />
+          <Rectangle x:Name="GlowLayer" Width="555" Height="663" Fill="#0D6BFF" IsHitTestVisible="False">
             <Rectangle.OpacityMask>
               <ImageBrush ImageSource="pack://application:,,,/Assets/PcRender/glow.png" />
             </Rectangle.OpacityMask>
@@ -27,67 +27,67 @@
 
           <!-- Fan blades: turned by PcIllustration.xaml.cs -->
           <Canvas IsHitTestVisible="False">
-            <Grid Canvas.Left="144.02" Canvas.Top="91.47" Width="69.56" Height="69.56" RenderTransformOrigin="0.5,0.5">
+            <Grid Canvas.Left="116.54" Canvas.Top="81.49" Width="85.52" Height="85.52" RenderTransformOrigin="0.5,0.5">
               <Grid.RenderTransform>
                 <TransformGroup>
                   <RotateTransform x:Name="FanTop1Turn" Angle="0" />
-                  <ScaleTransform ScaleY="0.3346" />
-                  <RotateTransform Angle="1" />
+                  <ScaleTransform ScaleY="0.2707" />
+                  <RotateTransform Angle="2.4" />
                 </TransformGroup>
               </Grid.RenderTransform>
               <Image x:Name="FanTop1Sharp" Source="pack://application:,,,/Assets/PcRender/blades-top1.png" />
               <Image x:Name="FanTop1Blur" Source="pack://application:,,,/Assets/PcRender/blades-top1-blur.png" Opacity="0" />
             </Grid>
-            <Grid Canvas.Left="235.27" Canvas.Top="87.67" Width="70.35" Height="70.35" RenderTransformOrigin="0.5,0.5">
+            <Grid Canvas.Left="221.54" Canvas.Top="76.98" Width="83.63" Height="83.63" RenderTransformOrigin="0.5,0.5">
               <Grid.RenderTransform>
                 <TransformGroup>
                   <RotateTransform x:Name="FanTop2Turn" Angle="23" />
-                  <ScaleTransform ScaleY="0.3346" />
-                  <RotateTransform Angle="0" />
+                  <ScaleTransform ScaleY="0.2881" />
+                  <RotateTransform Angle="0.2" />
                 </TransformGroup>
               </Grid.RenderTransform>
               <Image x:Name="FanTop2Sharp" Source="pack://application:,,,/Assets/PcRender/blades-top2.png" />
               <Image x:Name="FanTop2Blur" Source="pack://application:,,,/Assets/PcRender/blades-top2-blur.png" Opacity="0" />
             </Grid>
-            <Grid Canvas.Left="325.28" Canvas.Top="84.53" Width="70.44" Height="70.44" RenderTransformOrigin="0.5,0.5">
+            <Grid Canvas.Left="326.79" Canvas.Top="70.46" Width="85.24" Height="85.24" RenderTransformOrigin="0.5,0.5">
               <Grid.RenderTransform>
                 <TransformGroup>
                   <RotateTransform x:Name="FanTop3Turn" Angle="9" />
-                  <ScaleTransform ScaleY="0.3354" />
-                  <RotateTransform Angle="-1.5" />
+                  <ScaleTransform ScaleY="0.2938" />
+                  <RotateTransform Angle="-0.8" />
                 </TransformGroup>
               </Grid.RenderTransform>
               <Image x:Name="FanTop3Sharp" Source="pack://application:,,,/Assets/PcRender/blades-top3.png" />
               <Image x:Name="FanTop3Blur" Source="pack://application:,,,/Assets/PcRender/blades-top3-blur.png" Opacity="0" />
             </Grid>
-            <Grid Canvas.Left="118.74" Canvas.Top="481.74" Width="73.41" Height="73.41" RenderTransformOrigin="0.5,0.5">
+            <Grid Canvas.Left="103.59" Canvas.Top="507.07" Width="88.64" Height="88.64" RenderTransformOrigin="0.5,0.5">
               <Grid.RenderTransform>
                 <TransformGroup>
                   <RotateTransform x:Name="FanBottom1Turn" Angle="31" />
-                  <ScaleTransform ScaleY="0.2825" />
-                  <RotateTransform Angle="-2.3" />
+                  <ScaleTransform ScaleY="0.1802" />
+                  <RotateTransform Angle="-1.7" />
                 </TransformGroup>
               </Grid.RenderTransform>
               <Image x:Name="FanBottom1Sharp" Source="pack://application:,,,/Assets/PcRender/blades-bottom1.png" />
               <Image x:Name="FanBottom1Blur" Source="pack://application:,,,/Assets/PcRender/blades-bottom1-blur.png" Opacity="0" />
             </Grid>
-            <Grid Canvas.Left="215.06" Canvas.Top="483.86" Width="72.27" Height="72.27" RenderTransformOrigin="0.5,0.5">
+            <Grid Canvas.Left="208.24" Canvas.Top="510.85" Width="87.13" Height="87.13" RenderTransformOrigin="0.5,0.5">
               <Grid.RenderTransform>
                 <TransformGroup>
                   <RotateTransform x:Name="FanBottom2Turn" Angle="5" />
-                  <ScaleTransform ScaleY="0.2930" />
-                  <RotateTransform Angle="-1.2" />
+                  <ScaleTransform ScaleY="0.1898" />
+                  <RotateTransform Angle="-1.4" />
                 </TransformGroup>
               </Grid.RenderTransform>
               <Image x:Name="FanBottom2Sharp" Source="pack://application:,,,/Assets/PcRender/blades-bottom2.png" />
               <Image x:Name="FanBottom2Blur" Source="pack://application:,,,/Assets/PcRender/blades-bottom2-blur.png" Opacity="0" />
             </Grid>
-            <Grid Canvas.Left="312" Canvas.Top="485.5" Width="73.5" Height="73.5" RenderTransformOrigin="0.5,0.5">
+            <Grid Canvas.Left="316.01" Canvas.Top="511.93" Width="90.81" Height="90.81" RenderTransformOrigin="0.5,0.5">
               <Grid.RenderTransform>
                 <TransformGroup>
                   <RotateTransform x:Name="FanBottom3Turn" Angle="17" />
-                  <ScaleTransform ScaleY="0.2964" />
-                  <RotateTransform Angle="-0.3" />
+                  <ScaleTransform ScaleY="0.1873" />
+                  <RotateTransform Angle="-0.4" />
                 </TransformGroup>
               </Grid.RenderTransform>
               <Image x:Name="FanBottom3Sharp" Source="pack://application:,,,/Assets/PcRender/blades-bottom3.png" />
@@ -97,12 +97,12 @@
 
           <!-- Live text: the pump screen and the graphics card -->
           <Canvas IsHitTestVisible="False" TextOptions.TextFormattingMode="Ideal" TextOptions.TextRenderingMode="Grayscale">
-            <TextBlock Canvas.Left="220" Canvas.Top="214.78" Width="90" TextAlignment="Center" Text="{Binding ScreenValue}"
-                       FontSize="24.74" FontWeight="SemiBold" Foreground="#F5FFFFFF" />
-            <TextBlock Canvas.Left="233" Canvas.Top="242.1" Width="60" TextAlignment="Center" Text="{Binding ScreenLabel}"
-                       FontSize="11" FontWeight="SemiBold" Foreground="#E6FFFFFF" />
-            <TextBlock Canvas.Left="154" Canvas.Top="318.94" Width="166" TextTrimming="CharacterEllipsis" Text="{Binding GpuLabel}"
-                       FontSize="19.93" FontWeight="SemiBold" Foreground="#F2FFFFFF"
+            <TextBlock Canvas.Left="210.42" Canvas.Top="221.97" Width="90" TextAlignment="Center" Text="{Binding ScreenValue}"
+                       FontSize="26.72" FontWeight="SemiBold" Foreground="#F5FFFFFF" />
+            <TextBlock Canvas.Left="225.69" Canvas.Top="248.78" Width="60" TextAlignment="Center" Text="{Binding ScreenLabel}"
+                       FontSize="11.88" FontWeight="SemiBold" Foreground="#E6FFFFFF" />
+            <TextBlock Canvas.Left="133.92" Canvas.Top="342.93" Width="177.12" TextTrimming="CharacterEllipsis" Text="{Binding GpuLabel}"
+                       FontSize="22.27" FontWeight="SemiBold" Foreground="#F2FFFFFF"
                        Visibility="{Binding ShowGpuLabel, Converter={StaticResource BoolToVisibility}}" />
           </Canvas>
         </Grid>

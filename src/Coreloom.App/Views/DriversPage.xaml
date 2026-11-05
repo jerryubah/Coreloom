@@ -152,7 +152,7 @@
         <Grid ClipToBounds="True">
           <!-- The banners' light: from the top edge in the accent, a bright line where it meets the edge, a little grain. -->
           <c:SquircleBorder CornerRadius="17" Background="{DynamicResource Brush.HeroGlow}" IsHitTestVisible="False" />
-          <c:SquircleBorder CornerRadius="17" Background="{StaticResource GrainTexture}" Opacity="0.045" IsHitTestVisible="False" />
+          <c:SquircleBorder CornerRadius="17" Background="{StaticResource GrainTexture}" Opacity="{DynamicResource Grain.Opacity}" IsHitTestVisible="False" />
           <Border Height="1" VerticalAlignment="Top" Margin="56,0" Background="{DynamicResource Brush.HeroLine}" IsHitTestVisible="False" />
 
           <c:AdaptiveGrid MinColumnWidth="360" MaxColumns="2" Spacing="28" Margin="26,24,26,24">

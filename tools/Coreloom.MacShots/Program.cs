@@ -171,6 +171,12 @@ internal static class Program
             });
         }
 
+        // The grain over the gradients (--noise=0 … 100; 50 is the standard).
+        if (Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("--noise=", StringComparison.Ordinal)) is { } noise)
+        {
+            data.Settings.Update("Appearance", s => s.Appearance.Noise = int.Parse(noise[8..], System.Globalization.CultureInfo.InvariantCulture));
+        }
+
         // The Mac picture's lighting color (--glow=Rainbow), and the desktop picture off (--no-wallpaper).
         if (Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("--glow=", StringComparison.Ordinal)) is { } glow)
         {

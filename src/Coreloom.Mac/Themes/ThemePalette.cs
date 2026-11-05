@@ -14,6 +14,9 @@ internal static class ThemePalette
         // Since 1.8.2 the cards are glass over the window's background, so what sits inside them (insets, inputs,
         // tracks) is see-through too and takes on whatever the card shows. "Card" stays solid for menus and pop-ups.
         ["Surface"] = Hex("#0DFFFFFF"),
+        // The selected segment of a picker (the range picker, sizes, tabs): a raised thumb lighter than its track (1.9.3).
+        ["SegmentThumb"] = Hex("#1CFFFFFF"),
+        ["SegmentThumbRim"] = Hex("#1AFFFFFF"),
         ["Card"] = Hex("#10141B"),
         ["CardHover"] = Hex("#161B23"),
         ["CardBorder"] = Hex("#14FFFFFF"),
@@ -80,6 +83,8 @@ internal static class ThemePalette
     {
         ["Background"] = Hex("#EEF1F5"),
         ["Surface"] = Hex("#0B000000"),
+        ["SegmentThumb"] = Hex("#FFFFFF"),
+        ["SegmentThumbRim"] = Hex("#14000000"),
         ["Card"] = Hex("#FFFFFF"),
         ["CardHover"] = Hex("#F8F9FA"),
         ["CardBorder"] = Hex("#14000000"),

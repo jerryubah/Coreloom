@@ -37,35 +37,36 @@ PACK = "pack://application:,,,/Assets/PcRender/"
 
 # ---- The render (coordinates in its pixels) -----------------------------------------------------------------
 
-CROP = (0, 24, 1104, 1344)            # x0, y0, x1, y1: the case plus a little room
-OUTPUT_SCALE = 0.5                    # 1104 x 1320 -> 552 x 660 (sharp up to ~280 % at the header's 196 x 234 DIP)
+CROP = (84, 27, 1112, 1254)           # x0, y0, x1, y1: the case plus a little room, in the header's shape (196 x 234)
+OUTPUT_SCALE = 0.54                   # 1028 x 1227 -> 555 x 663 (sharp up to ~280 % at the header's 196 x 234 DIP)
 
 # The render's glow color (the fan rings' blue), as full-brightness sRGB. Each pixel is split into a neutral base
 # and an amount of this color, which the app then replaces with the chosen one.
-GLOW = np.array([0.05, 0.42, 1.0], dtype=np.float32)
+GLOW = np.array([0.03, 0.40, 1.0], dtype=np.float32)
 
-# Fan rings: center x, center y, radius x, radius y, tilt (degrees). The blades end at BLADE_EDGE of the ring.
+# Fan rings: center x, center y, radius x, radius y, tilt (degrees), fitted to each ring's outer edge (since 1.9.3's
+# render: the top fans seen from a little below, the bottom ones from above). The blades end at BLADE_EDGE of the ring.
 FANS = {
-    "Top1": (357.6, 276.5, 79.5, 26.6, 1.0),
-    "Top2": (540.9, 269.7, 80.4, 26.9, 0.0),
-    "Top3": (721.0, 263.5, 80.5, 27.0, -1.5),
-    "Bottom1": (310.9, 1060.9, 83.9, 23.7, -2.3),
-    "Bottom2": (502.4, 1064.0, 82.6, 24.2, -1.2),
-    "Bottom3": (697.5, 1068.5, 84.0, 24.9, -0.3),
+    "Top1": (379.0, 257.1, 90.5, 24.5, 2.4),
+    "Top2": (571.7, 247.0, 88.5, 25.5, 0.2),
+    "Top3": (768.1, 236.4, 90.2, 26.5, -0.8),
+    "Bottom1": (357.9, 1048.1, 93.8, 16.9, -1.7),
+    "Bottom2": (550.3, 1053.7, 92.2, 17.5, -1.4),
+    "Bottom3": (753.3, 1059.1, 96.1, 18.0, -0.4),
 }
 BLADE_EDGE = 0.875
 # Each fan starts at its own angle, so the three in a row don't look like copies.
 PHASES = {"Top1": 0, "Top2": 23, "Top3": 9, "Bottom1": 31, "Bottom2": 5, "Bottom3": 17}
 
-# Text in the render: (x0, y0, x1, y1) boxes to paint out.
-TEXT_BOXES = [(486, 452, 578, 511), (498, 507, 556, 538), (296, 656, 476, 712)]
+# Text in the render: (x0, y0, x1, y1) boxes to paint out (the pump screen's "57°" and "CPU", the card's model).
+TEXT_BOXES = [(520, 444, 600, 491), (533, 488, 583, 514), (326, 664, 514, 709)]
 
 # Where the app draws its text, measured from the render's lettering: center x (or left x), cap-height center y,
 # cap height, all in source pixels.
-SCREEN_VALUE = (530.0, 483.5, 36.0)
-SCREEN_LABEL = (526.0, 521.5, 16.0)
-GPU_LABEL = (308.0, 686.0, 29.0)
-GPU_LABEL_MAX_RIGHT = 640.0           # the vents on the card start here
+SCREEN_VALUE = (557.0, 468.0, 36.0)
+SCREEN_LABEL = (557.5, 501.0, 16.0)
+GPU_LABEL = (332.0, 687.0, 30.0)
+GPU_LABEL_MAX_RIGHT = 660.0           # the vents on the card start here
 
 # Inter's metrics (units per em 2048): ascender 1984, cap height 1490. WPF puts the baseline at the ascender.
 INTER_ASCENT = 1984 / 2048

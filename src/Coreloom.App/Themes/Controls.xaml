@@ -1223,15 +1223,18 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="ListBoxItem">
-          <c:SquircleBorder x:Name="Root" Background="Transparent" CornerRadius="8" Padding="11,5" Margin="1">
+          <c:SquircleBorder x:Name="Root" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="8" Padding="10,4" Margin="1">
             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
           </c:SquircleBorder>
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
               <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
             </Trigger>
+            <!-- The selected segment: a raised thumb lighter than the track with a hairline rim, so its shape shows
+                 over any background (since 1.9.3; the card colour it had sank into dark backgrounds). -->
             <Trigger Property="IsSelected" Value="True">
-              <Setter TargetName="Root" Property="Background" Value="{DynamicResource Brush.Card}" />
+              <Setter TargetName="Root" Property="Background" Value="{DynamicResource Brush.SegmentThumb}" />
+              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Brush.SegmentThumbRim}" />
               <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
             </Trigger>
           </ControlTemplate.Triggers>

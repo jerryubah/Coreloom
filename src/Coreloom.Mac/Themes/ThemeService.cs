@@ -128,6 +128,10 @@ public sealed class ThemeService : IThemeService
         PublishGlass();
         var sidebar = appearance.Sidebar ?? new SidebarSettings();
         PublishSidebar(sidebar, palette);
+        // The grain over the gradients (Settings › Appearance › Gradient noise, since 1.9.3): 4.5 % over the banners'
+        // light at the standard strength, 3 % over the whole window on a Mac; none at 0, twice at 100.
+        _resources["Grain.Opacity"] = 0.045 * appearance.NoiseFactor;
+        _resources["Grain.WindowOpacity"] = 0.03 * appearance.NoiseFactor;
         PublishAppIcon();
         Backdrop.Apply(backdrop, sidebar, _isDark, background, AccentColor);
 
